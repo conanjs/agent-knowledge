@@ -1,6 +1,6 @@
 ---
 schema: schema-system/v1
-last-updated: 2026-11-14
+last-updated: 2026-11-20
 ---
 
 # Knowledge Framework: Schema System
@@ -69,6 +69,7 @@ The **Verification status** section (knowledge-doc) counts these.
 | KB-10 | **Only defined front-matter keys.** A key not listed in the schema's Front-matter table fails; to track something new, add the key to the schema first | script |
 | KB-11 | **Title and Summary head.** Every v1 file has a `# Title` line. Knowledge docs and deep dives open with `## Summary` holding `**TL;DR:**` and `**Use this when:**` (a deep dive also has `**Depth:**`, DD-1) | script |
 | KB-12 | **References and Related are real.** `## References` has at least one entry, `## Related` has at least one entry (`- _None yet._` when empty), and every footnote used in the body (`[^n]`) has a References entry carrying it | script |
+| KB-13 | **Revisions do not erase.** When a doc is revised, the old and new versions are compared unit by unit (section, table row, paragraph, claim); every removed unit has a stated reason: wrong, unverifiable, or a true duplicate now linked. A rewrite that drops correct content without a reason fails | llm |
 
 ## 5. Registry
 

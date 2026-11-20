@@ -5,7 +5,7 @@ topic: ai-agents
 status: verified
 applies-to: ["Claude Code 2.1.278–2.1.308 (local tests)", "Claude Code docs read 2026-10-30 (features up to v2.1.307)", "Claude Code 2.1.318 (local test 2026-11-09)", "Claude Code 2.1.319 (transcripts and docs read 2026-11-10)"]
 last-verified: 2026-11-10
-last-updated: 2026-11-14
+last-updated: 2026-11-19
 tags: [claude-code, tokens, usage, cost, prompt-caching, compaction, opentelemetry, subagents, agent-teams, workflows]
 ---
 
@@ -153,6 +153,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 ## Lookup notes
 - **Two kinds of automatic compaction show in the transcripts, both with `trigger: auto`.** In this machine's 11 compactions (2026-10-27 to 2026-11-09, Claude Opus 5.5, no `autoCompactWindow` set), 3 came 1–2 minutes after the previous reply at 966,631–973,626 tokens: the context-limit trigger at about 967K. The other 8 came after pauses of 62–428 minutes, at 215,804–825,912 tokens, which matches idle compaction on the 1-hour cache; the transcript does not say which kind it was, so that reading is an inference ✅[^20]. No command is documented that shows the current compaction point; with nothing set it is the model's default ✅[^20].
 - **`@` imports of files outside the project are skipped in `claude -p`.** A project `CLAUDE.md` importing `@/Users/…/file.md` or `@~/…/file.md` loaded only its own lines: `/context` listed the `CLAUDE.md` (98 tokens) but none of the imported files. An import inside the project (`@AGENTS.md`) loaded. Imports in the user's `~/.claude/CLAUDE.md` load as usual (2.1.318) ✅[^18]. The docs say an import in a project `CLAUDE.md` that resolves outside the working directory needs a one-time approval, and stays disabled until approved; print mode shows no dialog ✅[^19]. Block-level HTML comments in a `CLAUDE.md` are stripped before the content reaches the model ✅[^19].
+- **Home-directory imports: the docs show `@~/…`, but not how `~` resolves on Windows.** The memory page's example is `@~/.claude/my-project-instructions.md`; it states relative and absolute paths, at most four hops, and frontmatter removal only for `.claude/rules/` files, not for imports. Windows resolution of `~` and whether an imported file's frontmatter reaches the model are not stated (page read 2026-11-19) ✅[^19].
 - **`--settings '{"claudeMdExcludes": ["<path to ~/.claude/CLAUDE.md>"]}'` drops the user `CLAUDE.md` and its imports for one run:** the first request fell by 5,672 tokens, the size of the three imported instruction files plus their wrapper (2.1.318) ✅[^18].
 - **`--strict-mcp-config` without `--mcp-config` keeps every MCP server out, the claude.ai connectors included.** Without it, `claude -p` sessions connected those connectors in some runs and not others, moving the first request by about 4,000 tokens ✅[^18].
 - `/usage`, the status line and OpenTelemetry costs are client-side estimates at list price unless `modelPricing` is set; the Claude Console or the org analytics page is the bill ✅[^1].
@@ -169,7 +170,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 95 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 96 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
 
 ## References
 - [Manage costs effectively](https://code.claude.com/docs/en/costs) — Anthropic, living. Backs: `/usage`, `/insights`, levers, background usage, agent team costs, `modelPricing`. [^1]
@@ -194,7 +195,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - Local test, 2026-11-09, Claude Code 2.1.318 (terminal, signed in with a subscription): `claude -p` with `--output-format stream-json --verbose`, `--strict-mcp-config`, `--settings` with `claudeMdExcludes`, and `claude -p "/context"` in test folders whose `CLAUDE.md` imported files inside and outside the project; first-request `usage` compared. Numbers in agent-config `proposals/instruction-loading.md` section 6. [^18]
 
 - [Model configuration](https://code.claude.com/docs/en/model-config) and [How Claude Code uses prompt caching](https://code.claude.com/docs/en/prompt-caching) — Anthropic, living, read 2026-11-10 (the model-config page partly through a summary), with the `compact_boundary` lines of `~/.claude/projects/*/*.jsonl` and the time of the reply before each, Claude Code 2.1.308–2.1.319 — local check, 2026-11-10. Backs: the default point of about 967K for native 1M-token models, `/autocompact` per model and `auto`, the cap at the model's window, the variable's precedence, idle compaction on the 1-hour cache, and the two kinds seen in the transcripts. [^20]
-- [Manage Claude's memory](https://code.claude.com/docs/en/memory) — Anthropic, living, read 2026-11-09. Backs: external imports in a project need a one-time approval and stay disabled if declined; user-scope memory files load without it; `claudeMdExcludes` skips files by absolute path or glob; block-level HTML comments are stripped. [^19]
+- [Manage Claude's memory](https://code.claude.com/docs/en/memory) — Anthropic, living, read 2026-11-09, re-read 2026-11-19. Backs: external imports in a project need a one-time approval and stay disabled if declined; user-scope memory files load without it; `claudeMdExcludes` skips files by absolute path or glob; block-level HTML comments are stripped. [^19]
 
 ## Related
 - `ai-agents/agent-token-accounting.md`

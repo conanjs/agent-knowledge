@@ -5,7 +5,7 @@ topic: ai-agents
 status: verified
 applies-to: ["Official documentation read 2026-11-07 (Claude Code, Codex) and 2026-11-11 (all four hosts); host-specific behavior"]
 last-verified: 2026-11-11
-last-updated: 2026-11-11
+last-updated: 2026-11-19
 tags: [skills, subagents, context, portability, prompt-caching]
 ---
 
@@ -69,17 +69,24 @@ Suggested acceptance cases for this recipe (a proposed test design, not executed
 
 **Interpretation:** the standard's experimental tool declaration is not proof of identical permission enforcement across hosts. Treat tool policy as an integration test. Model Context Protocol (MCP) connects a host to external tools; listing a dependency is like listing an ingredient, not evidence that credentials or access already work.
 
+**Shipping skills from another repo.** All three hosts install skills from a plugin listed in a marketplace, with one `SKILL.md` per skill for every host; the file paths, the install steps and a tested setup are in [How a plugin gets from a marketplace to a loaded skill](plugin-marketplace-install-flow.md).
+
+Host-only skill settings stay out of the shared file where the host allows it: Codex keeps its own in `agents/openai.yaml` next to `SKILL.md` ✅[^openai]. Whether Codex and Copilot CLI ignore a frontmatter key meant for another host is not stated.
+
+**Separate skill folders for Copilot CLI and Codex.** Copilot CLI also reads Codex's `~/.agents/skills`. With `"ignoredSkillsLocations": ["~/.agents/skills"]` in `~/.copilot/settings.json`, `copilot skill list` listed each skill once, and a probe skill placed only in `~/.agents/skills` was not listed ✅[^cptest].
+
 ## Takeaways
 - Keep one canonical recipe and small host-specific adapters.
 - Test discovery, trigger selection, task completion and permission behavior separately.
 - Re-check host extensions before copying configuration between products.
 - In Claude Code, hide a skill from the list with `skillOverrides: name-only` or `disable-model-invocation`, but not a skill that a subagent preloads.
+- To give Copilot CLI its own copy of a skill that Codex also gets, put Copilot's in `~/.copilot/skills` and ignore `~/.agents/skills` in Copilot's settings.
 
 ## Used by
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 16 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-11
+- Verified: 18 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-11
 
 Source verification only: current official pages were read; illustrative configurations were not executed in a product session. Recommendations and worked scenarios are this document's synthesis, not measured product guarantees.
 
@@ -89,10 +96,11 @@ Source verification only: current official pages were read; illustrative configu
 - [Build skills](https://learn.chatgpt.com/docs/build-skills) — OpenAI, living, re-read 2026-11-11. Backs: discovery, catalog budget, `[[skills.config]]` and OpenAI metadata. [^openai]
 - [GitHub Copilot CLI command reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference) — GitHub, living, read 2026-11-11. Backs: Copilot CLI skill fields, locations, `copilot skill`, `ignoredSkillsLocations`. [^ghref]
 - [Agent Skills in VS Code](https://code.visualstudio.com/docs/agent-customization/agent-skills) — Microsoft, living, read 2026-11-11. Backs: VS Code locations per harness, fields, loading levels, forked context. [^vscode]
-- `skills/review-docs/SKILL.md` — local example of a thin wrapper around a shared procedure.
-- `copilot/procedures/review-docs.procedure.md` — source and meaning review used for this document.
+- Local test, 2026-11-19, GitHub Copilot CLI 1.0.109 (macOS): `ignoredSkillsLocations` added to `~/.copilot/settings.json`, then `copilot skill list` with and without a probe skill in `~/.agents/skills`. [^cptest]
+- `plugin/skills/review-knowledge-doc/SKILL.md` (this repo) — the source and meaning review used for this document, shipped as a plugin skill.
 
 ## Related
+- [How a plugin gets from a marketplace to a loaded skill](plugin-marketplace-install-flow.md).
 - [Subagent execution boundaries](subagent-execution-boundaries.md).
 - [Skills, delegation and cache economics](skills-delegation-cache-economics.md).
 - [Claude Code installation and historical tests](claude-code-agents-and-skills.md).

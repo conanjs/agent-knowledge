@@ -1,0 +1,14 @@
+{
+  "name": "agent-knowledge",
+  "owner": {
+    "name": "conanjs"
+  },
+  "description": "Skills that ship with V's knowledge base.",
+  "plugins": [
+    {
+      "name": "agent-knowledge",
+      "source": "./plugin",
+      "description": "Skills for working on V's knowledge base (agent-knowledge)."
+    }
+  ]
+}

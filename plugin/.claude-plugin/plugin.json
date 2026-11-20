@@ -1,0 +1,9 @@
+{
+  "name": "agent-knowledge",
+  "version": "0.1.0",
+  "description": "Skills for working on V's knowledge base (agent-knowledge).",
+  "repository": "https://github.com/conanjs/agent-knowledge",
+  "author": {
+    "name": "conanjs"
+  }
+}
