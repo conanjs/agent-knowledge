@@ -204,8 +204,8 @@ Observed on a live cluster (2026-10-19): the new-way pod listed exactly the thre
 - [External Secrets Operator overview](https://external-secrets.io/latest/introduction/overview/) — External Secrets project, living. Backs: ESO fetches from an external API and creates Kubernetes Secrets.
 - [ExternalSecret API](https://external-secrets.io/latest/api/externalsecret/) — External Secrets project, living. Backs: `refreshInterval` and `creationPolicy` fields.
 - [`atomic_writer.go`](https://github.com/kubernetes/kubernetes/blob/master/pkg/volume/util/atomic_writer.go) — Kubernetes source, living. Backs: timestamped directory plus `..data` symlink swap.
-- `{{AGENT_HOME}}/patterns/explaining-mechanisms.pattern.md` — the structure used for How it works.
+- `~/.agent-config/patterns/explaining-mechanisms.pattern.md` — the structure used for How it works.
 
 ## Related
-- `{{AGENT_HOME}}/knowledge/gcp/gke-lens-setup.md` — legacy: inspecting a GKE cluster, including pods and their mounts, with Lens.
-- `{{AGENT_HOME}}/knowledge/operations/index.md` — config and secrets handling at startup in application code.
+- `../gcp/gke-lens-setup.md` — legacy: inspecting a GKE cluster, including pods and their mounts, with Lens.
+- `../operations/index.md` — config and secrets handling at startup in application code.

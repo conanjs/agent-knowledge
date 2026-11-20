@@ -68,4 +68,4 @@ A plain `git@github.com:...` URL (no alias) always falls back to whatever the *d
 
 ## Related
 
-- `{{AGENT_HOME}}/global-variables.md` — a different, unrelated multi-machine-identity problem (path variables, not credentials) solved with a different mechanism (seed-once file, not SSH aliasing) — worth contrasting if the two ever get confused.
+- `~/.agent-config/global-variables.md` — a different, unrelated multi-machine-identity problem (path variables, not credentials) solved with a different mechanism (seed-once file, not SSH aliasing) — worth contrasting if the two ever get confused.

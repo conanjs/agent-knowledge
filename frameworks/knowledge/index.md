@@ -14,10 +14,10 @@ last-updated: 2026-11-14
  A  rules framework             RULES       "must / must not"      foundations/, stacks/, paradigms/
  │   Source: + Reference topics
  ▼
- B  knowledge framework (this)  REFERENCES  "how it works, why"    {{AGENT_HOME}}/knowledge/<topic>/
+ B  knowledge framework (this)  REFERENCES  "how it works, why"    ~/.agent-config/knowledge/<topic>/
  ▲
  │   links to general concepts
- C  company-kb framework        FACTS       "what our system is"   {{AGENT_HOME}}/companies/<co>/
+ C  company-kb framework        FACTS       "what our system is"   ~/.agent-config/companies/<co>/
  ▲
  │   company-kb: front-matter
  D  project repo                FACTS       "what this repo is"    docs/architecture.md, docs/integrations/
@@ -41,7 +41,7 @@ last-updated: 2026-11-14
 ## 3. Layout
 
 ```
-{{AGENT_HOME}}/knowledge/
+~/.agent-config/knowledge/
 ├── index.md                       list of topics (topic-index schema, kind: root)
 ├── <topic>/                       e.g. grpc/, js-runtime/, software-design/
 │   ├── index.md                   topic-index schema
@@ -96,7 +96,7 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 4. One doc, one type. A concept doc that grows a how-to section gets split. If the subject resists splitting, write a deep dive and synthesize it (§4.1).
 5. These rules and the schemas apply to **new docs only**. Existing (legacy) docs are kept as they are and never retrofitted (`schemas/_system.md` §6).
 6. The doc stands alone (no replies to a chat the reader cannot see) and copies nothing another doc already holds: link instead (KB-7, KB-8).
-7. Before committing, follow `{{AGENT_HOME}}/procedures/review-docs.procedure.md`. The validator also runs on its own: after each edit in Claude Code, on `git commit`, and as the required `validate-docs` check on `main` (`README.md` § "Doc guards").
+7. Before committing, follow `~/.agent-config/procedures/review-docs.procedure.md`. The validator also runs on its own: after each edit in Claude Code, on `git commit`, and as the required `validate-docs` check on `main` (`README.md` § "Doc guards").
 
 ## 7. Files
 
@@ -111,8 +111,8 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 ## References
 
 - Diátaxis — https://diataxis.fr/
-- `{{AGENT_HOME}}/frameworks/company-kb/index.md`
+- `~/.agent-config/frameworks/company-kb/index.md`
 
 ## Related
 
-- `{{AGENT_HOME}}/knowledge/documentation/doc-template-base.md` — team docs (a different audience)
+- `../../knowledge/documentation/doc-template-base.md` — team docs (a different audience)

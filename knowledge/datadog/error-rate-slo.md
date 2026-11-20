@@ -724,7 +724,7 @@ Same "Error Budget" / "Burn Rate" monitor options apply as for count-based SLOs 
 
 ## Related
 
-- `{{AGENT_HOME}}/knowledge/gcp/roadmap.md` — GCP infrastructure knowledge
+- `../gcp/roadmap.md` — GCP infrastructure knowledge
 - Jira task: "Create Error rate SLO — % of sessions/views without JS errors or failed API calls (similar to backend availability) for ne-manage-shipment-frontend"
 
 ---

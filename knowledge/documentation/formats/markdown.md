@@ -13,7 +13,7 @@ Default format. Use unless the user asks for something else, or the doc needs to
 
 - Keep tables narrow enough to read in a plain text editor, not just rendered.
 - No raw HTML unless the target renderer needs it (e.g. an `<br>` inside a table cell) — plain markdown syntax only otherwise.
-- Internal cross-references use `[[doc-name]]`-style links per this knowledge base's existing convention (see other files in `{{AGENT_HOME}}/knowledge/`).
+- Internal cross-references use `[[doc-name]]`-style links per this knowledge base's existing convention (see other files in `~/.agent-config/knowledge/`).
 
 ## Stop condition (this format's pass/fail check)
 

@@ -103,7 +103,7 @@ Only reach for this once Template A + B already work interactively — an unatte
 ## References
 
 **Local artifacts:**
-- `{{AGENT_HOME}}/knowledge/ai-agents/loop-engineering.md` — concept doc this playbook applies.
+- `loop-engineering.md` — concept doc this playbook applies.
 - `/Users/vinh.doq/workspace/ots-projects/one-ai-armor/skills/common/systematic-debugging/SKILL.md` — the policy-skill shape Template A is modeled on.
 - `ne-manage-shipment-frontend/package.json` — source of the actual `type-check`/`lint`/`test`/`build` script names used in the templates (verified by reading the file directly, 2026-09-14).
 - `ne-manage-shipment-frontend/dead-code-*.{md,csv}`, `import-migration-plan.md` — in-progress work used as the worked example in §6.

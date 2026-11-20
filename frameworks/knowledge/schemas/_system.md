@@ -9,7 +9,7 @@ The meta-schema: a header line, Front-matter, Required structure, Rules, Example
 
 ## 1. Shared front-matter
 
-Every file in `{{AGENT_HOME}}/knowledge/` starts with:
+Every file in `~/.agent-config/knowledge/` starts with:
 
 ```yaml
 ---
@@ -114,7 +114,7 @@ The schemas apply to **new docs only**. Existing docs stay as they are.
 ## References
 
 - [Diátaxis](https://diataxis.fr/) — Daniele Procida, living. Backs: type split.
-- `{{AGENT_HOME}}/frameworks/company-kb/schemas/_system.md`: the host schema-system style. Note that store B deliberately does **not** copy company-kb's retrofit rule (§6).
+- `~/.agent-config/frameworks/company-kb/schemas/_system.md`: the host schema-system style. Note that store B deliberately does **not** copy company-kb's retrofit rule (§6).
 
 ## Related
 

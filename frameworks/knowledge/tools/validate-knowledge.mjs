@@ -2,7 +2,7 @@
 // validate-knowledge.mjs — checks store B (global knowledge) against the knowledge framework schemas.
 //
 // Usage: node validate-knowledge.mjs [knowledge-root] [--urls]
-//   knowledge-root  default: <this framework>/../../knowledge  (repo: copilot/knowledge, installed: ~/.copilot/knowledge)
+//   knowledge-root  default: <this framework>/../../knowledge  (installed: ~/.agent-config/knowledge)
 //   --urls          also run KB-3: every external URL in a v1 doc must answer HTTP < 400 (network; slow)
 //
 // Only v1 docs are checked (front-matter `schema:` = knowledge-doc/v1 | deep-dive/v1 | topic-index/v1).

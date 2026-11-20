@@ -6,8 +6,8 @@ Split out of [conanjs/agent-config](https://github.com/conanjs/agent-config) on 
 
 | Folder | What | Installed at |
 |---|---|---|
-| `knowledge/` | The docs; start at `knowledge/index.md` | `~/.copilot/knowledge` |
-| `frameworks/knowledge/` | Rules and schemas for knowledge docs, and the validator | `~/.copilot/frameworks/knowledge` |
+| `knowledge/` | The docs; start at `knowledge/index.md` | `~/.agent-config/knowledge` |
+| `frameworks/knowledge/` | Rules and schemas for knowledge docs, and the validator | `~/.agent-config/frameworks/knowledge` |
 
 ## Check
 
@@ -31,14 +31,14 @@ Claude Code and Copilot CLI read the plugin from the clone, so an edit shows in 
 
 ## Integrate into the agent home
 
-The agent home is `~/.copilot` (`%USERPROFILE%\.copilot` on Windows); the core instructions read the knowledge base there. agent-config does not install this repo: ask an agent to follow these steps.
+The agent home is `~/.agent-config` (`%USERPROFILE%\.agent-config` on Windows): the folder every coding agent reads, whose core instructions point at `~/.agent-config/knowledge/index.md` and `~/.agent-config/frameworks/knowledge/index.md`. agent-config does not install this repo: ask an agent to follow these steps.
 
-1. Clone: `git clone https://github.com/conanjs/agent-knowledge.git ~/workspace/agent-knowledge`
+1. Clone it anywhere, for example: `git clone https://github.com/conanjs/agent-knowledge.git ~/workspace/agent-knowledge`. Below, `<clone>` is that folder.
 2. Link it into the agent home (macOS, Linux):
    ```bash
-   ln -sfn ~/workspace/agent-knowledge/knowledge ~/.copilot/knowledge
-   mkdir -p ~/.copilot/frameworks && ln -sfn ~/workspace/agent-knowledge/frameworks/knowledge ~/.copilot/frameworks/knowledge
+   ln -sfn <clone>/knowledge ~/.agent-config/knowledge
+   mkdir -p ~/.agent-config/frameworks && ln -sfn <clone>/frameworks/knowledge ~/.agent-config/frameworks/knowledge
    ```
-   Windows (PowerShell): `New-Item -ItemType Junction -Path $HOME\.copilot\knowledge -Target <clone>\knowledge`, and the same for `frameworks\knowledge`.
-3. Install the plugin: the commands in "Skills (plugin)" above.
-4. Core line: the core instructions already point at `~/.copilot/knowledge/index.md` and `~/.copilot/frameworks/knowledge/index.md`; nothing to add.
+   Windows (PowerShell): `New-Item -ItemType Junction -Path $HOME\.agent-config\knowledge -Target <clone>\knowledge`, and the same for `frameworks\knowledge`.
+3. Install the plugin: the commands in "Skills (plugin)" above, with `<clone>` in place of `~/workspace/agent-knowledge`.
+4. Core line: the core instructions already point at the two paths in step 2; nothing to add.

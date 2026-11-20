@@ -486,10 +486,10 @@ JSX double-brace `value={{ a, b }}` conflicts with template syntax — use an in
 - Agents (organised, not scanned): `ne-copilot/.github/agents/eCOM/manage-shipment.agent.md`
 - Prompts: `ne-copilot/.github/prompts/eCOM/manage-shipment/*.prompt.md`
 - Skill frontmatter fix example: `one-ai-armor/skills/common/systematic-debugging/SKILL.md`, `root-cause-tracing/SKILL.md`, `defense-in-depth/SKILL.md`
-- Dead-code rules: `{{AGENT_HOME}}/knowledge/dead-code/dead-code-rules.md`
+- Dead-code rules: `../dead-code/dead-code-rules.md`
 
 ## Related
 
-- `{{AGENT_HOME}}/knowledge/dead-code/dead-code-rules.md` — tracing rules referenced by `remove-dead-code.prompt.md`
-- `{{AGENT_HOME}}/knowledge/github-copilot/copilot-cli-internals.md` — CLI-specific internals
+- `../dead-code/dead-code-rules.md` — tracing rules referenced by `remove-dead-code.prompt.md`
+- `copilot-cli-internals.md` — CLI-specific internals
 - `one-ai-armor` repo `skills/README.md` and `CONTRIBUTING.md` — this team's own skill-authoring conventions (kept in sync with section 7 above)

@@ -138,12 +138,12 @@ synthesized-into:
 | Check | Tool |
 |---|---|
 | DD-1 envelope; DD-3 two-way links; DD-4 staleness warning; URLs resolve (KB-3) | `validate-knowledge.mjs` |
-| DD-2, DD-5; the synthesis "Done when" | LLM review: `{{AGENT_HOME}}/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
+| DD-2, DD-5; the synthesis "Done when" | LLM review: `~/.agent-config/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
 
 ## References
 
 **Local artifacts:**
-- `{{AGENT_HOME}}/knowledge/grpc/stale-connection-keepalive.md`: the precedent deep dive used in the example.
+- `../../../knowledge/grpc/stale-connection-keepalive.md`: the precedent deep dive used in the example.
 - Global instructions, "deep dive" trigger: source of the recommended body content.
 
 **External authoritative sources:**

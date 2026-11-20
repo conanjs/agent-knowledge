@@ -192,13 +192,13 @@ const b = { y: 2, x: 1 };   // shape S2: different order → different shape
 | Check | Tool |
 |---|---|
 | KD-1, KD-2, KD-6, KD-7, KD-9; the shared KB-9 … KB-12 (front-matter values and keys, title and Summary head, References/Related/footnotes); KB-7 and KB-8 heuristics (warn); URLs resolve (KB-3, `--urls`) | `validate-knowledge.mjs`, run by `scripts/check-docs.sh` (pre-commit, Claude Code hook, CI) |
-| KD-3, KD-5, KD-8, KB-1, KB-5, KB-7, KB-8 | LLM review: `{{AGENT_HOME}}/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
+| KD-3, KD-5, KD-8, KB-1, KB-5, KB-7, KB-8 | LLM review: `~/.agent-config/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
 
 ## References
 
 - [Diátaxis](https://diataxis.fr/) — Daniele Procida, living. Backs: type split.
 - [Fast properties in V8](https://v8.dev/blog/fast-properties), [What's up with monomorphism?](https://mrale.ph/blog/2015/01/11/whats-up-with-monomorphism.html) — the example's sources.
-- `{{AGENT_HOME}}/patterns/explaining-mechanisms.pattern.md` — the How it works structure.
+- `~/.agent-config/patterns/explaining-mechanisms.pattern.md` — the How it works structure.
 
 ## Related
 
