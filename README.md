@@ -28,3 +28,17 @@ codex plugin marketplace add ~/workspace/agent-knowledge && codex plugin add age
 ```
 
 Claude Code and Copilot CLI read the plugin from the clone, so an edit shows in the next session. Codex copies it: run `codex plugin add agent-knowledge@agent-knowledge` again after an edit.
+
+## Integrate into the agent home
+
+The agent home is `~/.copilot` (`%USERPROFILE%\.copilot` on Windows); the core instructions read the knowledge base there. agent-config does not install this repo: ask an agent to follow these steps.
+
+1. Clone: `git clone https://github.com/conanjs/agent-knowledge.git ~/workspace/agent-knowledge`
+2. Link it into the agent home (macOS, Linux):
+   ```bash
+   ln -sfn ~/workspace/agent-knowledge/knowledge ~/.copilot/knowledge
+   mkdir -p ~/.copilot/frameworks && ln -sfn ~/workspace/agent-knowledge/frameworks/knowledge ~/.copilot/frameworks/knowledge
+   ```
+   Windows (PowerShell): `New-Item -ItemType Junction -Path $HOME\.copilot\knowledge -Target <clone>\knowledge`, and the same for `frameworks\knowledge`.
+3. Install the plugin: the commands in "Skills (plugin)" above.
+4. Core line: the core instructions already point at `~/.copilot/knowledge/index.md` and `~/.copilot/frameworks/knowledge/index.md`; nothing to add.
