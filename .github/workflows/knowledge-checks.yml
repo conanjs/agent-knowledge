@@ -1,4 +1,7 @@
-name: check
+# Runs npm run verify-before-commit (the validator over knowledge/, then the tools' scenarios) on every pull request
+# and push to main. Actions are pinned to a full commit SHA, with the release tag as a comment; Dependabot
+# (.github/dependabot.yml) proposes updates.
+name: knowledge checks
 on:
   pull_request:
   push:
@@ -7,7 +10,7 @@ on:
 permissions:
   contents: read
 jobs:
-  check:
+  verify-before-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -15,4 +18,4 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm install --no-audit --no-fund
-      - run: npm run check
+      - run: npm run verify-before-commit

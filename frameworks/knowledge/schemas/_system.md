@@ -5,11 +5,11 @@ last-updated: 2026-11-20
 
 # Knowledge Framework: Schema System
 
-The meta-schema: a header line, Front-matter, Required structure, Rules, Example, Checks. This file adds what is specific to store B.
+The meta-schema: a header line, Front-matter, Required structure, Rules, Example, Checks. This file adds what is specific to the knowledge base.
 
 ## 1. Shared front-matter
 
-Every file in `~/.agent-config/knowledge/` starts with:
+Every file in `knowledge/` (at the root of this repo) starts with:
 
 ```yaml
 ---
@@ -58,7 +58,7 @@ The **Verification status** section (knowledge-doc) counts these.
 | Id | Rule | Enforced by |
 |---|---|---|
 | KB-1 | Own words; quotes ≤ 2 sentences, cited | llm |
-| KB-2 | No company names, hosts or secrets (store B is company-neutral) | llm |
+| KB-2 | No company names, hosts or secrets (the knowledge base is company-neutral) | llm |
 | KB-3 | Every external URL resolves (HTTP < 400) at `last-verified` | script |
 | KB-4 | Retired. A doc needs no `Used by` section; a leftover `Used by` section or table is ignored, not checked | none |
 | KB-5 | One type per doc | llm |
@@ -114,7 +114,7 @@ The schemas apply to **new docs only**. Existing docs stay as they are.
 ## References
 
 - [Diátaxis](https://diataxis.fr/) — Daniele Procida, living. Backs: type split.
-- `~/.agent-config/frameworks/company-kb/schemas/_system.md`: the host schema-system style. Note that store B deliberately does **not** copy company-kb's retrofit rule (§6).
+- The company-kb framework's `schemas/_system.md` (agent-companies repo): the schema-system style this one follows. This framework deliberately does **not** copy its retrofit rule (§6).
 
 ## Related
 

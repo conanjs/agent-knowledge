@@ -11,7 +11,7 @@ Covers what the validator cannot judge: meaning, purpose and truth.
 
 ## Steps
 
-1. **Run the checks** from the root of the agent-knowledge clone that holds the changed files (`git -C <folder of a changed file> rev-parse --show-toplevel`): `npm run check` (the validator, then its scenarios). Fix every FAIL. Treat every `KB-7`, `KB-8` and `KD-9` warning as a question for step 3. For docs that cite URLs, also run `node frameworks/knowledge/tools/validate-knowledge.mjs --urls`.
+1. **Run the checks** from the root of the agent-knowledge clone that holds the changed files (`git -C <folder of a changed file> rev-parse --show-toplevel`): `npm run verify-before-commit` (the validator, then its scenarios). Fix every FAIL. Treat every `KB-7`, `KB-8` and `KD-9` warning as a question for step 3. For docs that cite URLs, also run `npm run validate-docs-urls`.
 2. **Read every changed file in full**, not only the diff: a duplicated paragraph is invisible in a diff that adds one copy.
 3. **Check each file against this list.** Record each finding as `file:line — problem — why it matters`.
 

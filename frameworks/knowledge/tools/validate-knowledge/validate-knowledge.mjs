@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// validate-knowledge.mjs — checks store B (global knowledge) against the knowledge framework schemas.
+// validate-knowledge.mjs — checks the knowledge base (knowledge/) against the knowledge framework schemas.
 //
 // Usage: node validate-knowledge.mjs [knowledge-root] [--urls]
-//   knowledge-root  default: <this framework>/../../knowledge  (installed: ~/.agent-config/knowledge)
+//   knowledge-root  default: knowledge/ at the root of this repo
 //   --urls          also run KB-3: every external URL in a v1 doc must answer HTTP < 400 (network; slow)
 //
 // Only v1 docs are checked (front-matter `schema:` = knowledge-doc/v1 | deep-dive/v1 | topic-index/v1).
 // Legacy docs (no such schema) are skipped: schemas/_system.md §6, no retrofit.
 //
-// Every code printed is a rule id in ../schemas/ (a test checks this: tests/validate-knowledge/).
+// Every code printed is a rule id in ../../schemas/ (a test checks this: tests/ next to this file).
 // Checks: knowledge-doc KD-1 (sections/order), KD-2 (verified ⇒ no ⚠️ + last-verified), KD-6 (concept ≤ 400 lines, warn), KD-7 (derived-from ↔ synthesized-into),
 // KD-9 (exact Verification status line, singular/plural, date = last-verified; counts warn);
 // deep-dive DD-1, DD-3, DD-4 (warn); topic-index TI-1 … TI-7; shared KB-9 (front-matter values),
@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 const args = process.argv.slice(2);
 const checkUrls = args.includes('--urls'); if (checkUrls) args.splice(args.indexOf('--urls'), 1);
 const here = fs.realpathSync(path.dirname(fileURLToPath(import.meta.url)));
-const fwRoot = path.resolve(here, '..');
+const fwRoot = path.resolve(here, '..', '..');
 const kRoot = fs.realpathSync(path.resolve(args[0] ?? path.join(fwRoot, '..', '..', 'knowledge')));
 
 const fails = []; const warns = [];

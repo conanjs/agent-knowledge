@@ -81,8 +81,8 @@ These come from the global "deep dive" instruction. They make a dive easier to s
 
 1. **Read** the whole source. List its claims, and keep each claim's ✅ / ⚠️ marker.
 2. **Classify** each part by what it answers (table above): mechanism → `concept`, option or value tables → `reference`, steps → `how-to`, incident → `case-study`. Route content that does not belong in B elsewhere:
-   - company facts → store C (`companies/<co>/…`);
-   - must-rules → a `[rule-candidate]` takeaway, which becomes a store A rule only in the learning loop;
+   - company facts → that company's knowledge base;
+   - must-rules → a `[rule-candidate]` takeaway, which becomes a rule in a rules framework only in the learning loop;
    - one-off notes → dropped.
 3. **Check for overlap** in the topic's `index.md`. Extend an existing v1 doc rather than creating a near-duplicate.
 4. **Write** each derived doc to `knowledge-doc/v1` in full, with `derived-from: [<source path>]`. Re-check claims against the **original** sources and cite those. The deep dive is listed as a local artifact under References, never as the source of a fact.
@@ -90,7 +90,7 @@ These come from the global "deep dive" instruction. They make a dive easier to s
 6. **Index** each new doc in the topic `index.md`, and list the deep dive itself with Type `deep-dive`.
 7. **Validate** with `validate-knowledge.mjs` (DD-3, KD-7).
 
-**Done when:** every claim in the source has a home (a derived doc, store C, a rule candidate, or "dropped" with a reason), and the source's verified/unverified counts carry over without loss.
+**Done when:** every claim in the source has a home (a derived doc, a company's knowledge base, a rule candidate, or "dropped" with a reason), and the source's verified/unverified counts carry over without loss.
 
 ## Example
 
@@ -138,7 +138,7 @@ synthesized-into:
 | Check | Tool |
 |---|---|
 | DD-1 envelope; DD-3 two-way links; DD-4 staleness warning; URLs resolve (KB-3) | `validate-knowledge.mjs` |
-| DD-2, DD-5; the synthesis "Done when" | LLM review: `~/.agent-config/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
+| DD-2, DD-5; the synthesis "Done when" | LLM review: the `review-knowledge-doc` skill (`plugin/skills/review-knowledge-doc/SKILL.md`), before committing changes under `knowledge/` |
 
 ## References
 
