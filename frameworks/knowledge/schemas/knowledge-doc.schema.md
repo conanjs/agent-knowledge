@@ -83,7 +83,7 @@ Section names are fixed. Sections marked *(opt)* may be omitted, but **not renam
 
 | # | Section | Content |
 |---|---|---|
-| 1 | `## Context` | System and situation, **anonymized** (store B rule KB-2) |
+| 1 | `## Context` | System and situation, **anonymized** (rule KB-2) |
 | 2 | `## Symptom` | What was observed |
 | 3 | `## Root cause` | Why it happened |
 | 4 | `## Fix` | What changed |
@@ -94,7 +94,7 @@ Section names are fixed. Sections marked *(opt)* may be omitted, but **not renam
 
 ```markdown
 ## Takeaways
-- <short, actionable statement> [rule-candidate]   ← tag = could become a rule in store A
+- <short, actionable statement> [rule-candidate]   ← tag = could become a rule in a rules framework
 
 ## Verification status
 - Verified: <n> claims (✅) · Unverified: <n> claims (⚠️) · Last verified: <date>
@@ -192,7 +192,7 @@ const b = { y: 2, x: 1 };   // shape S2: different order → different shape
 | Check | Tool |
 |---|---|
 | KD-1, KD-2, KD-6, KD-7, KD-9; the shared KB-9 … KB-12 (front-matter values and keys, title and Summary head, References/Related/footnotes); KB-7 and KB-8 heuristics (warn); URLs resolve (KB-3, `--urls`) | `validate-knowledge.mjs`, run by `scripts/check-docs.sh` (pre-commit, Claude Code hook, CI) |
-| KD-3, KD-5, KD-8, KB-1, KB-5, KB-7, KB-8 | LLM review: `~/.agent-config/procedures/review-docs.procedure.md`, before committing changes under `knowledge/` |
+| KD-3, KD-5, KD-8, KB-1, KB-5, KB-7, KB-8 | LLM review: the `review-knowledge-doc` skill (`plugin/skills/review-knowledge-doc/SKILL.md`), before committing changes under `knowledge/` |
 
 ## References
 

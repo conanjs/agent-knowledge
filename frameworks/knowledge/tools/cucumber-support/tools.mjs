@@ -1,20 +1,20 @@
-// tools.mjs — the registry of tools under test. Each tests/<tool>/tool.mjs registers one entry:
+// tools.mjs — the registry of tools under test. Each frameworks/<framework>/tools/<tool>/tests/tool.mjs registers one entry:
 //
 //   registerTool('<name>', {
-//     fixture: 'tests/<name>/fixtures/base',         // copied into a fresh temp folder per scenario
+//     fixture: 'frameworks/<framework>/tools/<name>/tests/fixtures/base',         // copied into a fresh temp folder per scenario
 //     run: (world, extraArgs) => ({ file, args, env }), // the process to start; env is merged into process.env
 //     header: /^…/,                                     // optional: first output line, checked and dropped
 //     normalize: [[/regex/g, 'text']],                  // optional: replacements for unstable output (counts of days, …)
 //     quietPass: '…',                                   // output after the header for a clean pass
 //     codes: () => ['KD-1', …],                         // every rule code the tool can print
-//     rules: 'copilot/…/schemas',                       // optional: folder whose `| <code> |` rows define those codes
+//     rules: 'frameworks/<framework>/schemas',                       // optional: folder whose `| <code> |` rows define those codes
 //   });
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+export const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const tools = new Map();
 
 export function registerTool(name, def) {

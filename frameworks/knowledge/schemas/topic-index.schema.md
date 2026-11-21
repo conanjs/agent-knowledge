@@ -84,4 +84,4 @@ Not covered: framework-level performance (see `web-performance/`).
 
 | Check | Tool |
 |---|---|
-| TI-1 … TI-7, plus the shared KB-11 (title) | `validate-knowledge.mjs`, run by `scripts/check-docs.sh` |
+| TI-1 … TI-7, plus the shared KB-11 (title) | `validate-knowledge.mjs`, run by `npm run verify-before-commit` |

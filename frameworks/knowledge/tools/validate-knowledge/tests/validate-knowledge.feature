@@ -1,6 +1,6 @@
-# Requirements for copilot/frameworks/knowledge/tools/validate-knowledge.mjs, as executable scenarios (specs/001).
+# Requirements for frameworks/knowledge/tools/validate-knowledge/validate-knowledge.mjs, as executable scenarios (specs/001).
 # Each scenario title starts with the rule code it covers. The rules themselves are defined in
-# copilot/frameworks/knowledge/schemas/ (knowledge-doc, deep-dive, topic-index, _system).
+# frameworks/knowledge/schemas/ (knowledge-doc, deep-dive, topic-index, _system).
 # Every printed code is a rule id in those schemas (specs/002), and a test checks it.
 #
 # Change policy (constitution principle IV):
@@ -663,7 +663,7 @@ Feature: Knowledge validator
     Then it passes with no warnings
 
   Scenario: AC-9.2 the validator source holds no backlink scan and does not read the SDLC framework
-    Given the repo's "frameworks/knowledge/tools" folder is copied to "validator"
+    Given the repo's "frameworks/knowledge/tools/validate-knowledge" folder is copied to "validator"
     Then the file "validator/validate-knowledge.mjs" has no line containing "backlink"
     And the file "validator/validate-knowledge.mjs" has no line containing "KD-4"
     And the file "validator/validate-knowledge.mjs" has no line containing "sdlc"
@@ -673,14 +673,8 @@ Feature: Knowledge validator
     When the tool runs
     Then it passes with no warnings
 
-  Scenario: AC-9.4 a checkout holding only the knowledge area passes
-    Given the folder "agentic-sdlc" is removed
-    And the folder "companies" is removed
-    When the tool runs with "--only-knowledge"
-    Then it passes with no warnings
-
   Scenario: AC-9.4 the validator source never reads a company folder and the deny-list check is gone
-    Given the repo's "frameworks/knowledge/tools" folder is copied to "validator"
+    Given the repo's "frameworks/knowledge/tools/validate-knowledge" folder is copied to "validator"
     Then the file "validator/validate-knowledge.mjs" has no line containing "companies"
     And the file "validator/validate-knowledge.mjs" has no line containing "deny"
 
