@@ -16,12 +16,12 @@ V's knowledge base for coding agents (Claude Code, GitHub Copilot, Codex): sourc
 
 | Command | What it does |
 |---|---|
-| `npm run validate-docs` | Checks every doc and index under `knowledge/` against the schemas (legacy docs skipped) |
-| `npm run validate-docs-urls` | The same, and also requests every URL the docs cite |
-| `npm run test-tools` | Runs the scenarios of the tools under `frameworks/knowledge/tools/` |
-| `npm run verify-before-commit` | `validate-docs`, then `test-tools`; CI runs this |
+| `pnpm run validate-docs` | Checks every doc and index under `knowledge/` against the schemas (legacy docs skipped) |
+| `pnpm run validate-docs-urls` | The same, and also requests every URL the docs cite |
+| `pnpm run test-tools` | Runs the scenarios of the tools under `frameworks/knowledge/tools/` |
+| `pnpm run verify-before-commit` | `validate-docs`, then `test-tools`; CI runs this |
 
-Run `npm install` once first. The validator also runs on its own: `node frameworks/knowledge/tools/validate-knowledge/validate-knowledge.mjs [knowledge-root] [--urls]`.
+Run `pnpm install` once first (pnpm version: `packageManager` in `package.json`). The validator also runs on its own: `node frameworks/knowledge/tools/validate-knowledge/validate-knowledge.mjs [knowledge-root] [--urls]`.
 
 ## Use it from your coding agent
 

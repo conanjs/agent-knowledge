@@ -1,4 +1,4 @@
-# Runs npm run verify-before-commit (the validator over knowledge/, then the tools' scenarios) on every pull request
+# Runs pnpm run verify-before-commit (the validator over knowledge/, then the tools' scenarios) on every pull request
 # and push to main. Actions are pinned to a full commit SHA, with the release tag as a comment; Dependabot
 # (.github/dependabot.yml) proposes updates.
 name: knowledge checks
@@ -17,5 +17,5 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-      - run: npm install --no-audit --no-fund
-      - run: npm run verify-before-commit
+      - run: corepack enable && pnpm install --frozen-lockfile # pnpm version from package.json packageManager
+      - run: pnpm run verify-before-commit
