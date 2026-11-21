@@ -1,7 +1,7 @@
 {
   "name": "agent-knowledge",
-  "version": "0.1.0",
-  "description": "Skills for working on V's knowledge base (agent-knowledge).",
+  "version": "0.2.0",
+  "description": "Skills for working on V's knowledge base (agent-knowledge): reviewing docs before a commit, and researching a topic with checkable claims.",
   "repository": "https://github.com/conanjs/agent-knowledge",
   "author": {
     "name": "conanjs"

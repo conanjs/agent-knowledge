@@ -95,6 +95,10 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 | `schemas/deep-dive.schema.md` | Envelope of free-form deep dives, and the synthesis procedure |
 | `schemas/topic-index.schema.md` | Shape of every `index.md` |
 | `tools/validate-knowledge/` | The validator and its scenarios (`tests/`). Checks every v1 doc and index (legacy skipped): `node tools/validate-knowledge/validate-knowledge.mjs [knowledge-root] [--urls]`; from the repo root, `pnpm run validate-docs`. CI runs `pnpm run verify-before-commit` |
+| `research.md` | Researching a topic into a doc whose every claim can be checked: roles, flow, where each piece lives |
+| `schemas/research-run.schema.md` | The run folder `research/<topic>/<slug>/` and its rules RR-1 … RR-15 |
+| `tools/research-run/` | The research-run scripts (`init`, `merge`, `quotes`, `replay`, `pairs`, `validate`) and their scenarios: `node tools/research-run/research-run.mjs <command> <run>`; from the repo root, `pnpm run research -- …` |
+| `agents/research-researcher/`, `agents/research-verifier/` | The two research agents: `body.md` and one header per coding agent, built by agent-config's `build-agents.mjs` |
 | `tools/cucumber-support/` | The shared Cucumber World and steps every tool's scenarios use |
 
 ## References

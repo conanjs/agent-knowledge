@@ -1,0 +1,16 @@
+claims:
+  - id: Q2-C1
+    statement: Adding a 65th item throws a RangeError.
+    kind: runtime
+    evidence:
+      - source: Q2-S1
+        locator: "#the-error"
+        quote: "the 65th item throws a RangeError"
+    experiment: E-1
+  - id: Q2-C2
+    statement: Releases before 2.0 allowed 128 items.
+    kind: interpretive
+    evidence:
+      - source: Q2-S1
+        locator: "#history"
+        quote: "older versions were more generous"

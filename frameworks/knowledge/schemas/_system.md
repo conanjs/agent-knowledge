@@ -78,6 +78,7 @@ The **Verification status** section (knowledge-doc) counts these.
 | `knowledge-doc/v1` | `knowledge-doc.schema.md` | `knowledge/<topic>/[<sub>/]<slug>.md`: structured, typed docs |
 | `deep-dive/v1` | `deep-dive.schema.md` | `knowledge/<topic>/[<sub>/]<slug>.md`: free-form deep dives (envelope only), synthesized into knowledge-docs |
 | `topic-index/v1` | `topic-index.schema.md` | `knowledge/index.md`, `knowledge/<topic>/[<sub>/]index.md` |
+| `research-run/v1` | `research-run.schema.md` | `research/<topic>/[<sub>/]<slug>/plan.md` and its run folder: the evidence behind a researched doc (not under `knowledge/`, so `validate-knowledge` skips it; `research-run.mjs validate` checks it) |
 
 ### 5.1 Structured vs. deep dive
 

@@ -1,0 +1,7 @@
+pairs:
+  - claim: Q1-C1
+    sentence: A widget holds at most 64 items ✅ (Q1-C1).
+    verdict: entails
+  - claim: Q2-C1
+    sentence: Adding a 65th item throws a `RangeError` ✅ (Q2-C1).
+    verdict: entails

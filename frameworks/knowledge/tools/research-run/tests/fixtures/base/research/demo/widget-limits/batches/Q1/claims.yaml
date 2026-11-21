@@ -1,0 +1,9 @@
+claims:
+  - id: Q1-C1
+    statement: A widget holds at most 64 items.
+    kind: documented
+    evidence:
+      - source: Q1-S1
+        locator: "#limits"
+        quote: "A widget holds at most 64 items."
+    applies-to: [{ name: widgets, version: ">=2.0" }]

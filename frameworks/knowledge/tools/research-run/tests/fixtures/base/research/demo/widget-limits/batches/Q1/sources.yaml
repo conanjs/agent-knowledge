@@ -1,0 +1,11 @@
+sources:
+  - id: Q1-S1
+    url: https://example.com/docs/widgets
+    locator: "#limits"
+    title: Widgets
+    publisher: Example Corp
+    tier: primary
+    version: "2.0"
+    retrieved-at: 2026-11-21
+    retrieval-method: web-fetch
+    applies-to: [{ name: widgets, version: ">=2.0" }]

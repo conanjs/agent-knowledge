@@ -1,0 +1,5 @@
+Widgets
+
+## Limits
+A widget holds at most
+64 items. Plan ahead.

@@ -1,0 +1,3 @@
+# Researcher of a knowledge research run (frameworks/knowledge/research.md): one question.
+name: research-researcher
+description: "Researches one question of a knowledge research run: finds primary sources, saves each page's text, and writes sourced claims to batches/<Qn>/. Give it the run folder's absolute path, the question id and text, the out-of-scope lines, the source budget and today's date."

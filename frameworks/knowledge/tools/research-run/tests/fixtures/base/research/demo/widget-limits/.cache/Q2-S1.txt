@@ -1,0 +1,3 @@
+When a widget is full
+
+In our tests, the 65th item throws a RangeError. We think older versions were more generous.
