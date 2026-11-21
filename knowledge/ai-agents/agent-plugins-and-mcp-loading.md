@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: ai-agents
 status: verified
-applies-to: ["Claude Code (docs read 2026-11-11)", "Copilot CLI and VS Code Copilot (docs read 2026-11-11)", "Codex (docs read 2026-11-11)"]
-last-verified: 2026-11-11
-last-updated: 2026-11-11
+applies-to: ["Claude Code (docs read 2026-11-11)", "Copilot CLI and VS Code Copilot (docs read 2026-11-11)", "Codex (docs read 2026-11-21; CLI 0.166.0-alpha.6 tested)"]
+last-verified: 2026-11-21
+last-updated: 2026-11-21
 tags: [plugins, mcp, tools, context, token-cost]
 ---
 
@@ -28,7 +28,7 @@ Plugins (installable bundles of skills, agents, hooks and MCP server configurati
 | What a plugin can bring | Skills, subagents, commands, hooks, MCP servers | Skills, agents, hooks, MCP server configurations, LSP servers; Agent Plugins 1.0 standardizes skills and MCP servers, other parts are client-specific | Skills, MCP servers, custom agents, hooks, canvases, automation templates | Skills and MCP servers | ✅[^ccpl][^ghpl][^vspl][^cxpl] |
 | Context cost when enabled | Name and description of each model-invocable skill, agent and command, on every turn, even when nothing from the plugin runs; full text only when used | Not stated; plugin skills appear in the skill list like other skills | Not stated; plugin skills appear with local ones | Installed plugins add skills and MCP tools to new chats | ✅[^ccpl][^ghref][^vspl][^cxpl] |
 | See the cost before installing | Official marketplace shows a **Context cost** estimate in `/plugin`; `/skill-doctor` reports per-skill cost and use | — | — | — | ✅[^ccpl][^ccsk] |
-| Turn off without uninstalling | `/plugin` or `claude plugin disable`; `enabledPlugins` per settings scope (user, project, local); `"<name>@synced": false` for one synced plugin | Manage the plugin; plugin skills cannot be removed with `/skills remove` | `chat.plugins.enabled` turns plugin support on or off | — | ✅[^ccpl][^ccset][^ghsk][^vspl] |
+| Turn off without uninstalling | `/plugin` or `claude plugin disable`; `enabledPlugins` per settings scope (user, project, local); `"<name>@synced": false` for one synced plugin | Manage the plugin; plugin skills cannot be removed with `/skills remove` | `chat.plugins.enabled` turns plugin support on or off | `plugins."<name>@<marketplace>".enabled = false` in `~/.codex/config.toml` (documented for local-marketplace plugins). Also works for a remote plugin (`openai-curated-remote`), though `codex plugin list` keeps printing "enabled" (tested 2026-11-21) | ✅[^ccpl][^ccset][^ghsk][^vspl][^cxcfg] |
 | Skill controls that skip plugins | `skillOverrides` does not apply to plugin skills | — | — | — | ✅[^ccsk] |
 | Plugin agents' limits | `hooks`, `mcpServers` and `permissionMode` are ignored in plugin subagents | — | `model-policy` is not forwarded when plugin agents are converted | — | ✅[^ccsub][^vsref] |
 
@@ -43,6 +43,7 @@ Plugins (installable bundles of skills, agents, hooks and MCP server configurati
 
 ## Lookup notes
 - **Measured here:** the Postman plugin's 19 skills cost about 2,870 tokens and product-management's 9 about 900 in every Claude Code session (2026-11-10). Disabling them globally and enabling them in a project's `.claude/settings.json` `enabledPlugins` keeps them where they are used. See [What each coding agent loads at session start](session-start-context-by-agent.md) for the full breakdown.
+- **Turned off here (2026-11-21):** Codex figma, pages, sites and work-pets took the skills block from 18,292 to 5,940 chars; Claude Code postman (`claude plugin disable postman@claude-plugins-official`). Details in [What each coding agent loads at session start](session-start-context-by-agent.md).
 - **claude.ai connectors are MCP servers too.** In Claude Code they arrive with the account and moved the first request by about 4,000 tokens between runs; `--strict-mcp-config` keeps them out of a measurement run.
 
 ## Takeaways
@@ -53,7 +54,7 @@ Plugins (installable bundles of skills, agents, hooks and MCP server configurati
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 10 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-11
+- Verified: 10 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [Plugins](https://code.claude.com/docs/en/plugins) — Anthropic, living, read 2026-11-11. Backs: what an enabled plugin adds, context cost estimate, disabling. [^ccpl]
@@ -68,6 +69,7 @@ Plugins (installable bundles of skills, agents, hooks and MCP server configurati
 - [Custom agent file reference](https://code.visualstudio.com/docs/agents/reference/custom-agent-file-reference) — Microsoft, living, read 2026-11-11. Backs: `deferred-tool-loading`, `mcp-servers`, `model-policy` conversion. [^vsref]
 - [Use tools with agents](https://code.visualstudio.com/docs/agent-customization/tools) — Microsoft, living, read 2026-11-11. Backs: 128-tool limit, virtual tools, tools picker. [^vstools]
 - [Plugins](https://learn.chatgpt.com/docs/plugins) — OpenAI, living, read 2026-11-11. Backs: Codex plugin contents. [^cxpl]
+- [Codex configuration reference](https://learn.chatgpt.com/codex/config-file/config-reference) and [Codex plugins](https://learn.chatgpt.com/codex/plugins) — OpenAI, living, read 2026-11-21. Backs: `plugins.<plugin>.enabled`. [^cxcfg]
 - [Model Context Protocol](https://learn.chatgpt.com/docs/extend/mcp) — OpenAI, living, read 2026-11-11. Backs: `enabled_tools`, `disabled_tools`. [^cxmcp]
 
 ## Related
