@@ -1,7 +1,7 @@
 ---
 schema: topic-index/v1
 kind: root
-last-updated: 2026-11-14
+last-updated: 2026-11-21
 ---
 
 # Global knowledge
@@ -31,7 +31,7 @@ New docs follow `../frameworks/knowledge/schemas/_system.md`. Topics marked *leg
 | [testing/](testing/index.md) | Putting tests around code and tools that have none: characterization tests, Gherkin scenarios, proving coverage by sabotage | topic index |
 | [product-tours/](product-tours/index.md) | In-app onboarding tours with Product Fruits: integration in React/Next.js, per-user state, settings and API catalog | topic index |
 | [windows/](windows/index.md) | Windows internals mapped to Linux: user/kernel mode, boot phases, registry and services, processes, handles, jobs and scheduling, reserve/commit memory and the page file, NTFS and IRPs, tokens, DACLs, integrity levels and UAC, the Windows Filtering Platform, Windows containers and WSL 2, diagnostics tools; plus symlink privileges | 8 subtopics + 1 reference + 1 legacy |
-| [ai-agents/](ai-agents/index.md) | Prompt, context and harness engineering deep dives, Graph Engineering study guide, comparison with SDD / AI-DLC / Spec Kit, cross-host skill portability, how a plugin goes from a marketplace to a loaded skill, subagent execution boundaries, what each agent loads at session start, plugins and MCP loading, agent memory features, prompt-cache economics, Claude Code agents and skills, token accounting and usage references for Claude Code, Codex and GitHub Copilot, official tokenizers and count endpoints per model vendor, tested findings on how agents follow instruction wording, token-saving tools, LangGraph.js runtime facts, and existing loop-engineering guides | 3 deep dives + 5 concepts + 13 references + 1 how-to + 2 legacy |
+| [ai-agents/](ai-agents/index.md) | Prompt, context and harness engineering deep dives, Graph Engineering study guide, comparison with SDD / AI-DLC / Spec Kit, cross-host skill portability, how a plugin goes from a marketplace to a loaded skill, subagent execution boundaries, what each agent loads at session start, plugins and MCP loading, agent memory features, prompt-cache economics, Claude Code agents and skills, token accounting and usage references for Claude Code, Codex and GitHub Copilot, official tokenizers and count endpoints per model vendor, tested findings on how agents follow instruction wording, token-saving tools, LangGraph.js runtime facts, and existing loop-engineering guides, and an MCP specification deep dive (draft) | 4 deep dives + 5 concepts + 13 references + 1 how-to + 2 legacy |
 | [analytics/](analytics/) | *legacy* — GTM → GA4 → BigQuery → Looker Studio pipeline | 5 |
 | [blink/](blink/) | *legacy* — rollout notes | 1 |
 | [datadog/](datadog/) | *legacy* — error-rate SLOs | 1 |
