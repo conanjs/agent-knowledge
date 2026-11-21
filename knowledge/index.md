@@ -6,7 +6,7 @@ last-updated: 2026-11-14
 
 # Global knowledge
 
-Cross-project reference material (store B): how technologies and design techniques work and why, in our own words, with links to the original sources. Not covered here: facts about one company's systems (those live in `~/.agent-config/companies/<co>/`).
+Cross-project reference material: how technologies and design techniques work and why, in our own words, with links to the original sources. Not covered here: facts about one company's systems (those live in that company's own knowledge base).
 
 New docs follow `../frameworks/knowledge/schemas/_system.md`. Topics marked *legacy* predate that framework and keep their own shape (never retrofitted).
 
@@ -48,4 +48,4 @@ New docs follow `../frameworks/knowledge/schemas/_system.md`. Topics marked *leg
 - [Diátaxis](https://diataxis.fr/) — Daniele Procida, living. Backs: the doc-type split used by v1 docs.
 
 ## Related
-- `~/.agent-config/companies/` — company-specific facts (store C).
+- Company-specific facts live in each company's own knowledge base, not here.

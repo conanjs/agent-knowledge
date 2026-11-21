@@ -1,47 +1,35 @@
 ---
 schema: framework-index/v1
-last-updated: 2026-11-14
+last-updated: 2026-11-21
 ---
 
-# Knowledge Framework (store B)
+# Knowledge Framework
 
-> **Plain English:** store B is the **textbook shelf**. It explains *how things work* (V8 hidden classes, gRPC keepalive, DDD aggregates) in our own words, with links to the original sources.
-> It does **not** give orders (that is store A, the framework rules). It does **not** describe one company's systems (that is store C, the Company KB).
+> **Plain English:** this knowledge base is the **textbook shelf**. It explains *how things work* (V8 hidden classes, gRPC keepalive, DDD aggregates) in our own words, with links to the original sources.
+> It does **not** give orders (that is a rules framework, for example agentic-sdlc) and does **not** describe one company's or one repo's systems (that belongs with that company or repo).
 
 ## 1. Where this sits
 
-```
- A  rules framework             RULES       "must / must not"      foundations/, stacks/, paradigms/
- │   Source: + Reference topics
- ▼
- B  knowledge framework (this)  REFERENCES  "how it works, why"    ~/.agent-config/knowledge/<topic>/
- ▲
- │   links to general concepts
- C  company-kb framework        FACTS       "what our system is"   ~/.agent-config/companies/<co>/
- ▲
- │   company-kb: front-matter
- D  project repo                FACTS       "what this repo is"    docs/architecture.md, docs/integrations/
-```
+Other material may cite these docs; these docs never cite it back.
 
-| Link | Mechanism | Example |
-|---|---|---|
-| A → B | A rule's `Source:` column; a stack's *Reference topics* table | `TSN-12` → `knowledge/js-runtime/v8-hidden-classes.md` |
-| C → B | A Company KB doc's References section | `companies/ots/flows/shipment-import.md` → `knowledge/grpc/stale-connection-keepalive.md` |
-| B → A | **Never.** Store B does not list who cites it. A leftover `Used by` section or table in a doc is ignored by the validator. | — |
-| B → C/D | **Never.** Store B stays company-neutral. | — |
+| Material | Lives in | Links to this knowledge base | This knowledge base links to it |
+|---|---|---|---|
+| Rules ("must / must not") | A rules framework, for example agentic-sdlc | A rule's source, a stack's reference topics: `TSN-12` → `knowledge/js-runtime/v8-hidden-classes.md` | **Never.** A doc does not list who cites it; a leftover `Used by` section or table is ignored by the validator |
+| Company facts ("what our system is") | That company's knowledge base | A doc's References: a shipment-import flow → `knowledge/grpc/stale-connection-keepalive.md` | **Never.** Docs here stay company-neutral |
+| Repo facts ("what this repo is") | That repo's own docs | The same, from its docs | **Never** |
 
-## 2. What goes in B (and what doesn't)
+## 2. What goes here (and what doesn't)
 
-| Put it in B if… | Put it elsewhere if… |
+| Put it here if… | Put it elsewhere if… |
 |---|---|
-| It is true for anyone using that technology | It is about *our* system → C or D |
-| It explains, teaches or catalogs | It is a check that must pass → A (rule, with `Source:` back to B) |
+| It is true for anyone using that technology | It is about *our* system → that company's or repo's docs |
+| It explains, teaches or catalogs | It is a check that must pass → a rule, whose source links back here |
 | You'd cite it from more than one repo or stack | It is a one-off note for one task → the PR or spec |
 
 ## 3. Layout
 
 ```
-~/.agent-config/knowledge/
+knowledge/                         (at the root of this repo)
 ├── index.md                       list of topics (topic-index schema, kind: root)
 ├── <topic>/                       e.g. grpc/, js-runtime/, software-design/
 │   ├── index.md                   topic-index schema
@@ -86,7 +74,7 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 ```
 
 - `last-verified` is the date each external claim was re-checked against its source.
-- A rule in A that cites a `stale` doc is flagged by `validate.mjs`. It is a warning, not an error.
+- A rules framework may warn when one of its rules cites a `stale` doc; that check belongs to the rules framework, not to this one.
 
 ## 6. Writing rules (summary; details in `schemas/_system.md`)
 
@@ -96,7 +84,7 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 4. One doc, one type. A concept doc that grows a how-to section gets split. If the subject resists splitting, write a deep dive and synthesize it (§4.1).
 5. These rules and the schemas apply to **new docs only**. Existing (legacy) docs are kept as they are and never retrofitted (`schemas/_system.md` §6).
 6. The doc stands alone (no replies to a chat the reader cannot see) and copies nothing another doc already holds: link instead (KB-7, KB-8).
-7. Before committing, follow `~/.agent-config/procedures/review-docs.procedure.md`. The validator also runs on its own: after each edit in Claude Code, on `git commit`, and as the required `validate-docs` check on `main` (`README.md` § "Doc guards").
+7. Before committing, run the `review-knowledge-doc` skill (`plugin/skills/review-knowledge-doc/SKILL.md`): it runs `pnpm run verify-before-commit` from the repo root, then the checks the validator cannot do. CI runs the same command on every pull request.
 
 ## 7. Files
 
@@ -106,12 +94,12 @@ draft ──(sources checked, claims marked)──► verified ──(applies-to
 | `schemas/knowledge-doc.schema.md` | Shape of every structured `<slug>.md` |
 | `schemas/deep-dive.schema.md` | Envelope of free-form deep dives, and the synthesis procedure |
 | `schemas/topic-index.schema.md` | Shape of every `index.md` |
-| `tools/validate-knowledge.mjs` | Checks every v1 doc and index (legacy skipped): `node tools/validate-knowledge.mjs [knowledge-root] [--urls]`. Run automatically by `scripts/check-docs.sh` (pre-commit, Claude Code hook, CI) |
+| `tools/validate-knowledge/` | The validator and its scenarios (`tests/`). Checks every v1 doc and index (legacy skipped): `node tools/validate-knowledge/validate-knowledge.mjs [knowledge-root] [--urls]`; from the repo root, `pnpm run validate-docs`. CI runs `pnpm run verify-before-commit` |
+| `tools/cucumber-support/` | The shared Cucumber World and steps every tool's scenarios use |
 
 ## References
 
 - Diátaxis — https://diataxis.fr/
-- `~/.agent-config/frameworks/company-kb/index.md`
 
 ## Related
 
