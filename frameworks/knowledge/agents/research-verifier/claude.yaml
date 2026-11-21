@@ -1,5 +1,0 @@
-# Verifier of a knowledge research run (frameworks/knowledge/research.md): fresh context, never sees the draft.
-name: research-verifier
-description: "Independently checks a knowledge research run: writes and runs pinned experiments for runtime claims, re-checks quotes the script could not match, judges interpretive claims, and judges whether each doc sentence says what its claim says. Give it the run folder's absolute path and the job: claims or entailment."
-model: sonnet
-disallowedTools: Agent

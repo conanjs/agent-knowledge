@@ -174,10 +174,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      yaml:
-        specifier: 2.9.1
-        version: 2.9.1
     devDependencies:
       '@cucumber/cucumber':
         specifier: ~13.3.0

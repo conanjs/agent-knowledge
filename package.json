@@ -2,7 +2,7 @@
   "name": "agent-knowledge",
   "version": "0.0.0",
   "private": true,
-  "description": "Knowledge base for coding agents; package.json runs the knowledge validator, the research-run scripts and their scenarios.",
+  "description": "Knowledge base for coding agents; package.json exists only to run the knowledge validator and its scenarios.",
   "type": "module",
   "engines": {
     "node": ">=24.12 <25"
@@ -11,14 +11,10 @@
   "scripts": {
     "validate-docs": "node frameworks/knowledge/tools/validate-knowledge/validate-knowledge.mjs",
     "validate-docs-urls": "node frameworks/knowledge/tools/validate-knowledge/validate-knowledge.mjs --urls",
-    "research": "node frameworks/knowledge/tools/research-run/research-run.mjs",
     "test-tools": "cucumber-js",
     "verify-before-commit": "pnpm run validate-docs && pnpm run test-tools"
   },
   "devDependencies": {
     "@cucumber/cucumber": "~13.3.0"
-  },
-  "dependencies": {
-    "yaml": "2.9.1"
   }
 }

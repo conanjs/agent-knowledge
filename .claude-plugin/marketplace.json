@@ -8,7 +8,7 @@
     {
       "name": "agent-knowledge",
       "source": "./plugin",
-      "description": "Skills for working on V's knowledge base (agent-knowledge): reviewing docs before a commit, and researching a topic with checkable claims."
+      "description": "Skills for working on V's knowledge base (agent-knowledge)."
     }
   ]
 }
