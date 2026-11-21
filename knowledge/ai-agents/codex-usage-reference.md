@@ -4,8 +4,8 @@ type: reference
 topic: ai-agents
 status: verified
 applies-to: ["Codex CLI 0.164.0-alpha.11.1 (bundled with the ChatGPT desktop app)", "Codex CLI 0.166.0-alpha.6 (instruction-file benchmark)", "Codex docs read 2026-10-30"]
-last-verified: 2026-11-09
-last-updated: 2026-11-14
+last-verified: 2026-11-21
+last-updated: 2026-11-21
 tags: [codex, openai, tokens, usage, rate-limits, prompt-caching, compaction, opentelemetry, subagents, agents-md]
 ---
 
@@ -76,6 +76,7 @@ The Codex harness (CLI, IDE extension and the Codex part of the ChatGPT desktop 
 | Hook or field | Behaviour | Status |
 |---|---|---|
 | Where hooks are set | `hooks.json` or inline `[hooks]` tables in `config.toml`, next to each config layer; usually `~/.codex/hooks.json` or `~/.codex/config.toml`; plugins can bundle hooks | ✅[^11] |
+| Command hook fields (2026-11-21) | `command`, `commandWindows` (a Windows-only override of `command`), `timeout` (600 s when omitted, for most events), `async`, `statusMessage`, `additionalContextLimit`: the field list of `HookHandlerConfig::Command` in the Codex 0.166.0-alpha.6 binary, and the hooks page. Which shell runs either command is not stated | ✅[^11] |
 | Trust | A non-managed hook runs only after you review and trust it in `/hooks`; trust is tied to the hook's hash, so a changed hook is skipped until trusted again | ✅[^11] |
 | Events during a turn | `PreToolUse`, `PermissionRequest`, `PostToolUse`, `PreCompact`, `PostCompact`, `UserPromptSubmit`, `SubagentStop`, `Stop` | ✅[^11] |
 | Common input | `session_id` (subagent hooks get the parent's), `transcript_path`, `cwd`, `hook_event_name`, `model`; turn hooks add `turn_id` | ✅[^11] |
@@ -167,7 +168,7 @@ Codex has no import syntax for `AGENTS.md` (Claude Code has `@path` imports; Cop
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 86 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-09
+- Verified: 87 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [Unrolling the Codex agent loop](https://openai.com/index/unrolling-the-codex-agent-loop/) — OpenAI (Michael Bolin), 2026. Backs: shared harness, cache-miss causes, appended config messages, `/responses/compact`. [^1]

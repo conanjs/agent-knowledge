@@ -4,8 +4,8 @@ type: reference
 topic: ai-agents
 status: verified
 applies-to: ["GitHub Copilot CLI 1.0.105", "Copilot agent in VS Code 1.143.0 (Copilot SDK runtime 1.0.100)", "docs read 2026-11-02", "GitHub Copilot CLI 1.0.105 (local test 2026-11-09)", "Copilot session logs of 2026-10-26 to 2026-11-09 (read 2026-11-10)", "GitHub Copilot CLI 1.0.107 help text (read 2026-11-10)"]
-last-verified: 2026-11-10
-last-updated: 2026-11-14
+last-verified: 2026-11-21
+last-updated: 2026-11-21
 tags: [github-copilot, copilot-cli, vscode, tokens, ai-credits, hooks, instructions]
 ---
 
@@ -60,6 +60,7 @@ GitHub Copilot's local usage records, its AI-credit billing, its hooks and how V
 | Sub-agent tool name in VS Code | VS Code's Copilot harness names it `task`, as the CLI does (✅[^6]): a user-level `preToolUse` hook received `{sessionId, timestamp, cwd, toolName: "task", toolArgs: {name, agent_type, description, prompt}}`, and its deny stopped the launch; the chat showed a "Delegating task" step with "Tool execution failed: Denied by preToolUse hook: <reason>" | ✅[^8] |
 | Locations | `~/.copilot/hooks/*.json` (user), `.github/hooks/*.json` (repository), a `hooks` block in `~/.copilot/settings.json` or `.github/copilot/settings.json`, plugins | ✅[^1] |
 | Format | `{"version": 1, "hooks": {"<event>": [{"type": "command", "bash": …, "powershell": …, "timeoutSec": …}]}}` | ✅[^1] |
+| `bash`, `powershell`, `command` (docs read 2026-11-21) | Copilot runs `bash` on macOS and Linux and `powershell` on Windows; `command` is a cross-platform fallback copied to both when they are absent. What a hook with only `bash` does on Windows is not stated | ✅[^1] |
 | `agentStop` input | camelCase: `sessionId`, `timestamp`, `cwd`, `transcriptPath`, `stopReason`, `stop_hook_active`; the VS Code-style name `Stop` gives the same in snake_case | ✅[^1] |
 | `agentStop` output | Only `decision` / `reason` (to make the agent go on); no message field for the user | ✅[^1] |
 | Progress lines | A hook may print `{"type": "progress", "message": "…"}` lines; the CLI shows each one in its output (seen as "● …" lines) | ✅[^1][^5] |
@@ -102,7 +103,7 @@ GitHub Copilot's local usage records, its AI-credit billing, its hooks and how V
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 45 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 46 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [GitHub Copilot hooks reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-hooks-reference) — GitHub, living. Backs: hook locations, format, `agentStop` input and output, progress lines, `preToolUse` deny, the `task` subagent tool and subagent events. [^1]

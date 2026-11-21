@@ -63,6 +63,7 @@ The four surfaces agent-config installs into: Claude Code, GitHub Copilot CLI, G
 
 | Measurement | Value | How | Evidence |
 |---|---|---|---|
+| Start-up block after the switch to agent-config-next (2026-11-21) | Codex 0.166.0-alpha.6 (`gpt-6-luna`): core `AGENTS.md` once (4,863 chars), 40 skills listed in an 18,292-char skills block, of which 2 come from agent-config and agent-knowledge and 16 from the Figma plugin. Copilot CLI 1.0.114: system message 34,564 chars, the core once, 5 skills (the same 2 plus 3 built-in), the tracker `sessionStart` and `agentStop` hooks ran. Claude Code was not run (V's limits); its config lists the core through `CLAUDE.md`, the plugins postman, agent-knowledge and agent-config, and the agent `code-explainer` | One prompt ("what is 2+2?") in an empty repo per agent; the rollout file and `events.jsonl` read, then `efficiency-audit.mjs session <id>` (no findings for either) | ✅ |
 | `AGENTS.md` of a sibling repo while working there from another folder | Not loaded by Codex 0.166.0-alpha.6 or Copilot CLI 1.0.114 (both with `gpt-6-luna`), also not by Copilot with `--add-dir` on that repo. Control: started inside that repo, both followed it | A sibling repo whose `AGENTS.md` says every reply starts with `PINEAPPLE-7`; from the other folder the agent ran `cat` on a file in that repo and replied without the word; the same prompt started in that repo replied with it. 2026-11-21. Claude Code not run (spends V's own limits); a cheaper model may behave differently from V's daily models | ✅ |
 | Claude Code skill list | 9,900 tokens: Postman plugin 19 skills ≈ 2,870; built-in 16 ≈ 2,580; synced from claude.ai 28 ≈ 1,860; agent-config `skills/` 20 ≈ 1,670; product-management plugin 9 ≈ 900; cowork plugin-management 2 ≈ 240 | `/context all`, Claude Code, 2026-11-10 | ✅ |
 | Of which the 13 `sdlc-*` skills | ≈ 824 tokens | Same run | ✅ |
@@ -85,7 +86,7 @@ The four surfaces agent-config installs into: Claude Code, GitHub Copilot CLI, G
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 23 claims (✅) · Unverified: 1 claim (⚠️) · Last verified: 2026-11-21
+- Verified: 24 claims (✅) · Unverified: 1 claim (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living, read 2026-11-11. Backs: instruction loading, imports, `AGENTS.md`, size limit, compaction, `MEMORY.md` limit. [^ccmem]

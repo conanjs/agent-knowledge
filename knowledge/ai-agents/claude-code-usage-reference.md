@@ -4,8 +4,8 @@ type: reference
 topic: ai-agents
 status: verified
 applies-to: ["Claude Code 2.1.278–2.1.308 (local tests)", "Claude Code docs read 2026-10-30 (features up to v2.1.307)", "Claude Code 2.1.318 (local test 2026-11-09)", "Claude Code 2.1.319 (transcripts and docs read 2026-11-10)"]
-last-verified: 2026-11-10
-last-updated: 2026-11-19
+last-verified: 2026-11-21
+last-updated: 2026-11-21
 tags: [claude-code, tokens, usage, cost, prompt-caching, compaction, opentelemetry, subagents, agent-teams, workflows]
 ---
 
@@ -84,6 +84,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 | `SubagentStop` | Runs when a subagent finishes; input adds `agent_id`, `agent_type`, `agent_transcript_path` (the subagent's own file) | ✅[^15] |
 | `systemMessage` (JSON output) | A message shown to the user; hook strings and plain output are capped at 10,000 characters | ✅[^15] |
 | Where hooks are set | The `hooks` key of a settings file, by event and matcher. Locations: `~/.claude/settings.json` (user, fixed name), `.claude/settings.json` (project), `.claude/settings.local.json` (project, not committed), managed policy settings, a plugin's `hooks/hooks.json` (while the plugin is enabled), skill frontmatter (after the skill is invoked) and subagent frontmatter (while it runs). No documented way to load hooks from an extra user file; `--settings <file or JSON>` applies for one session only. `CLAUDE_CONFIG_DIR` moves `~/.claude` (settings, session history, plugins) | ✅[^1][^15][^21] |
+| Shell per OS (docs read 2026-11-21) | A hook's `command` (shell form) runs with `sh -c` on macOS and Linux, Git Bash on Windows, and PowerShell when Git Bash is not installed; `"shell": "powershell"` on a hook picks PowerShell; exec form (`command` plus `args`) runs no shell on any platform. No Windows-only command field | ✅[^15] |
 | `PreToolUse` on `Agent` | The subagent tool is `Agent` (`tool_input`: `prompt`, `description`, `subagent_type`, optional `model`); a hook with matcher `Agent` can refuse the launch with `hookSpecificOutput.permissionDecision: "deny"` and a reason, or with exit code 2 (stderr becomes the error) | ✅[^15] |
 | `SubagentStart` | Runs when a subagent starts (`agent_id`, `agent_type`); it can add context but cannot block the subagent | ✅[^15] |
 | `PreToolUse` deny in `claude -p` | A project hook (`--setting-sources project`) with matcher `Agent` denied the launch in a non-interactive run; the agent received the reason verbatim; the input held `tool_name: "Agent"`, `tool_input` {`description`, `prompt`, `subagent_type`} | ✅[^17] |
@@ -170,7 +171,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 96 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 97 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [Manage costs effectively](https://code.claude.com/docs/en/costs) — Anthropic, living. Backs: `/usage`, `/insights`, levers, background usage, agent team costs, `modelPricing`. [^1]
