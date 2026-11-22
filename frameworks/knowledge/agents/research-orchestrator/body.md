@@ -40,7 +40,7 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
      - `## 3. How it works`: the mechanism, step by step;
      - `## 4. Worked examples`: concrete runs with real inputs and outputs;
      - `## 5. Reference & invariants`: exact values, options and limits, and every rule a user must follow, with the source's modal verb (MUST, SHOULD, may). A rule belongs here even when `## 3.` explains why it holds;
-     - `## 6. Trade-offs, pitfalls & misconceptions`: edge cases, trade-offs, what goes wrong and why, and the losing side of each conflict;
+     - `## 6. Trade-offs, pitfalls & misconceptions`: edge cases, trade-offs, what goes wrong and why, and the losing side of each conflict. Each misconception the `pitfall` ledger records gets its own entry that states the false belief and refutes it in so many words (what is wrong, what holds instead, the source), never only by implication;
    - `## References`, one entry per source, ordered by rank, 1 first: `- [<page title>](<url>) — <publisher>, <year>. Rank <n>. Backs: <what>. [^<label>]`; then `## Related`, with the `knowledge/` docs from step 1.
 
    Mark each claim `✅[^<label>]` right after it. The rank a section may cite: `## 1.`, `## 2.`, Summary: 1–5; `## 3.`, `## 5.`: 1–4; `## 4.`: 1–5 (6 only warns); `## 6.`: any. Keep the doc to at most 80 ✅ claims, so one judge can check them all.
