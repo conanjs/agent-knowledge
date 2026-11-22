@@ -94,13 +94,15 @@ Given('a local web server that answers:', function (doc) {
 });
 
 // Serves the files under a folder of the scenario's copy, with a content type by extension (tests/fetch-source).
-// A request for a missing file answers 404.
+// A request for a missing file answers 404. /busy-once/<file> answers 429 with Retry-After: 0 the first time, then serves <file>.
 Given('a local web server that serves the files in {string}', function (dir) {
   const types = { '.html': 'text/html; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.md': 'text/markdown', '.json': 'application/json', '.pdf': 'application/pdf' };
   const root = this.at(dir);
+  const busy = new Set();
   return new Promise((resolve) => {
     const srv = http.createServer((req, res) => {
-      const file = path.join(root, decodeURIComponent(req.url.split('?')[0]));
+      if (req.url.startsWith('/busy-once/') && !busy.has(req.url)) { busy.add(req.url); res.writeHead(429, { 'retry-after': '0' }); res.end(); return; }
+      const file = path.join(root, decodeURIComponent(req.url.replace(/^\/busy-once\//, '/').split('?')[0]));
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('not found'); return; }
       res.writeHead(200, { 'content-type': types[path.extname(file)] ?? 'application/octet-stream' });
       res.end(fs.readFileSync(file));

@@ -1,0 +1,46 @@
+[
+ {
+  "url": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+  "normalized": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+  "fetched_from": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+  "cache": "cache/c225d5946a26.txt",
+  "fetched": "2026-11-22T10:38:27Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 16298,
+  "sha256": "cfd707971e5029d6d6307cb6dcc4c88a7cd1fdaed7b12cb83e535a964c1c2d86"
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+  "normalized": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+  "fetched_from": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+  "cache": "cache/d4cb145dde9c.txt",
+  "fetched": "2026-11-22T10:38:28Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 10110,
+  "sha256": "41f595cd11316b212c427ea755b9b7b492b10b292c6e054ac966ee66ba2a98a1"
+ },
+ {
+  "url": "https://github.com/torvalds/linux/blob/v6.12/include/uapi/linux/eventpoll.h",
+  "normalized": "https://github.com/torvalds/linux/blob/v6.12/include/uapi/linux/eventpoll.h",
+  "fetched_from": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/uapi/linux/eventpoll.h",
+  "cache": "cache/434174511f25.txt",
+  "fetched": "2026-11-22T10:38:30Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 3063,
+  "sha256": "5550fcd320468d703a56172a35ab6f46dd6b1ca858bf5832df74af693ebd78fd"
+ },
+ {
+  "url": "https://github.com/torvalds/linux/blob/v6.12/fs/eventpoll.c",
+  "normalized": "https://github.com/torvalds/linux/blob/v6.12/fs/eventpoll.c",
+  "fetched_from": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/eventpoll.c",
+  "cache": "cache/787c21f1de96.txt",
+  "fetched": "2026-11-22T10:38:51Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 71601,
+  "sha256": "e7fa7c5c3b3217cb58ce3b736497b96cde3b17961af686ae3ea6b7d56b7c6302"
+ }
+]

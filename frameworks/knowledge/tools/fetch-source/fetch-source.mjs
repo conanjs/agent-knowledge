@@ -10,7 +10,8 @@
 //          and records it in <run>/sources.json: url, the URL fetched, cache file, fetch time, HTTP status, content
 //          type, length and the SHA-256 of the saved text (§1.5, so a later check can tell a page that changed).
 //          A page already saved is skipped unless --refresh. HTML becomes text with one line per block; text, Markdown
-//          and JSON are kept as they are; a PDF is refused (v1 saves no PDFs: cite the HTML version).
+//          and JSON are kept as they are; a PDF is refused (v1 saves no PDFs: cite the HTML version). A 429 or 503 answer
+//          is tried again up to 2 times, after its Retry-After seconds (at most 10; 2 s, then 5 s, when it gives none).
 //   plan   prints, without fetching, what fetch would do with each URL: the URL fetched, the cache file, and warnings
 //   text   prints the text that fetch would save for a local HTML file
 // A GitHub file page (github.com/<org>/<repo>/blob/<ref>/<path>) is fetched raw from raw.githubusercontent.com, since
@@ -68,9 +69,16 @@ async function fetchOne(run, url, refresh, index) {
   if (fs.existsSync(file) && !refresh) { console.log(`cached | ${p.cache} | ${p.normalized}`); return true; }
   if (/\.pdf($|\?)/i.test(p.normalized)) { console.log(`refused | pdf | ${p.normalized}`); return false; }
   let res;
-  try {
-    res = await fetch(p.fetchUrl, { redirect: 'follow', signal: AbortSignal.timeout(40000), headers: { 'user-agent': 'kb-fetch-source/1.0', accept: 'text/html,text/plain;q=0.9,*/*;q=0.5' } });
-  } catch (e) { console.log(`error | ${e.cause?.code ?? e.name} | ${p.normalized}`); return false; }
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await fetch(p.fetchUrl, { redirect: 'follow', signal: AbortSignal.timeout(40000), headers: { 'user-agent': 'kb-fetch-source/1.0', accept: 'text/html,text/plain;q=0.9,*/*;q=0.5' } });
+    } catch (e) { console.log(`error | ${e.cause?.code ?? e.name} | ${p.normalized}`); return false; }
+    if (![429, 503].includes(res.status) || attempt === 2) break;
+    const h = res.headers.get('retry-after'); const ra = h === null ? NaN : Number(h);
+    const wait = Math.min(10, Number.isFinite(ra) && ra >= 0 ? ra : [2, 5][attempt]);
+    console.log(`retry | ${res.status} | waiting ${wait} s | ${p.normalized}`);
+    await new Promise((r) => setTimeout(r, wait * 1000));
+  }
   const type = (res.headers.get('content-type') ?? '').split(';')[0].trim();
   if (!res.ok) { console.log(`error | ${res.status} | ${p.normalized}`); return false; }
   if (type === 'application/pdf') { console.log(`refused | pdf | ${p.normalized}`); return false; }

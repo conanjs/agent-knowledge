@@ -9,23 +9,26 @@ A worker never writes doc text (V's rule, design §0): a fact is a short summary
 ```json
 {
   "profile": "ground-truth",
-  "question": "How does epoll's edge-triggered mode report readiness?",
-  "terms": ["EPOLLET", "edge-triggered", "ready list"],
+  "question": "What does fsync() make durable, and what does it leave out?",
+  "terms": ["fsync", "fdatasync", "directory entry"],
   "sources": [
-    { "id": "S1", "url": "https://man7.org/linux/man-pages/man7/epoll.7.html", "cache": "cache/c225d5946a26.txt",
+    { "id": "S1", "url": "https://man7.org/linux/man-pages/man2/fsync.2.html", "cache": "cache/908cff5fca2c.txt",
       "fetched": "2026-11-22T10:00:00Z", "tier": "A", "rank": 1, "rule": "man7.org/linux/man-pages/",
       "rank_basis": "tier A: man7.org/linux/man-pages/", "seed": false, "provenance_ref": null }
   ],
   "facts": [
-    { "id": "F1", "source": "S1", "summary": "In edge-triggered mode an event comes only when the fd changes, such as when new data arrives.",
-      "quote": "an event will be generated upon each receipt of a chunk of data",
-      "loc": { "heading": "Level-triggered and edge-triggered", "lines": [97, 98] } }
+    { "id": "F1", "source": "S1", "summary": "fsync() on a file may leave the file's directory entry not yet on disk.",
+      "quote": "Calling fsync() does not necessarily ensure that the entry in the directory containing the file has also reached disk",
+      "loc": { "heading": "DESCRIPTION", "lines": [69, 70] } },
+    { "id": "F2", "source": "S1", "summary": "To make the entry durable, fsync() the directory too.",
+      "quote": "For that an explicit fsync() on a file descriptor for the directory is also needed",
+      "loc": { "heading": "DESCRIPTION", "lines": [70, 72] } }
   ],
-  "conflicts": [ { "id": "X1", "topic": "one event per write?", "facts": ["F1", "F2"], "note": "epoll(7) against a kernel commit" } ]
+  "conflicts": [ { "id": "X1", "topic": "is a rename durable after fsync of the file?", "facts": ["F1", "F7"], "note": "the man page against a file-system FAQ" } ]
 }
 ```
 
-The example is cut to one source and one fact (F2 is not shown). Its quote and lines are those of epoll(7) as `fetch-source.mjs` saved it on 2026-11-22.
+The example is cut to one source (F7, from a second source, is not shown). Its quotes and lines are those of fsync(2) as `fetch-source.mjs` saved it on 2026-11-22. Keep examples here off the golden-set topics (design §5), since a worker reads this file: an example that is a test's answer measures recall of the example (instruction-wording-findings IW-16).
 
 Every rule below is checked by `evaluate-research.mjs ledger`; an **error** fails the ledger (exit 1), a **warn** is for the orchestrator to weigh.
 
