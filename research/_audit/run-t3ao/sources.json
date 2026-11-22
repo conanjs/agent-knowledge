@@ -1,0 +1,50 @@
+[
+ {
+  "url": "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+  "normalized": "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+  "cache": "cache/44a053f9f149.txt",
+  "fetched": "2026-11-22T06:34:53Z",
+  "status": 200,
+  "chars": 25257
+ },
+ {
+  "url": "https://code.claude.com/docs/en/costs",
+  "normalized": "https://code.claude.com/docs/en/costs",
+  "cache": "cache/7c26178a4fa1.txt",
+  "fetched": "2026-11-22T06:34:54Z",
+  "status": 200,
+  "chars": 40276
+ },
+ {
+  "url": "https://code.claude.com/docs/en/headless",
+  "normalized": "https://code.claude.com/docs/en/headless",
+  "cache": "cache/d4f4e2941ed1.txt",
+  "fetched": "2026-11-22T06:34:54Z",
+  "status": 200,
+  "chars": 33328
+ },
+ {
+  "url": "https://code.claude.com/docs/en/hooks",
+  "normalized": "https://code.claude.com/docs/en/hooks",
+  "cache": "cache/20106b0f3bee.txt",
+  "fetched": "2026-11-22T06:34:54Z",
+  "status": 200,
+  "chars": 259062
+ },
+ {
+  "url": "https://code.claude.com/docs/en/statusline",
+  "normalized": "https://code.claude.com/docs/en/statusline",
+  "cache": "cache/8a9fc80be1c7.txt",
+  "fetched": "2026-11-22T06:34:55Z",
+  "status": 200,
+  "chars": 57667
+ },
+ {
+  "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
+  "normalized": "https://learn.chatgpt.com/docs/non-interactive-mode",
+  "cache": "cache/ef5ba26f3f87.txt",
+  "fetched": "2026-11-22T06:34:55Z",
+  "status": 200,
+  "chars": 32021
+ }
+]

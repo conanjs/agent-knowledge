@@ -1,0 +1,6 @@
+# Independent judge of a knowledge-base doc (frameworks/knowledge/research-agent.design.md §3): fresh context, reads only its input folder.
+# Calibrated on claude-opus-5-5 only (research/_calibration/REPORT.md); a header for another coding agent waits for a calibration run on it.
+name: knowledge-judge
+description: "Judges a knowledge-base doc against the saved text of the pages it cites and writes one verdict JSON. Give it INPUT (the round's input folder), OUTPUT (the verdict file), SCOPE, MODEL and PROMPT_SHA."
+model: claude-opus-5-5
+disallowedTools: Agent, WebFetch, WebSearch

@@ -1,0 +1,113 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/c0b4c71eeffb.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "typescriptlang.org/docs/",
+   "written_rank": null,
+   "cache": "cache/b8c0426b8b77.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#function-overloads",
+   "tier": "A",
+   "rank": 1,
+   "rule": "typescriptlang.org/docs/",
+   "written_rank": null,
+   "cache": "cache/db1c5af3b947.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "typescriptlang.org/docs/",
+   "written_rank": null,
+   "cache": "cache/b1f557c03240.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://go.dev/ref/spec#Interface_types",
+   "tier": "A",
+   "rank": 1,
+   "rule": "go.dev/ref/",
+   "written_rank": null,
+   "cache": "cache/3f4be4138e86.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch18-02-trait-objects.md",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/107db9d9836d.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch10-02-traits.md",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/2648d88d0c1a.txt"
+  },
+  {
+   "labels": [
+    "[^7]"
+   ],
+   "url": "https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/38885c763a28.txt"
+  },
+  {
+   "labels": [
+    "[^8]"
+   ],
+   "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#exhaustiveness-checking",
+   "tier": "A",
+   "rank": 1,
+   "rule": "typescriptlang.org/docs/",
+   "written_rank": null,
+   "cache": "cache/b2adaad06a21.txt"
+  }
+ ],
+ "tier_b": [
+  "https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html",
+  "https://raw.githubusercontent.com/rust-lang/book/main/src/ch18-02-trait-objects.md",
+  "https://raw.githubusercontent.com/rust-lang/book/main/src/ch10-02-traits.md",
+  "https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt"
+ ]
+}

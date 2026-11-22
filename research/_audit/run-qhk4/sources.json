@@ -1,0 +1,74 @@
+[
+ {
+  "url": "https://go.dev/ref/spec",
+  "normalized": "https://go.dev/ref/spec",
+  "cache": "cache/3f4be4138e86.txt",
+  "fetched": "2026-11-22T06:34:18Z",
+  "status": 200,
+  "chars": 234825
+ },
+ {
+  "url": "https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt",
+  "normalized": "https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt",
+  "cache": "cache/38885c763a28.txt",
+  "fetched": "2026-11-22T06:34:19Z",
+  "status": 200,
+  "chars": 13295
+ },
+ {
+  "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch10-02-traits.md",
+  "normalized": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch10-02-traits.md",
+  "cache": "cache/2648d88d0c1a.txt",
+  "fetched": "2026-11-22T06:34:20Z",
+  "status": 200,
+  "chars": 18707
+ },
+ {
+  "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch18-02-trait-objects.md",
+  "normalized": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch18-02-trait-objects.md",
+  "cache": "cache/107db9d9836d.txt",
+  "fetched": "2026-11-22T06:34:21Z",
+  "status": 200,
+  "chars": 13168
+ },
+ {
+  "url": "https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html",
+  "normalized": "https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html",
+  "cache": "cache/c0b4c71eeffb.txt",
+  "fetched": "2026-11-22T06:34:21Z",
+  "status": 200,
+  "chars": 1486
+ },
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/2/functions.html",
+  "cache": "cache/db1c5af3b947.txt",
+  "fetched": "2026-11-22T06:34:22Z",
+  "status": 200,
+  "chars": 33282
+ },
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+  "cache": "cache/b8c0426b8b77.txt",
+  "fetched": "2026-11-22T06:34:23Z",
+  "status": 200,
+  "chars": 26682
+ },
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
+  "cache": "cache/b2adaad06a21.txt",
+  "fetched": "2026-11-22T06:34:23Z",
+  "status": 200,
+  "chars": 28863
+ },
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+  "cache": "cache/b1f557c03240.txt",
+  "fetched": "2026-11-22T06:34:24Z",
+  "status": 200,
+  "chars": 17003
+ }
+]

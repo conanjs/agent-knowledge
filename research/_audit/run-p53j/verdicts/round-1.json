@@ -1,0 +1,169 @@
+{
+  "verdict": "PASS",
+  "overall_score": 4.5,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "d8dcf5d", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "—" },
+    { "heading": "## Scope", "role": 1 },
+    { "heading": "## Catalog", "role": 5 },
+    { "heading": "## Lookup notes", "role": 4 },
+    { "heading": "## Takeaways", "role": 6 },
+    { "heading": "## Used by", "role": "—" },
+    { "heading": "## Verification status", "role": "—" },
+    { "heading": "## References", "role": "—" },
+    { "heading": "## Related", "role": "—" }
+  ],
+  "sources": [
+    {
+      "ref": "R1",
+      "url": "https://epubs.siam.org/doi/abs/10.1137/0206024",
+      "cache": null,
+      "tier": "B",
+      "rank": 2,
+      "rank_basis": "Tier B with no saved text (sources.json status \"error\"; cache/de88eabe835f.txt named in stage1.json is absent). Rated from the URL and the References entry: the SIAM journal record of Knuth, Morris and Pratt's 1977 paper. Rank 1 (originators' own publication) and Rank 2 (peer-reviewed paper) both fit; took the higher number, 2."
+    },
+    {
+      "ref": "R2",
+      "url": "https://cr.yp.to/bib/1975/aho.pdf",
+      "cache": "cache/eaed3674ae93.txt",
+      "tier": "B",
+      "rank": 2,
+      "rank_basis": "Tier B. The saved file is raw PDF bytes destroyed in text conversion (333,551 U+FFFD replacement characters; 0 of 33 compressed streams decode), so no page text can be read. Its PDF header shows an 8-page scanned document, consistent with the 1975 Aho–Corasick paper named in References, hosted as a copy in a bibliography archive on cr.yp.to rather than by the publisher. Rated as the paper: Ranks 1 and 2 fit, took 2. The copy's fidelity cannot be checked from the saved text."
+    },
+    {
+      "ref": "R3",
+      "url": "https://www.sqlite.org/fts5.html",
+      "cache": "cache/90b57f7dd042.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: sqlite.org/"
+    },
+    {
+      "ref": "R4",
+      "url": "Embedded SQL and result table — local semantics check",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "Local artifact: the SQL and result table embedded in ## Lookup notes."
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": { "citation_integrity": 5, "rank_compliance": 5, "factual_grounding": 4, "diataxis_rigor": 4 },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 4,
+    "checked_roles_1_5": 4,
+    "claims_role_6": 0,
+    "checked_role_6": 0,
+    "no_cache": 2,
+    "not_checkable": 1
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Catalog",
+      "role": 5,
+      "claim": "Knuth–Morris–Pratt (KMP) computes fallback positions from the pattern and searches in time proportional to text plus pattern length.",
+      "source": "R1",
+      "verdict": "no_cache",
+      "severity": "none",
+      "page_says": "not found: the source fetch failed (sources.json status \"error\") and no cache file exists, so there was nothing to search.",
+      "note": "The doc places each ✅ before the claim it marks, so the claim is read as the sentence(s) between the ✅ and the inline link. The time bound is unconfirmed by this audit."
+    },
+    {
+      "id": "C2",
+      "section": "## Catalog",
+      "role": 5,
+      "claim": "Aho–Corasick builds a trie with fallback links and output information. It shares work across patterns during the scan. Returning many overlapping matches adds output cost.",
+      "source": "R2",
+      "verdict": "no_cache",
+      "severity": "none",
+      "page_says": "not found: searched 'aho', 'corasick', 'failure', 'goto', 'output function', 'keyword', 'bibliographic', 'Communications'; the only hit is the URL in the SOURCE header line.",
+      "note": "The cache file exists but holds corrupted PDF binary with no readable words, so it is treated as having no saved text. None of the three statements can be grounded."
+    },
+    {
+      "id": "C3",
+      "section": "## Catalog",
+      "role": 5,
+      "claim": "A full-text index maps tokens to document occurrences. SQLite Full-Text Search 5 (FTS5) supports phrase and prefix queries and optional indexes for configured token-prefix lengths.",
+      "source": "R3",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "\"By default, FTS5 maintains a single index recording the location of each token instance within the document set.\" … (detail=column) \"Phrase queries are not available.\"",
+      "note": "Phrase queries (§3.2), prefix queries (§3.3) and a prefix index created for each configured integer (§4.2) are all on the page. Two gaps: the first sentence defines full-text indexes in general, while the page describes only FTS5's own index (wider scope); and the page says phrase queries are unavailable when detail is column or none, a condition the plain \"supports phrase queries\" drops. No number, version or MUST-level modal is involved, so WARN."
+    },
+    {
+      "id": "C4",
+      "section": "## Lookup notes",
+      "role": 4,
+      "claim": "The following SQLite statements were exercised locally on arm64 using Python 3.13.7 and SQLite 3.50.4 on 2026-11-07. The input rows have shape `(rowid, body)`. The match selects documents by token semantics and the projection returns only their `rowid` values.",
+      "source": "R4",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: the claim rests only on the local check (References: \"Embedded SQL and result table — local semantics check\"), which has no saved text.",
+      "note": "The listed outputs agree with R3's prefix-query rule (§3.3) and its default unicode61 tokenizer, but that does not ground a local run. The ✅ is tied to the local References entry only by its wording (\"exercised locally\"), not by an explicit marker."
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "WARN",
+      "section": "## Catalog",
+      "rule": "grounding",
+      "evidence": "C3 overstates R3: R3 describes FTS5's own index (\"By default, FTS5 maintains a single index recording the location of each token instance within the document set\"), not full-text indexes in general, and it removes phrase queries under detail=column or detail=none (§4.6)."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Catalog",
+      "rule": "citation",
+      "evidence": "C1 (KMP bound) cites R1, whose fetch failed, so no saved text exists. This audit cannot confirm that ✅."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Catalog",
+      "rule": "citation",
+      "evidence": "C2 (Aho–Corasick) cites R2, whose cache is corrupted PDF binary (333,551 replacement characters; no stream decodes). This audit cannot confirm that ✅."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Lookup notes",
+      "rule": "citation",
+      "evidence": "The ✅ on the local run carries no citation marker. Only its wording (\"exercised locally\") and the unlinked References entry \"Embedded SQL and result table — local semantics check\" connect it to its evidence."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Takeaways",
+      "rule": "structure",
+      "evidence": "The only role-6 section has two generic bullets that repeat the Catalog's \"What to measure\" column and the Lookup notes' advice to compare with an identical table. It has no concrete trade-offs, failure modes or decision table."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## Catalog",
+      "action": "In the \"Documents matching terms or phrases\" row, scope the first sentence to FTS5, for example \"By default, an FTS5 index records the location of each token instance within the document set\" (R3 §4.2). Add the condition \"phrase queries need the default detail=full; detail=column or detail=none removes them\" (R3 §4.6)."
+    },
+    {
+      "section": "## Catalog",
+      "action": "KMP row: R1 could not be fetched. Re-fetch it, or add a fetchable rank 1–4 copy of the 1977 paper that states the linear bound, so the ✅ can be grounded. If neither is possible, downgrade the claim to ⚠️."
+    },
+    {
+      "section": "## Catalog",
+      "action": "Aho–Corasick row: add the publisher's record of the 1975 paper (ACM, doi:10.1145/360825.360855) next to the cr.yp.to copy, and cache a text-extracted version so the trie, failure-link and output statements can be grounded. If neither is possible, downgrade the claim to ⚠️."
+    },
+    {
+      "section": "## Lookup notes",
+      "action": "Tie the ✅ to its evidence explicitly, for example \"✅ (local check; see References: Embedded SQL and result table)\"."
+    },
+    {
+      "section": "## Takeaways",
+      "action": "Replace the two generic bullets with a small trade-off table, each row naming a choice, its cost and the failure it guards against. Example: FTS5 prefix index, faster prefix queries against extra index space; without it \"querying for a prefix token can be slow, as it requires a range scan\" (R3 §4.2). Example: detail=column or none, which saves space but loses phrase and NEAR queries (R3 §4.6)."
+    }
+  ]
+}

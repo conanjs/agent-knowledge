@@ -1,0 +1,26 @@
+[
+ {
+  "url": "https://javascript.info/property-descriptors",
+  "normalized": "https://javascript.info/property-descriptors",
+  "cache": "cache/3dac7b1dcd7f.txt",
+  "fetched": "2026-11-22T06:34:30Z",
+  "status": 200,
+  "chars": 10129
+ },
+ {
+  "url": "https://javascript.info/property-accessors",
+  "normalized": "https://javascript.info/property-accessors",
+  "cache": "cache/3c1c20119715.txt",
+  "fetched": "2026-11-22T06:34:29Z",
+  "status": 200,
+  "chars": 7465
+ },
+ {
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze",
+  "normalized": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze",
+  "cache": "cache/f41a45096ae3.txt",
+  "fetched": "2026-11-22T06:34:28Z",
+  "status": 200,
+  "chars": 12856
+ }
+]

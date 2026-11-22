@@ -9,6 +9,8 @@ Date: 2026-11-22. Design: `frameworks/knowledge/research-agent.design.md` §4.2 
 | v1 | `cded4d1` | First draft: rank table, role map, grounding verdicts, scoring anchors |
 | v2 | `9ae51f8` | Three reading rules added to step 5, after v1 missed K1: a plain statement of behaviour reads as a requirement, and a leading modal covers every clause; no `entails` with a caveat; versions stay apart |
 | v3 | `f166f98` | V's severity split (2026-11-22): `CRITICAL_FAIL` only for `contradicted`, `unsupported`, a wrong number, version, date or name, and a modal raised to MUST level in the claim's own words; every other `overstates` is a new `WARN`, which lowers `factual_grounding` but does not fail the doc. `factual_grounding` 4 allows at most 3 `WARN`s, or 1 per 10 checked claims. A `claims.json` sample mode. **Neutral examples**: v1 and v2 used calibration answers as examples (finding 6) |
+| v4 | `d8dcf5d` | Takes tier A ranks from `stage1.json` (built by `evaluate-research.mjs stage1`) as given and rates only tier B sources, with the tier B rating guide (a maintainer's mailing-list post is Rank 4 only when the page shows the role) |
+| v5 | `2b066f6` | Tier B rules in order (V, 2026-11-22): the originator of a concept (shown by a page in the input) is Rank 1 for that concept; a project's own home is Rank 1 for that project; then the maintainer's post; then the class, with the higher number on a tie. A `rank_scope` per source. A note that a script may turn PASS into `INCONCLUSIVE`. First version run as the linked `knowledge-judge` agent |
 
 ## 2. Calibration docs
 
@@ -75,6 +77,30 @@ Neither is a false alarm by the rules: each claim says more than its page. V rul
 - Every quote that backs a failing verdict was checked by script against the saved pages: **87 of 87 quote segments were found verbatim** (all 9 verdict files).
 - I read 10 flagged claims against the pages myself: K1, K2, C24 (part A), C38, C41, C51, C60 (part B), C5, C35 (part C), and the two clean-doc findings. All 10 are real: the doc says more than the page.
 - The judge also found **22 non-`entails` claims in the MCP doc under v1** (6 in part A, 11 in part B, 5 in part C), against 3 errors in the blind check's 15. v2 raised part C from 5 to 15, mostly SHOULD-level rules written as plain facts.
+
+### 3.5 Recalibration of v4 (2026-11-22)
+
+Inputs built by `evaluate-research.mjs stage1` in new neutral folders (`RUNS.md`); judge run as a Claude Code subagent on Claude Opus 5.5.
+
+| Test | v3 | v4 | Tokens |
+|---|---|---|---|
+| Unchanged private-fields doc (`run-f2n8`) | PASS 4.50, 2 `WARN` | **PASS 4.50**, the same 2 `WARN` (`protected` bracket access; the dropped "predictable enough" condition) | 112k |
+| 5 planted errors (`run-x7d3`) | 5/5, right severity | **5/5, right severity**: P1, P2, P3 (KB-15, the issue's Rank 6 now from `stage1.json`), P5 `CRITICAL_FAIL`; P4 `SOFT_WARN` | 109k |
+| MCP sample of 15 (`run-r9k5`; the JS sampler, so 11 of its claims differ from `run-b9r4`) | K1 `CRITICAL_FAIL`, K2 `WARN` | **K1 `CRITICAL_FAIL`, K2 `WARN`**; K3's §3.4 row `entails`; its §1.6 row the same citation gap as v3 (`CRITICAL_FAIL`) | 152k |
+
+Every source in the three runs was tier A, and the judge copied each rank from `stage1.json` (`rank_basis: tier A: <rule>`). `evaluate-research.mjs quotes` found every quote behind a failing verdict on the pages the claim cites: 28 of 28 in the v4 runs, 86 of 86 across all nine runs. v4 passes calibration (design §4.2 stage 1).
+
+### 3.6 Recalibration of v5 (2026-11-22)
+
+Run as the linked `knowledge-judge` agent (`~/.claude/agents/knowledge-judge.md`, built by agent-config's `build-agents`), on new `stage1` inputs.
+
+| Test | v4 | v5 | Tokens |
+|---|---|---|---|
+| Unchanged private-fields doc (`run-k8w2`) | PASS 4.50 | **PASS 4.50**, the same 2 `WARN` | 111k |
+| 5 planted errors (`run-d5h9`) | 5/5 | **5/5, right severity** | 103k |
+| MCP sample of 15 (`run-m3v6`, the same sample as `run-r9k5`) | K1 critical, K2 `WARN` | **K1 `CRITICAL_FAIL`, K2 `WARN`**; the §1.6 citation gap `CRITICAL_FAIL` again | 153k |
+
+Quotes: 26 of 26 found on the cited pages. v5 passes calibration.
 
 ## 4. Findings for the design
 

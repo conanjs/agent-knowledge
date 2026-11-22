@@ -1,0 +1,433 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.0,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "2b066f6",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope",
+      "note": "Summary; holds no ✅ claim"
+    },
+    {
+      "heading": "## Problem",
+      "role": 1
+    },
+    {
+      "heading": "## Mental model",
+      "role": 1
+    },
+    {
+      "heading": "## How it works",
+      "role": 3,
+      "note": "Mostly concept architecture (kinds of polymorphism, language facts) with one mechanism (dynamic dispatch); mapped to role 3, the stricter role its heading names"
+    },
+    {
+      "heading": "## Worked example",
+      "role": 4
+    },
+    {
+      "heading": "## Edge cases",
+      "role": 6
+    },
+    {
+      "heading": "## Trade-offs",
+      "role": 6
+    },
+    {
+      "heading": "## Takeaways",
+      "role": "envelope",
+      "note": "Summary-like rule candidates; no ✅ claim"
+    },
+    {
+      "heading": "## Used by",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Verification status",
+      "role": "envelope"
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^1]",
+      "url": "https://refactoring.com/catalog/replaceConditionalWithPolymorphism.html",
+      "cache": "cache/c0b4c71eeffb.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "Class rule. The saved page is a catalog entry on refactoring.com, 'part of martinfowler.com', '© Martin Fowler': one author's self-published site. Rule 1 needs input evidence that Fowler coined or first published this refactoring; the saved page holds only the title and a code sketch, and no other cached page mentions Fowler, so rule 1 does not apply. Rule 2 (a software project's own repo/docs/release notes) and rule 3 (maintainer's mailing-list post) do not fit. Rank 3 (curated reference / web edition of a book, hinted by 'How do I access the web edition?') and rank 6 (personal, unvetted site) both fit; the higher number is taken."
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+      "cache": "cache/b8c0426b8b77.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#function-overloads",
+      "cache": "cache/db1c5af3b947.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    },
+    {
+      "ref": "[^3]",
+      "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+      "cache": "cache/b1f557c03240.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    },
+    {
+      "ref": "[^4]",
+      "url": "https://go.dev/ref/spec#Interface_types",
+      "cache": "cache/3f4be4138e86.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: go.dev/ref/"
+    },
+    {
+      "ref": "[^5]",
+      "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch18-02-trait-objects.md",
+      "cache": "cache/107db9d9836d.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "Rust language behaviour (traits, trait objects, generics, dispatch in Rust)",
+      "rank_basis": "Rule 2: the file comes from the Rust project's own repository (rust-lang/book) and documents Rust. For claims outside Rust (general polymorphism terminology) the class rule applies: a textbook-style book chapter on the main branch, not a tagged spec; rank 1 (project docs) and rank 3 (textbook) both fit, so rank 3."
+    },
+    {
+      "ref": "[^6]",
+      "url": "https://raw.githubusercontent.com/rust-lang/book/main/src/ch10-02-traits.md",
+      "cache": "cache/2648d88d0c1a.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "Rust language behaviour (traits and trait bounds)",
+      "rank_basis": "Rule 2: the Rust project's own repository (rust-lang/book), documenting Rust traits. Outside Rust: class rank 3 (textbook), as for [^5]."
+    },
+    {
+      "ref": "[^7]",
+      "url": "https://homepages.inf.ed.ac.uk/wadler/papers/expression/expression.txt",
+      "cache": "cache/38885c763a28.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "The Expression Problem (its name and framing)",
+      "rank_basis": "Rule 1: the page itself, Wadler's note of 12 November 1998, says 'The Expression Problem is a new name for an old problem', so the author names the problem here. Outside that scope: an email to the java-genericity mailing list kept on a personal university homepage; rule 3 does not fit (no project's official list or maintainer role shown), so class rank 6 (unvetted)."
+    },
+    {
+      "ref": "[^8]",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#exhaustiveness-checking",
+      "cache": "cache/b2adaad06a21.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": false,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": false,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 3,
+    "factual_grounding": 2,
+    "diataxis_rigor": 2
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 10,
+    "checked_roles_1_5": 10,
+    "claims_role_6": 5,
+    "checked_role_6": 5,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Problem",
+      "role": 1,
+      "claim": "Fowler's catalog records “Replace Conditional with Polymorphism” as the refactoring that moves per-variant behavior behind polymorphic operations.",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "switch (bird.type) { case 'EuropeanSwallow': return “average”; … class EuropeanSwallow { get plumage() { return “average”; }",
+      "note": "The catalog entry's before/after sketch moves each bird type's plumage branch into a plumage getter on its own class. Grounding passes, but the source is rank 6 in a role 1 section (KB-15 breach, see violations). The preceding unmarked sentence ('every new behavior or variant reopens the central branch and risks inconsistent edits') is not on the page."
+    },
+    {
+      "id": "C2",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Subtype polymorphism lets a value of a more specific type be used through a shared supertype, interface, trait object, or protocol.",
+      "source": "[^5]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "not found (searched: polymorph, subtyp, supertype, protocol). Nearest: “But because Rust doesn’t have inheritance, we need another way to structure the `gui` library”",
+      "note": "General claim, so [^5] counts as rank 3 here (outside its Rust scope; allowed in role 3). The page never names subtype polymorphism, never mentions interfaces or protocols, and does not class trait objects as subtyping: it says Rust lacks inheritance and likens trait objects to duck typing. No cached page defines subtype polymorphism."
+    },
+    {
+      "id": "C3",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Parametric polymorphism uses type parameters so one implementation can work for many types while preserving type information, as TypeScript generics and Rust trait bounds do.",
+      "source": "[^2]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "being able to create a component that can work over a variety of types rather than a single one … it doesn’t lose any information",
+      "note": "The TypeScript half is supported by the generics page. The Rust trait-bounds half is not on either cited TypeScript page; it is on [^6], which this claim does not cite. The term 'parametric polymorphism' appears on no cached page."
+    },
+    {
+      "id": "C4",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Ad-hoc polymorphism gives the same operation name multiple implementations, such as TypeScript overload signatures or Rust traits implemented for different types.",
+      "source": "[^2]",
+      "verdict": "contradicted",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "write some number of function signatures (usually two or more), followed by the body of the function … Then, we wrote a function implementation with a compatible signature.",
+      "note": "TypeScript overloads give one function several call signatures backed by a single implementation whose signature is hidden from callers. They do not give multiple implementations. The Rust half is not on the cited TypeScript pages (unsupported), and 'ad-hoc polymorphism' appears on no cached page."
+    },
+    {
+      "id": "C5",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Dynamic dispatch selects a method implementation at runtime when the compiler cannot know the concrete receiver type; Rust trait objects use dynamic dispatch for this case.",
+      "source": "[^5]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "_dynamic dispatch_, which is when the compiler can’t tell at compile time which method you’re calling … When we use trait objects, Rust must use dynamic dispatch.",
+      "note": ""
+    },
+    {
+      "id": "C6",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "TypeScript type compatibility is structural: a value is compatible when it has the target type's required members, unlike nominal systems that require explicit declarations.",
+      "source": "[^3]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "The basic rule for TypeScript’s structural type system is that x is compatible with y if y has at least the same members as x.",
+      "note": "Wider than the page. The page states a 'basic rule' (at least the same members, each a compatible property) with exceptions such as private/protected members. The claim says having only the target's 'required' members is enough, a qualifier the page lacks, and states the rule with no exceptions. The nominal contrast is supported."
+    },
+    {
+      "id": "C7",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Go interfaces are satisfied implicitly by any type whose method set matches the interface, so a type does not announce the relationship in its declaration.",
+      "source": "[^4]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "Interfaces that are not basic may only be used as type constraints … the File interface is implemented by both S1 and S2, regardless of what other methods",
+      "note": "The method-set rule holds for basic interfaces only. General interfaces with type terms such as ~int (Go 1.18) define type sets that method sets alone do not satisfy. The spec also says a type implements an interface when its method set includes the methods, 'regardless of what other methods' it has, which is wider than 'matches'. That implementation needs no declaration does follow from the spec's definition."
+    },
+    {
+      "id": "C8",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Rust traits define shared behavior and trait bounds constrain generic parameters to types that provide that behavior.",
+      "source": "[^6]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "We can use traits to define shared behavior in an abstract way. … trait bounds to specify that a generic type can be any type that has certain behavior",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Wadler's expression problem frames a trade-off: functional data variants make it easy to add new functions, while OO subclasses make it easy to add new variants.",
+      "source": "[^7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "In a functional language … it is easy to add new columns (functions). In an object-oriented language … it is easy to add new rows (subclasses).",
+      "note": "Inside [^7]'s rank-1 scope (the Expression Problem)."
+    },
+    {
+      "id": "C10",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "TypeScript uses narrowing and `never` checks to support exhaustive handling.",
+      "source": "[^8]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This means you can use narrowing and rely on never turning up to do exhaustive checking in a switch statement.",
+      "note": "The mark closes only this sentence. The preceding unmarked sentence ('A discriminated union with an exhaustive switch is better when the set of variants is closed and the system mainly adds new operations') is a design judgment that [^8] does not state."
+    },
+    {
+      "id": "C11",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "YAGNI avoids speculative subclasses before a second variant. (row: One variant exists | Prefer a simple function or union)",
+      "source": "[^7]",
+      "verdict": "unsupported",
+      "severity": "SOFT_WARN",
+      "page_says": "not found (searched: YAGNI, speculative, second variant, one variant)",
+      "note": "Wadler's note is about adding cases and functions to a datatype in GJ, not YAGNI. This claim is outside [^7]'s originator scope, so the citation counts as rank 6 (allowed in role 6)."
+    },
+    {
+      "id": "C12",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "TypeScript can narrow branches and detect unhandled `never` cases. (row: Closed protocol messages | Use discriminated union plus exhaustive switch)",
+      "source": "[^8]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Adding a new member to the Shape union, will cause a TypeScript error … Type 'Triangle' is not assignable to type 'never'.",
+      "note": "Loosely worded (the unhandled case is detected because it is not assignable to never), but supported."
+    },
+    {
+      "id": "C13",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Callers can add new implementations without editing the central package. (row: Public plugin API | Prefer interface or trait object)",
+      "source": "[^5]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When we wrote the library, we didn’t know that someone might add the `SelectBox` type, but our `Screen` implementation was able to operate on the new type and draw it",
+      "note": ""
+    },
+    {
+      "id": "C14",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Private/protected members affect structural compatibility. (row: TypeScript private members | Compatibility becomes tied to the same class origin)",
+      "source": "[^3]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Private and protected members in a class affect their compatibility. … the source type must also contain a private member that originated from the same class.",
+      "note": ""
+    },
+    {
+      "id": "C15",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Generics are monomorphized; trait objects use runtime dispatch. (row: Rust homogeneous list | Prefer generics over trait objects)",
+      "source": "[^5]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "using generics and trait bounds is preferable because the definitions will be monomorphized … When we use trait objects, Rust must use dynamic dispatch.",
+      "note": ""
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "TypeScript overloads: one implementation behind several signatures (handbook) vs. 'multiple implementations' (doc)",
+      "winner": "[^2] rank 1",
+      "loser": "the doc's own wording, which no source backs",
+      "where_loser_is": "## How it works",
+      "ok": false,
+      "note": "The doc states as fact something its rank-1 source contradicts. No lower-ranked source backs the doc's version, so this is counted once, as grounding finding C4, and not again under KB-17. No two cited sources disagree with each other."
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Problem",
+      "rule": "KB-15",
+      "evidence": "[^1] (refactoring.com, rank 6 by class: one author's self-published site with no input evidence that he originated the refactoring) is cited in a role 1 section, which allows ranks 1–5."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C2 unsupported: [^5] never names subtype polymorphism and never mentions interfaces or protocols. It says Rust has no inheritance and likens trait objects to duck typing."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C3 unsupported: the Rust trait-bounds half is not on the cited TypeScript pages ([^6] holds it but is not cited), and no cached page uses the term 'parametric polymorphism'."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C4 contradicted: the TypeScript handbook says overloads are several signatures 'followed by the body of the function', one implementation. The doc says overloads give 'multiple implementations'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C6 overstates: the page's 'basic rule' needs 'at least the same members' as compatible properties. The doc says the target's 'required' members are enough and drops the rule's exceptions."
+    },
+    {
+      "severity": "WARN",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C7 overstates: the method-set rule holds for basic interfaces only. Interfaces with type terms (Go 1.18) are not satisfied by method sets alone, and the spec says 'include … regardless of what other methods', not 'matches'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C11 unsupported: Wadler's Expression Problem note [^7] says nothing about YAGNI or speculative subclasses."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Worked example",
+      "rule": "structure",
+      "evidence": "Role 4 shows a before/after rewrite but no run with real inputs and outputs, and the alternative path ('add exhaustive functions instead') has no code."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## How it works",
+      "rule": "structure",
+      "evidence": "Roles 2 (concept architecture) and 5 (reference & invariants) have no section. 'How it works' is a list of definitions and language facts rather than mechanism steps. Several factual sentences carry neither ✅ nor ⚠️ (Problem sentence 1, How it works line 53 sentence 1, the whole Trade-offs table), yet Verification status reports 0 unverified."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## Problem",
+      "action": "Make [^1] eligible for role 1 or move the sentence. Either (a) cache and cite a page in which Fowler's Refactoring catalog or book states that it introduces this refactoring, so step-2 rule 1 (originator) applies, or (b) move the 'Fowler's catalog records …' sentence to Edge cases/Trade-offs (role 6). Mark the first sentence ('every new behavior or variant reopens the central branch …') ⚠️ or cite a source for it."
+    },
+    {
+      "section": "## How it works",
+      "action": "Replace C2 with what [^5] says: 'In a language with inheritance, subclasses such as Button can be treated as instances of a base class such as Component; Rust has no inheritance, so it uses trait objects (Box<dyn Draw>) to hold values of different types that implement one trait. ✅[^5]' Drop the 'subtype polymorphism … interface … protocol' definition, or mark it ⚠️ until a source that defines subtype polymorphism is cached and cited."
+    },
+    {
+      "section": "## How it works",
+      "action": "C3: add [^6] for the Rust half ('We can use trait bounds to specify that a generic type can be any type that has certain behavior') and keep [^2] for TypeScript ('work over a variety of types … doesn’t lose any information'). Drop the label 'parametric polymorphism' or mark it ⚠️, since no cached page defines it."
+    },
+    {
+      "section": "## How it works",
+      "action": "Rewrite C4 as: 'TypeScript overloads give one function several overload signatures backed by a single implementation whose signature callers cannot see ✅[^2]; in Rust, different types can each implement the same trait ✅[^6].' Remove 'multiple implementations' for TypeScript, and drop or ⚠️-mark the 'ad-hoc polymorphism' label."
+    },
+    {
+      "section": "## How it works",
+      "action": "Rewrite C6 as: 'Type compatibility in TypeScript is based on structural subtyping: under its basic rule, x is compatible with y if y has at least the same members as x, each a compatible property; in nominal languages such as C# or Java, a class must explicitly declare that it implements an interface. ✅[^3]' Drop 'required'."
+    },
+    {
+      "section": "## How it works",
+      "action": "Rewrite C7 as: 'A Go type implements a basic interface when its method set includes all of the interface's methods, regardless of what other methods it has; nothing in the type's declaration names the interface. Interfaces with type elements such as ~int (Go 1.18) are defined by type sets and can be used only as type constraints. ✅[^4]'"
+    },
+    {
+      "section": "## Edge cases",
+      "action": "Row 'One variant exists': remove ✅[^7], since Wadler's note does not discuss YAGNI. Mark the cell ⚠️, or cite a cached source that states the YAGNI rule."
+    },
+    {
+      "section": "## Worked example",
+      "action": "Add concrete runs with outputs, for example: cost({ kind: \"flat\" }) returns 500; cost({ kind: \"weight\", grams: 2500 }) returns 300 + Math.ceil(2.5) * 120 = 660; new ByWeight(2500).cost() returns 660. Also show one exhaustive function (such as label) with a `never` default check, per [^8]."
+    },
+    {
+      "section": "## Verification status",
+      "action": "After the fixes above, recount ✅ and ⚠️, and mark the unmarked factual sentences (Problem sentence 1, the 'better when the set of variants is closed' sentence, the Trade-offs table) ✅ with a citation or ⚠️."
+    }
+  ]
+}

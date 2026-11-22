@@ -1,0 +1,39 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [],
+   "url": "https://epubs.siam.org/doi/abs/10.1137/0206024",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/de88eabe835f.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://cr.yp.to/bib/1975/aho.pdf",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/eaed3674ae93.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://www.sqlite.org/fts5.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "sqlite.org/",
+   "written_rank": null,
+   "cache": "cache/90b57f7dd042.txt"
+  }
+ ],
+ "tier_b": [
+  "https://epubs.siam.org/doi/abs/10.1137/0206024",
+  "https://cr.yp.to/bib/1975/aho.pdf"
+ ]
+}

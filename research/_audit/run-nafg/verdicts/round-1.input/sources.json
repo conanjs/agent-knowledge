@@ -1,0 +1,66 @@
+[
+ {
+  "url": "https://docs.kernel.org/networking/napi.html",
+  "normalized": "https://docs.kernel.org/networking/napi.html",
+  "cache": "cache/e42d45ec83bf.txt",
+  "fetched": "2026-11-22T06:34:49Z",
+  "status": 200,
+  "chars": 20820
+ },
+ {
+  "url": "https://docs.kernel.org/networking/scaling.html",
+  "normalized": "https://docs.kernel.org/networking/scaling.html",
+  "cache": "cache/1f7b4aa3b2d3.txt",
+  "fetched": "2026-11-22T06:34:50Z",
+  "status": 200,
+  "chars": 28300
+ },
+ {
+  "url": "https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks",
+  "normalized": "https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks",
+  "cache": "cache/1c737e16001b.txt",
+  "fetched": "2026-11-22T06:34:52Z",
+  "status": 200,
+  "chars": 7874
+ },
+ {
+  "url": "https://docs.kernel.org/networking/ip-sysctl.html",
+  "normalized": "https://docs.kernel.org/networking/ip-sysctl.html",
+  "cache": "cache/0fd8d8f37040.txt",
+  "fetched": "2026-11-22T06:34:49Z",
+  "status": 200,
+  "chars": 122970
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man4/veth.4.html",
+  "normalized": "https://man7.org/linux/man-pages/man4/veth.4.html",
+  "cache": "cache/6fef6b342b94.txt",
+  "fetched": "2026-11-22T06:34:51Z",
+  "status": 200,
+  "chars": 3631
+ },
+ {
+  "url": "https://docs.kernel.org/networking/skbuff.html",
+  "normalized": "https://docs.kernel.org/networking/skbuff.html",
+  "cache": "cache/7a7c05cd2b18.txt",
+  "fetched": "2026-11-22T06:34:50Z",
+  "status": 200,
+  "chars": 4356
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man8/iptables.8.html",
+  "normalized": "https://man7.org/linux/man-pages/man8/iptables.8.html",
+  "cache": "cache/ab13073b4692.txt",
+  "fetched": "2026-11-22T06:34:51Z",
+  "status": 200,
+  "chars": 26053
+ },
+ {
+  "url": "https://docs.kernel.org/networking/statistics.html",
+  "normalized": "https://docs.kernel.org/networking/statistics.html",
+  "cache": "cache/067b923c66f4.txt",
+  "fetched": "2026-11-22T06:34:51Z",
+  "status": 200,
+  "chars": 16073
+ }
+]

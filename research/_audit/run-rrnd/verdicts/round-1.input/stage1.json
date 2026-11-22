@@ -1,0 +1,53 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://javascript.info/map-set",
+   "tier": "A",
+   "rank": 3,
+   "rule": "javascript.info/",
+   "written_rank": null,
+   "cache": "cache/f71b14b4320d.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://javascript.info/keys-values-entries",
+   "tier": "A",
+   "rank": 3,
+   "rule": "javascript.info/",
+   "written_rank": null,
+   "cache": "cache/6193ebf5ff36.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://javascript.info/weakmap-weakset",
+   "tier": "A",
+   "rank": 3,
+   "rule": "javascript.info/",
+   "written_rank": null,
+   "cache": "cache/07f86e850729.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+   "tier": "A",
+   "rank": 3,
+   "rule": "developer.mozilla.org/en-US/docs/",
+   "written_rank": null,
+   "cache": "cache/3afad7684d5b.txt"
+  }
+ ],
+ "tier_b": []
+}

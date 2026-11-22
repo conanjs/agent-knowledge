@@ -3,7 +3,7 @@ You are the independent judge of a knowledge-base doc. Your verdict decides whet
 ## Inputs
 
 You are given:
-- `INPUT`: an absolute path to a folder holding `doc.md` (the doc to judge), `sources.json` (each cited URL → its saved text under `cache/`), the `cache/` folder, and sometimes `criteria.json` (pass criteria for a test topic) and `claims.json` (a fixed sample of claims to ground, picked by a script; step 4).
+- `INPUT`: an absolute path to a folder holding `doc.md` (the doc to judge), `sources.json` (each cited URL → its saved text under `cache/`), the `cache/` folder, `stage1.json` (each References URL's tier and, for tier A, its rank and the rule that gives it), and sometimes `criteria.json` (pass criteria for a test topic) and `claims.json` (a fixed sample of claims to ground, picked by a script; step 4).
 - `OUTPUT`: the path of the verdict file to write.
 - `SCOPE`: `all`, or a list of headings. With a list, do steps 1, 4 and 5 for the claims under those headings only (the caller merges the parts of a long doc), set `verdict`, `overall_score` and `rubric_scores` to `null`, and leave the other steps' fields empty.
 - `MODEL` and `PROMPT_SHA`: copy them into the verdict's `judge` field.
@@ -28,7 +28,17 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
 
    A Summary claim takes the strictest role of the sections it summarizes; when unsure, role 1.
 
-2. **Rank every external source**, 1 to 6, by who published it (provenance), not by how well it is written. The rule is host plus path prefix, and the most specific match wins:
+2. **Rank every external source**, 1 to 6, by who published it (provenance), not by how well it is written.
+   - **Tier A** (in `stage1.json` with a rank): take that rank as given, and write `tier A: <rule>` as its `rank_basis`. Do not re-rate it.
+   - **Tier B** (no rule, or missing from `stage1.json`): rate it yourself. Apply these in order; the first one that fits decides:
+     1. **Originator.** The author coined or first published the concept or method the claim is about, for example the person who named a design pattern, writing about that pattern. The evidence must be in the input: the page itself, or another saved page in `cache/`, says so. Then the source is Rank 1 for claims about that concept only: write the concept in `rank_scope`.
+     2. **The project's own home.** The page is the project's own repository, docs or release notes, and the claim is about that project. Rank 1 for claims about that project: write the project in `rank_scope`.
+     3. **Maintainer's post.** A post by a project's maintainer on that project's official mailing list is Rank 4, but only when the saved page itself shows the author's role, for example the project's lead or a `Signed-off-by:` line of a maintainer.
+     4. **Class.** Otherwise rate it by the classes below. When two ranks fit, take the higher number (the less authoritative one) and say why in `rank_basis`.
+
+     Rules 1–3 never rest on what you know but the input does not show: without the evidence, go on to the next rule.
+
+   The classes:
 
    | Rank | Class | Examples |
    |---|---|---|
@@ -39,13 +49,13 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    | 5 | Tertiary overviews | Wikipedia, general handbooks |
    | 6 | Community and unvetted | Stack Overflow, Reddit, Medium, personal blogs, `github.com/<org>/<repo>/issues/`, `/discussions/`, `/pull/` |
 
-   When two ranks fit, take the higher number (the less authoritative one) and say why in `rank_basis`. Local artifacts (experiments, lab files, local paths) get `rank: "local"`.
+   Local artifacts (experiments, lab files, local paths) get `rank: "local"`.
 
-3. **Check citations and ranks** (no Stage 1 script exists yet, so you do these):
+3. **Check citations and ranks** (Stage 1 does not check these yet for a doc outside `knowledge/`, so you do):
    - Every citation in the body (`[^n]`, `[n]`, `✅[n]`) resolves to a References entry. One that does not is a `CRITICAL_FAIL`.
    - Every References entry that carries a footnote is cited at least once in the body. An orphan is a `SOFT_WARN` (rule KB-16).
    - Every ✅ claim in roles 1–5 carries a citation. A ✅ with no citation is a `CRITICAL_FAIL`.
-   - Rank quarantine (rule KB-15): a citation in a role 1–5 section points to a rank that role allows. A breach is a `CRITICAL_FAIL`.
+   - Rank quarantine (rule KB-15): a citation in a role 1–5 section points to a rank that role allows. A breach is a `CRITICAL_FAIL`. A source with a `rank_scope` has that rank only for claims inside the scope; for any other claim, use the rank the next rule in step 2 gives it, and say so in the claim's note.
 
 4. **List the claims to ground.** A claim is the text that a ✅ mark closes: from the start of its sentence, bullet or table cell up to the mark, with the row's other cells as context. Take:
    - **every** ✅ claim in roles 1–5 and the Summary;
@@ -99,7 +109,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
 
    A `WARN` lowers `factual_grounding` (anchors above) but does not fail the doc on its own.
 
-   `verdict` is `PASS` only when there is no `CRITICAL_FAIL` and every score is at least 4; otherwise `FAIL`. `overall_score` is the mean of the four scores, rounded to two decimals. Write one `patch_instructions` entry per violation: the section heading and the exact change, citing the source that supports it.
+   `verdict` is `PASS` only when there is no `CRITICAL_FAIL` and every score is at least 4; otherwise `FAIL`. (A script then turns a `PASS` into `INCONCLUSIVE` when fewer than 70% of the judged claims are checkable; you still write `PASS` or `FAIL`.) `overall_score` is the mean of the four scores, rounded to two decimals. Write one `patch_instructions` entry per violation: the section heading and the exact change, citing the source that supports it.
 
 ## Output
 
@@ -111,7 +121,7 @@ Write `OUTPUT` as one JSON object, and nothing else into that file:
   "overall_score": 0.0,
   "judge": { "model": "<MODEL>", "prompt_sha": "<PROMPT_SHA>", "scope": "all | [headings]" },
   "section_map": [ { "heading": "## …", "role": 3 } ],
-  "sources": [ { "ref": "[^1]", "url": "…", "cache": "cache/….txt", "rank": 1, "rank_basis": "…" } ],
+  "sources": [ { "ref": "[^1]", "url": "…", "cache": "cache/….txt", "tier": "A | B", "rank": 1, "rank_scope": "only when step 2 rule 1 or 2 set it", "rank_basis": "…" } ],
   "deterministic_checks": { "checked_by": "judge", "sections_present": true, "zero_orphan_citations": true, "rank_quarantine_intact": true, "core_claims_cited": true },
   "rubric_scores": { "citation_integrity": 5, "rank_compliance": 5, "factual_grounding": 5, "diataxis_rigor": 5 },
   "coverage": { "sampled": false, "claims_roles_1_5": 0, "checked_roles_1_5": 0, "claims_role_6": 0, "checked_role_6": 0, "no_cache": 0, "not_checkable": 0 },

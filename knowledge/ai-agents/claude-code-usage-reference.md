@@ -5,7 +5,7 @@ topic: ai-agents
 status: verified
 applies-to: ["Claude Code 2.1.278–2.1.308 (local tests)", "Claude Code docs read 2026-10-30 (features up to v2.1.307)", "Claude Code 2.1.318 (local test 2026-11-09)", "Claude Code 2.1.319 (transcripts and docs read 2026-11-10)"]
 last-verified: 2026-11-21
-last-updated: 2026-11-21
+last-updated: 2026-11-22
 tags: [claude-code, tokens, usage, cost, prompt-caching, compaction, opentelemetry, subagents, agent-teams, workflows]
 ---
 
@@ -130,6 +130,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 | Built-in Explore / Plan | Read-only research agents | Start without `CLAUDE.md` and git status, to stay cheap | ✅[^8] |
 | Fork (`/subtask`, fork mode) | A subagent that inherits the whole conversation | Reads the parent's cache on its first request | ✅[^8][^2] |
 | Background subagents | Subagents that run while you keep working | Same cost; runs in parallel | ✅[^8] |
+| Nested subagents; an agent as the main thread | A subagent can start its own subagents, which run on its model unless their `model` says otherwise. An agent started with `claude --agent <name>` runs as the main thread and can start subagents. `tools: Agent(a, b)` limits which ones; leaving `Agent` out of `tools` stops it from starting any. Read in the docs for Claude Code 2.1.330 on 2026-11-22; not run here yet | Each nested subagent adds its own requests, like any subagent | ✅[^8] |
 | Agent teams (experimental) | A lead plus peer sessions with a shared task list and messages | Each teammate is a full instance: about 7× tokens when teammates run in plan mode | ✅[^1][^9] |
 | Dynamic workflows | A script Claude writes that runs dozens to hundreds of agents | Intermediate results stay in script variables, not in a context; fan-outs wait up to 5 s so agents share the first one's cache | ✅[^10][^2] |
 | Dynamic workflows: control | JavaScript with `agent()`, `pipeline()`, `parallel()`, `phase()`; no mid-run user input (a sign-off between stages needs one workflow per stage); a relaunch in the same session replays saved results; up to 16 concurrent agents by default, 1,000 per run | The script, not Claude, decides what runs next; Claude Code only | ✅[^10] |
@@ -171,7 +172,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 97 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
+- Verified: 98 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
 
 ## References
 - [Manage costs effectively](https://code.claude.com/docs/en/costs) — Anthropic, living. Backs: `/usage`, `/insights`, levers, background usage, agent team costs, `modelPricing`. [^1]
@@ -181,7 +182,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - [Run Claude Code programmatically](https://code.claude.com/docs/en/headless) — Anthropic, living. Backs: `--output-format json`, `--json-schema`, stream-json, `--max-budget-usd`. [^5]
 - [Model configuration](https://code.claude.com/docs/en/model-config) — Anthropic, living. Backs: auto-compact window, effort levels and defaults. [^6]
 - [Explore the context window](https://code.claude.com/docs/en/context-window) — Anthropic, living. Backs: what survives compaction, `/rewind` summarize. [^7]
-- [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living. Backs: subagent models, Explore/Plan, forks, background, concurrency limit. [^8]
+- [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living. Backs: subagent models, Explore/Plan, forks, background, concurrency limit; nested subagents and `claude --agent` (read 2026-11-22). [^8]
 - [Orchestrate teams of Claude Code sessions](https://code.claude.com/docs/en/agent-teams) — Anthropic, living. Backs: experimental flag, teammates as full instances. [^9]
 - [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living. Backs: script-held orchestration, scale, script functions, no mid-run input, resume by replay, limits. [^10]
 - [Speed up responses with fast mode](https://code.claude.com/docs/en/fast-mode) — Anthropic, living. Backs: 2.5× speed, Opus 5.5 pricing, usage-credits only. [^11]

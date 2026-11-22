@@ -51,6 +51,7 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 | IW-15 | IW-14 reworded: "… run `node copilot/atlas/tools/atlas.mjs --explain <file>`; for a file you are about to add, explain an existing file of the same kind in the same folder. It answers in about 250 tokens …", plus a `.ignore` that keeps `copilot/atlas/map/` out of searches. Same question as IW-14 | The agent still explained the folder first, then the not-yet-written file, then other files, and then read the schemas and index to verify: 4–17 commands. Without the line, it answered in 2–3 large commands, once by `cat`-ing three map pages (90,313 characters). No search returned map-page lines with `.ignore`. Kept: `.ignore`. Dropped: the line | — | — | Codex CLI 0.166.0-alpha.6 with `gpt-6-luna`, 2026-11-10: all 5 facts 2/2 in both variants; mean input 216,614 with the line, 130,480 without; `--explain` 6 times with, 0 without | ✅[^6] |
 | IW-16 | A judge prompt (agent-knowledge `frameworks/knowledge/agents/knowledge-judge/body.md`) that grades a doc's claims against saved page text. v2 added: "**A plain statement of behaviour is a requirement.** … If the page says SHOULD or MAY, the claim `overstates`. A modal verb at the start of a sentence or list item (\"Server must …; …; …\") covers every clause after it." Test item: a step reading "Server must validate the token …; insufficient scope gives `403`", where the spec has SHOULD for the 403 | Without the rule (v1), the judge read the 403 clause as having no modal and passed it. With it (v2), the judge flagged it. But v2's example sentence was the test item itself, and v1's example of a dropped qualifier was the other test item. v3 replaced both with examples from topics no test doc covers (DNS resolvers, a full disk), and the judge still flagged both | Flagged 0/1 (v1), 1/1 (v2, the example was the test item), 1/1 (v3, neutral example) | — | — | ✅[^7] |
 | IW-17 | Judge v3 severity rule: "`CRITICAL_FAIL`: `contradicted` …; `unsupported`; a gap in a number, version, date or name …; a modal raised to MUST level in the claim's own words … `WARN`, for every other `overstates`" | The judge applied the three levels as written. 5 planted errors kept the severity they were planted for. An unchanged doc's 2 findings (a dropped condition and a wider scope) came out `WARN`, and the doc passed. Of the two known errors, the MUST-for-SHOULD one came out `CRITICAL_FAIL` and the dropped qualifier `WARN` | 3 docs, 1 run each: as written 3/3 | — | — | ✅[^7] |
+| IW-18 | Judge v5 tier B order: "Apply these in order; the first one that fits decides: 1. **Originator.** … The evidence must be in the input … 2. **The project's own home.** … Rules 1–3 never rest on what you know but the input does not show: without the evidence, go on to the next rule." Re-judged 3 docs that v4 had failed on originators' pages | The judge raised a source to Rank 1 only where a saved page showed the originator role or the project's own repository (3 sources), and kept Rank 6 where no saved page showed it (4 sources), saying so in each `rank_basis`. It never used its own knowledge of who coined a term | Followed as written in 3/3 docs (7 of 7 sources) | — | — | ✅[^8] |
 
 ## Lookup notes
 - **The pattern behind the findings.**
@@ -82,7 +83,7 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 17 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 18 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
 
 ## References
 - Local measurement, 2026-11-09:
@@ -100,6 +101,8 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - Local measurement, 2026-11-10: Codex CLI 0.166.0-alpha.6 with `gpt-6-luna`, an export of agent-config `main` (`78e11cc` plus PR #23) against the same with IW-15's `AGENTS.md` line and `.ignore`, one question, 2 runs each; global instructions = the deployed core. [^6]
 
 - Local measurement, 2026-11-22: the knowledge-judge prompt v1 (`cded4d1`), v2 (`9ae51f8`) and v3 (`f166f98`), each run as a Claude Code subagent on Claude Opus 5.5 against saved page text, on a deep dive with 2 known errors, a verified doc, and a copy of it with 5 planted errors; one run per prompt and doc; details in agent-knowledge `research/_calibration/REPORT.md`. [^7]
+
+- Local measurement, 2026-11-22: the knowledge-judge prompt v5 (`2b066f6`), run as the linked `knowledge-judge` Claude Code agent on Claude Opus 5.5, on 3 verified docs re-judged after v4; one run each; details in agent-knowledge `research/_audit/REPORT.md`. [^8]
 
 ## Related
 - `ai-agents/agent-token-accounting.md` — why each file read adds a full model request.

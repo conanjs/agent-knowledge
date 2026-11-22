@@ -1,0 +1,77 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://code.claude.com/docs/en/statusline",
+   "tier": "A",
+   "rank": 1,
+   "rule": "code.claude.com/docs/",
+   "written_rank": null,
+   "cache": "cache/8a9fc80be1c7.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://code.claude.com/docs/en/agent-sdk/cost-tracking",
+   "tier": "A",
+   "rank": 1,
+   "rule": "code.claude.com/docs/",
+   "written_rank": null,
+   "cache": "cache/44a053f9f149.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://code.claude.com/docs/en/headless",
+   "tier": "A",
+   "rank": 1,
+   "rule": "code.claude.com/docs/",
+   "written_rank": null,
+   "cache": "cache/d4f4e2941ed1.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/ef5ba26f3f87.txt"
+  },
+  {
+   "labels": [
+    "[^7]"
+   ],
+   "url": "https://code.claude.com/docs/en/costs",
+   "tier": "A",
+   "rank": 1,
+   "rule": "code.claude.com/docs/",
+   "written_rank": null,
+   "cache": "cache/7c26178a4fa1.txt"
+  },
+  {
+   "labels": [
+    "[^8]"
+   ],
+   "url": "https://code.claude.com/docs/en/hooks",
+   "tier": "A",
+   "rank": 1,
+   "rule": "code.claude.com/docs/",
+   "written_rank": null,
+   "cache": "cache/20106b0f3bee.txt"
+  }
+ ],
+ "tier_b": [
+  "https://learn.chatgpt.com/docs/non-interactive-mode"
+ ]
+}

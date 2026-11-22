@@ -1,0 +1,296 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.0,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "2b066f6", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "—" },
+    { "heading": "## Problem", "role": 1 },
+    { "heading": "## Mental model", "role": 1 },
+    { "heading": "## How it works", "role": 3 },
+    { "heading": "## Worked example", "role": 4 },
+    { "heading": "## Edge cases", "role": 6 },
+    { "heading": "## Trade-offs", "role": 6 },
+    { "heading": "## Takeaways", "role": "—" },
+    { "heading": "## Verification status", "role": "—" },
+    { "heading": "## References", "role": "—" },
+    { "heading": "## Related", "role": "—" }
+  ],
+  "sources": [
+    {
+      "ref": "[^1]",
+      "url": "https://blog.cleancoder.com/uncle-bob/2020/10/18/Solid-Relevance.html",
+      "cache": "cache/65ca06070f16.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "tier B. Rule 1 (originator) not met: no saved page says Martin coined or first published ISP; the only attribution in cache/ is Fowler's “Robert Martin talks about this topic as the Interface Segregation Principle”, which reports his use of the name, not that he introduced it. Rules 2 and 3 do not apply. Class: personal blog (“The Clean Code Blog by Robert C. Martin (Uncle Bob)”); rank 4 (vetted engineering literature) and rank 6 (personal blog) both arguable, so the higher number, 6."
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://martinfowler.com/bliki/RoleInterface.html",
+      "cache": "cache/6ffa1010749b.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "tier B. Rule 1 not met: the page does not claim Fowler coined the term and credits the notion to earlier work (“this notion has been around for a long time”, Reenskaug, Martin). Rules 2 and 3 do not apply. Class: personal bliki (“© Martin Fowler”), not a company or project engineering blog; rank 4 and rank 6 both arguable, so 6."
+    },
+    {
+      "ref": "[^3]",
+      "url": "https://martinfowler.com/bliki/HeaderInterface.html",
+      "cache": "cache/147e01cab9be.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "tier B. Rule 1 not met: the page defines the term but nowhere says Fowler coined it. Rules 2 and 3 do not apply. Class: personal bliki (“© Martin Fowler”); rank 4 and rank 6 both arguable, so 6."
+    },
+    {
+      "ref": "[^4]",
+      "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+      "cache": "cache/b1f557c03240.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    },
+    {
+      "ref": "[^5]",
+      "url": "https://go.dev/doc/effective_go#interfaces",
+      "cache": "cache/5d82dc9a454d.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: go.dev/doc/"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": false,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 1,
+    "factual_grounding": 3,
+    "diataxis_rigor": 3
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 6,
+    "checked_roles_1_5": 6,
+    "claims_role_6": 4,
+    "checked_role_6": 4,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Problem",
+      "role": 1,
+      "claim": "A broad interface forces consumers to depend on methods they do not use, and Martin notes that such compile-time dependencies can force recompilation or redeployment even without runtime use.",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Keep interfaces small so that users don’t end up depending on things they don’t need. ... changes to module B will force recompilation and redeployment of module A.",
+      "note": "Both statements are on the page; the doc's “can force” is weaker than the page's “will force”. Grounding passes, but the source is Rank 6 in a role-1 section (KB-15 breach, see violations)."
+    },
+    {
+      "id": "C2",
+      "section": "## Problem",
+      "role": 1,
+      "claim": "Header interfaces that copy every public method of a class hide the actual collaboration, while role interfaces show the methods a specific consumer needs.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The strength of a role interface is that it clearly communicates the actual collaboration between an activity and its successors. ... it's good to show which ones are actually needed.",
+      "note": "The page draws this contrast itself: a header interface would “mirror the public methods of our activity class”, a role interface holds “only ... the methods we actually use”. Source is Rank 6 in a role-1 section (KB-15 breach)."
+    },
+    {
+      "id": "C3",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "A role interface is shaped by one supplier-consumer interaction; the same supplier may implement several such roles.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A role interface is defined by looking at a specific interaction between suppliers and consumers. A supplier component will usually implement several role interfaces",
+      "note": "The doc's “may implement several” is weaker than the page's “will usually implement several”. Source is Rank 6 in a role-3 section, which allows ranks 1-4 (KB-15 breach)."
+    },
+    {
+      "id": "C4",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "A header interface mirrors a class's full public surface and tends to force implementers to provide methods irrelevant to their role.",
+      "source": "[^3]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "A header interface is an explicit interface that mimics the implicit public interface of a class.",
+      "note": "First half entailed. Second half (forces implementers to provide irrelevant methods) is not in [^3]: searched force, implement, need, irrelevant; the only hit is “supply an alternative implementation”. The statement is in the uncited [^2] (“A header interface forces you to implement every method, even if you're not going to need them”), so as cited it is unsupported. Also Rank 6 in role 3 (KB-15 breach)."
+    },
+    {
+      "id": "C5",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "TypeScript compatibility is structural, so an object with the required members can satisfy a narrow interface without explicitly naming it.",
+      "source": "[^4]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Type compatibility in TypeScript is based on structural subtyping. Structural typing is a way of relating types based solely on their members.",
+      "note": "The page's Dog/Pet example is accepted although Dog “does not explicitly describe itself as being an implementer of the Pet interface”."
+    },
+    {
+      "id": "C6",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Go idiom favors small method sets such as one-method `Reader` and `Writer` interfaces, named for the operation they provide.",
+      "source": "[^5]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Interfaces with only one or two methods are common in Go code, and are usually given a name derived from the method, such as io.Writer for something that implements Write.",
+      "note": "The page, a guide to idiomatic Go, also gives the convention that one-method interfaces take the method name plus -er (“Reader, Writer, Formatter”) and shows io.Reader and io.Writer with one method each."
+    },
+    {
+      "id": "C7",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "One consumer needs all methods | A broader interface may be fine | ISP is about consumers being forced beyond their needs.",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Keep interfaces small so that users don’t end up depending on things they don’t need.",
+      "note": "The marked cell restates the page's ISP definition; the “may be fine” context cell follows from it and is hedged."
+    },
+    {
+      "id": "C8",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "TypeScript extra members | Usually accepted when assigned structurally | Compatibility checks target members, not supplier identity.",
+      "source": "[^4]",
+      "verdict": "overstates",
+      "severity": "SOFT_WARN",
+      "page_says": "Only members of the target type (Pet in this case) are considered when checking for compatibility. ... must also contain a private member that originated from the same class.",
+      "note": "The general rule is entailed, but the claim drops the page's exception: with private or protected members, a class is incompatible with classes “from a different inheritance hierarchy which otherwise have the same shape”, so origin does matter there. The “Usually accepted” cell rightly hedges the object-literal excess-property error."
+    },
+    {
+      "id": "C9",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Go interface placement | Define small interfaces near the consumer when practical | The role is discovered by use, not by the concrete type's package.",
+      "source": "[^5]",
+      "verdict": "unsupported",
+      "severity": "SOFT_WARN",
+      "page_says": "not found (searched: consumer, near the, where it is used, where they are used, discover, placement); closest: “a type need not declare explicitly that it implements an interface.”",
+      "note": "Effective Go supports implicit satisfaction but says nothing about where to define interfaces. Its Generality section shows the opposite pattern: producer constructors return a shared interface type (“crc32.NewIEEE and adler32.New return the interface type hash.Hash32”)."
+    },
+    {
+      "id": "C10",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Remote API response | Extra fields can travel over the wire | The consumer contract can still validate only the fields it needs.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "perfectly valid for it to return a document with more data than I asked for. ... any type checking involved should only check that the earliest finish data is present.",
+      "note": "The doc's “can” is weaker than the page's “should”."
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Problem",
+      "rule": "KB-15",
+      "evidence": "Line 20 cites [^1], a Rank 6 personal blog, in a role-1 section (allowed ranks 1-5). No saved page shows Martin originated ISP, so rule 1 cannot lift it."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Problem",
+      "rule": "KB-15",
+      "evidence": "Line 22 cites [^2], a Rank 6 personal bliki, in a role-1 section (allowed ranks 1-5). It defines the core role-versus-header contrast."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "KB-15",
+      "evidence": "Line 36 cites [^2] (Rank 6) in a role-3 section (allowed ranks 1-4); it defines what a role interface is."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "KB-15",
+      "evidence": "Line 38 cites [^3] (Rank 6) in a role-3 section (allowed ranks 1-4); it defines what a header interface is."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C4: “tends to force implementers to provide methods irrelevant to their role” is not in the cited [^3]; it is in the uncited [^2]."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C8 overstates: “not supplier identity” drops the [^4] exception that private and protected members must originate from the same class."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C9 unsupported: Effective Go [^5] says nothing about defining interfaces near the consumer; its Generality section shows producer constructors returning a shared interface type."
+    },
+    {
+      "severity": "WARN",
+      "section": "## Worked example",
+      "rule": "structure",
+      "evidence": "Role 4 needs a real run with inputs and outputs. The section shows before/after type declarations only: the mock it describes (“supplies one operation, not four”) is never shown, no compiler or test output is given, and QuoteInput, Money, BookingInput and Booking are undefined, so the snippets do not compile as written."
+    },
+    {
+      "severity": "WARN",
+      "section": "## How it works",
+      "rule": "structure",
+      "evidence": "The section mixes concept-architecture definitions (role vs header interface, role 2 material) with language facts, and gives no step-by-step mechanism for deriving a role interface. Roles 2 and 5 have no section of their own."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## How it works",
+      "rule": "structure",
+      "evidence": "Line 44 (“Class-modeled code uses consumer-owned interfaces ... Functional-pipeline code uses narrow function types ...”) is stated as fact with no citation and no ⚠️, while ## Verification status reports 0 unverified claims."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## Problem",
+      "action": "Line 20: [^1] is Rank 6 in a role-1 section. Back the sentence with a Rank 1-5 source (for rule 1 to give Rank 1 scoped to ISP, cite a page that itself shows Martin introduced the principle), or move the sentence to ## Edge cases or ## Trade-offs (role 6, any rank). The wording itself is supported by [^1]: “Keep interfaces small so that users don’t end up depending on things they don’t need.”"
+    },
+    {
+      "section": "## Problem",
+      "action": "Line 22: [^2] is Rank 6 in a role-1 section. Replace it with a Rank 1-5 source for the role-versus-header contrast, or move the sentence to role 6."
+    },
+    {
+      "section": "## How it works",
+      "action": "Line 36: [^2] is Rank 6 and role 3 allows ranks 1-4. Cite a Rank 1-4 source for the definition of a role interface, or move the sentence to role 6."
+    },
+    {
+      "section": "## How it works",
+      "action": "Line 38: keep “A header interface mirrors a class's full public surface” on [^3]; cite [^2] for the second half (“A header interface forces you to implement every method, even if you're not going to need them”). Both are Rank 6, so in role 3 the sentence still needs a Rank 1-4 source or must move to role 6."
+    },
+    {
+      "section": "## How it works",
+      "action": "Line 44: cite a source for the class-modeled versus functional-pipeline convention or mark it ⚠️ (or reword it as this doc's recommendation), and count it in ## Verification status."
+    },
+    {
+      "section": "## Worked example",
+      "action": "Add a real run: define QuoteInput and Money, show a test double for QuotePage that implements only price and the type-checker result, then the same double typed as ShipmentService with the compiler's actual error output; record the tool version and run date."
+    },
+    {
+      "section": "## Edge cases",
+      "action": "Row “TypeScript extra members”: add the [^4] exception, for example “except private or protected members, which must originate from the same class”, citing “the source type must also contain a private member that originated from the same class”."
+    },
+    {
+      "section": "## Edge cases",
+      "action": "Row “Go interface placement”: [^5] does not say to define interfaces near the consumer. Replace ✅[^5] with ⚠️, or cite a source that states it, and note the Effective Go Generality counter-pattern (“crc32.NewIEEE and adler32.New return the interface type hash.Hash32”)."
+    },
+    {
+      "section": "## Verification status",
+      "action": "Recount verified and unverified claims after the fixes above."
+    }
+  ]
+}

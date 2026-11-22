@@ -1,0 +1,78 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://www.brendangregg.com/USEmethod/use-linux.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/28c63e8954f8.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man5/proc_loadavg.5.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/b17fbb9caba0.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/acaa2ea2bf61.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://docs.kernel.org/filesystems/proc.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.kernel.org/",
+   "written_rank": null,
+   "cache": "cache/b9736fe75d64.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.kernel.org/",
+   "written_rank": null,
+   "cache": "cache/11a08c17c96b.txt"
+  },
+  {
+   "labels": [
+    "[^7]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man1/pidstat.1.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/706cf57ef292.txt"
+  }
+ ],
+ "tier_b": [
+  "https://www.brendangregg.com/USEmethod/use-linux.html",
+  "https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html"
+ ]
+}

@@ -1,0 +1,222 @@
+{
+  "verdict": "PASS",
+  "overall_score": 4.25,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "d8dcf5d", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "envelope" },
+    { "heading": "## Problem", "role": 1 },
+    { "heading": "## Mental model", "role": 1 },
+    { "heading": "## How it works", "role": 3 },
+    { "heading": "## Worked example", "role": 4 },
+    { "heading": "## Edge cases", "role": 6 },
+    { "heading": "## Trade-offs", "role": 6 },
+    { "heading": "## Takeaways", "role": 6 },
+    { "heading": "## Used by", "role": "envelope" },
+    { "heading": "## Verification status", "role": "envelope" },
+    { "heading": "## References", "role": "envelope" },
+    { "heading": "## Related", "role": "envelope" }
+  ],
+  "sources": [
+    { "ref": "[^1]", "url": "linux/lab-setup.md", "cache": null, "tier": "B", "rank": "local", "rank_basis": "Local lab artifact (the References entry calls it the Node 24.22.1 lab run on 2026-11-04); not in stage1.json and has no saved text." },
+    { "ref": "[^2]", "url": "https://javascript.info/property-descriptors", "cache": "cache/3dac7b1dcd7f.txt", "tier": "A", "rank": 3, "rank_basis": "tier A: javascript.info/" },
+    { "ref": "[^3]", "url": "https://javascript.info/property-accessors", "cache": "cache/3c1c20119715.txt", "tier": "A", "rank": 3, "rank_basis": "tier A: javascript.info/" },
+    { "ref": "[^4]", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze", "cache": "cache/f41a45096ae3.txt", "tier": "A", "rank": 3, "rank_basis": "tier A: developer.mozilla.org/en-US/docs/" }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": { "citation_integrity": 5, "rank_compliance": 4, "factual_grounding": 4, "diataxis_rigor": 4 },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 15,
+    "checked_roles_1_5": 15,
+    "claims_role_6": 4,
+    "checked_role_6": 4,
+    "no_cache": 0,
+    "not_checkable": 10
+  },
+  "claim_checks": [
+    {
+      "id": "C1", "section": "## Mental model", "role": 1,
+      "claim": "Artifact: descriptors in Node 24 (the code block: literal property all flags true; defineProperty-created property all false; Math.PI all false)",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "Local-only citation. [^2] shows the same literal and Math.PI descriptors but is not cited here."
+    },
+    {
+      "id": "C2", "section": "## How it works", "role": 3,
+      "claim": "Object.getOwnPropertyDescriptor(obj, key) returns the descriptor; Object.defineProperty(obj, key, descriptor) creates or updates one, and omitted flags default to false when creating",
+      "source": "[^1] [^2]", "verdict": "entails", "severity": "none",
+      "page_says": "If the property exists, defineProperty updates its flags. Otherwise, it creates the property … if a flag is not supplied, it is assumed false.",
+      "note": "[^2] also says getOwnPropertyDescriptor returns a descriptor holding the value and all the flags."
+    },
+    {
+      "id": "C3", "section": "## How it works", "role": 3,
+      "claim": "Object.getOwnPropertyDescriptors plus Object.defineProperties clone an object with its flags and symbols",
+      "source": "[^2]", "verdict": "entails", "severity": "none",
+      "page_says": "Together with Object.defineProperties it can be used as a “flags-aware” way of cloning an object … returns all property descriptors including symbolic and non-enumerable ones.",
+      "note": ""
+    },
+    {
+      "id": "C4", "section": "## How it works", "role": 3,
+      "claim": "writable: false. Assignment throws TypeError in strict mode and is silently ignored otherwise",
+      "source": "[^1] [^2]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "In non-strict mode, no errors occur when writing to non-writable properties and such. But the operation still won’t succeed.",
+      "note": "[^2] backs the error in strict mode and the silent failure otherwise, but its error line ('Error: Cannot assign to read only property') never names TypeError (searched 'TypeError'). The error class rests only on the local lab [^1], so the claim as a whole cannot be grounded here. [^4] names TypeError for frozen objects in strict mode but is not cited."
+    },
+    {
+      "id": "C5", "section": "## How it works", "role": 3,
+      "claim": "enumerable: false. The property is skipped by for…in, Object.keys and JSON.stringify, but direct access still works",
+      "source": "[^1] [^2]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "Then it won’t appear in a for..in loop, just like the built-in one … Non-enumerable properties are also excluded from Object.keys",
+      "note": "[^2] backs for…in and Object.keys. JSON.stringify skipping and direct access still working: not found in [^2] (searched 'JSON', 'stringify', 'direct'); those parts rest only on the local lab [^1]."
+    },
+    {
+      "id": "C6", "section": "## How it works", "role": 3,
+      "claim": "configurable: false. The property cannot be deleted, and its flags cannot be changed — except that writable can still go from true to false",
+      "source": "[^2]", "verdict": "entails", "severity": "none",
+      "page_says": "A non-configurable property can’t be deleted, its attributes can’t be modified. … We can change writable: true to false for a non-configurable property",
+      "note": ""
+    },
+    {
+      "id": "C7", "section": "## How it works", "role": 3,
+      "claim": "Both a redefinition and a delete threw TypeError in strict mode",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "Lab observation."
+    },
+    {
+      "id": "C8", "section": "## How it works", "role": 3,
+      "claim": "preventExtensions forbids new properties; seal also makes all properties non-configurable; freeze also makes them non-writable",
+      "source": "[^2] [^4]", "verdict": "entails", "severity": "none",
+      "page_says": "Forbids the addition of new properties to the object. … Sets configurable: false for all existing properties. … Sets configurable: false, writable: false for all existing properties.",
+      "note": "Each helper also forbids adding properties, so 'all properties' and 'all existing properties' are the same set. [^4] confirms freeze prevents extensions and makes existing properties non-writable and non-configurable."
+    },
+    {
+      "id": "C9", "section": "## How it works", "role": 3,
+      "claim": "They are shallow: a frozen object's nested object stays mutable",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "[^4] says this ('freeze is shallow') and the References entry says [^4] backs shallowness, but this sentence does not cite it."
+    },
+    {
+      "id": "C10", "section": "## How it works", "role": 3,
+      "claim": "Accessors. get full() {…} runs on read, set full(v) {…} on assignment; the descriptor has get/set and no value/writable",
+      "source": "[^1] [^3]", "verdict": "entails", "severity": "none",
+      "page_says": "The getter works when obj.propName is read, the setter – when it is assigned. … there is no value or writable, but instead there are get and set functions.",
+      "note": ""
+    },
+    {
+      "id": "C11", "section": "## How it works", "role": 3,
+      "claim": "A descriptor with both get and value is invalid (TypeError)",
+      "source": "[^1] [^3]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "If we try to supply both get and value in the same descriptor, there will be an error: // Error: Invalid property descriptor.",
+      "note": "[^3] backs 'invalid, throws an error' but does not name TypeError (searched 'TypeError'); the error class rests only on the local lab [^1]."
+    },
+    {
+      "id": "C12", "section": "## How it works", "role": 3,
+      "claim": "Smart getters for compatibility. An accessor can keep an old property name working while the data moves — e.g. derive age from a stored birthday",
+      "source": "[^3]", "verdict": "entails", "severity": "none",
+      "page_says": "Instead of age we may decide to store birthday, because it’s more precise and convenient … Adding a getter for age solves the problem",
+      "note": ""
+    },
+    {
+      "id": "C13", "section": "## Worked example", "role": 4,
+      "claim": "Step 3: u.full = 'C D' gives u.first 'C'",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "Lab run."
+    },
+    {
+      "id": "C14", "section": "## Worked example", "role": 4,
+      "claim": "Step 4: Object.getOwnPropertyDescriptor(u, 'full') has get, no value",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "Lab run."
+    },
+    {
+      "id": "C15", "section": "## Worked example", "role": 4,
+      "claim": "Step 5: Object.freeze(u); u.first = 'X' (strict) throws TypeError",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "Lab run. [^4] would support it ('obj.foo = \"sparky\"; // throws a TypeError' inside a strict function) but is not cited."
+    },
+    {
+      "id": "C16", "section": "## Edge cases", "role": 6,
+      "claim": "defineProperty on an existing normal property, only {enumerable: false}: other flags keep their values, because updating merges with the existing descriptor",
+      "source": "[^2]", "verdict": "entails", "severity": "none",
+      "page_says": "If the property exists, defineProperty updates its flags. … Here user.name is non-configurable, but we can still change it (as it’s writable)",
+      "note": "The page's example sets only configurable: false on an existing property and the property stays writable; false defaults are limited to newly created properties."
+    },
+    {
+      "id": "C17", "section": "## Edge cases", "role": 6,
+      "claim": "Object.freeze({a: {b: 1}}).a.b = 2 works, because freeze is shallow",
+      "source": "[^1]", "verdict": "not_checkable", "severity": "none",
+      "page_says": "not checked: cites only the local lab [^1], which has no saved text",
+      "note": "[^4] supports it but is not cited."
+    },
+    {
+      "id": "C18", "section": "## Edge cases", "role": 6,
+      "claim": "Non-writable property, sloppy mode: assignment silently ignored, because errors occur only in strict mode",
+      "source": "[^2]", "verdict": "entails", "severity": "none",
+      "page_says": "Errors appear only in strict mode … Flag-violating actions are just silently ignored in non-strict.",
+      "note": "Entailed by its cited source for assignment. The general rule in the Why cell conflicts with [^4]; see conflicts."
+    },
+    {
+      "id": "C19", "section": "## Edge cases", "role": 6,
+      "claim": "Getter without setter, then assignment (strict): TypeError, because there is no setter to call",
+      "source": "[^3]", "verdict": "overstates", "severity": "SOFT_WARN",
+      "page_says": "If we attempt to assign user.fullName=, there will be an error: … // Error (property has only a getter)",
+      "note": "The page says only 'an error'; the error class TypeError is a name the page lacks (searched 'TypeError'). No lab citation on this row."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Do flag-violating operations throw only in strict mode? [^2]: 'Errors appear only in strict mode … silently ignored in non-strict'. [^4]: attempts fail 'silently or by throwing a TypeError exception (most commonly, but not exclusively, when in strict mode)', with non-strict examples where Object.defineProperty on a frozen object and push on a frozen array throw TypeError.",
+      "winner": "none: [^2] rank 3 and [^4] rank 3 are the same rank and no Rank 1 source is cached to settle it",
+      "loser": "[^2] rank 3 (as a general rule; both sources agree for plain assignment)",
+      "where_loser_is": "## Trade-offs (Object.freeze row: 'strict-mode-only errors', uncited and not marked ⚠️); ## Edge cases row 3 Why cell ('Errors only in strict mode')",
+      "ok": false
+    },
+    {
+      "topic": "Does freeze set writable: false on all existing properties ([^2]) or only on data properties ([^4])?",
+      "winner": "no real conflict: accessor properties have no writable attribute ([^3]), so both describe the same effect",
+      "loser": "none",
+      "where_loser_is": "## How it works step 5",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "SOFT_WARN", "section": "## Edge cases", "rule": "grounding",
+      "evidence": "C19: the row names TypeError for assigning to a getter-only property; [^3] says only 'there will be an error' and '// Error (property has only a getter)'."
+    },
+    {
+      "severity": "SOFT_WARN", "section": "## Trade-offs", "rule": "KB-17",
+      "evidence": "The Object.freeze row states 'strict-mode-only errors' as fact. Same-rank cited sources disagree: [^2] says errors appear only in strict mode, while [^4] says freeze violations throw TypeError 'most commonly, but not exclusively, when in strict mode' and shows Object.defineProperty and push on a frozen object throwing outside strict mode. The difference is not marked ⚠️ or attributed; the Why cell of ## Edge cases row 3 repeats the general rule."
+    },
+    {
+      "severity": "SOFT_WARN", "section": "## How it works", "rule": "structure",
+      "evidence": "No section holds role 2 (parts) or role 5 (reference values) of its own: the flag defaults and per-helper effects are spread across ## Mental model and the steps of ## How it works, which mixes mechanism with reference rules. ## Takeaways repeats the false-defaults point already made in ## How it works step 1 and ## Trade-offs."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## Edge cases",
+      "action": "In the row 'Getter without setter, then assignment (strict)', change 'TypeError' to 'An error' to match [^3] ('// Error (property has only a getter)'), or add the lab citation [^1] if the lab ran this case."
+    },
+    {
+      "section": "## Trade-offs",
+      "action": "In the Object.freeze row, replace 'strict-mode-only errors' with 'assignments fail silently outside strict mode, but Object.defineProperty and push on a frozen object throw TypeError in any mode' and cite [^4]. In ## Edge cases row 3, scope the Why cell to assignment ('assignment errors appear only in strict mode' [^2]). If the general rule is kept, mark it ⚠️ as an open conflict between [^2] and [^4] until a Rank 1 source (the ECMAScript specification) settles it."
+    },
+    {
+      "section": "## How it works",
+      "action": "Optional for the structure score: add a short reference table (flag, default for a literal property, default for a defineProperty-created property; and what preventExtensions, seal and freeze each set), citing [^2] and [^4], and trim the duplicate false-defaults reminder in ## Takeaways."
+    }
+  ]
+}

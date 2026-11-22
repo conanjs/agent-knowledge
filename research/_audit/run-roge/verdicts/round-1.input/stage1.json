@@ -1,0 +1,66 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://xlinux.nist.gov/dads/HTML/hashtab.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/3a66dbc21cf7.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://github.com/python/cpython/blob/main/Objects/dictobject.c",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/python/cpython/",
+   "written_rank": null,
+   "cache": "cache/d7c44e36fdb4.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.oracle.com/",
+   "written_rank": null,
+   "cache": "cache/9271ecac0a4c.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHASHSEED",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.python.org/",
+   "written_rank": null,
+   "cache": "cache/c1abe3b0c9de.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://docs.python.org/3/library/stdtypes.html#mapping-types-dict",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.python.org/",
+   "written_rank": null,
+   "cache": "cache/5e0bc1d749a4.txt"
+  }
+ ],
+ "tier_b": [
+  "https://xlinux.nist.gov/dads/HTML/hashtab.html"
+ ]
+}

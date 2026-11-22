@@ -1,0 +1,50 @@
+[
+ {
+  "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+  "normalized": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+  "cache": "cache/11a08c17c96b.txt",
+  "fetched": "2026-11-22T06:34:59Z",
+  "status": 200,
+  "chars": 131719
+ },
+ {
+  "url": "https://docs.kernel.org/filesystems/proc.html",
+  "normalized": "https://docs.kernel.org/filesystems/proc.html",
+  "cache": "cache/b9736fe75d64.txt",
+  "fetched": "2026-11-22T06:34:59Z",
+  "status": 200,
+  "chars": 96849
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man1/pidstat.1.html",
+  "normalized": "https://man7.org/linux/man-pages/man1/pidstat.1.html",
+  "cache": "cache/706cf57ef292.txt",
+  "fetched": "2026-11-22T06:35:00Z",
+  "status": 200,
+  "chars": 21199
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man5/proc_loadavg.5.html",
+  "normalized": "https://man7.org/linux/man-pages/man5/proc_loadavg.5.html",
+  "cache": "cache/b17fbb9caba0.txt",
+  "fetched": "2026-11-22T06:35:01Z",
+  "status": 200,
+  "chars": 2576
+ },
+ {
+  "url": "https://www.brendangregg.com/USEmethod/use-linux.html",
+  "normalized": "https://www.brendangregg.com/USEmethod/use-linux.html",
+  "cache": "cache/28c63e8954f8.txt",
+  "fetched": "2026-11-22T06:35:01Z",
+  "status": 200,
+  "chars": 13041
+ },
+ {
+  "url": "https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html",
+  "normalized": "https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html",
+  "cache": "cache/acaa2ea2bf61.txt",
+  "fetched": "2026-11-22T06:35:02Z",
+  "status": 200,
+  "chars": 33165
+ }
+]

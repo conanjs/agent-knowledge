@@ -1,0 +1,42 @@
+[
+ {
+  "url": "https://blog.cleancoder.com/uncle-bob/2020/10/18/Solid-Relevance.html",
+  "normalized": "https://blog.cleancoder.com/uncle-bob/2020/10/18/Solid-Relevance.html",
+  "cache": "cache/65ca06070f16.txt",
+  "fetched": "2026-11-22T06:34:25Z",
+  "status": 200,
+  "chars": 13382
+ },
+ {
+  "url": "https://go.dev/doc/effective_go",
+  "normalized": "https://go.dev/doc/effective_go",
+  "cache": "cache/5d82dc9a454d.txt",
+  "fetched": "2026-11-22T06:34:25Z",
+  "status": 200,
+  "chars": 101874
+ },
+ {
+  "url": "https://martinfowler.com/bliki/HeaderInterface.html",
+  "normalized": "https://martinfowler.com/bliki/HeaderInterface.html",
+  "cache": "cache/147e01cab9be.txt",
+  "fetched": "2026-11-22T06:34:26Z",
+  "status": 200,
+  "chars": 1249
+ },
+ {
+  "url": "https://martinfowler.com/bliki/RoleInterface.html",
+  "normalized": "https://martinfowler.com/bliki/RoleInterface.html",
+  "cache": "cache/6ffa1010749b.txt",
+  "fetched": "2026-11-22T06:34:27Z",
+  "status": 200,
+  "chars": 6709
+ },
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html",
+  "cache": "cache/b1f557c03240.txt",
+  "fetched": "2026-11-22T06:34:28Z",
+  "status": 200,
+  "chars": 17003
+ }
+]

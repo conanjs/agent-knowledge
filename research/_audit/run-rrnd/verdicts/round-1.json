@@ -1,0 +1,328 @@
+{
+ "verdict": "PASS",
+ "overall_score": 4.75,
+ "judge": {
+  "model": "claude-opus-5-5",
+  "prompt_sha": "d8dcf5d",
+  "scope": "all"
+ },
+ "section_map": [
+  {
+   "heading": "## Summary",
+   "role": "—"
+  },
+  {
+   "heading": "## Problem",
+   "role": 1
+  },
+  {
+   "heading": "## Mental model",
+   "role": 1
+  },
+  {
+   "heading": "## How it works",
+   "role": 3
+  },
+  {
+   "heading": "## Worked example",
+   "role": 4
+  },
+  {
+   "heading": "## Edge cases",
+   "role": 6
+  },
+  {
+   "heading": "## Trade-offs",
+   "role": 6
+  },
+  {
+   "heading": "## Takeaways",
+   "role": "—"
+  },
+  {
+   "heading": "## Used by",
+   "role": "—"
+  },
+  {
+   "heading": "## Verification status",
+   "role": "—"
+  },
+  {
+   "heading": "## References",
+   "role": "—"
+  },
+  {
+   "heading": "## Related",
+   "role": "—"
+  }
+ ],
+ "sources": [
+  {
+   "ref": "[^1]",
+   "url": "linux/lab-setup.md",
+   "cache": null,
+   "tier": "B",
+   "rank": "local",
+   "rank_basis": "local artifact: a lab-notes path (Node 24.22.1 lab), not a web page; not in stage1.json"
+  },
+  {
+   "ref": "[^2]",
+   "url": "https://javascript.info/map-set",
+   "cache": "cache/f71b14b4320d.txt",
+   "tier": "A",
+   "rank": 3,
+   "rank_basis": "tier A: javascript.info/"
+  },
+  {
+   "ref": "[^3]",
+   "url": "https://javascript.info/keys-values-entries",
+   "cache": "cache/6193ebf5ff36.txt",
+   "tier": "A",
+   "rank": 3,
+   "rank_basis": "tier A: javascript.info/"
+  },
+  {
+   "ref": "[^4]",
+   "url": "https://javascript.info/weakmap-weakset",
+   "cache": "cache/07f86e850729.txt",
+   "tier": "A",
+   "rank": 3,
+   "rank_basis": "tier A: javascript.info/"
+  },
+  {
+   "ref": "[^5]",
+   "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+   "cache": "cache/3afad7684d5b.txt",
+   "tier": "A",
+   "rank": 3,
+   "rank_basis": "tier A: developer.mozilla.org/en-US/docs/"
+  }
+ ],
+ "deterministic_checks": {
+  "checked_by": "judge",
+  "sections_present": true,
+  "zero_orphan_citations": true,
+  "rank_quarantine_intact": true,
+  "core_claims_cited": true
+ },
+ "rubric_scores": {
+  "citation_integrity": 5,
+  "rank_compliance": 5,
+  "factual_grounding": 5,
+  "diataxis_rigor": 4
+ },
+ "coverage": {
+  "sampled": false,
+  "claims_roles_1_5": 13,
+  "checked_roles_1_5": 13,
+  "claims_role_6": 4,
+  "checked_role_6": 4,
+  "no_cache": 0,
+  "not_checkable": 5
+ },
+ "claim_checks": [
+  {
+   "id": "C1",
+   "section": "## Mental model",
+   "role": 1,
+   "claim": "Artifact: the plain-object key collapse versus `Map`, in Node 24 (code block: Object.keys(o) gives ['[object Object]']; [m.get(1), m.get('1'), m.get(k), m.size] gives ['n', 's', 'o', 3])",
+   "source": "[^1]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found: [^1] is a local artifact (linux/lab-setup.md) with no saved text",
+   "note": "Cites only the local lab."
+  },
+  {
+   "id": "C2",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "**`Map`.** `set` returns the map (chainable), `get`, `has`, `delete`, `clear`, `size`. Keys are compared with SameValueZero, so `NaN` works as a key",
+   "source": "[^1] [^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Every map.set call returns the map itself … Map uses the algorithm SameValueZero … So NaN can be used as the key as well.",
+   "note": "The method list (get, has, delete, clear, size) is on the same page."
+  },
+  {
+   "id": "C3",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "Iteration (`keys`, `values`, `entries`, `for…of`) follows insertion order",
+   "source": "[^1] [^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The iteration goes in the same order as the values were inserted. Map preserves this order, unlike a regular Object.",
+   "note": "The page lists keys(), values(), entries() and says entries() is used by default in for..of."
+  },
+  {
+   "id": "C4",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "**`Set`.** `add` ignores duplicates: `new Set(['b','a','b','c','a'])` iterates `b, a, c`",
+   "source": "[^1] [^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "set.add(value) – adds a value (does nothing if value exists), returns the set itself. … Iteration over Map and Set is always in the insertion order",
+   "note": "The example output follows from these two rules; the page's own john/pete/mary example shows the same pattern."
+  },
+  {
+   "id": "C5",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "Node 24 also has set algebra such as `intersection` and `union`",
+   "source": "[^1] [^5]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "Set.prototype.intersection() Takes a set and returns a new set containing elements in both this set and the given set.",
+   "note": "MDN backs the methods (intersection, union are listed). The 'Node 24' label rests only on the local lab [^1]: the saved MDN page has an empty Browser compatibility section and never mentions Node, so the claim as written cannot be checked."
+  },
+  {
+   "id": "C6",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "**Converting.** `new Map(Object.entries(obj))` and `Object.fromEntries(map)` convert in both directions",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "let map = new Map(Object.entries(obj)); … let obj = Object.fromEntries(map); // omit .entries()",
+   "note": ""
+  },
+  {
+   "id": "C7",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "To transform a plain object, go through entries: double every price with `Object.fromEntries(Object.entries(prices).map(([k, v]) => [k, v * 2]))`",
+   "source": "[^1] [^3]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "we can use Object.entries followed by Object.fromEntries … Object.entries(prices).map(entry => [entry[0], entry[1] * 2])",
+   "note": "The doc's destructured arrow is the same transform as the page's example."
+  },
+  {
+   "id": "C8",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "`Object.keys/values/entries` return arrays (not iterators, unlike `map.keys()`) and skip symbol keys",
+   "source": "[^3]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Object.* methods return “real” array objects, not just an iterable. … these methods ignore properties that use Symbol(...) as keys.",
+   "note": "The page's comparison table gives map.keys() as returning an iterable and Object.keys as a real Array."
+  },
+  {
+   "id": "C9",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "`WeakMap` keys must be objects; `new WeakMap().set('k', 1)` throws `TypeError`",
+   "source": "[^1] [^4]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "keys must be objects, not primitive values … weakMap.set(\"test\", \"Whoops\"); // Error, because \"test\" is not an object",
+   "note": "The object-only rule and the thrown error are in [^4], but the page names no error class; 'TypeError' rests only on the local lab [^1], so the claim as written cannot be checked."
+  },
+  {
+   "id": "C10",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "The entry does not keep its key reachable; once nothing else references the key, the entry can be collected",
+   "source": "[^4]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "there are no other references to that object – it will be removed from memory (and from the map) automatically.",
+   "note": "The page is stronger ('will be removed'); the claim's 'can be collected' is within it."
+  },
+  {
+   "id": "C11",
+   "section": "## How it works",
+   "role": 3,
+   "claim": "There is no iteration and no `size` (`w.keys` is `undefined`), because contents depend on when the collector runs",
+   "source": "[^1] [^4]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "WeakMap does not support iteration and methods keys(), values(), entries() … So, technically, the current element count of a WeakMap is not known.",
+   "note": "The page also says 'WeakMap has only the following methods' (set, get, delete, has), so there is no keys property, and its Summary says no support for size."
+  },
+  {
+   "id": "C12",
+   "section": "## Worked example",
+   "role": 4,
+   "claim": "Step 4: `john = null` (user logs out, no other references) → Entry is eligible for collection with the object",
+   "source": "[^4]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "After john object becomes unreachable, by all means except as a key of WeakMap, it gets removed from memory, along with the information by that key from WeakMap.",
+   "note": ""
+  },
+  {
+   "id": "C13",
+   "section": "## Worked example",
+   "role": 4,
+   "claim": "Step 5: Same code with `Map` → The entry and `john`'s object stay in memory until removed by hand",
+   "source": "[^4]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "john object should be garbage collected, but remains in memory, as it’s a key in visitsCountMap. We need to clean visitsCountMap when we remove users",
+   "note": ""
+  },
+  {
+   "id": "C14",
+   "section": "## Edge cases",
+   "role": 6,
+   "claim": "`map[key] = v` instead of `map.set` → Creates a plain property, not a map entry; why: Square brackets use the object, not the `Map` API",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Although map[key] also works, e.g. we can set map[key] = 2, this is treating map as a plain JavaScript object",
+   "note": ""
+  },
+  {
+   "id": "C15",
+   "section": "## Edge cases",
+   "role": 6,
+   "claim": "`new Map([[NaN, 1]]).get(NaN)` → `1`; why: SameValueZero",
+   "source": "[^1]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found: [^1] is a local artifact with no saved text",
+   "note": "Cites only the local lab ([^2] would support it but is not cited here)."
+  },
+  {
+   "id": "C16",
+   "section": "## Edge cases",
+   "role": 6,
+   "claim": "Primitive key in `WeakMap` → `TypeError`; why: Primitives cannot be collected individually",
+   "source": "[^1]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found: [^1] is a local artifact with no saved text",
+   "note": "Cites only the local lab."
+  },
+  {
+   "id": "C17",
+   "section": "## Edge cases",
+   "role": 6,
+   "claim": "Need size or keys of a weak collection → Not available; why: Non-deterministic contents",
+   "source": "[^4]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Like Set, it supports add, has and delete, but not size, keys() and no iterations. … technically it’s not exactly specified when the cleanup happens.",
+   "note": "The first quote is about WeakSet; the WeakMap passages say the same for keys() and the element count."
+  }
+ ],
+ "conflicts": [],
+ "criteria_checks": [],
+ "violations": [
+  {
+   "severity": "SOFT_WARN",
+   "section": "## How it works",
+   "rule": "structure",
+   "evidence": "The doc has no section of its own for role 2 (concept architecture) or role 5 (reference and invariants); their content is folded into Summary and How it works. As a result How it works is mostly an API catalog (method names, return types, key rules) with mechanism only for the weak collections (reachability, collector timing). Every other section does its role's job."
+  }
+ ],
+ "patch_instructions": [
+  {
+   "section": "## How it works",
+   "action": "Move the API catalog (Map methods get/has/delete/clear/size, Set methods, Object.keys/values/entries returning real arrays) into a compact reference table, backed by [^2] and [^3], and keep the numbered steps for mechanism: SameValueZero key comparison and insertion-order iteration [^2], and reachability-based removal with collector-dependent timing [^4]."
+  }
+ ]
+}

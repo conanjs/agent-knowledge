@@ -1,0 +1,26 @@
+[
+ {
+  "url": "https://cr.yp.to/bib/1975/aho.pdf",
+  "normalized": "https://cr.yp.to/bib/1975/aho.pdf",
+  "cache": "cache/eaed3674ae93.txt",
+  "fetched": "2026-11-22T06:34:42Z",
+  "status": 200,
+  "chars": 701972
+ },
+ {
+  "url": "https://epubs.siam.org/doi/abs/10.1137/0206024",
+  "normalized": "https://epubs.siam.org/doi/abs/10.1137/0206024",
+  "cache": "cache/de88eabe835f.txt",
+  "fetched": "2026-11-22T06:34:47Z",
+  "status": "error",
+  "error": "RuntimeError('HTTP 403')"
+ },
+ {
+  "url": "https://www.sqlite.org/fts5.html",
+  "normalized": "https://www.sqlite.org/fts5.html",
+  "cache": "cache/90b57f7dd042.txt",
+  "fetched": "2026-11-22T06:34:47Z",
+  "status": 200,
+  "chars": 160377
+ }
+]

@@ -1,0 +1,310 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.0,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "2b066f6", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "envelope" },
+    { "heading": "## Goal & prerequisites", "role": 1 },
+    { "heading": "## Steps", "role": 3 },
+    { "heading": "## Verify", "role": 4 },
+    { "heading": "## Troubleshooting", "role": 6 },
+    { "heading": "## Takeaways", "role": 1 },
+    { "heading": "## Used by", "role": "envelope" },
+    { "heading": "## Verification status", "role": "envelope" },
+    { "heading": "## References", "role": "envelope" },
+    { "heading": "## Related", "role": "envelope" }
+  ],
+  "sources": [
+    {
+      "ref": "[^1]",
+      "url": "https://www.brendangregg.com/USEmethod/use-linux.html",
+      "cache": "cache/28c63e8954f8.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "tier B, no rule. Rule 1 not shown: the saved page refers to 'the USE Method' but neither it nor another cached page says the author coined or first published it (the load-average post says only 'I focus on such metrics in the USE method'); and the claims cited to it are about vmstat/mpstat/iostat column meanings, which would sit outside a USE-method scope anyway. Rules 2 and 3 do not fit. Class: a personal site ('Brendan's site'), page last updated 29-Sep-2013, so rank 6 (personal blog); rank 4 needs a company's or project's engineering blog, and when two fit the higher number is taken."
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://man7.org/linux/man-pages/man5/proc_loadavg.5.html",
+      "cache": "cache/b17fbb9caba0.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: man7.org/linux/man-pages/"
+    },
+    {
+      "ref": "[^3]",
+      "url": "https://www.brendangregg.com/blog/2017-08-08/linux-load-averages.html",
+      "cache": "cache/acaa2ea2bf61.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "tier B, no rule. Rule 1 does not fit: the post itself credits load averages to earlier systems (Multics) and the 1993 Linux patch to another engineer. Rules 2 and 3 do not fit. Class: 'Brendan Gregg's Blog', a personal blog, so rank 6."
+    },
+    {
+      "ref": "[^4]",
+      "url": "https://docs.kernel.org/filesystems/proc.html",
+      "cache": "cache/b9736fe75d64.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: docs.kernel.org/"
+    },
+    {
+      "ref": "[^5]",
+      "url": "https://docs.kernel.org/admin-guide/cgroup-v2.html",
+      "cache": "cache/11a08c17c96b.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: docs.kernel.org/"
+    },
+    {
+      "ref": "[^6]",
+      "url": "linux/lab-setup.md",
+      "cache": null,
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "local lab artifact; not in stage1.json and has no saved text"
+    },
+    {
+      "ref": "[^7]",
+      "url": "https://man7.org/linux/man-pages/man1/pidstat.1.html",
+      "cache": "cache/706cf57ef292.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: man7.org/linux/man-pages/"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": false,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 1,
+    "factual_grounding": 2,
+    "diataxis_rigor": 4
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 9,
+    "checked_roles_1_5": 9,
+    "claims_role_6": 0,
+    "checked_role_6": 0,
+    "no_cache": 0,
+    "not_checkable": 1
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "Load counts runnable **and** `D`-state threads",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D) averaged over 1, 5, and 15 minutes",
+      "note": "Step 1. The page also says these are the numbers uptime(1) shows."
+    },
+    {
+      "id": "C2",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "it is a damped average and lags behind a sudden change",
+      "source": "[^3]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "calculate exponentially-damped moving sums of a five second average … The so-called \"one minute average\" only reaches about 0.62 by the one minute mark.",
+      "note": "Step 1. Grounded, but [^3] is rank 6 in a role 3 section: KB-15 breach recorded under violations."
+    },
+    {
+      "id": "C3",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "`r` larger than the CPU count = CPU saturation; `si`/`so` > 0 = swapping; `wa` high = waiting on I/O; `st` high = the hypervisor is taking CPU",
+      "source": "[^1]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "system-wide: vmstat 1, \"r\" > CPU count … vmstat 1, \"si\"/\"so\" (swapping) … vmstat 1, \"us\" + \"sy\" + \"st\"; wa/st meaning: not found (searched steal, hypervisor, \"wa\", iowait)",
+      "note": "Step 2. The r and si/so parts match the checklist. The page never says what vmstat 'wa' or 'st' mean: it lists 'st' only as part of CPU utilization and excludes the iowait columns from it. Also [^1] is rank 6 in role 3 (KB-15)."
+    },
+    {
+      "id": "C4",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "One CPU at 100% (often in `%soft` or `%sys`) while others idle = a single-threaded or single-queue bottleneck",
+      "source": "[^1]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "CPU utilization: a single hot CPU can be caused by a single hot thread, or mapped hardware interrupt.",
+      "note": "Step 3. The page says a hot CPU 'can be caused by' a hot thread or a mapped hardware interrupt; the doc writes that 'can' as '=', swaps 'mapped hardware interrupt' for 'single-queue', and adds '(often in %soft or %sys)' and 'while others idle', which the page does not say (searched %soft, %sys, single, interrupt). Also [^1] is rank 6 in role 3 (KB-15)."
+    },
+    {
+      "id": "C5",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "`%CPU` per process; `%wait` = time runnable but not running (waiting for a CPU or a CPU quota)",
+      "source": "[^7]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "%wait  Percentage of CPU spent by the task while waiting to run. … %CPU   Total percentage of CPU time used by the task.",
+      "note": "Step 4. %CPU and 'waiting to run' match. The page names no cause of the wait and never mentions a CPU quota or cgroup throttling (searched quota, cgroup, throttl); the quota reading comes from the lab run [^6], which this claim does not cite."
+    },
+    {
+      "id": "C6",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "Judge by `available`, not `free`",
+      "source": "[^4]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "MemFree … Total free RAM. … MemAvailable … An estimate of how much memory is available for starting new applications, without swapping.",
+      "note": "Step 5. The page defines both /proc/meminfo fields but does not tell the reader to prefer one, and does not document the `available`/`free` columns of free(1) (searched free(1), \"available\"). The directive and the column mapping go beyond the page."
+    },
+    {
+      "id": "C7",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "`%util` high **and** `aqu-sz` > 1 with high `r_await`/`w_await` = saturated device",
+      "source": "[^1]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "iostat -xz 1, \"%util\" … iostat -xnz 1, \"avgqu-sz\" > 1, or high \"await\" … Last updated: 29-Sep-2013",
+      "note": "Step 6. The page (2013) names 'avgqu-sz' and 'await'; 'aqu-sz', 'r_await' and 'w_await' (the column names of the sysstat >= 12 the doc targets) do not appear, so the names and the version are not covered. The page also gives saturation as queue > 1 OR high await, with %util as the utilization metric, not an AND of all three. Also [^1] is rank 6 in role 3 (KB-15)."
+    },
+    {
+      "id": "C8",
+      "section": "## Steps",
+      "role": 3,
+      "claim": "`nr_throttled / nr_periods` near 100% = CPU quota is the limit; `memory.events` `oom_kill` > 0 = OOM kills; `memory.current` near `memory.max` = reclaim pressure inside the cgroup",
+      "source": "[^5]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "nr_periods / nr_throttled listed with no definition (searched throttl, period); \"oom_kill The number of processes belonging to this cgroup killed by any kind of OOM killer.\"",
+      "note": "Step 8. The oom_kill part entails. The page only lists nr_periods and nr_throttled, defines neither and gives no ratio reading; it also limits them to 'this cgroup’s own bandwidth limit, not including throttling inherited from ancestor cgroups', a qualifier the claim drops. 'memory.current near memory.max = reclaim pressure' overstates: the page ties direct reclaim to usage that reaches or is 'about to go over the max boundary', and uses 'reclaim pressure' for memory.high."
+    },
+    {
+      "id": "C9",
+      "section": "## Verify",
+      "role": 4,
+      "claim": "A run in the lab: three busy-loop threads in a container limited to 2 CPUs (`--cpus=2`) on an 8-CPU VM (Linux 6.17.8, 2026-11-04)",
+      "source": "[^6]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: local artifact linux/lab-setup.md has no saved text",
+      "note": "Cites only a local artifact."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "What the D state in the load average covers: [^2] says 'waiting for disk I/O (state D)'; [^3] says uninterruptible tasks include 'tasks blocked on disk I/O and some locks'.",
+      "winner": "[^2] rank 1",
+      "loser": "[^3] rank 6",
+      "where_loser_is": "not stated in the doc: role 3 says only 'D-state threads', and the role 6 table reads many D threads as 'Disk or NFS waits'",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "KB-15",
+      "evidence": "Step 1 cites [^3] (personal blog, rank 6) for 'damped average and lags'; role 3 allows ranks 1-4."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "KB-15",
+      "evidence": "Step 2 cites [^1] (personal site, rank 6; no originator evidence in the input) for the vmstat column readings; role 3 allows ranks 1-4."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "KB-15",
+      "evidence": "Step 3 cites [^1] (rank 6) for the single-hot-CPU reading; role 3 allows ranks 1-4."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "KB-15",
+      "evidence": "Step 6 cites [^1] (rank 6) for the iostat saturation rule; role 3 allows ranks 1-4."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C3: [^1] never defines vmstat 'wa' (I/O wait) or 'st' (hypervisor steal); it lists 'st' only inside the CPU utilization sum."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C4: [^1] says a single hot CPU 'can be caused by a single hot thread, or mapped hardware interrupt'; '(often in %soft or %sys)', 'while others idle' and 'single-queue' are not on the page, and 'can' became '='."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C5: [^7] defines %wait as 'Percentage of CPU spent by the task while waiting to run' and never mentions a CPU quota; the quota reading rests on the uncited lab run."
+    },
+    {
+      "severity": "WARN",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C6: [^4] defines MemAvailable and MemFree but gives no 'judge by available, not free' rule and does not cover free(1)'s columns."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C7: [^1] (2013) names 'avgqu-sz' and 'await', not 'aqu-sz' or 'r_await'/'w_await', and gives saturation as 'avgqu-sz > 1, or high await', not %util AND queue AND await."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## Steps",
+      "rule": "grounding",
+      "evidence": "C8: [^5] lists nr_periods and nr_throttled without defining them or any ratio reading, and limits them to the cgroup's own limit, excluding ancestors'; 'near memory.max = reclaim pressure' widens 'about to go over the max boundary'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Steps",
+      "rule": "structure",
+      "evidence": "Interpretive claims carry neither a mark nor a citation: step 1's dmesg strings, step 5's 'Swap activity (step 2) plus low available = memory pressure', and all of step 7's network readings. The Verification status line still reports 'Unverified: 0 claims'."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## Steps",
+      "action": "Step 1: replace [^3] with a rank 1-4 source for the damping, e.g. kernel/sched/loadavg.c at a release tag (rank 1), fetched and cached; or keep the sentence, mark it ⚠️, and move the Gregg reading with [^3] into ## Troubleshooting (role 6, any rank). Note that [^2] gives only 'averaged over 1, 5, and 15 minutes' and does not support 'damped'."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 2: cite vmstat(8) on man7.org (rank 1, fetch and cache it) for the meanings of r, si/so, wa and st, in place of [^1]. If vmstat(8)'s wording for 'r' differs from [^1]'s footnote, which calls the man page 'either incorrect or misleading', record that disagreement in ## Troubleshooting with both ranks (KB-17)."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 3: rewrite to the page's modal and wording, e.g. 'One hot CPU can be caused by a single hot thread or a mapped hardware interrupt', and drop '(often in %soft or %sys)' unless a rank 1-4 source such as mpstat(1) on man7.org backs it. Replace [^1] with that rank 1-4 source, or move the heuristic with [^1] into ## Troubleshooting (role 6)."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 4: split the sentence. Keep '`%wait` = percentage of CPU the task spent waiting to run ✅[^7]'. Mark '(including time throttled by a CPU quota)' as shown by the lab run ✅[^6], or move that reading into ## Verify, which already shows %wait ≈ 33% under the quota."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 5: rephrase to 'Judge by MemAvailable (the `available` column of free), an estimate of how much memory is available for starting new applications without swapping ✅[^4]', and cite free(1) on man7.org (rank 1) for the mapping of the `available` column to MemAvailable."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 6: cite iostat(1) on man7.org for sysstat >= 12 (rank 1) for the names %util, aqu-sz, r_await and w_await, in place of [^1]. State the rule as the checklist gives it: %util = utilization; queue length > 1 or high await = saturation (OR, not AND). If [^1] stays at all, place it in ## Troubleshooting and note that it uses the older names avgqu-sz and await."
+    },
+    {
+      "section": "## Steps",
+      "action": "Step 8: cite the CFS bandwidth control doc (docs.kernel.org/scheduler/sched-bwc.html, rank 1, fetch and cache it) for what nr_periods and nr_throttled count, or mark the ratio reading ⚠️. Add the qualifier from [^5]: these stats count only throttling by this cgroup's own limit, so check cpu.stat.local throttled_usec for an ancestor's limit. Replace 'memory.current near memory.max = reclaim pressure' with 'memory.events max > 0 = usage reached memory.max and triggered direct reclaim ✅[^5]'."
+    },
+    {
+      "section": "## Steps",
+      "action": "Mark the unmarked readings in steps 1, 5 and 7 with ✅ and a rank 1-4 citation (e.g. ss(8), nstat(8) and ip(8) on man7.org for step 7) or with ⚠️, then update the counts in ## Verification status."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+ {
+  "url": "https://xlinux.nist.gov/dads/HTML/hashtab.html",
+  "normalized": "https://xlinux.nist.gov/dads/HTML/hashtab.html",
+  "cache": "cache/3a66dbc21cf7.txt",
+  "fetched": "2026-11-22T06:34:41Z",
+  "status": 200,
+  "chars": 2511
+ },
+ {
+  "url": "https://github.com/python/cpython/blob/main/Objects/dictobject.c",
+  "normalized": "https://github.com/python/cpython/blob/main/Objects/dictobject.c",
+  "cache": "cache/d7c44e36fdb4.txt",
+  "fetched": "2026-11-22T06:34:40Z",
+  "status": 200,
+  "chars": 40360
+ },
+ {
+  "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html",
+  "normalized": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html",
+  "cache": "cache/9271ecac0a4c.txt",
+  "fetched": "2026-11-22T06:34:38Z",
+  "status": 200,
+  "chars": 23257
+ },
+ {
+  "url": "https://docs.python.org/3/using/cmdline.html",
+  "normalized": "https://docs.python.org/3/using/cmdline.html",
+  "cache": "cache/c1abe3b0c9de.txt",
+  "fetched": "2026-11-22T06:34:39Z",
+  "status": 200,
+  "chars": 46745
+ },
+ {
+  "url": "https://docs.python.org/3/library/stdtypes.html",
+  "normalized": "https://docs.python.org/3/library/stdtypes.html",
+  "cache": "cache/5e0bc1d749a4.txt",
+  "fetched": "2026-11-22T06:34:39Z",
+  "status": 200,
+  "chars": 197317
+ }
+]

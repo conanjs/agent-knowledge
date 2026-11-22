@@ -33,19 +33,24 @@ status: proposal (not built, not committed)
 ### 1.1 Actors (7)
 
 - **V**: approves the plan and the commit, in chat.
-- **Orchestrator** (the Supervisor in the specs): plans, dispatches, arbitrates and writes the doc. It is the `research-knowledge` skill running in the main session, on a strong model.
+- **Orchestrator** (the Supervisor in the specs): plans, dispatches, arbitrates and writes the doc. It is the `research-orchestrator` agent, on a strong model, built like the other agents (body plus one header per coding agent, composed by agent-config's `build-agents`). Its Claude header allows only `Agent(research-worker, knowledge-judge)` as subagents.
 - **Worker** (one agent body, 4 profiles): searches, ranks, fetches and extracts for one profile. It is the `research-worker` agent, started as a subagent.
 - **Rank classifier**: gives each URL a rank 1–6, via `classify-source.mjs` (deterministic rules, `tier: A`) or, for URLs no rule covers, the worker's judgment marked `tier: B`. A worker unsure between two ranks picks the higher number (the less authoritative one), so an unknown source never reaches a core section by default. The judge re-rates every `tier: B` source (§3.3).
 - **Fetcher**: saves the page text, via `fetch-source.mjs` (HTML to text) or `gh api` (GitHub issues and code at a tag).
 - **Stage 1 checker**: checks structure, citations and ranks, via `validate-knowledge.mjs` with the new rules KB-14 to KB-16.
 - **Judge** (the Stage 2 LLM-as-a-judge): checks every core claim against the saved page text, plus conflicts and structure. It is the `knowledge-judge` agent, in a fresh context on a strong model.
 
-Why the orchestrator runs in the main session: in Claude Code a subagent cannot start other subagents, and the orchestrator must start the workers and the judge (Claude Code subagents docs; the reverted design hit the same limit).
+Why the orchestrator is an agent, not a skill plus a procedure (changed 2026-11-22). The first version of this design said a Claude Code subagent cannot start other subagents, so the orchestrator had to be a skill in the main session. The Claude Code docs for 2.1.330 say otherwise:
+- a subagent can start its own (nested) subagents;
+- an agent started with `claude --agent <name>` runs as the main thread and can start subagents;
+- `tools: Agent(a, b)` limits which ones.
+
+So the orchestrator can be an agent: started as the main thread (`claude --agent research-orchestrator`), or as a subagent that starts the workers and the judge as nested subagents. In both cases the judge still starts with a fresh context. A thin skill can stay as the trigger ("research X" starts the agent), but the steps live in the agent's body, one canonical copy. **Unconfirmed:** whether Codex CLI and Copilot support nested subagents or an agent as the main thread; their orchestrator headers wait for that (Phase 3).
 
 ### 1.2 Diagram
 
 ```
-V ──prompt──► ORCHESTRATOR (main session)
+V ──prompt──► ORCHESTRATOR (research-orchestrator agent)
                │ 1 scope: grep knowledge/ for what is already known
                │ 2 plan.md (questions, out of scope, budget) ──► V approves
                │
@@ -135,7 +140,20 @@ Rank is about **provenance** (who published it and with what authority), not abo
 
 A rule is proposed only when one publisher owns everything under that host and prefix, such as one book or one organization's blog. A host where many people post never gets a rule, because its paths do not show who wrote a page: a mailing-list archive such as `lkml.iu.edu` (`/hypermail/linux/kernel/2010.1/04469.html` names no author), `medium.com`, or `github.com/<user>/`. Those pages stay tier B and are rated one at a time.
 
-**Tier B rating guide** (decided by V, 2026-11-22): a post by a project's maintainer on that project's official mailing list is Rank 4, but only when the saved page itself shows the author's role, for example the project's lead or a `Signed-off-by:` line of a maintainer. Otherwise it is Rank 6. Example: the three `lkml.iu.edu` posts in the SE-04 baseline are by Linus Torvalds, and their saved pages show it.
+**GitHub: org rules and repo rules** (decided by V, 2026-11-22). The code and docs in the repositories of core languages, runtimes, frameworks and operating systems are Rank 1, while `/issues/`, `/pull/` and `/discussions/` inside them stay Rank 6, because the rule with more path segments wins.
+- **Org rule** (`github.com/<org>/` → Rank 1) for an organization whose every repository is official: `rust-lang`, `nodejs`, `golang`, `python`, `denoland`, `oven-sh`, `tc39`, `kubernetes`, `postgres`, `llvm`, `whatwg`, `w3c`, plus those seen in the knowledge base's References: `opencontainers`, `swiftlang`, `cucumber`, `github`, `actions`, `anthropics`, `openai`, `modelcontextprotocol`, `Homebrew`, `cilium`, `projectcalico`, `flannel-io`, `kata-containers`, `firecracker-microvm`, `graphql`.
+- **Repo rule** (`github.com/<org>/<repo>/` → Rank 1) for a flagship project inside a large or personal account: `facebook/react`, `vercel/next.js`, `microsoft/TypeScript`, `torvalds/linux`, `v8/v8`, `apple/swift`, `redis/redis`, `docker/cli`, `moby/moby`, `libuv/libuv`, `nvm-sh/nvm`, `google/benchmark`.
+- **Books on GitHub** are Rank 3, like a textbook: `getify/You-Dont-Know-JS`, `MostlyAdequate/mostly-adequate-guide`, and `javascript-tutorial` (the source of `javascript.info`).
+
+The list cannot name every library's repository: of the 112 tier B `github.com` References URLs found on 2026-11-22, most were one library's own repo. Those stay tier B, and the judge's "project's own home" rule below rates them.
+
+**Tier B rating guide** (decided by V, 2026-11-22). The judge applies these in order, and the first that fits decides:
+1. **Originator:** the author coined or first published the concept the claim is about, and a page in the judge's input shows it. Rank 1, for claims about that concept only. In the audit, three originators' own pages were rated Rank 6 by the fallback below; this rule comes first so that cannot recur.
+2. **The project's own home:** the project's own repository, docs or release notes, for claims about that project. Rank 1.
+3. **Maintainer's post:** a post by a project's maintainer on that project's official mailing list is Rank 4, but only when the saved page itself shows the author's role, for example the project's lead or a `Signed-off-by:` line of a maintainer. Example: the three `lkml.iu.edu` posts in the SE-04 baseline are by Linus Torvalds, and their saved pages show it.
+4. **Class:** otherwise by the classes in the table above; when two ranks fit, the higher number.
+
+Rules 1–3 rest only on what the input shows, never on the judge's own memory.
 
 ### 2.2 Where the rank is written
 
@@ -237,7 +255,7 @@ This is the evaluator spec's `EvaluatorVerdict` with three changes. `section` is
 }
 ```
 
-**PASS** = Stage 1 all true, no `CRITICAL_FAIL`, and every rubric score ≥ 4 (evaluator spec §4).
+**PASS** = Stage 1 all true, no `CRITICAL_FAIL`, and every rubric score ≥ 4 (evaluator spec §4), **and at least 70% of the judged claims are checkable** (decided by V, 2026-11-22). A judge's `PASS` below that share becomes **`INCONCLUSIVE`**: nothing was found wrong, but too little could be checked. A script sets it from `claim_checks` (`evaluate-research.mjs verdict`), so the judge does not compute it. Example: a doc with 4 ✅ claims of which 3 cite only a local lab is 1 of 4 = 25% checkable, so `INCONCLUSIVE`.
 
 **Severity of a grounding finding in sections 1–5** (decided by V, 2026-11-22; judge v3):
 
@@ -254,6 +272,7 @@ Example: in the MCP deep dive, "Server must …; insufficient scope gives `403`"
 | Outcome | `status` | ✅ marks | Summary |
 |---|---|---|---|
 | PASS | `verified`, `last-verified` = date of the verdict | ✅ now means "checked by the judge against the saved page" | — |
+| INCONCLUSIVE | `draft`, with the reason (for example "13 of 20 claims cite only local labs") in a Summary note | Unchanged: they are the writer's own checks | — |
 | FAIL after 2 patch rounds | `draft` | Each failing claim becomes `⚠️ unverified` with the judge's note in our own words | A "Known issues" line listing them, as the MCP doc already does (the specs' "Epistemic Caution Banner") |
 
 ### 3.6 Stage 1.5: code probes (Phase 2b, decided by V, 2026-11-22)
@@ -344,11 +363,23 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 |---|---|---|---|
 | **0. Baseline + judge prototype** (Markdown only) | The judge prompt as a draft agent. A plain-prompt run on 3 golden topics (SE-04, LS-03, SE-02) | The judge passes calibration (§4.2 stage 1), and the 3 baseline docs have verdicts. **Status 2026-11-22: done.** Judge v3 (`f166f98`, V's severity split, neutral examples) found both known MCP errors and 5/5 planted ones at the right severity, and passes the clean doc (4.50). The 3 baselines fail at 2.75–3.25, with 2.0–3.9 grounding findings per 15 checkable claims (0.3–1.3 critical), mostly on tier B sources the judge rated Rank 6 (`research/_calibration/REPORT.md`) | S |
 | **1. Source rank** | `source-ranks.json` (host + path-prefix rules) + `classify-source.mjs` (tier A). `ranked-sources` key; KB-14 to KB-16 in the validator, with Cucumber scenarios. A report-only rank census of today's References (for example, how many are Rank 5–6) | `pnpm run verify-before-commit` passes; the census reaches V. **Status 2026-11-22: built, checks pass (94 scenarios).** Census of 1,873 References URLs: 64% tier A (Rank 1: 47%, Rank 3: 15%), 36% tier B. KB-16 gated on `ranked-sources`, as §2.2 says | S–M |
-| **2. Verifier** | `evaluate-research.mjs` (Stage 1 + quote check), the `knowledge-judge` agent, the verdict JSON schema, the patch loop in a procedure, the status mapping (§3.5). Stage 1 passes tier A ranks to the judge, and the tier B rating guide (§2.1) joins the judge prompt in the same change, so the judge is recalibrated once | It re-runs green on the calibration docs. An offline audit of 10 verified docs reaches V | M |
+| **2. Verifier** | `evaluate-research.mjs` (Stage 1 + quote check), the `knowledge-judge` agent, the verdict JSON schema, the patch loop and the status mapping (§3.5) for the orchestrator's body. Stage 1 passes tier A ranks to the judge, and the tier B rating guide (§2.1) joins the judge prompt in the same change, so the judge is recalibrated once | It re-runs green on the calibration docs. An offline audit of 10 verified docs reaches V | M |
 | **2b. Code probes** | `tools/run-code-harness/` (Stage 1.5, §3.6) with Cucumber scenarios; the fence tags in `deep-dive.schema.md` and a validator check for them; the judge's `observed` and `invalid_probe` verdicts | SE-04's 14 C tests run as probes, and its `not_checkable` claims drop from 10/45 to 2/45 or fewer when re-judged with the same sample seed; `pnpm run verify-before-commit` passes. Done before Phase 3 | M |
-| **3. Research agent** | The `research-knowledge` skill (thin) → procedure; the `research-worker` agent with 4 profiles; `fetch-source.mjs`; the ledger JSON schema | One run end to end on SE-04 reaches `verified` or an honest draft | M–L |
+| **3. Research agent** | The `research-orchestrator` agent (and, if wanted, a thin `research-knowledge` skill that starts it); the `research-worker` agent with 4 profiles; `fetch-source.mjs`; the ledger JSON schema | One run end to end on SE-04 reaches `verified` or an honest draft | M–L |
 | **4. Regression + decision** | Runs the agent and the plain prompt on the 6 software topics, both scored by the same calibrated judge, with tokens measured | V decides: **adopt**, **tune** (record wording tests in `knowledge/ai-agents/instruction-wording-findings.md`), or **drop the agent and keep phases 1–2** | S |
 | 5. Mechanize (only if needed) | LangGraph or a script orchestrator | Only on a signal from the conversation's list: the model keeps breaking the JSON or quarantine, runs are too slow, or V wants batch or API use | — |
+
+**Phase 2 work order** (status 2026-11-22):
+
+| # | Piece | Status |
+|---|---|---|
+| 1 | `evaluate-research.mjs ranks` (tier A or B per References URL) and `quotes` (the judge's quotes against the cited pages, comment-aware); the References parser is shared with the validator | **Done**, 4 scenarios. On the 6 v3 runs, 58 of 58 quote segments are found on the pages each claim cites |
+| 2 | `evaluate-research.mjs stage1 <run> <n>`: the judge's input folder with `stage1.json` (each source's tier, and for tier A its rank and rule), and `--sample <k> --seed <s> [--include …]` (replaces the Phase 0 scripts `make_input.py` and `sample_claims.py`). The validator's result for a doc outside `knowledge/` is not in it yet | **Done**, 2 scenarios |
+| 3 | The verdict JSON schema, checked by the same tool | — |
+| 4 | Judge v4 (`d8dcf5d`): takes tier A ranks from `stage1.json` and adds the tier B rating guide (§2.1); recalibrated on the 3 calibration docs, about 360k tokens | **Done**: passes calibration (`research/_calibration/REPORT.md` §3.5), 373k tokens |
+| 5 | The judge's `claude.yaml` header (model `claude-opus-5-5`; no Agent, WebFetch or WebSearch). Codex and Copilot headers only after a calibration run on them. Linking through agent-config's `agent-sources` | **Done**: agent-config `installer/mapping.yaml` lists `{{KNOWLEDGE_REPO}}/frameworks/knowledge/agents`, and `~/.claude/agents/knowledge-judge.md` links to the built file. A plain `build-agents` run (agent-config's own checks) does not read `agent-sources` and deletes the built file; tracked as agent-config T-10 |
+| 6 | The patch loop (at most 2 rounds) and status mapping (§3.5), written for the orchestrator's body (Phase 3) | — |
+| 7 | Offline audit of 10 verified docs: about 110k tokens each (the clean Phase 0 doc's cost), so about 1.1M | **Done**: 6 FAIL, 4 PASS; 1,177k tokens (`research/_audit/REPORT.md`) |
 
 **Where each piece lives** (artifact-types pattern):
 
@@ -356,7 +387,7 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 |---|---|---|
 | Rank rules and the new KB rules | Framework | `schemas/_system.md`, both doc schemas, `tools/classify-source/source-ranks.json` |
 | Scripts | Tools with scenarios | `tools/classify-source/`, `tools/evaluate-research/`, `tools/run-code-harness/`, `tools/fetch-source/` |
-| `research-knowledge` | Skill (thin trigger) → procedure | `plugin/skills/research-knowledge/SKILL.md` → `frameworks/knowledge/research.md` |
+| `research-orchestrator` | Agent (optional thin skill as its trigger) | `frameworks/knowledge/agents/research-orchestrator/` (body + headers); trigger, if any: `plugin/skills/research-knowledge/SKILL.md` |
 | `research-worker`, `knowledge-judge` | Agents | `frameworks/knowledge/agents/<name>/` (body + one header per coding agent) |
 | Run folders | Evidence | `research/<topic>/<slug>/`: `plan.md`, `ledger/`, `verdicts/` committed; `cache/` gitignored, `verdicts/` committed (decided by V, 2026-11-22) |
 
@@ -365,6 +396,8 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 | Item | Why it matters | Settle in |
 |---|---|---|
 | `javascript.info` (247 links, the most cited domain) is Rank 3 but documents no review step | At Rank 3 it can back a How it works claim alone. The judge's grounding shows only that the page says it, not that the spec agrees | Phase 4: count golden-set claims that rest on Rank 3 alone, and spot-check them against the spec |
+| The "higher number when two ranks fit" rule against the originator class | In the audit it rated three originators' own pages Rank 6 (Robert C. Martin on ISP, Wadler on the expression problem, Gregg on USE), causing 9 of 10 KB-15 failures | **Decided by V, 2026-11-22**: the originator rule comes first (§2.1, judge v5). Re-judged: it raised Wadler's note to Rank 1 where the note itself shows he named the problem, but not Robert C. Martin or Brendan Gregg, whose originator role no saved page shows. **Phase 3:** workers save a page that shows who originated each concept the doc rests on |
+| A PASS that rests on few checked claims | 4 of 4 passing audit docs cite local labs for 25–75% of their claims; one passed with 1 of 4 claims checked | **Decided by V, 2026-11-22**: at least 70% checkable, else `INCONCLUSIVE`; the 3 verified docs below it keep their status until Phase 2b's probes |
 | Rank 3 ties (MDN and `javascript.info`) | Their conflicts need a Rank 1 source to settle (KB-17 tie rule); without one, the claim leaves the core sections | Phase 3: count how often a run hits a tie with no Rank 1 source |
 | Does `WebFetch` return the raw page or a model's summary of it? | A quote check needs the real text. If it returns a summary, `fetch-source.mjs` must fetch raw HTML itself | Phase 3, **unconfirmed** |
 | Does `WebSearch` take allowed and blocked domain lists in every coding agent we use? | Profile routing depends on it; without it, workers filter after the search | Phase 3, **unconfirmed** |
@@ -385,6 +418,7 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 
 **External authoritative sources:**
 - [Diátaxis](https://diataxis.fr/): Daniele Procida, living. Backs: the section roles the judge checks.
+- [Create custom subagents](https://code.claude.com/docs/en/sub-agents): Anthropic, living, read 2026-11-22 (Claude Code 2.1.330). Backs: §1.1, nested subagents, `claude --agent` as the main thread, `tools: Agent(a, b)`.
 - [CommonMark Spec 0.31.2](https://spec.commonmark.org/0.31.2/): John MacFarlane, 2024, read 2026-11-22. Backs: §3.6, "The first word of the info string is typically used to specify the language" (§4.5, fenced code blocks).
 - `docker run --help`, Docker 29.8.2 on this machine, checked 2026-11-22. Backs: §3.6, the sandbox flags.
 - [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119): IETF, 1997. Backs: the MUST/SHOULD distinction that the "overstates" verdict checks.

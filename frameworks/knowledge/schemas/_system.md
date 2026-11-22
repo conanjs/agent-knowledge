@@ -99,7 +99,13 @@ A doc opts in with `ranked-sources: true` in its front-matter; KB-14 to KB-16 th
 
 **Rules.** `tools/classify-source/source-ranks.json` holds the rules, each a host plus a path prefix, and `classify-source.mjs` applies them. The rule with the most path segments wins, so `github.com/microsoft/typescript/` gives the TypeScript source Rank 1, while `github.com/*/*/issues/` gives any issue Rank 6. A URL that no rule covers is tier B: the writer picks its rank (the higher number when two fit), and the judge re-rates it. A rule is added only on V's yes, and only for a host and prefix that one publisher owns (one book, one organization's blog): a host where many people post, such as a mailing-list archive, never gets one, because its paths do not show who wrote a page.
 
-**Tier B rating guide** (decided by V, 2026-11-22): a post by a project's maintainer on that project's official mailing list is Rank 4, but only when the page itself shows the author's role (the project's lead, or a `Signed-off-by:` line of a maintainer); otherwise it is Rank 6.
+**GitHub** follows the same rules: an org rule (`github.com/<org>/`) covers an organization whose every repository is official, a repo rule (`github.com/<org>/<repo>/`) a flagship project in a large or personal account, and `/issues/`, `/pull/` and `/discussions/` stay Rank 6 inside both. A book kept on GitHub is Rank 3.
+
+**Tier B rating guide** (decided by V, 2026-11-22), applied in order; the first that fits decides:
+1. The author coined or first published the concept the claim is about, and a saved page shows it: Rank 1, for claims about that concept only.
+2. The page is the project's own repository, docs or release notes, and the claim is about that project: Rank 1.
+3. A post by a project's maintainer on that project's official mailing list: Rank 4, but only when the page itself shows the author's role (the project's lead, or a `Signed-off-by:` line of a maintainer).
+4. Otherwise the class in the table above; when two fit, the higher number.
 
 **Section map** (KB-15): the ranks each `##` section may cite. A `###` heading inherits its section's role. The research agent writes deep dives with the six numbered headings; a ranked deep dive with any other body heading fails KB-15.
 

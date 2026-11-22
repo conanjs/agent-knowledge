@@ -1,0 +1,42 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://javascript.info/property-descriptors",
+   "tier": "A",
+   "rank": 3,
+   "rule": "javascript.info/",
+   "written_rank": null,
+   "cache": "cache/3dac7b1dcd7f.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://javascript.info/property-accessors",
+   "tier": "A",
+   "rank": 3,
+   "rule": "javascript.info/",
+   "written_rank": null,
+   "cache": "cache/3c1c20119715.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze",
+   "tier": "A",
+   "rank": 3,
+   "rule": "developer.mozilla.org/en-US/docs/",
+   "written_rank": null,
+   "cache": "cache/f41a45096ae3.txt"
+  }
+ ],
+ "tier_b": []
+}

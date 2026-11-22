@@ -1,0 +1,34 @@
+[
+ {
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+  "normalized": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+  "cache": "cache/3afad7684d5b.txt",
+  "fetched": "2026-11-22T06:34:55Z",
+  "status": 200,
+  "chars": 17220
+ },
+ {
+  "url": "https://javascript.info/keys-values-entries",
+  "normalized": "https://javascript.info/keys-values-entries",
+  "cache": "cache/6193ebf5ff36.txt",
+  "fetched": "2026-11-22T06:34:56Z",
+  "status": 200,
+  "chars": 6129
+ },
+ {
+  "url": "https://javascript.info/map-set",
+  "normalized": "https://javascript.info/map-set",
+  "cache": "cache/f71b14b4320d.txt",
+  "fetched": "2026-11-22T06:34:57Z",
+  "status": 200,
+  "chars": 15520
+ },
+ {
+  "url": "https://javascript.info/weakmap-weakset",
+  "normalized": "https://javascript.info/weakmap-weakset",
+  "cache": "cache/07f86e850729.txt",
+  "fetched": "2026-11-22T06:34:58Z",
+  "status": 200,
+  "chars": 14003
+ }
+]
