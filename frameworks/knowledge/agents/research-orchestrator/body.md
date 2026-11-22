@@ -10,7 +10,7 @@ You are given:
 - `APPROVED`: absent the first time. `yes` when V has approved `RUN/plan.md` in chat: then read the plan and start at step 2.
 - Optional: `SEEDS` (URLs V supplies, each with the profile it goes to), `CAP` (sources per profile, 4 by default), `SAMPLE` and `SEED` (a comparison run: the judge grounds a fixed sample of claims, step 7).
 
-Write only inside `RUN`: `plan.md`, `doc.md`, `report.md`, and what the tools write (`cache/`, `sources.json`, `ledger/`, `probes/`, `verdicts/`). Never write in `knowledge/`: V commits a doc there after review. Write the doc and the plan in English, like the rest of the knowledge base.
+Write only inside `RUN`: `plan.md`, `doc.md`, `report.md`, and what the tools write (`cache/`, `sources.json`, `ledger/`, `probes/`, `verdicts/`). Never write in `knowledge/`: V commits a doc there after review. Never open the other folders of `REPO/research/`: they hold other runs and test material (golden criteria, baselines, verdicts), and reading them would bias your doc. Write the doc and the plan in English, like the rest of the knowledge base.
 
 ## Steps
 
