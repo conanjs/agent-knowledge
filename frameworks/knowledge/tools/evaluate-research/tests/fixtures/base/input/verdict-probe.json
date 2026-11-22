@@ -1,0 +1,22 @@
+{
+ "sources": [
+  {
+   "ref": "[^a]",
+   "cache": "cache/src.txt"
+  }
+ ],
+ "claim_checks": [
+  {
+   "id": "C6",
+   "source": "[^probe-01]",
+   "verdict": "unsupported",
+   "page_says": "probe-01 printed 'read(4096) = -1 (Resource temporarily unavailable)'; no page is cited"
+  },
+  {
+   "id": "C7",
+   "source": "[^probe-01]",
+   "verdict": "overstates",
+   "page_says": "read(4096) = -1 (Resource temporarily unavailable) / events: 1 of 4"
+  }
+ ]
+}
