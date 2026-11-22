@@ -1,0 +1,81 @@
+{
+ "round": 2,
+ "doc": "doc.md",
+ "engine": "29.8.2",
+ "runtimes": {
+  "tsc": {
+   "image": "kb-probe-tsc5:5.9.3",
+   "id": "sha256:f23b6c4ad2865726258e88f70bf1bac5e565401fb3b873bd5e70787a73d9060d"
+  },
+  "tsc7": {
+   "image": "kb-probe-tsc7:7.0.2",
+   "id": "sha256:80db6b678ef9fcffad3bd3555ef328ca140fcc2ba04481b9c9d3f13a00d12e0f"
+  },
+  "node24": {
+   "image": "node:24.22.1-alpine",
+   "id": "sha256:976554ea4b266f797a368b22bb5959ac08d388a11445cf40f7ef55912c7c754b"
+  }
+ },
+ "probes": [
+  {
+   "probe_id": "probe-01",
+   "mode": "verify",
+   "runtime": "tsc",
+   "expect": "exit:0",
+   "uses": null,
+   "repeat": 1,
+   "line": 82,
+   "file": "probe-01.ts",
+   "block_sha": "1c3b2590f07f",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "",
+   "stderr": "",
+   "duration_ms": 2864,
+   "runs": 1,
+   "compat": {
+    "tsc7": {
+     "same_outcome": true,
+     "same_diagnostics": true,
+     "exit_code": 0,
+     "ok": true,
+     "stdout": ""
+    }
+   }
+  },
+  {
+   "probe_id": "probe-02",
+   "mode": "verify",
+   "runtime": "node24",
+   "expect": "stdout:false",
+   "uses": null,
+   "repeat": 1,
+   "line": 90,
+   "file": "probe-02.js",
+   "block_sha": "43c4ccad7ab2",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "false\n",
+   "stderr": "",
+   "duration_ms": 158,
+   "runs": 1
+  },
+  {
+   "probe_id": "probe-03",
+   "mode": "verify",
+   "runtime": "node24",
+   "expect": "stdout:not listed",
+   "uses": null,
+   "repeat": 1,
+   "line": 97,
+   "file": "probe-03.js",
+   "block_sha": "fa9239ce80c9",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "not listed\n",
+   "stderr": "",
+   "duration_ms": 166,
+   "runs": 1
+  }
+ ]
+}

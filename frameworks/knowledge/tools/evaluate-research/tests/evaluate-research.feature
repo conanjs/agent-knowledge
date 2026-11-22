@@ -47,7 +47,7 @@ Feature: Research verifier, Stage 1 helpers
       quotes: 0 found, 1 missing, in 1 claim(s) with a verdict other than entails
       """
 
-  Scenario: quotes checks a quote of a probe's output against that probe's stdout in harness.json
+  Scenario: quotes checks a quote of a probe's output or code against harness.json and probes/, past the judge's bracketed and "(Searched …)" notes
     When the tool runs with arguments:
       """
       quotes
@@ -56,7 +56,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      quotes: 3 found, 0 missing, in 2 claim(s) with a verdict other than entails
+      quotes: 4 found, 0 missing, in 3 claim(s) with a verdict other than entails
       """
 
   Scenario: stage1 builds the judge's input folder with each source's tier and only the pages that were saved

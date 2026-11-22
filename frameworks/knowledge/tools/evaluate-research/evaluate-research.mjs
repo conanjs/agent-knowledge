@@ -13,7 +13,8 @@
 //           source-code comment still matches; a page_says that quotes two pages may carry their footnotes inline, or
 //           name each page before its "quoted" text, and then only the quoted text is checked. A footnote's pages come from
 //           stage1.json when the input folder has it, plus the verdict's own sources; a quote of a cited probe's output
-//           is checked against that probe's stdout in harness.json
+//           is checked against that probe's stdout in harness.json and its code in probes/; a [bracketed] note and a
+//           "(Searched …)" note are the judge's own words, not quotes
 //   verdict the final verdict (design §3.4, decided by V 2026-11-22): the judge's FAIL stays FAIL; its PASS stays PASS only
 //           when at least 70% of the judged claims are checkable (a verdict other than not_checkable and no_cache), and
 //           becomes INCONCLUSIVE otherwise. --write adds it to the verdict file as "final"
@@ -99,26 +100,34 @@ function quotes(verdictPath, inputDir) {
     for (const s of JSON.parse(fs.readFileSync(path.join(inputDir, 'stage1.json'), 'utf8')).sources ?? []) addCache((s.labels ?? []).join(' '), s.cache);
   } catch { /* no stage1.json: the verdict's sources only */ }
   for (const s of v.sources ?? []) addCache(s.ref, s.cache);
-  const probeOut = new Map(); // probe id -> its stdout in harness.json (a quote of a probe's output is checked there)
+  const probeOut = new Map(); // probe id -> its stdout in harness.json, and its code in probes/ (a quote of either is checked there)
   try {
     for (const p of JSON.parse(fs.readFileSync(path.join(inputDir, 'harness.json'), 'utf8')).probes ?? []) probeOut.set(p.probe_id, norm(p.stdout ?? ''));
   } catch { /* no probes */ }
+  try {
+    for (const f of fs.readdirSync(path.join(inputDir, 'probes'))) {
+      const id = f.replace(/\.[^.]+$/, '');
+      if (/^probe-/.test(id)) probeOut.set(id, `${probeOut.get(id) ?? ''} ${norm(fs.readFileSync(path.join(inputDir, 'probes', f), 'utf8'))}`);
+    }
+  } catch { /* no probe code */ }
   let found = 0; let missing = 0; let claims = 0;
   for (const c of v.claim_checks ?? []) {
     if (['entails', 'observed', 'not_checkable', 'no_cache'].includes(c.verdict)) continue;
-    const q = String(c.page_says ?? '').split(/\bnot found\b/i)[0]; // a note such as "Not found for x: searched …" ends the quotes
+    // A note such as "Not found for x: searched …" ends the quotes, and a "(Searched 'a', 'b' …)" note holds search terms, not quotes.
+    const q = String(c.page_says ?? '').replace(/\(\s*searched\b[^)]*\)?/gi, '').split(/\bnot found\b/i)[0];
     if (!q.trim()) continue;
     claims++;
     const files = [...new Set(labelsOf(c.source).flatMap((l) => cacheOf.get(l) ?? []))];
     const texts = files.map(page).filter((t) => t !== null)
       .concat(labelsOf(c.source).filter((l) => probeOut.has(l)).map((l) => probeOut.get(l)));
     const where = texts.length ? texts : [...fs.readdirSync(path.join(inputDir, 'cache'))].map((f) => page(`cache/${f}`));
-    const quoted = [...q.matchAll(/"([^"]{12,})"|\u201c([^\u201d]{12,})\u201d|(?:^|[\s(])'([^']{12,})'(?=[\s;:,.)]|$)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+    const quoted = [...q.matchAll(/"([^"]{12,})"|\u201c([^\u201d]{12,})\u201d|(?:^|[\s(])'([^']{12,})'(?=[\s;:,.)]|$)|`([^`]{12,})`/g)].map((m) => m[1] ?? m[2] ?? m[3] ?? m[4]);
     // A page_says that names pages ("lifecycle: \"…\"") is checked by its quoted parts; without quotes, a leading
     // "<page or probe> stdout:" style label is dropped.
     const parts = quoted.length ? quoted : [q.replace(/^[\w .-]{1,40}:\s+/, '')];
-    for (const seg of parts.flatMap((x) => x.split(/\s*(?:…|\.\.\.|\[\^?[\w.-]+\]|\s\|\s|\s\/\s)\s*/))) {
-      const s = norm(seg.replace(/^["'\s]+|["'\s]+$/g, ''));
+    // Any [bracketed] group ends a part: a footnote label, or the judge's own note such as "[probe-02 stdout: false]".
+    for (const seg of parts.flatMap((x) => x.split(/\s*(?:…|\.\.\.|\[[^\]]*\]|\s\|\s|\s\/\s)\s*/))) {
+      const s = norm(seg.replace(/^["'`\s]+|["'`\s]+$/g, ''));
       if (s.length < 12) continue;
       if (where.some((t) => t && t.includes(s))) found++;
       else { missing++; out(`missing | ${c.id ?? '?'} | ${s.slice(0, 80)}`); }

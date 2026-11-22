@@ -1,0 +1,766 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 4,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope",
+      "note": "Summary; also holds the mental-model text ('Read this first', the phone-call vs letters analogy). Its claims are judged as role 3, the strictest role of what they summarize."
+    },
+    {
+      "heading": "## 1. Q1: Architecture and lifecycle",
+      "role": 3,
+      "note": "mixed; dominant content is the lifecycle mechanism"
+    },
+    {
+      "heading": "### 1.1 Roles",
+      "role": 2
+    },
+    {
+      "heading": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5
+    },
+    {
+      "heading": "### 1.3 Which spec version is current",
+      "role": 5
+    },
+    {
+      "heading": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3
+    },
+    {
+      "heading": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3
+    },
+    {
+      "heading": "### 1.6 End-to-end session in six steps",
+      "role": 3
+    },
+    {
+      "heading": "## 2. Q2: Primitives",
+      "role": 5,
+      "note": "mixed; dominant content is a catalog of methods and fields"
+    },
+    {
+      "heading": "### 2.1 Server primitives (who controls them)",
+      "role": 5
+    },
+    {
+      "heading": "### 2.2 Client primitives",
+      "role": 3,
+      "note": "MRTR and subscriptions mechanism"
+    },
+    {
+      "heading": "## 3. Q3: Transports and authorization",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 The standard transports",
+      "role": 3
+    },
+    {
+      "heading": "### 3.2 What became of HTTP+SSE",
+      "role": 5
+    },
+    {
+      "heading": "### 3.3 Era detection for clients that must support both",
+      "role": 3
+    },
+    {
+      "heading": "### 3.4 Choosing a transport",
+      "role": 6,
+      "note": "decision table"
+    },
+    {
+      "heading": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3
+    },
+    {
+      "heading": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "note": "decision table"
+    },
+    {
+      "heading": "## 4. Q4: Security and trust",
+      "role": 5
+    },
+    {
+      "heading": "### 4.1 The spec's trust principles",
+      "role": 5
+    },
+    {
+      "heading": "### 4.2 Requirements by actor (2026-07-28)",
+      "role": 5
+    },
+    {
+      "heading": "### 4.3 Token passthrough",
+      "role": 5
+    },
+    {
+      "heading": "### 4.4 Confused deputy",
+      "role": 5
+    },
+    {
+      "heading": "### 4.5 Session handling",
+      "role": 5
+    },
+    {
+      "heading": "## 5. What the experiments showed that the spec text does not say",
+      "role": 6,
+      "note": "SDK deviations and pitfalls observed in local experiments"
+    },
+    {
+      "heading": "## 6. Reproducing the experiments",
+      "role": "envelope",
+      "note": "verification status / provenance of the local experiments"
+    },
+    {
+      "heading": "## 7. Gaps and unverified items",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[1]",
+      "url": "https://modelcontextprotocol.io/specification/versioning",
+      "cache": "cache/a55ad56b64e9.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[2]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+      "cache": "cache/d1aed5d46f78.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[3]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/changelog",
+      "cache": "cache/a739f7343f18.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[4]",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle",
+      "cache": "cache/44399078c55f.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[4]",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+      "cache": "cache/937fae6437b3.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[4a]",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25",
+      "cache": "cache/7b138caa8e63.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[4a-sess]",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices",
+      "cache": "cache/44f3cfe0d3ba.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[5]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning",
+      "cache": "cache/c6bfb6f59aa5.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[6]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/architecture",
+      "cache": "cache/eee6cbbccab2.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[7]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/index",
+      "cache": "cache/e8d957787d4b.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[8]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+      "cache": "cache/7296cd40e850.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[9]",
+      "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/releases",
+      "cache": "cache/139640d70140.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/modelcontextprotocol/"
+    },
+    {
+      "ref": "[10]",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+      "cache": "cache/f7fb7d70e0ff.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/modelcontextprotocol/ (the packaged README of @modelcontextprotocol/server@2.4.0 that [10] also names has no saved text)"
+    },
+    {
+      "ref": "[11]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
+      "cache": "cache/1d962c091f09.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[12]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio",
+      "cache": "cache/d615a0183fe5.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[13]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http",
+      "cache": "cache/6e1c66cfb825.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[14]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/tools",
+      "cache": "cache/920caecd56af.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[15]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions",
+      "cache": "cache/7345b33e447b.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[16]",
+      "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+      "cache": "cache/937fae6437b3.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/ ([16] is 'see [4]', the 2025-11-25 transports page)"
+    },
+    {
+      "ref": "[17]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/resources",
+      "cache": "cache/a4347016e843.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[18]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/prompts",
+      "cache": "cache/626e6a88e5b1.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[19]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation",
+      "cache": "cache/0049ed6bcde6.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[20]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/sampling",
+      "cache": "cache/b13d8c59508c.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[21]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/deprecated",
+      "cache": "cache/3adf6f101c1f.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[22]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/roots",
+      "cache": "cache/f431985927ec.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[23]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr",
+      "cache": "cache/39e0293cbb4e.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[24]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+      "cache": "cache/7296cd40e850.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[25]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+      "cache": "cache/0120b26ae8e5.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[26]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization",
+      "cache": "cache/34fabf499cb7.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[27]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery",
+      "cache": "cache/117c3edbfcd7.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[28]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration",
+      "cache": "cache/5655f61af2a0.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[29]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations",
+      "cache": "cache/4b9b953ca683.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[30]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+      "cache": "cache/0120b26ae8e5.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[31]",
+      "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+      "cache": "cache/d1aed5d46f78.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: modelcontextprotocol.io/specification/"
+    },
+    {
+      "ref": "[E1]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    },
+    {
+      "ref": "[E2]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    },
+    {
+      "ref": "[E3]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    },
+    {
+      "ref": "[E4]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    },
+    {
+      "ref": "[E5]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    },
+    {
+      "ref": "[E6]",
+      "url": "local experiment (doc section 6; files not kept)",
+      "cache": null,
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: a local SDK experiment, not a harness probe; no saved output in INPUT"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": false,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true,
+    "notes": "All body citations resolve ([4a], [4a-sess] and [16] are defined inside the [4] and [16] entries; [E1]-[E6] in the last entry). Every References entry is cited. The only check mark without a footnote is line 339, in a role 6 section. All external sources are tier A rank 1, so no quarantine breach. sections_present is false because no heading does role 1 or role 4."
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 5,
+    "factual_grounding": 3,
+    "diataxis_rigor": 3
+  },
+  "coverage": {
+    "sampled": true,
+    "claims_roles_1_5": 176,
+    "checked_roles_1_5": 12,
+    "claims_role_6": 15,
+    "checked_role_6": 3,
+    "no_cache": 0,
+    "not_checkable": 1
+  },
+  "claim_checks": [
+    {
+      "id": "S1",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "It removed the `initialize` handshake and protocol-level sessions",
+      "source": "[3]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Remove protocol-level sessions and the Mcp-Session-Id header from the Streamable HTTP transport. ... Make MCP stateless: remove the initialize/notifications/initialized handshake.",
+      "note": "Both removals are listed under Major changes of the 2026-07-28 changelog."
+    },
+    {
+      "id": "S2",
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "A request missing a required key is rejected with `-32602`, and with HTTP 400 on HTTP",
+      "source": "[7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A request missing any required field is malformed; the server MUST reject it with JSON-RPC error code -32602 (Invalid params). On HTTP, the response status MUST be 400 Bad Request.",
+      "note": "The required fields are the protocolVersion and clientCapabilities _meta keys in the table just above the passage."
+    },
+    {
+      "id": "S3",
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "On HTTP there is nothing to shut down: each request is its own POST",
+      "source": "[13]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "Each request is its own POST ... HTTP GET or DELETE to the MCP endpoint: respond with 405 Method Not Allowed.",
+      "note": "The second half is stated. The page has no shutdown rule at all (searched 'shut', 'terminat'); what it supports is narrower: no session and no DELETE to end one. Open streams still have to be ended, for example a subscriptions/listen stream, which the client ends by closing it ([15], Cancellation). 'Nothing to shut down' widens 'no session to terminate'."
+    },
+    {
+      "id": "S4",
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "`notifications/tools/list_changed`, delivered on a GET stream or the open connection (legacy column, step 5)",
+      "source": "[4][13]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "The client MAY issue an HTTP GET to the MCP endpoint. ... or else return HTTP 405 Method Not Allowed ... The server MAY send JSON-RPC requests and notifications on the stream.",
+      "note": "Checked against the 2025-11-25 pages in [4] (the row is labelled legacy). On HTTP the GET stream exists only if the client opens one and the server offers one (it may answer 405); the row gives it as the delivery path with that condition dropped. The method name itself appears in [4a-sess] (notifications/tools/list_changed sent as server sent events)."
+    },
+    {
+      "id": "S5",
+      "section": "## 2. Q2: Primitives > ### 2.1 Server primitives (who controls them)",
+      "role": 5,
+      "claim": "A missing resource is error `-32602` in 2026-07-28 (it was `-32002` before; clients should still accept `-32002`)",
+      "source": "[17][3]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the requested resource does not exist, servers MUST return a JSON-RPC error with code -32602 (Invalid Params). ... clients SHOULD also accept -32002 as a resource not found error",
+      "note": "[3] also records the change from -32002 to -32602 (SEP-2164)."
+    },
+    {
+      "id": "S6",
+      "section": "## 2. Q2: Primitives > ### 2.2 Client primitives",
+      "role": 3,
+      "claim": "The client gathers the input and retries the original request with a new `id`, `inputResponses` and the echoed `requestState`",
+      "source": "[23]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the client MUST echo back the exact value of that field when retrying the original request. ... The JSON-RPC id MUST be different between the initial request and the retry",
+      "note": "Line 193 of the page also gives the gather-then-retry step; InputResponses is defined at line 236."
+    },
+    {
+      "id": "S7",
+      "section": "## 2. Q2: Primitives > ### 2.2 Client primitives",
+      "role": 3,
+      "claim": "Worked example (2026-07-28, from the spec): `tools/call` id 2 returns an `input_required` result asking for a GitHub username via form elicitation; the client retries `tools/call` as id 3 with `inputResponses: {\"github_login\":{\"action\":\"accept\",\"content\":{\"name\":\"octocat\"}}}` and the same `requestState`",
+      "source": "[14][23]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "\"resultType\": \"input_required\" ... \"mode\": \"form\", \"message\": \"Please provide your GitHub username\" ... \"id\": 3, \"method\": \"tools/call\" ... \"name\": \"octocat\"",
+      "note": "The tools page example has response id 2, retry id 3 and the same requestState value in both."
+    },
+    {
+      "id": "S8",
+      "section": "## 3. Q3: Transports and authorization > ### 3.1 The standard transports",
+      "role": 3,
+      "claim": "optional `MCP-Session-Id`; 400 without it; 404 when ended; client `DELETE` to end (2025-11-25 column, Sessions row)",
+      "source": "[4]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "Servers that require a session ID SHOULD respond to requests without an MCP-Session-Id header (other than initialization) with HTTP 400 Bad Request.",
+      "note": "Optional session and 404 after termination (MUST) are supported. '400 without it' is a SHOULD written as a plain statement and drops the condition 'servers that require a session ID'; 'client DELETE to end' is a SHOULD, and the server MAY answer that DELETE with 405."
+    },
+    {
+      "id": "S9",
+      "section": "## 3. Q3: Transports and authorization > ### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Existing HTTP+SSE server: keep old endpoints only for old clients, add Streamable HTTP",
+      "source": "[13]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Servers wanting to support older clients should: Continue to host both the SSE and POST endpoints of the old transport, alongside the new “MCP endpoint”",
+      "note": ""
+    },
+    {
+      "id": "S10",
+      "section": "## 3. Q3: Transports and authorization > ### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Need server push of tool-list changes: `subscriptions/listen` (2026-07-28) or GET stream (legacy)",
+      "source": "[15][4]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "It replaces the former resources/subscribe RPC and the HTTP GET endpoint. ([15]) ... The server MAY send JSON-RPC requests and notifications on the stream. ([4], 2025-11-25 transports)",
+      "note": "A recommendation of which mechanism to use, and each page offers that mechanism for its era."
+    },
+    {
+      "id": "S11",
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Alternative transports must follow established best practice for their protocol",
+      "source": "[26]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "Implementations using alternative transports MUST follow established security best practices for their protocol.",
+      "note": "The modal matches, but the qualifier 'security' is dropped, which widens the rule to all best practice; the page also scopes the list with 'When supported:' (when authorization is supported)."
+    },
+    {
+      "id": "S12",
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs",
+      "source": "[26]",
+      "verdict": "overstates",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "Invalid or expired tokens MUST receive an HTTP 401 response. ... insufficient scope during runtime operations, the server SHOULD respond with: ... HTTP 403 Forbidden status code",
+      "note": "Token validation, audience check and 401 are MUST and entail. The 403 / insufficient_scope / scope part is SHOULD on the page (and 'servers SHOULD include the scopes needed'), but it sits under the item's leading 'Server must' and under the flow's 'steps are normative unless marked': a SHOULD raised to MUST level."
+    },
+    {
+      "id": "S13",
+      "section": "## 4. Q4: Security and trust > ### 4.2 Requirements by actor (2026-07-28)",
+      "role": 5,
+      "claim": "Resources: servers must validate URIs and sanitize `file://` paths against traversal",
+      "source": "[17]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Servers MUST validate all resource URIs ... Servers MUST sanitize file paths to prevent directory traversal attacks when serving file:// resources",
+      "note": ""
+    },
+    {
+      "id": "S14",
+      "section": "## 4. Q4: Security and trust > ### 4.4 Confused deputy",
+      "role": 5,
+      "claim": "SSRF through metadata URLs (clients should require HTTPS and block private ranges, and use an egress proxy on servers)",
+      "source": "[30]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "MCP clients SHOULD require HTTPS for all OAuth-related URLs in production environments ... operators SHOULD consider using an egress proxy that enforces network policies",
+      "note": "'should block private ranges' entails. 'should use an egress proxy' raises 'SHOULD consider using' short of MUST, and the HTTPS rule drops 'in production environments'. The item's own 'should' governs it, although the sentence opens with 'Related attacks with required mitigations'."
+    },
+    {
+      "id": "S15",
+      "section": "## 5. What the experiments showed that the spec text does not say",
+      "role": 6,
+      "claim": "v1 SDK has no `server/discover`; its `initialize` negotiated an unknown version down to 2025-11-25 (E2)",
+      "source": "(E2), no bracketed footnote",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: the claim cites only local experiment E2, which has no saved text in INPUT",
+      "note": "The check mark carries no [..] footnote, only '(E2)' in prose. Also, no experiment listed in section 6 sends server/discover to the v1 SDK (E2 tested version negotiation only), so the first half has no named backing at all."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Whether a server rejects an unsupported protocolVersion",
+      "winner": "[5] rank 1 (server MUST respond with UnsupportedProtocolVersionError)",
+      "loser": "[E4] local (SDK 2.4.0 serveStdio returned a normal tool list for 1900-01-01)",
+      "where_loser_is": "## 5. What the experiments showed that the spec text does not say",
+      "ok": true
+    },
+    {
+      "topic": "Strength of the human-in-the-loop rule for tools",
+      "winner": "[14] rank 1, normative tools page (SHOULD always be a human in the loop)",
+      "loser": "[4a][31] rank 1, Security and Trust & Safety principles in lowercase 'must'",
+      "where_loser_is": "## 4. Q4: Security and trust > ### 4.1 The spec's trust principles (both kept; the doc names the normative SHOULD as governing)",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "rule": "grounding",
+      "evidence": "S12: step 9 puts the 403 insufficient_scope response under 'Server must'; [26] says 'the server SHOULD respond with: HTTP 403 Forbidden' and 'servers SHOULD include the scopes needed'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "rule": "grounding",
+      "evidence": "S3: 'On HTTP there is nothing to shut down' is not in [13]; the page supports only that there is no session and that DELETE gets 405."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.6 End-to-end session in six steps",
+      "rule": "grounding",
+      "evidence": "S4: legacy list_changed delivery 'on a GET stream' drops the condition that the GET stream is optional on both sides ([4]: client MAY issue GET; server may return 405)."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 3. Q3: Transports and authorization > ### 3.1 The standard transports",
+      "rule": "grounding",
+      "evidence": "S8: '400 without it' and 'client DELETE to end' are SHOULD rules in [4], written as plain statements; the 400 rule applies only to 'servers that require a session ID'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "rule": "grounding",
+      "evidence": "S11: drops 'security' from 'established security best practices' ([26])."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 4. Q4: Security and trust > ### 4.4 Confused deputy",
+      "rule": "grounding",
+      "evidence": "S14: 'use an egress proxy' raises [30]'s 'SHOULD consider using an egress proxy'; the HTTPS rule drops 'in production environments'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 3. Q3: Transports and authorization > ### 3.2 What became of HTTP+SSE",
+      "rule": "grounding",
+      "evidence": "Found in the conflict audit, outside the fixed sample (not counted in claim_checks): 'No feature has been removed yet ✅[21]' drops the page's 'under this policy' ([21]: 'No features have been removed under this policy yet'). As written it contradicts the doc's own section 2.2 and [3] ('Remove ping, logging/setLevel, and notifications/roots/list_changed'). The sources agree once the qualifier is kept, so this is not a source conflict."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 5. What the experiments showed that the spec text does not say",
+      "rule": "citation",
+      "evidence": "S15 (line 339): the check mark has no bracketed footnote, only '(E2)' in prose, and no listed experiment tests server/discover on the v1 SDK."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "(whole doc)",
+      "rule": "structure",
+      "evidence": "No heading does role 1 or role 4: the mental model sits inside the Summary, and the worked runs (E1, E4, E5, E6 traces) are embedded in sections 1.4, 1.5 and 3.1. Sections 1 and 2 mix roles 2, 3 and 5. Section 6 'Reproducing the experiments' lists files in a temporary folder that the doc says were not kept, so nothing can be reproduced from it."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "action": "Rewrite step 9 as: 'Server must validate the token and that it was issued for this server as audience; invalid or expired tokens must get `401`. For insufficient scope the server should respond `403` with `error=\"insufficient_scope\"` and should list the scopes the operation needs in `scope` ✅[26].' ([26], Scope Challenge Handling: 'the server SHOULD respond with: HTTP 403 Forbidden')."
+    },
+    {
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "action": "Replace 'On HTTP there is nothing to shut down: each request is its own POST ✅[13]' with 'On HTTP there is no session to end: each request is its own POST, and a modern-only server answers DELETE with 405 ✅[13]; an open `subscriptions/listen` stream ends when the client closes it ✅[15].'"
+    },
+    {
+      "section": "## 1. Q1: Architecture and lifecycle > ### 1.6 End-to-end session in six steps",
+      "action": "Legacy step 5: '`notifications/tools/list_changed` (if the server declared `listChanged`): on stdio over stdout; on HTTP on the optional GET SSE stream, if the client opens one and the server offers it (a server may answer GET with 405) ✅[4]'."
+    },
+    {
+      "section": "## 3. Q3: Transports and authorization > ### 3.1 The standard transports",
+      "action": "Sessions row, 2025-11-25 column: 'server MAY assign `MCP-Session-Id` at initialization; servers that require it should answer 400 without it; must answer 404 after ending it; clients should `DELETE` to end (server may answer 405) ✅[4]'."
+    },
+    {
+      "section": "## 3. Q3: Transports and authorization > ### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "action": "Scope paragraph: 'When authorization is supported, implementations using alternative transports must follow established security best practices for their protocol ✅[26].'"
+    },
+    {
+      "section": "## 4. Q4: Security and trust > ### 4.4 Confused deputy",
+      "action": "Change the lead-in to 'Related attacks and their mitigations:' and the SSRF item to 'clients should require HTTPS for OAuth-related URLs in production and should block private and reserved IP ranges; operators of server-side clients should consider an egress proxy ✅[30]'."
+    },
+    {
+      "section": "## 3. Q3: Transports and authorization > ### 3.2 What became of HTTP+SSE",
+      "action": "Replace 'No feature has been removed yet ✅[21]' with 'No feature has been removed under the lifecycle policy yet ✅[21]' and point to section 2.2 for the methods the changelog removed in 2026-07-28 ✅[3]."
+    },
+    {
+      "section": "## 5. What the experiments showed that the spec text does not say",
+      "action": "Write the citation as '✅[E2]', and either drop 'v1 SDK has no `server/discover`' or add the experiment that sent `server/discover` to `@modelcontextprotocol/sdk@1.32.2` to the table in section 6."
+    },
+    {
+      "section": "## 6. Reproducing the experiments",
+      "action": "Either keep the experiment files somewhere durable and link them, or add each experiment's code as a harness probe so its claims can be checked; give the worked runs (E1, E4, E5, E6) a section of their own (role 4)."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 14,
+    "claims": 15,
+    "share": 0.93,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}
