@@ -1,0 +1,154 @@
+Pager usage is off.
+DROP TABLE IF EXISTS c;
+psql:/exp/06-xid-consumption.sql:4: NOTICE:  table "c" does not exist, skipping
+DROP TABLE
+CREATE TABLE c (x int);
+CREATE TABLE
+SELECT pg_current_xact_id() AS before 
+--- 10 read-only transactions
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM c;
+ count 
+-------
+     0
+(1 row)
+
+SELECT pg_current_xact_id() AS after_reads 
+SELECT '5782'::text::bigint - '5781'::text::bigint - 1 AS xids_used_by_10_read_only_transactions;
+ xids_used_by_10_read_only_transactions 
+----------------------------------------
+                                      0
+(1 row)
+
+--- one transaction that writes inside 5 savepoints
+BEGIN;
+BEGIN
+INSERT INTO c VALUES (0);
+INSERT 0 1
+SAVEPOINT s1;
+SAVEPOINT
+INSERT INTO c VALUES (1);
+INSERT 0 1
+RELEASE s1;
+RELEASE
+SAVEPOINT s2;
+SAVEPOINT
+INSERT INTO c VALUES (2);
+INSERT 0 1
+RELEASE s2;
+RELEASE
+SAVEPOINT s3;
+SAVEPOINT
+INSERT INTO c VALUES (3);
+INSERT 0 1
+RELEASE s3;
+RELEASE
+SAVEPOINT s4;
+SAVEPOINT
+INSERT INTO c VALUES (4);
+INSERT 0 1
+RELEASE s4;
+RELEASE
+SAVEPOINT s5;
+SAVEPOINT
+INSERT INTO c VALUES (5);
+INSERT 0 1
+RELEASE s5;
+RELEASE
+COMMIT;
+COMMIT
+SELECT pg_current_xact_id() AS after_subxacts 
+SELECT '5789'::text::bigint - '5782'::text::bigint - 1 AS xids_used_by_1_txn_with_5_writing_savepoints;
+ xids_used_by_1_txn_with_5_writing_savepoints 
+----------------------------------------------
+                                            6
+(1 row)
+
+SELECT x, xmin FROM c ORDER BY x;
+ x | xmin 
+---+------
+ 0 | 5783
+ 1 | 5784
+ 2 | 5785
+ 3 | 5786
+ 4 | 5787
+ 5 | 5788
+(6 rows)
+
+--- the same 6 inserts without savepoints
+BEGIN;
+BEGIN
+INSERT INTO c VALUES (10);
+INSERT 0 1
+INSERT INTO c VALUES (11);
+INSERT 0 1
+INSERT INTO c VALUES (12);
+INSERT 0 1
+INSERT INTO c VALUES (13);
+INSERT 0 1
+INSERT INTO c VALUES (14);
+INSERT 0 1
+INSERT INTO c VALUES (15);
+INSERT 0 1
+COMMIT;
+COMMIT
+SELECT pg_current_xact_id() AS after_plain 
+SELECT '5791'::text::bigint - '5789'::text::bigint - 1 AS xids_used_by_1_txn_without_savepoints;
+ xids_used_by_1_txn_without_savepoints 
+---------------------------------------
+                                     1
+(1 row)
+

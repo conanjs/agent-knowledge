@@ -436,8 +436,9 @@ Total estimate: about 1.7–2.2M tokens, most of it in 3.6. After 3.6, Phase 4 c
 | SE-04 | FAIL 3.25 (v7) | FAIL 4.75 (v7), a §5 criterion | 3.67 → 0 | 1,163k / 232k |
 | SE-02 | FAIL 4.25 (v8) | FAIL 4.75 (v8), a criterion read two ways | 2.0 → 0 | 1,107k / 211k |
 | LS-03 | FAIL 3.25 (v8) | PASS 4.75 (v8) | 2.84 → 0 | 1,167k / 304k |
+| SE-01 (batch 2, 2026-11-23) | FAIL 3.50 (v8) | FAIL 4.25 (v8), the §6 criterion (VACUUM FULL's lock not named) | 2.43 → 0.33 | 1,203k / 363k |
 
-Against the release gate (§5): Stage 1 passes on all three; the agent's judge average is 4.75 (≥ 4.5); it beats the baseline on grounding findings on all three; the trap lands in section 6 explicitly on SE-04 and SE-02, only by implication on LS-03; the token cost, about 4–5× the plain prompt, is V's call.
+Against the release gate (§5): Stage 1 passes on all three; the agent's judge average is 4.75 (≥ 4.5); it beats the baseline on grounding findings on all three; the trap lands in section 6 explicitly on SE-04 and SE-02, only by implication on LS-03; the token cost, about 4–5× the plain prompt, is V's call. **SE-01** (V's yes for about 1.9M, 2026-11-23; 2.02M spent, baseline included) tested the two orchestrator fixes made from batch 1's criteria: the `## 5.` rule placement held (§5 met; the baseline's §5 failed); the explicit refutation in `## 6.` half held (an entry refutes VACUUM FULL, without the table lock the criterion names). Across the four topics the trap is refuted explicitly in section 6 on 2 (SE-04, SE-02) and in part on 2 (LS-03, SE-01).
 
 **Where each piece lives** (artifact-types pattern):
 

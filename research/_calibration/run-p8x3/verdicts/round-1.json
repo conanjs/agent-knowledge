@@ -1,0 +1,1155 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.5,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope (its claims take role 3, the strictest of the sections it summarizes)"
+    },
+    {
+      "heading": "## 1. Context",
+      "role": 1
+    },
+    {
+      "heading": "### 1.1 MVCC in one picture",
+      "role": 1,
+      "note": "inherits ## 1. Context"
+    },
+    {
+      "heading": "### 1.2 Why a 32-bit counter makes freezing mandatory",
+      "role": 1,
+      "note": "inherits ## 1. Context"
+    },
+    {
+      "heading": "### 1.3 Why it matters in production",
+      "role": 1,
+      "note": "inherits ## 1. Context"
+    },
+    {
+      "heading": "## 2. The actors",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How MVCC works",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 Row versions on the page",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.2 Transaction IDs: who gets one, and when",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.3 Snapshots and isolation levels",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.4 The visibility rule, step by step",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.5 Hint bits",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.6 Dead versions: pruning, HOT and VACUUM",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.7 The xmin horizon: who keeps dead versions alive",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "### 3.8 Multixacts",
+      "role": 3,
+      "note": "inherits ## 3. How MVCC works"
+    },
+    {
+      "heading": "## 4. Wraparound and freezing",
+      "role": 3,
+      "note": "mechanism of XID comparison, freezing and the threshold ladder"
+    },
+    {
+      "heading": "### 4.1 Comparing XIDs on a circle",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "### 4.2 Freezing",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "### 4.3 Bookkeeping: `relfrozenxid`, `datfrozenxid` and `age()`",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "### 4.4 The threshold ladder",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "### 4.5 The kinds of VACUUM, as far as freezing goes",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "### 4.6 Life of one row, from INSERT to frozen",
+      "role": 3,
+      "note": "inherits ## 4. Wraparound and freezing"
+    },
+    {
+      "heading": "## 5. Settings catalog",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Cross-actor interactions",
+      "role": 3,
+      "note": "each row states a mechanism (its own column), so role 3, not role 2"
+    },
+    {
+      "heading": "## 7. Worked example: a forgotten replication slot stops all writes",
+      "role": 4
+    },
+    {
+      "heading": "### 7.1 Method",
+      "role": 4,
+      "note": "inherits ## 7. Worked example: a forgotten replication slot stops all writes"
+    },
+    {
+      "heading": "### 7.2 Timeline",
+      "role": 4,
+      "note": "inherits ## 7. Worked example: a forgotten replication slot stops all writes"
+    },
+    {
+      "heading": "### 7.3 What the numbers show",
+      "role": 4,
+      "note": "inherits ## 7. Worked example: a forgotten replication slot stops all writes"
+    },
+    {
+      "heading": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "note": "prescriptive procedure (measure, tune, remove horizon holders, runbook steps), mapped to role 3 'steps'"
+    },
+    {
+      "heading": "### 8.1 Measure",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "### 8.2 Keep autovacuum able to finish",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "### 8.3 Remove horizon holders",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "### 8.4 Freeze ahead of time",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "### 8.5 Spend fewer XIDs",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "### 8.6 Emergency runbook (the docs' procedure, 18 and 19)",
+      "role": 3,
+      "note": "inherits ## 8. Preventing wraparound: the playbook"
+    },
+    {
+      "heading": "## 9. Failure and edge-case matrix",
+      "role": 6
+    },
+    {
+      "heading": "## 10. Misconceptions and version differences",
+      "role": 6
+    },
+    {
+      "heading": "## 11. Verification notes",
+      "role": "envelope"
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^1]",
+      "url": "https://www.postgresql.org/docs/current/routine-vacuuming.html",
+      "cache": "cache/0485c9325213.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://www.postgresql.org/docs/18/routine-vacuuming.html",
+      "cache": "cache/59583419aa86.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^3]",
+      "url": "https://www.postgresql.org/docs/current/mvcc-intro.html",
+      "cache": "cache/e6cd546103c5.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^4]",
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+      "cache": "cache/cb4ce5048048.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^5]",
+      "url": "https://www.postgresql.org/docs/current/storage-page-layout.html",
+      "cache": "cache/a6ec7ca4934a.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^6]",
+      "url": "https://www.postgresql.org/docs/current/transaction-id.html",
+      "cache": "cache/87410b804d78.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^7]",
+      "url": "https://www.postgresql.org/docs/current/functions-info.html",
+      "cache": "cache/c39eceeac711.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^8]",
+      "url": "https://www.postgresql.org/docs/current/storage-hot.html",
+      "cache": "cache/594c1c4b4952.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^9]",
+      "url": "https://www.postgresql.org/docs/current/storage-vm.html",
+      "cache": "cache/a0d4631c1bbc.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^10]",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-vacuum.html",
+      "cache": "cache/3e63ee03898e.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^11]",
+      "url": "https://www.postgresql.org/docs/19/release-19.html",
+      "cache": "cache/1fca49ab9193.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^12]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/varsup.c",
+      "cache": "cache/8204316949eb.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^13]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/htup_details.h",
+      "cache": "cache/e3e6f3b6ad43.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^14]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/heap/heapam_visibility.c",
+      "cache": "cache/42c64b78f53d.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^15]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/clog.c",
+      "cache": "cache/f08906ad6250.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^15]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/xact.c",
+      "cache": "cache/b97968bb2a08.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^16]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/commands/vacuum.c",
+      "cache": "cache/5a58d9806138.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^17]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/transam.h",
+      "cache": "cache/0cea5b6617a7.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^17]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/transam.c",
+      "cache": "cache/fd47d501cf2f.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    },
+    {
+      "ref": "[^18]",
+      "url": "https://www.postgresql.org/docs/current/sql-vacuum.html",
+      "cache": "cache/fed027b0a0d4.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^19]",
+      "url": "https://www.postgresql.org/docs/current/progress-reporting.html",
+      "cache": "cache/aae230722d1e.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^20]",
+      "url": "https://www.postgresql.org/docs/current/app-pgresetwal.html",
+      "cache": "cache/6d1eb3b3f393.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^21]",
+      "url": "https://www.postgresql.org/docs/current/sql-prepare-transaction.html",
+      "cache": "cache/58987ace2263.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^22]",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-client.html",
+      "cache": "cache/1844713022bf.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^23]",
+      "url": "https://www.postgresql.org/docs/current/view-pg-replication-slots.html",
+      "cache": "cache/5fb6d29f1d4d.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^24]",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-replication.html",
+      "cache": "cache/22b15bc63016.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^25]",
+      "url": "https://www.postgresql.org/docs/current/runtime-config-resource.html",
+      "cache": "cache/a9a6133438cf.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^26]",
+      "url": "https://www.postgresql.org/docs/current/subxacts.html",
+      "cache": "cache/9d704f1b5d56.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^27]",
+      "url": "https://blog.sentry.io/transaction-id-wraparound-in-postgres/",
+      "cache": "cache/9acd09e424d2.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "step 2 rule 4 (class): a company engineering blog post-mortem (page shows 'Sentry Blog', 'David Cramer - July 23, 2015'); not originator, not the PostgreSQL project, not a maintainer post. The author himself writes he 'can't speak with authority' on internals; cited only for Sentry's own incident."
+    },
+    {
+      "ref": "[^28]",
+      "url": "https://mailchimp.com/what-we-learned-from-the-recent-mandrill-outage/",
+      "cache": "cache/a0aa73d201de.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "step 2 rule 4 (class): Mailchimp's official post-mortem of its own Mandrill outage (vetted engineering literature); cited only for that incident."
+    },
+    {
+      "ref": "[^29]",
+      "url": "https://en.wikipedia.org/wiki/Multiversion_concurrency_control",
+      "cache": "cache/2684ed39a408.txt",
+      "tier": "A",
+      "rank": 5,
+      "rank_basis": "tier A: *.wikipedia.org/"
+    },
+    {
+      "ref": "[^30]",
+      "url": "experiments/ (local path next to the doc)",
+      "cache": null,
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "local artifact (lab scripts and outputs); not in sources.json; claims citing only it are not_checkable"
+    },
+    {
+      "ref": "[^31]",
+      "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/storage/itemid.h",
+      "cache": "cache/1aff84631cfb.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "PostgreSQL (18 source)",
+      "rank_basis": "step 2 rule 2 (project's own home): PostgreSQL's own source tree at REL_18_STABLE; the saved file's header reads 'Copyright (c) ... PostgreSQL Global Development Group'. Every claim citing it is about PostgreSQL. (A branch, not a tag: the class table alone would not give rank 1.)"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true,
+    "note": "All 31 footnotes resolve and all are cited. 319 ✅ claim marks each carry a footnote; the bare ✅ on Summary line 17 and ## 11 line 545 are legend text. No role 1-5 citation falls outside its allowed ranks: [^27]/[^28] rank 4 appear in roles 1, 3 and 6, [^29] rank 5 in role 1 only, and [^30] is local. No probes or harness.json in the input."
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 3,
+    "factual_grounding": 2,
+    "diataxis_rigor": 4
+  },
+  "coverage": {
+    "sampled": true,
+    "claims_roles_1_5": 271,
+    "checked_roles_1_5": 37,
+    "claims_role_6": 49,
+    "checked_role_6": 7,
+    "no_cache": 0,
+    "not_checkable": 8,
+    "note": "Population from claims.json strata (323 marks: 271 in Summary and roles 1-5, 49 in role 6, 3 in ## 11 envelope). S45 (## 11) counts in neither role bucket. Checkable: 37 of 45."
+  },
+  "claim_checks": [
+    {
+      "id": "S1",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "**Depth:** tuple header fields and flag bits read from a real page; XID assignment, snapshots and isolation levels; the visibility rule and hint bits; HOT updates and pruning; VACUUM and the xmin horizon; multixacts; freezing, `relfrozenxid` / `datfrozenxid` and the full threshold ladder from `vacuum_freeze_min_age` to the stop limit, for PostgreSQL 18 and 19; every freezing-related setting with its default, clamp and \"unset\" behaviour; cross-actor interactions; a lab cluster driven past the stop limit by a forgotten replication slot and recovered; a prevention playbook, an emergency runbook, a failure matrix and misconceptions; verified (✅",
+      "source": "none",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found (no citation on this line)",
+      "note": "The ✅ here is the doc's legend symbol inside 'verified (✅) and unverified (⚠️) marks', not a claim mark; the Depth line describes the doc's own coverage. Not counted as an uncited ✅."
+    },
+    {
+      "id": "S2",
+      "section": "## 1. Context",
+      "role": 1,
+      "claim": "Outage: 05:35 UTC on 4 Feb to 22:09 UTC on 5 Feb, that is 24 h + 16 h 34 min = 40 h 34 min ✅[^28]",
+      "source": "[^28]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The outage began at 05:35 UTC on February 4, and we resolved the issue on February 5 at 22:09 UTC.",
+      "note": "Year 2019 shown by the page's refund window (January 1, 2019 to February 13, 2019). 05:35 Feb 4 to 22:09 Feb 5 = 40 h 34 min; arithmetic checks."
+    },
+    {
+      "id": "S3",
+      "section": "## 2. The actors",
+      "role": 2,
+      "claim": "Normal XIDs start at 3; 0 = invalid, 1 = bootstrap, 2 = frozen ✅[^17]",
+      "source": "[^17]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "InvalidTransactionId ((TransactionId) 0) … BootstrapTransactionId ((TransactionId) 1) … FrozenTransactionId ((TransactionId) 2) … FirstNormalTransactionId ((TransactionId) 3)",
+      "note": "transam.h #define lines 35-38."
+    },
+    {
+      "id": "S4",
+      "section": "## 2. The actors",
+      "role": 2,
+      "claim": "Status of very old XIDs is discarded; `pg_xact_status()` then returns NULL ✅[^7]",
+      "source": "[^7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If it is old enough that no references to the transaction survive in the system and the commit status information has been discarded, the result is NULL.",
+      "note": "pg_xact_status() description."
+    },
+    {
+      "id": "S5",
+      "section": "## 2. The actors",
+      "role": 2,
+      "claim": "Plain `VACUUM`: no exclusive lock, space kept for reuse in the same table ✅[^18]",
+      "source": "[^18]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "as an exclusive lock is not obtained. However, extra space is not returned to the operating system (in most cases); it's just kept available for re-use within the same table.",
+      "note": ""
+    },
+    {
+      "id": "S6",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": ", the value the `ctid` system column shows, such as `(0,3)` ✅[^30]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": "The (page, item) TID part carries its own ✅[^5] mark and is outside this claim."
+    },
+    {
+      "id": "S7",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Tuple-header table (## 3.1) under the column header 'Meaning ✅[^5]', e.g. `t_xmax` | 4 bytes | XID that deleted or locked it (0 if none)  [claims.json text: Meaning ✅[^5]]",
+      "source": "[^5]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "t_xmax | TransactionId | 4 bytes | delete XID stamp",
+      "note": "The column header 'Meaning ✅[^5]' puts every row on [^5]. The t_xmax row says 'deleted or locked it (0 if none)'; [^5] has only 'delete XID stamp' (searched 'lock', 'zero', 'xmax'). The lock meaning is in htup_details.h [^13] ('if XMAX is valid, the tuple is either locked or deleted') and 0 = InvalidTransactionId is in transam.h [^17], neither cited here. Other rows match [^5]."
+    },
+    {
+      "id": "S8",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Subtransactions (`SAVEPOINT`) that write get their own XID, a \"subxid\", and force their parents to take XIDs too; a parent's XID is always lower than its children's ✅[^26]",
+      "source": "[^26]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This also causes all of a subxid's parents ... to be assigned non-virtual transaction ids. We ensure that a parent xid is always lower than any of its child subxids.",
+      "note": "Page also says read-only subtransactions get no subxid until they write."
+    },
+    {
+      "id": "S9",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Middle versions of a HOT chain can be removed during normal operation, including `SELECT`s ✅[^8]",
+      "source": "[^8]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "row versions other than the oldest and the newest can be completely removed during normal operation, including SELECTs, instead of requiring periodic vacuum operations.",
+      "note": "Claim keeps the page's 'can'."
+    },
+    {
+      "id": "S10",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "`VACUUM` cannot run inside a transaction block ✅[^18]",
+      "source": "[^18]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "VACUUM cannot be executed inside a transaction block.",
+      "note": ""
+    },
+    {
+      "id": "S11",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Ended by `idle_in_transaction_session_timeout` (lab: a 2 s timeout ended the session with `terminating connection due to idle-in-transaction timeout`) ✅[^22]",
+      "source": "[^22] [^30]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Terminate any session that has been idle (that is, waiting for a client query) within an open transaction for longer than the specified amount of time.",
+      "note": "The lab message text in the parenthesis is backed by the adjacent ✅[^30] (local, not checkable); the [^22] part entails."
+    },
+    {
+      "id": "S12",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "MXIDs wrap like XIDs, and their member storage must be managed too ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "multixact IDs are implemented as a 32-bit counter ... requires careful aging management, storage cleanup, and wraparound handling ... list of members ... must also be managed",
+      "note": "Page adds that member storage 'cannot wrap around'; the claim does not say it does."
+    },
+    {
+      "id": "S13",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Lab: two sessions ran `SELECT … FOR SHARE` on row 3; its `xmax` became `1` with `infomask 0x11d2` (`0x1000` is-multi, `0x0080` lock-only, `0x0050` shared lock, `0x0100` inserter committed, `0x0002`) ... ✅[^30] ✅[^13]  [claims.json text: ✅[^13]]",
+      "source": "[^13]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "#define HEAP_XMAX_LOCK_ONLY 0x0080 … HEAP_XMAX_SHR_LOCK (HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK) … HEAP_XMIN_COMMITTED 0x0100 … HEAP_XMAX_IS_MULTI 0x1000",
+      "note": "[^13] backs the bit meanings: 0x0050 = EXCL_LOCK 0x0040 | KEYSHR_LOCK 0x0010; 0x1000+0x0100+0x0080+0x0050+0x0002 = 0x11d2. The observed xmax and members come from the lab [^30] (local)."
+    },
+    {
+      "id": "S14",
+      "section": "## 3. How MVCC works",
+      "role": 3,
+      "claim": "Lab: two sessions ran `SELECT … FOR SHARE` on row 3; its `xmax` became `1` with `infomask 0x11d2` (`0x1000` is-multi, `0x0080` lock-only, `0x0050` shared lock, `0x0100` inserter committed, `0x0002`), and `pg_get_multixact_members('1')` returned XIDs 762 and 763 in mode `sh` ✅[^30]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": ""
+    },
+    {
+      "id": "S15",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "50,000,000 ✅[^10]",
+      "source": "[^10]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The default is 50 million transactions.",
+      "note": "vacuum_freeze_min_age in [^10]."
+    },
+    {
+      "id": "S16",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "150 million | `vacuum_freeze_table_age` | ... | The next VACUUM is aggressive: it scans every page not marked all-frozen ✅[^10] ✅[^19]  [claims.json text: ✅[^19]]",
+      "source": "[^10] [^19]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "aggressive: The operation is running an aggressive vacuum, which must scan every page that is not marked all-frozen.",
+      "note": "[^19]; [^10] gives the trigger: 'VACUUM performs an aggressive scan if the table's pg_class.relfrozenxid field has reached the age specified by this setting.'"
+    },
+    {
+      "id": "S17",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "100 M or 40 M before wrap ✅[^1]",
+      "source": "[^1] [^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "[^1]: when the database's oldest XIDs reach one hundred million transactions from the wraparound point; [^2]: reach forty million transactions from the wraparound point",
+      "note": "Version-matched: 100 M from the 19 page, 40 M from the 18 page."
+    },
+    {
+      "id": "S18",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "3 M before wrap ✅[^12]",
+      "source": "[^12]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "xidStopLimit = xidWrapLimit - 3000000;",
+      "note": "varsup.c (REL_18_STABLE)."
+    },
+    {
+      "id": "S19",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "New XIDs refused; running transactions may continue, read-only transactions can start, `VACUUM` still works ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "In this condition any transactions already in progress can continue, but only read-only transactions can be started. ... The VACUUM command can still be run normally.",
+      "note": ""
+    },
+    {
+      "id": "S20",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "**X + a little:** once the table has received 1,000 + 20 % of its unfrozen size in new rows, autovacuum's insert threshold fires ✅[^1]",
+      "source": "[^1] [^10]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples * percent of table not frozen",
+      "note": "Defaults 1000 and 0.2 from [^10] ('The default is 1000 tuples', 'The default is 0.2 (20% of unfrozen pages in table)')."
+    },
+    {
+      "id": "S21",
+      "section": "## 4. Wraparound and freezing",
+      "role": 3,
+      "claim": "**X + 200 million:** if no VACUUM ran at all, autovacuum forces one ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "autovacuum is invoked on any table that might contain unfrozen rows with XIDs older than the age specified by ... autovacuum_freeze_max_age. (This will happen even if autovacuum is disabled.)",
+      "note": ""
+    },
+    {
+      "id": "S22",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "`autovacuum_freeze_max_age` row, What it does: Table age that forces autovacuum. Storage: 200 M ≈ 50 MB of `pg_xact` and ≈ 2 GB of `pg_commit_ts`; 2 B ≈ 0.5 GB and ≈ 20 GB ✅[^1]  [claims.json text: ✅[^1]]",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "(if track_commit_timestamp is enabled) timestamp ... (The default, 200 million transactions, translates to about 50MB of pg_xact storage and about 2GB of pg_commit_ts storage.)",
+      "note": "Numbers match, but the claim drops the condition that pg_commit_ts grows only if track_commit_timestamp is enabled; as written, every cluster carries about 2 GB (or 20 GB) of pg_commit_ts."
+    },
+    {
+      "id": "S23",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "MXIDs older than this are replaced (by zero, one XID or a newer MXID) ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "replace any multixact ID it encounters which is older than vacuum_multixact_freeze_min_age by a different value, which can be the zero value, a single transaction ID, or a newer multixact ID",
+      "note": ""
+    },
+    {
+      "id": "S24",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "Table MXID age (`relminmxid`) that makes VACUUM aggressive ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "pg_class.relminmxid stores the oldest possible multixact ID still appearing in any tuple of that table. If this value is older than vacuum_multixact_freeze_table_age, an aggressive vacuum is forced.",
+      "note": ""
+    },
+    {
+      "id": "S25",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "Server start only; per table lower ✅[^10]",
+      "source": "[^10]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This parameter can only be set at server start, but the setting can be reduced for individual tables by changing table storage parameters.",
+      "note": "autovacuum_multixact_freeze_max_age in [^10]."
+    },
+    {
+      "id": "S26",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "max −1: no cap ✅[^10]",
+      "source": "[^10]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If -1 is specified, autovacuum will not enforce a maximum number of updated or deleted tuples that will trigger a VACUUM operation.",
+      "note": "autovacuum_vacuum_max_threshold."
+    },
+    {
+      "id": "S27",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "−1 disables ✅[^10]",
+      "source": "[^10]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If -1 is specified, autovacuum will not trigger a VACUUM operation on any tables based on the number of inserts.",
+      "note": "autovacuum_vacuum_insert_threshold."
+    },
+    {
+      "id": "S28",
+      "section": "## 5. Settings catalog",
+      "role": 5,
+      "claim": "10 min (lab: 600000 ms) ✅[^30]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": "The 10 min default is not cited to [^10] in this cell."
+    },
+    {
+      "id": "S29",
+      "section": "## 6. Cross-actor interactions",
+      "role": 3,
+      "claim": "Raising `autovacuum_freeze_max_age` | Fewer forced vacuums; larger `pg_xact` and `pg_commit_ts`; less margin before the warnings; raises the caps of `vacuum_freeze_min_age` (½) and `vacuum_freeze_table_age` (95 %) and the failsafe floor (105 %) | ✅[^1] ✅[^10]  [claims.json text: ✅[^10]]",
+      "source": "[^1] [^10]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "The sole disadvantage of increasing autovacuum_freeze_max_age (and vacuum_freeze_table_age along with it) is that the pg_xact and pg_commit_ts subdirectories of the database cluster will take more space",
+      "note": "Row: 'Fewer forced vacuums; larger pg_xact and pg_commit_ts; less margin before the warnings; raises the caps ... (½) ... (95 %) ... (105 %)'. The caps are in [^10] and fewer forced vacuums and larger storage are in [^1], but 'less margin before the warnings' is in neither page (searched 'margin', 'warning', 'closer') and [^1] calls storage the sole disadvantage. The pg_commit_ts growth also drops 'if track_commit_timestamp is enabled'."
+    },
+    {
+      "id": "S30",
+      "section": "## 6. Cross-actor interactions",
+      "role": 3,
+      "claim": "Only the owning session can vacuum them; autovacuum cannot ✅[^1]",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "Temporary tables cannot be accessed by autovacuum. Therefore, appropriate vacuum and analyze operations should be performed via session SQL commands.",
+      "note": "'autovacuum cannot' entails. 'Only the owning session can vacuum them' adds an exclusivity rule (and 'owning') that the page lacks: it only says vacuuming should be done with session SQL commands."
+    },
+    {
+      "id": "S31",
+      "section": "## 7. Worked example: a forgotten replication slot stops all writes",
+      "role": 4,
+      "claim": "Experiment 05 (PostgreSQL 18.3, a throwaway Docker volume, `wal_level=logical`, `autovacuum_naptime=2s`) ✅[^30]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": ""
+    },
+    {
+      "id": "S32",
+      "section": "## 7. Worked example: a forgotten replication slot stops all writes",
+      "role": 4,
+      "claim": "Reaching 2 billion XIDs honestly would take days, so the counter was moved with `pg_resetwal -x`, a repair tool the docs reserve for last-resort recovery of a damaged cluster ✅[^20]",
+      "source": "[^20]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "This function is sometimes needed if these files have become corrupted. It should be used only as a last resort, when the server will not start due to such corruption.",
+      "note": "The pg_resetwal part entails. The claim opens with 'Reaching 2 billion XIDs honestly would take days', an estimate that neither [^20] nor any other citation in the sentence backs (searched 'days', 'rate'); the lab's XID rate is not given either."
+    },
+    {
+      "id": "S33",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "claim": "The docs advise against setting `transaction_timeout` or `statement_timeout` in `postgresql.conf`, because that affects all sessions ✅[^22]",
+      "source": "[^22]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Setting statement_timeout in postgresql.conf is not recommended because it would affect all sessions. ... Setting transaction_timeout in postgresql.conf is not recommended because it would affect all sessions.",
+      "note": ""
+    },
+    {
+      "id": "S34",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "claim": "Consider `idle_replication_slot_timeout` for slots that reserve WAL ✅[^24]",
+      "source": "[^24]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Note that the idle timeout invalidation mechanism is not applicable for slots that do not reserve WAL",
+      "note": "With: 'Invalidate replication slots that have remained inactive (not used by a replication connection) for longer than this duration.' The 'consider' is advice; its scope matches the page."
+    },
+    {
+      "id": "S35",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "claim": "- With `hot_standby_feedback = on`, long standby queries hold the primary's horizon; weigh that against query cancels on the standby ✅[^24]",
+      "source": "[^24]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "This parameter can be used to eliminate query cancels caused by cleanup records, but can cause database bloat on the primary for some workloads.",
+      "note": "The trade-off entails. 'long standby queries hold the primary's horizon' is a plain statement; the page says feedback 'can cause' bloat 'for some workloads' and never mentions the horizon."
+    },
+    {
+      "id": "S36",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "claim": "`VACUUM (FREEZE)` on a cold table after a bulk load makes later aggressive vacuums skip it via all-frozen pages ✅[^9] ✅[^30]  [claims.json text: ✅[^30]]",
+      "source": "[^9] [^30]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The second bit, if set, means that all tuples on the page have been frozen. That means that even an anti-wraparound vacuum need not revisit the page.",
+      "note": "[^9] backs the skip; that VACUUM (FREEZE) sets the all-frozen bits rests on the co-cited lab [^30] (local)."
+    },
+    {
+      "id": "S37",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "role": 3,
+      "claim": "- Reads do not consume XIDs; only writes do ✅[^6]",
+      "source": "[^6]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Non-virtual TransactionIds (or xid), e.g., 278394, are assigned sequentially ... This assignment happens when a transaction first writes to the database.",
+      "note": "Matches [^6]. Note: [^7] (not cited here) shows pg_current_xact_id() assigns an XID without a write; the doc names that exception in §3.2 and §8.5."
+    },
+    {
+      "id": "S38",
+      "section": "## 9. Failure and edge-case matrix",
+      "role": 6,
+      "claim": "Inactive logical slot | `datfrozenxid` stuck in all databases; catalogs at the slot's `catalog_xmin` | Slot `catalog_xmin` | Drop the slot | ✅[^30]  [claims.json text: ✅[^30]]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": ""
+    },
+    {
+      "id": "S39",
+      "section": "## 9. Failure and edge-case matrix",
+      "role": 6,
+      "claim": "Physical slot or standby feedback | Bloat and old ages on the primary | Slot or feedback `xmin` | Fix or drop the slot; reconsider feedback | ✅[^23] ✅[^24] ✅[^1]  [claims.json text: ✅[^23]]",
+      "source": "[^23] [^24] [^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "[^23] xmin: The oldest transaction that this slot needs the database to retain. VACUUM cannot remove tuples deleted by any later transaction. [^24]: can cause database bloat on the primary",
+      "note": "Judged with [^24] and [^1] ('Drop any old replication slots ... age(xmin) or age(catalog_xmin) is large')."
+    },
+    {
+      "id": "S40",
+      "section": "## 9. Failure and edge-case matrix",
+      "role": 6,
+      "claim": "VACUUM right after many empty write transactions | Pages not set all-visible yet | Unflushed asynchronous commits delay hint bits | Harmless; the next VACUUM sets them | ✅[^30] ⚠️ unverified  [claims.json text: ✅[^30]]",
+      "source": "[^30]",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found: cites only [^30], the local lab, which is not in the input",
+      "note": "The row also carries ⚠️ unverified for its mechanism."
+    },
+    {
+      "id": "S41",
+      "section": "## 10. Misconceptions and version differences",
+      "role": 6,
+      "claim": "\"Long reports are harmless because they only read\" | They consume no XID, but their snapshot holds the horizon | ✅[^6] ✅[^30]  [claims.json text: ✅[^6]]",
+      "source": "[^6] [^30]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This assignment happens when a transaction first writes to the database.",
+      "note": "[^6] backs 'consume no XID'; 'their snapshot holds the horizon' rests on the co-cited lab [^30] (local)."
+    },
+    {
+      "id": "S42",
+      "section": "## 10. Misconceptions and version differences",
+      "role": 6,
+      "claim": "Order of the `pg_class` listing ✅[^1]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "To revert to the prioritization strategy used before PostgreSQL 19 (i.e., the order the tables are listed in the pg_class system catalog)",
+      "note": "PG 18 column checked against a 19 page; accepted because this sentence explicitly covers the pre-19 era. The PG 18 page [^2] says nothing on table order."
+    },
+    {
+      "id": "S43",
+      "section": "## 10. Misconceptions and version differences",
+      "role": 6,
+      "claim": "`(to prevent wraparound)` in `pg_stat_activity` ✅[^2]",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if the autovacuum is running to prevent transaction ID wraparound (i.e., the autovacuum query name in the pg_stat_activity view ends with (to prevent wraparound)), the autovacuum is not automatically interrupted.",
+      "note": "Version-matched: the 18 page."
+    },
+    {
+      "id": "S44",
+      "section": "## 10. Misconceptions and version differences",
+      "role": 6,
+      "claim": ", while the 19 release notes say query scans can now set all-visible ✅[^11]",
+      "source": "[^11]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Allow query table scans to mark pages as all-visible in the visibility map",
+      "note": "The next line adds: 'Previously only VACUUM and COPY ... FREEZE could do this.'"
+    },
+    {
+      "id": "S45",
+      "section": "## 11. Verification notes",
+      "role": "envelope",
+      "claim": "- Counts in this doc (claim markers in the body: ✅",
+      "source": "none",
+      "verdict": "not_checkable",
+      "severity": "none",
+      "page_says": "not found (no citation; meta statement)",
+      "note": "An envelope count, not a sourced claim. Checked against the doc body anyway: 323 ✅ characters minus 4 legend uses = 319 claim marks, and 11 ⚠️ minus 3 legend uses = 8. Both match."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Who sets visibility-map bits (PostgreSQL 19 and before)",
+      "winner": "none: [^9] rank 1 (19 VM page: 'Visibility map bits are only set by vacuum') vs [^11] rank 1 (19 release notes: query table scans can now mark pages all-visible; 'Previously only VACUUM and COPY ... FREEZE could do this'). Same rank, and no further Rank 1 source settles it",
+      "loser": "[^9] rank 1, which the doc treats as stale on its own reasoning ('The release notes describe the newer behaviour')",
+      "where_loser_is": "## 10. Misconceptions and version differences (discussed, not marked ⚖️ open conflict); ## 2. The actors (role 2) states a blend as fact ('set only by vacuum (and, in 19, by query scans)') citing both, which matches neither page (drops COPY … FREEZE); ## 6. Cross-actor interactions (role 3) states the [^11] side as fact",
+      "ok": false
+    }
+  ],
+  "criteria_checks": [
+    {
+      "criterion": "Section 3 (role 3: ## 3, ## 4, ## 6, ## 8) must mandate standard VACUUM",
+      "met": true,
+      "evidence": "## 8.6 step 4: 'Run `VACUUM` as a superuser in each database with an old `datfrozenxid` ... Do not use `VACUUM FULL`'; ## 8.2: 'Leave `autovacuum` on: it is what vacuums and freezes tables'; ## 4.6 has normal and aggressive VACUUM freezing the row."
+    },
+    {
+      "criterion": "Section 5 (role 5: ## 5. Settings catalog) must mandate standard VACUUM",
+      "met": false,
+      "evidence": "## 5 lists the freezing settings but never says plain VACUUM or autovacuum is the required or sufficient tool. VACUUM FULL and REPACK are absent from it. The closest text is 'so a periodic manual VACUUM can run before an anti-wraparound one', which describes a clamp and mandates nothing."
+    },
+    {
+      "criterion": "Section 6 (role 6: ## 9, ## 10) must isolate VACUUM FULL as a severe table-locking anti-pattern",
+      "met": false,
+      "evidence": "## 10 lists '\"`VACUUM FULL` is the strongest fix in an emergency\"' as a misconception, but only because it 'needs an XID' and 'rewrites the whole table'. Its ACCESS EXCLUSIVE lock appears only in ## 3.6 (role 3), and ## 9 does not mention VACUUM FULL."
+    },
+    {
+      "criterion": "conflict_trap_claim ('Schedule VACUUM FULL periodically via cron to prevent wraparound') not stated as true in roles 1-5",
+      "met": true,
+      "evidence": "No role 1-5 text recommends scheduled VACUUM FULL; ## 8.4 recommends 'a manual `VACUUM` in quiet hours' (plain VACUUM)."
+    },
+    {
+      "criterion": "conflict_trap_claim refuted in role 6",
+      "met": false,
+      "evidence": "## 10 refutes VACUUM FULL only as an emergency fix; no role 6 row addresses periodic or cron-scheduled VACUUM FULL as prevention."
+    },
+    {
+      "criterion": "ground_truth_claim ('Standard VACUUM or autovacuum is sufficient to freeze tuples with FrozenTransactionId') reflected",
+      "met": true,
+      "evidence": "## 4.2 and ## 4.6 show plain or aggressive VACUUM and autovacuum doing the freezing; ## 8.6 restores operation with plain VACUUM. The doc refines the wording: since 9.4 freezing sets HEAP_XMIN_FROZEN rather than writing xmin = 2 (## 4.2, ## 10), per [^1]."
+    }
+  ],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 3. How MVCC works",
+      "rule": "grounding",
+      "evidence": "S7: tuple-header table under 'Meaning ✅[^5]' gives t_xmax as 'XID that deleted or locked it (0 if none)'; [^5] says only 'delete XID stamp'."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 6. Cross-actor interactions",
+      "rule": "grounding",
+      "evidence": "S29: 'less margin before the warnings' is in neither [^1] nor [^10]; [^1] calls storage 'The sole disadvantage of increasing autovacuum_freeze_max_age'. The pg_commit_ts condition is dropped too."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 7. Worked example: a forgotten replication slot stops all writes",
+      "rule": "grounding",
+      "evidence": "S32: 'Reaching 2 billion XIDs honestly would take days' sits under ✅[^20], which says nothing about it."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 5. Settings catalog",
+      "rule": "grounding",
+      "evidence": "S22: pg_commit_ts sizes (≈ 2 GB / ≈ 20 GB) stated without [^1]'s condition '(if track_commit_timestamp is enabled)'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 6. Cross-actor interactions",
+      "rule": "grounding",
+      "evidence": "S30: 'Only the owning session can vacuum them' is stronger than [^1]'s 'should be performed via session SQL commands'."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 8. Preventing wraparound: the playbook",
+      "rule": "grounding",
+      "evidence": "S35: 'long standby queries hold the primary's horizon' is a plain statement; [^24] says feedback 'can cause database bloat on the primary for some workloads'."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 2. The actors",
+      "rule": "KB-17",
+      "evidence": "[^9] (rank 1) says VM bits are only set by vacuum and [^11] (rank 1) says query scans (19) and, before, COPY … FREEZE set them. No further Rank 1 source settles this and it is not marked ⚖️ open conflict. ## 2 states 'set only by vacuum (and, in 19, by query scans)' as fact, which matches neither source, and ## 6 states the [^11] side as fact."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 5. Settings catalog",
+      "rule": "criteria",
+      "evidence": "Pass criterion 'Sections 3 and 5 must mandate standard VACUUM': role 5 (## 5) never mandates plain VACUUM or autovacuum."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 10. Misconceptions and version differences",
+      "rule": "criteria",
+      "evidence": "Pass criterion 'Section 6 must isolate VACUUM FULL as a severe table-locking anti-pattern': role 6 gives only the XID and rewrite reasons, never the ACCESS EXCLUSIVE lock."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 10. Misconceptions and version differences",
+      "rule": "criteria",
+      "evidence": "conflict_trap_claim (cron-scheduled VACUUM FULL to prevent wraparound) is not refuted in role 6."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 2. The actors",
+      "rule": "structure",
+      "evidence": "Role 2 carries mechanism and default-value detail ('via shared memory (saved in `pg_control` at each checkpoint)', 'With `off`, anti-wraparound vacuums still run', defaults better kept in ## 5), and ## 6 repeats ## 3.7's horizon content."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## 3. How MVCC works",
+      "action": "In the ## 3.1 tuple-header table, set the t_xmax meaning to [^5]'s 'XID that deleted it' (delete XID stamp). Alternatively, keep 'or locked it (0 if none)' and add ✅[^13] (htup_details.h: 'if XMAX is valid, the tuple is either locked or deleted'; HEAP_XMAX_LOCK_ONLY) and ✅[^17] (InvalidTransactionId = 0) to that cell. Fix ## 2's Tuple header row ('`xmax = 0` means \"not deleted or locked\" ✅[^5]') the same way."
+    },
+    {
+      "section": "## 6. Cross-actor interactions",
+      "action": "In the 'Raising `autovacuum_freeze_max_age`' row, delete 'less margin before the warnings' or mark it ⚠️ unverified (no cited page says it; [^1] calls storage the sole disadvantage), and write 'larger pg_xact and (if track_commit_timestamp is enabled) pg_commit_ts' ✅[^1]."
+    },
+    {
+      "section": "## 6. Cross-actor interactions",
+      "action": "In the Temporary tables row, replace 'Only the owning session can vacuum them; autovacuum cannot' with 'autovacuum cannot access them; the docs say to vacuum them with session SQL commands' ✅[^1]."
+    },
+    {
+      "section": "## 7. Worked example: a forgotten replication slot stops all writes",
+      "action": "In ## 7.1, keep ✅[^20] on the pg_resetwal clause only. Either label 'would take days' as the doc's own arithmetic from ## 4.4 (2,147,483,647 ÷ 10,000 XIDs/s ≈ 2.5 days) with the lab's measured XID rate, or mark it ⚠️ unverified."
+    },
+    {
+      "section": "## 5. Settings catalog",
+      "action": "In the autovacuum_freeze_max_age row, write 'pg_commit_ts (only if track_commit_timestamp is enabled) ≈ 2 GB / ≈ 20 GB' ✅[^1]."
+    },
+    {
+      "section": "## 8. Preventing wraparound: the playbook",
+      "action": "In ## 8.3, reword to 'With `hot_standby_feedback = on`, the standby reports its running queries to the primary, which avoids query cancels but can cause bloat on the primary for some workloads' ✅[^24]. If the horizon wording stays, back it with [^23] (slot xmin: 'VACUUM cannot remove tuples deleted by any later transaction')."
+    },
+    {
+      "section": "## 2. The actors",
+      "action": "Rewrite the Visibility map row per [^11]: 'set by VACUUM and COPY … FREEZE; in 19 also by query table scans ✅[^11]; cleared by any data change ✅[^9]'. In ## 10, mark the [^9]-vs-[^11] discrepancy as '⚖️ open conflict', naming each side with its source and rank 1, or settle it with a further Rank 1 source such as the 19 source tree."
+    },
+    {
+      "section": "## 5. Settings catalog",
+      "action": "Add an invariant line or row that mandates standard VACUUM, for example: 'Freezing and `relfrozenxid` advance are done by plain VACUUM and autovacuum (aggressive when the table age reaches `vacuum_freeze_table_age` or `autovacuum_freeze_max_age`) ✅[^1] ✅[^10]; `VACUUM FULL` is not needed for freezing and takes an ACCESS EXCLUSIVE lock on each table ✅[^18].'"
+    },
+    {
+      "section": "## 10. Misconceptions and version differences",
+      "action": "Add a misconception row: '\"Schedule `VACUUM FULL` (e.g. via cron) to prevent wraparound\"' → 'Anti-pattern: plain VACUUM/autovacuum already freezes ✅[^1]; `VACUUM FULL` needs an ACCESS EXCLUSIVE lock on each table, blocking reads and writes for the whole rewrite, plus extra disk ✅[^18]; at the stop limit it needs an XID and fails (except in single-user mode, where it consumes one) ✅[^1]'. Also add the ACCESS EXCLUSIVE lock reason to the existing emergency row."
+    },
+    {
+      "section": "## 2. The actors",
+      "action": "Keep ## 2 to what each actor is and how actors relate. Move defaults (max_prepared_transactions = 0, autovacuum = on) to ## 5 and mechanism notes (pg_control saves, anti-wraparound with autovacuum off) to ## 3 or ## 4. Trim ## 6 rows that restate ## 3.7."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 37,
+    "claims": 45,
+    "share": 0.82,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

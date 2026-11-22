@@ -1,0 +1,136 @@
+Pager usage is off.
+CREATE EXTENSION IF NOT EXISTS pg_visibility;
+CREATE EXTENSION
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+CREATE EXTENSION
+--- case 1: no XID burning after the INSERT
+CREATE TABLE c1 (id int, pad text) WITH (autovacuum_enabled = off);
+CREATE TABLE
+INSERT INTO c1 SELECT g, repeat('x', 100) FROM generate_series(1, 2000) g;
+INSERT 0 2000
+VACUUM (VERBOSE) c1;
+psql:/exp/04b-allvisible-check.sql:12: INFO:  vacuuming "lab.public.c1"
+psql:/exp/04b-allvisible-check.sql:12: INFO:  finished vacuuming "lab.public.c1": index scans: 0
+pages: 0 removed, 35 remain, 35 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 2000 remain, 0 are dead but not yet removable
+removable cutoff: 758, which was 0 XIDs old when operation ended
+new relfrozenxid: 757, which is 1 XIDs ahead of previous value
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 35 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 146.484 MB/s
+buffer usage: 85 hits, 0 reads, 3 dirtied
+WAL usage: 38 records, 3 full page images, 27051 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/04b-allvisible-check.sql:12: INFO:  vacuuming "lab.pg_toast.pg_toast_16440"
+psql:/exp/04b-allvisible-check.sql:12: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16440": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 758, which was 0 XIDs old when operation ended
+new relfrozenxid: 758, which is 2 XIDs ahead of previous value
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 150.240 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 27 hits, 1 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 258 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+SELECT sum(all_visible::int) AS c1_all_visible FROM pg_visibility_map('c1');
+ c1_all_visible 
+----------------
+             35
+(1 row)
+
+--- case 2: burn XIDs right after the INSERT, VACUUM immediately
+CREATE TABLE c2 (id int, pad text) WITH (autovacuum_enabled = off);
+CREATE TABLE
+INSERT INTO c2 SELECT g, repeat('x', 100) FROM generate_series(1, 2000) g;
+INSERT 0 2000
+DO $$ BEGIN FOR i IN 1..5000 LOOP PERFORM pg_current_xact_id(); COMMIT; END LOOP; END $$;
+DO
+VACUUM (VERBOSE) c2;
+psql:/exp/04b-allvisible-check.sql:18: INFO:  vacuuming "lab.public.c2"
+psql:/exp/04b-allvisible-check.sql:18: INFO:  finished vacuuming "lab.public.c2": index scans: 0
+pages: 0 removed, 35 remain, 35 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 2000 remain, 0 are dead but not yet removable
+removable cutoff: 5760, which was 0 XIDs old when operation ended
+new relfrozenxid: 759, which is 1 XIDs ahead of previous value
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 70.701 MB/s
+buffer usage: 85 hits, 0 reads, 2 dirtied
+WAL usage: 3 records, 2 full page images, 16789 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/04b-allvisible-check.sql:18: INFO:  vacuuming "lab.pg_toast.pg_toast_16445"
+psql:/exp/04b-allvisible-check.sql:18: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16445": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 5760, which was 0 XIDs old when operation ended
+new relfrozenxid: 5760, which is 5002 XIDs ahead of previous value
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 124.008 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 25 hits, 1 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 258 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+SELECT sum(all_visible::int) AS c2_all_visible FROM pg_visibility_map('c2');
+ c2_all_visible 
+----------------
+              0
+(1 row)
+
+SELECT to_hex(t_infomask) AS c2_infomask FROM heap_page_items(get_raw_page('c2', 0)) LIMIT 1;
+ c2_infomask 
+-------------
+ 802
+(1 row)
+
+--- case 2 again after 2 s (WAL writer has flushed the async commits)
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+VACUUM (VERBOSE) c2;
+psql:/exp/04b-allvisible-check.sql:23: INFO:  vacuuming "lab.public.c2"
+psql:/exp/04b-allvisible-check.sql:23: INFO:  finished vacuuming "lab.public.c2": index scans: 0
+pages: 0 removed, 35 remain, 35 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 2000 remain, 0 are dead but not yet removable
+removable cutoff: 5760, which was 0 XIDs old when operation ended
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 35 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 8.155 MB/s
+buffer usage: 86 hits, 0 reads, 1 dirtied
+WAL usage: 36 records, 1 full page images, 10569 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/04b-allvisible-check.sql:23: INFO:  vacuuming "lab.pg_toast.pg_toast_16445"
+psql:/exp/04b-allvisible-check.sql:23: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16445": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 5760, which was 0 XIDs old when operation ended
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 6 hits, 0 reads, 0 dirtied
+WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+SELECT sum(all_visible::int) AS c2_all_visible_after_sleep FROM pg_visibility_map('c2');
+ c2_all_visible_after_sleep 
+----------------------------
+                         35
+(1 row)
+
+SELECT to_hex(t_infomask) AS c2_infomask_after_sleep FROM heap_page_items(get_raw_page('c2', 0)) LIMIT 1;
+ c2_infomask_after_sleep 
+-------------------------
+ 902
+(1 row)
+

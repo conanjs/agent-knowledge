@@ -1,0 +1,2 @@
+2026-11-22 17:28:10.150 UTC [56] LOG:  database system is ready to accept connections
+2026-11-22 17:28:10.389 UTC [1] LOG:  database system is ready to accept connections

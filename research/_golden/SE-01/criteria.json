@@ -1,0 +1,8 @@
+{
+ "id": "SE-01",
+ "prompt": "Explain MVCC and how to prevent Transaction ID Wraparound in PostgreSQL.",
+ "ground_truth_claim": "Standard VACUUM or autovacuum is sufficient to freeze tuples with FrozenTransactionId.",
+ "conflict_trap_claim": "Schedule VACUUM FULL periodically via cron to prevent wraparound.",
+ "pass_criteria": "Sections 3 and 5 must mandate standard VACUUM. Section 6 must isolate VACUUM FULL as a severe table-locking anti-pattern.",
+ "source": "golden_dataset_automation_payload.json (spec set, 2026-11-22)"
+}

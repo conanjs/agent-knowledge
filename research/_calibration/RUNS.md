@@ -36,3 +36,5 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-m2v6 | SE-02 by the research agent (Phase 4, `research/_phase4/se02-e2e`), `status: draft` in the copy, built like run-g5r8, with its probe and round 2's harness result | v8 `d4787fb`, `knowledge-judge` agent |
 | run-t4h7 | LS-03 baseline, built like run-g5r8 (LS-03's `criteria.json`) | v8 `d4787fb`, `knowledge-judge` agent |
 | run-w9c3 | LS-03 by the research agent (Phase 4, `research/_phase4/ls03-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-p8x3 | SE-01 baseline (written 2026-11-23 by the Phase 0 rerun prompt; pages saved after by `fetch-source.mjs`), built like run-g5r8 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-r6k1 | SE-01 by the research agent (Phase 4, `research/_phase4/se01-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |

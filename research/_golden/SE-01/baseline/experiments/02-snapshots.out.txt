@@ -1,0 +1,164 @@
+Pager usage is off.
+DROP TABLE IF EXISTS acct2;
+DROP TABLE
+CREATE TABLE acct2 (id int PRIMARY KEY, balance int) WITH (autovacuum_enabled = off);
+psql:/exp/02-snapshots.sql:5: NOTICE:  table "acct2" does not exist, skipping
+CREATE TABLE
+INSERT INTO acct2 VALUES (1, 90);
+INSERT 0 1
+SELECT dblink_connect('b', 'dbname=lab');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+=== A. REPEATABLE READ: one snapshot for the whole transaction
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+BEGIN
+SELECT ctid, xmin, xmax, balance FROM acct2 WHERE id = 1;
+ ctid  | xmin | xmax | balance 
+-------+------+------+---------
+ (0,1) |  765 |    0 |      90
+(1 row)
+
+SELECT pg_current_snapshot() AS a_snapshot;
+ a_snapshot 
+------------
+ 766:766:
+(1 row)
+
+--- B updates the row to 80 and commits (autocommit)
+SELECT dblink_exec('b', 'UPDATE acct2 SET balance = 80 WHERE id = 1');
+ dblink_exec 
+-------------
+ UPDATE 1
+(1 row)
+
+--- A reads again: still the old version
+SELECT ctid, xmin, xmax, balance FROM acct2 WHERE id = 1;
+ ctid  | xmin | xmax | balance 
+-------+------+------+---------
+ (0,1) |  765 |  766 |      90
+(1 row)
+
+--- A tries to update the same row
+UPDATE acct2 SET balance = balance - 10 WHERE id = 1;
+psql:/exp/02-snapshots.sql:20: ERROR:  could not serialize access due to concurrent update
+ROLLBACK;
+ROLLBACK
+=== B. READ COMMITTED (default): a new snapshot for every statement
+BEGIN;
+BEGIN
+SELECT balance FROM acct2 WHERE id = 1;
+ balance 
+---------
+      80
+(1 row)
+
+SELECT dblink_exec('b', 'UPDATE acct2 SET balance = 70 WHERE id = 1');
+ dblink_exec 
+-------------
+ UPDATE 1
+(1 row)
+
+SELECT balance FROM acct2 WHERE id = 1;
+ balance 
+---------
+      70
+(1 row)
+
+COMMIT;
+COMMIT
+=== C. An in-progress writer appears in the snapshot xip list
+SELECT dblink_exec('b', 'BEGIN');
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+SELECT dblink_exec('b', 'INSERT INTO acct2 VALUES (2, 5)');
+ dblink_exec 
+-------------
+ INSERT 0 1
+(1 row)
+
+SELECT * FROM dblink('b', 'SELECT pg_current_xact_id()::text') AS t(b_xid text);
+ b_xid 
+-------
+ 769
+(1 row)
+
+SELECT pg_current_snapshot() AS a_snapshot_while_b_open;
+ a_snapshot_while_b_open 
+-------------------------
+ 769:769:
+(1 row)
+
+--- A commits a write of its own (gets a higher XID than B) while B is still open
+INSERT INTO acct2 VALUES (3, 1);
+INSERT 0 1
+SELECT pg_current_snapshot() AS a_snapshot_after_own_commit;
+ a_snapshot_after_own_commit 
+-----------------------------
+ 769:771:769
+(1 row)
+
+SELECT pg_visible_in_snapshot(pg_snapshot_xmin(pg_current_snapshot()), pg_current_snapshot()) AS b_xid_visible;
+ b_xid_visible 
+---------------
+ f
+(1 row)
+
+SELECT id FROM acct2 ORDER BY id;
+ id 
+----
+  1
+  3
+(2 rows)
+
+SELECT * FROM dblink('b', 'SELECT id FROM acct2 ORDER BY id') AS t(ids_b_sees int);
+ ids_b_sees 
+------------
+          1
+          2
+          3
+(3 rows)
+
+SELECT dblink_exec('b', 'COMMIT');
+ dblink_exec 
+-------------
+ COMMIT
+(1 row)
+
+SELECT id AS ids_a_sees_after_b_commit FROM acct2 ORDER BY id;
+ ids_a_sees_after_b_commit 
+---------------------------
+                         1
+                         2
+                         3
+(3 rows)
+
+SELECT dblink_disconnect('b');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+=== D. A read-only transaction gets no XID (only a virtual one)
+BEGIN;
+BEGIN
+SELECT count(*) FROM acct2;
+ count 
+-------
+     3
+(1 row)
+
+SELECT pg_current_xact_id_if_assigned() AS xid_if_assigned,
+       (SELECT virtualtransaction FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'virtualxid') AS vxid;
+ xid_if_assigned | vxid 
+-----------------+------
+                 | 4/20
+(1 row)
+
+COMMIT;
+COMMIT

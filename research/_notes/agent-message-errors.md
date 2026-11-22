@@ -10,7 +10,7 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 |---|---|---|
 | An example in the reader's input is the answer to the test | E1, E6 | Take examples from topics no test covers; check every file an agent reads for test answers |
 | An agent that can read the repo finds test material by search | E4, E5 | Forbid the folders by name *and* give the agent what it was going to look for; audit its reads after each run |
-| A rule silent on a case is read as permission | E7, E11, E14, E22, E24 | Name the case and what to do in it ("after a PASS, change nothing") |
+| A rule silent on a case is read as permission | E7, E11, E14, E22, E24, E25 | Name the case and what to do in it ("after a PASS, change nothing") |
 | Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
 | A criterion that names several sections can be read as each or as all | E8 | Write "each of sections 2 and 3" or "sections 2 and 3 together" |
 | A message copied in place of the rule | E20 | State the rule; quote the message only as the message |
@@ -162,3 +162,15 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Read as:** the rule is about the run folder; a throwaway script elsewhere is fine.
 - **Expected (the rule's purpose):** no doc text and no edited pages. A script outside the repo breaks neither, and the ledger check passed (0 errors).
 - **Fix (open):** say which writes are allowed: "In the repo, write only your ledger; a throwaway script may go in the session's scratch folder." The judges already do the same with their verdict scripts.
+
+### E25 "PASS → verified" when the doc still holds ⚠️ (SE-01 orchestrator)
+- **Words:** the orchestrator body, step 9: "PASS → `status: verified` and `last-verified` = today." KD-2: "`status: verified` ⇒ zero `⚠️ unverified` markers". The SE-01 doc passed round 2 with two `⚠️ unverified` points kept in §6.2.
+- **Read as:** the orchestrator kept `draft` and added a Summary note, rightly, and asked V to choose; the body gave it no rule for this case.
+- **Expected:** a rule for a PASS doc that still holds `⚠️` (unverified points the judge skips by design).
+- **Fix (open):** say in step 9 what a PASS with remaining `⚠️` means: keep `draft` with a note (what SE-01 did), or drop those points to the report and set `verified`. V decides which.
+
+### E26 Lines that mention ✅ sampled as claims (the stage1 sampler)
+- **Words:** `evaluate-research.mjs stage1 --sample` skips `## References`, `## Related`, `## Verification status` and lines with `✅ =`. The SE-01 baseline has `## 11. Verification notes` with "Counts in this doc (claim markers in the body: ✅ with a footnote, and ⚠️ marks): ✅ 319, ⚠️ 8", and a Summary **Depth:** line that mentions ✅.
+- **Read as (by the sampler):** two claims; the judge marked both `not_checkable`.
+- **Expected:** a line that talks about the markers is not a claim.
+- **Fix (open):** skip a line whose ✅ is followed by a count or by "with a footnote", and any heading that starts with "Verification"; re-sample earlier inputs only if their samples held such lines (to check).

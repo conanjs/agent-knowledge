@@ -1,0 +1,137 @@
+Pager usage is off.
+DROP TABLE IF EXISTS bloat;
+psql:/exp/03-horizon.sql:5: NOTICE:  table "bloat" does not exist, skipping
+DROP TABLE
+CREATE TABLE bloat (id int PRIMARY KEY, v int) WITH (autovacuum_enabled = off);
+CREATE TABLE
+INSERT INTO bloat SELECT g, 0 FROM generate_series(1, 1000) g;
+INSERT 0 1000
+VACUUM bloat;
+VACUUM
+--- an "old" session opens a REPEATABLE READ snapshot and goes idle
+SELECT dblink_connect('old', 'dbname=lab application_name=old_reader');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT dblink_exec('old', 'BEGIN ISOLATION LEVEL REPEATABLE READ');
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+SELECT * FROM dblink('old', 'SELECT count(*) FROM bloat') AS t(n bigint);
+  n   
+------
+ 1000
+(1 row)
+
+--- 3 updates of all 1000 rows -> 3000 dead versions
+UPDATE bloat SET v = v + 1;
+UPDATE 1000
+UPDATE bloat SET v = v + 1;
+UPDATE 1000
+UPDATE bloat SET v = v + 1;
+UPDATE 1000
+SELECT application_name, state, backend_xid, backend_xmin, age(backend_xmin) AS xmin_age
+FROM pg_stat_activity WHERE application_name = 'old_reader';
+ application_name |        state        | backend_xid | backend_xmin | xmin_age 
+------------------+---------------------+-------------+--------------+----------
+ old_reader       | idle in transaction |             |          773 |        3
+(1 row)
+
+--- VACUUM while the old snapshot is open
+VACUUM (VERBOSE) bloat;
+psql:/exp/03-horizon.sql:23: INFO:  vacuuming "lab.public.bloat"
+psql:/exp/03-horizon.sql:23: INFO:  finished vacuuming "lab.public.bloat": index scans: 0
+pages: 0 removed, 18 remain, 18 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 4000 remain, 3000 are dead but not yet removable
+removable cutoff: 773, which was 3 XIDs old when operation ended
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 55 hits, 0 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 307 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+--- the old session ends its transaction; VACUUM again
+SELECT dblink_exec('old', 'COMMIT');
+ dblink_exec 
+-------------
+ COMMIT
+(1 row)
+
+VACUUM (VERBOSE) bloat;
+psql:/exp/03-horizon.sql:27: INFO:  vacuuming "lab.public.bloat"
+VACUUM
+SELECT dblink_disconnect('old');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+psql:/exp/03-horizon.sql:27: INFO:  finished vacuuming "lab.public.bloat": index scans: 1
+pages: 0 removed, 18 remain, 18 scanned (100.00% of total), 0 eagerly scanned
+tuples: 3000 removed, 1000 remain, 0 are dead but not yet removable
+removable cutoff: 776, which was 0 XIDs old when operation ended
+new relfrozenxid: 775, which is 3 XIDs ahead of previous value
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 18 pages set all-visible, 13 pages set all-frozen (0 were all-visible)
+index scan needed: 14 pages from table (77.78% of total) had 3000 dead item identifiers removed
+index "bloat_pkey": pages: 11 in total, 0 newly deleted, 0 currently deleted, 0 reusable
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 88 hits, 0 reads, 0 dirtied
+WAL usage: 57 records, 0 full page images, 23241 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+--- guard: idle_in_transaction_session_timeout = 2s ends an idle-in-transaction session
+SELECT dblink_connect('idle', 'dbname=lab application_name=idle_reader');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT dblink_exec('idle', 'SET idle_in_transaction_session_timeout = ''2s''');
+ dblink_exec 
+-------------
+ SET
+(1 row)
+
+SELECT dblink_exec('idle', 'BEGIN ISOLATION LEVEL REPEATABLE READ');
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+SELECT * FROM dblink('idle', 'SELECT count(*) FROM bloat') AS t(n bigint);
+  n   
+------
+ 1000
+(1 row)
+
+SELECT count(*) AS idle_sessions_before FROM pg_stat_activity WHERE application_name = 'idle_reader';
+ idle_sessions_before 
+----------------------
+                    1
+(1 row)
+
+SELECT pg_sleep(3);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT count(*) AS idle_sessions_after_3s FROM pg_stat_activity WHERE application_name = 'idle_reader';
+ idle_sessions_after_3s 
+------------------------
+                      0
+(1 row)
+
+SELECT * FROM dblink('idle', 'SELECT 1') AS t(x int);
+psql:/exp/03-horizon.sql:39: ERROR:  FATAL:  terminating connection due to idle-in-transaction timeout
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+invalid socket
+CONTEXT:  while executing query on dblink connection named "idle"

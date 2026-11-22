@@ -1,0 +1,51 @@
+Pager usage is off.
+SELECT name, setting, unit, context FROM pg_settings
+WHERE name IN ('vacuum_freeze_min_age','vacuum_freeze_table_age','vacuum_failsafe_age',
+  'vacuum_multixact_freeze_min_age','vacuum_multixact_freeze_table_age','vacuum_multixact_failsafe_age',
+  'vacuum_max_eager_freeze_failure_rate','autovacuum','autovacuum_freeze_max_age',
+  'autovacuum_multixact_freeze_max_age','autovacuum_naptime','autovacuum_max_workers','autovacuum_worker_slots',
+  'autovacuum_vacuum_threshold','autovacuum_vacuum_scale_factor','autovacuum_vacuum_max_threshold',
+  'autovacuum_vacuum_insert_threshold','autovacuum_vacuum_insert_scale_factor','autovacuum_vacuum_cost_delay',
+  'autovacuum_vacuum_cost_limit','vacuum_cost_limit','vacuum_cost_delay','maintenance_work_mem','autovacuum_work_mem',
+  'log_autovacuum_min_duration','idle_in_transaction_session_timeout','transaction_timeout','statement_timeout',
+  'max_prepared_transactions','hot_standby_feedback','idle_replication_slot_timeout','max_slot_wal_keep_size',
+  'autovacuum_freeze_score_weight','track_counts','data_checksums')
+ORDER BY name;
+                 name                  |  setting   | unit |  context   
+---------------------------------------+------------+------+------------
+ autovacuum                            | on         |      | sighup
+ autovacuum_freeze_max_age             | 200000000  |      | postmaster
+ autovacuum_max_workers                | 3          |      | sighup
+ autovacuum_multixact_freeze_max_age   | 400000000  |      | postmaster
+ autovacuum_naptime                    | 60         | s    | sighup
+ autovacuum_vacuum_cost_delay          | 2          | ms   | sighup
+ autovacuum_vacuum_cost_limit          | -1         |      | sighup
+ autovacuum_vacuum_insert_scale_factor | 0.2        |      | sighup
+ autovacuum_vacuum_insert_threshold    | 1000       |      | sighup
+ autovacuum_vacuum_max_threshold       | 100000000  |      | sighup
+ autovacuum_vacuum_scale_factor        | 0.2        |      | sighup
+ autovacuum_vacuum_threshold           | 50         |      | sighup
+ autovacuum_worker_slots               | 16         |      | postmaster
+ autovacuum_work_mem                   | -1         | kB   | sighup
+ data_checksums                        | on         |      | internal
+ hot_standby_feedback                  | off        |      | sighup
+ idle_in_transaction_session_timeout   | 0          | ms   | user
+ idle_replication_slot_timeout         | 0          | s    | sighup
+ log_autovacuum_min_duration           | 600000     | ms   | sighup
+ maintenance_work_mem                  | 65536      | kB   | user
+ max_prepared_transactions             | 0          |      | postmaster
+ max_slot_wal_keep_size                | -1         | MB   | sighup
+ statement_timeout                     | 0          | ms   | user
+ track_counts                          | on         |      | superuser
+ transaction_timeout                   | 0          | ms   | user
+ vacuum_cost_delay                     | 0          | ms   | user
+ vacuum_cost_limit                     | 200        |      | user
+ vacuum_failsafe_age                   | 1600000000 |      | user
+ vacuum_freeze_min_age                 | 50000000   |      | user
+ vacuum_freeze_table_age               | 150000000  |      | user
+ vacuum_max_eager_freeze_failure_rate  | 0.03       |      | user
+ vacuum_multixact_failsafe_age         | 1600000000 |      | user
+ vacuum_multixact_freeze_min_age       | 5000000    |      | user
+ vacuum_multixact_freeze_table_age     | 150000000  |      | user
+(34 rows)
+

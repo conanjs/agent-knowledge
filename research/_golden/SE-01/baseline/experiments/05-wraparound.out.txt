@@ -1,0 +1,197 @@
+=== Step 1. Fresh cluster; a logical replication slot is created and then forgotten
+lab=# [lab] SELECT version()
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.3 (Debian 18.3-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+lab=# [lab] CREATE TABLE t (id int GENERATED ALWAYS AS IDENTITY, v int); INSERT INTO t (v) SELECT g FROM generate_series(1,1000) g
+CREATE TABLE
+INSERT 0 1000
+lab=# [lab] SELECT slot_name FROM pg_create_logical_replication_slot('forgotten_slot', 'test_decoding')
+   slot_name    
+----------------
+ forgotten_slot
+(1 row)
+
+lab=# [lab] SELECT slot_name, slot_type, active, xmin, catalog_xmin FROM pg_replication_slots
+   slot_name    | slot_type | active | xmin | catalog_xmin 
+----------------+-----------+--------+------+--------------
+ forgotten_slot | logical   | f      |      |          766
+(1 row)
+
+lab=# [lab] SELECT pg_current_xact_id() AS next_xid_now
+ next_xid_now 
+--------------
+          766
+(1 row)
+
+lab=# [lab] SELECT datname, datfrozenxid, age(datfrozenxid) FROM pg_database ORDER BY datname
+  datname  | datfrozenxid | age 
+-----------+--------------+-----
+ lab       |          745 |  22
+ postgres  |          745 |  22
+ template0 |          745 |  22
+ template1 |          745 |  22
+(4 rows)
+
+lab=# [lab] CHECKPOINT
+CHECKPOINT
+$ pg_controldata | grep -E 'NextXID|oldestXID'
+Latest checkpoint's NextXID:          0:767
+Latest checkpoint's oldestXID:        745
+Latest checkpoint's oldestXID's DB:   1
+oldest datfrozenxid = 745
+computed (PG 18 varsup.c): wrap limit = 2147484392, warn limit = 2107484392, stop limit = 2144484392
+jump targets: T1 = 2107637760 (between warn and stop), T2 = 2145386496 (past stop, before wrap)
+
+=== Step 2. Jump the XID counter into the warning zone
+$ pg_resetwal -x 2107637760
+Write-ahead log reset
+$ pg_controldata | grep -E 'NextXID|oldestXID'
+Latest checkpoint's NextXID:          0:2107637760
+Latest checkpoint's oldestXID:        745
+Latest checkpoint's oldestXID's DB:   1
+(wait 10 s so that autovacuum has had a few rounds; autovacuum_naptime = 2s)
+lab=# [lab] INSERT INTO t (v) VALUES (1)
+WARNING:  database "postgres" must be vacuumed within 39846652 transactions
+HINT:  To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+INSERT 0 1
+lab=# [lab] SELECT datname, datfrozenxid, age(datfrozenxid) FROM pg_database ORDER BY 3 DESC
+  datname  | datfrozenxid |    age     
+-----------+--------------+------------
+ postgres  |          766 | 2107636996
+ lab       |          766 | 2107636996
+ template1 |          766 | 2107636996
+ template0 |          766 | 2107636996
+(4 rows)
+
+lab=# [lab] SELECT slot_name, active, catalog_xmin, age(catalog_xmin) FROM pg_replication_slots
+   slot_name    | active | catalog_xmin |    age     
+----------------+--------+--------------+------------
+ forgotten_slot | f      |          766 | 2107636996
+(1 row)
+
+lab=# [lab] SELECT c.oid::regclass AS table_name, age(c.relfrozenxid) FROM pg_class c WHERE c.relkind IN ('r','m') ORDER BY 2 DESC LIMIT 3
+    table_name    |    age     
+------------------+------------
+ pg_statistic     | 2107636996
+ pg_type          | 2107636996
+ pg_foreign_table | 2107636996
+(3 rows)
+
+lab=# [lab] SELECT c.oid::regclass AS table_name, age(c.relfrozenxid) FROM pg_class c WHERE c.relname = 't'
+ table_name | age 
+------------+-----
+ t          |   2
+(1 row)
+
+--- VACUUM of a catalog that the slot holds back (age > vacuum_failsafe_age = 1.6 billion)
+lab=# [lab] VACUUM (VERBOSE) pg_catalog.pg_class
+WARNING:  cutoff for removing and freezing tuples is far in the past
+HINT:  Close open transactions soon to avoid wraparound problems.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+INFO:  aggressively vacuuming "lab.pg_catalog.pg_class"
+WARNING:  bypassing nonessential maintenance of table "lab.pg_catalog.pg_class" as a failsafe after 0 index scans
+DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+HINT:  Consider increasing configuration parameter "maintenance_work_mem" or "autovacuum_work_mem".
+You might also need to consider other ways for VACUUM to keep up with the allocation of transaction IDs.
+INFO:  finished vacuuming "lab.pg_catalog.pg_class": index scans: 0
+pages: 0 removed, 14 remain, 14 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 417 remain, 0 are dead but not yet removable
+removable cutoff: 766, which was 2107636996 XIDs old when operation ended
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 69 hits, 0 reads, 0 dirtied
+WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+WARNING:  database "lab" must be vacuumed within 39846651 transactions
+HINT:  To avoid XID assignment failures, execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+VACUUM
+--- autovacuum log lines from the server log (first 6)
+2026-11-22 17:28:14.445 UTC [31] WARNING:  database with OID 1 must be vacuumed within 39846632 transactions
+2026-11-22 17:28:14.458 UTC [1] LOG:  database system is ready to accept connections
+2026-11-22 17:28:15.145 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:15.145 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_statistic" as a failsafe after 0 index scans
+2026-11-22 17:28:15.145 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:15.148 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_statistic": index scans: 0
+
+=== Step 3. Jump past the stop limit
+$ pg_resetwal -x 2145386496
+Write-ahead log reset
+lab=# [lab] INSERT INTO t (v) VALUES (2)
+ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "postgres"
+HINT:  Execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+lab=# [lab] SELECT count(*) AS reads_still_work FROM t
+ reads_still_work 
+------------------
+             1001
+(1 row)
+
+lab=# [lab] CREATE TABLE should_fail (x int)
+ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "postgres"
+HINT:  Execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+
+=== Step 4. Diagnose with the three queries from the docs
+lab=# [lab] SELECT gid, prepared, age(transaction) FROM pg_prepared_xacts
+ gid | prepared | age 
+-----+----------+-----
+(0 rows)
+
+lab=# [lab] SELECT pid, datname, state, age(backend_xid) AS xid_age, age(backend_xmin) AS xmin_age FROM pg_stat_activity WHERE backend_xid IS NOT NULL OR backend_xmin IS NOT NULL ORDER BY 5 DESC NULLS LAST
+ pid | datname | state  | xid_age | xmin_age 
+-----+---------+--------+---------+----------
+  92 | lab     | active |         |        0
+(1 row)
+
+lab=# [lab] SELECT slot_name, slot_type, active, age(xmin) AS xmin_age, age(catalog_xmin) AS catalog_xmin_age FROM pg_replication_slots
+   slot_name    | slot_type | active | xmin_age | catalog_xmin_age 
+----------------+-----------+--------+----------+------------------
+ forgotten_slot | logical   | f      |          |       2145385730
+(1 row)
+
+
+=== Step 5. Recover: drop the slot, then a database-wide VACUUM in every database
+lab=# [lab] SELECT pg_drop_replication_slot('forgotten_slot')
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+$ vacuumdb --all (skips template0, which does not accept connections; autovacuum covers it)
+WARNING:  bypassing nonessential maintenance of table "lab.pg_catalog.pg_proc" as a failsafe after 0 index scans
+DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+HINT:  Consider increasing configuration parameter "maintenance_work_mem" or "autovacuum_work_mem".
+You might also need to consider other ways for VACUUM to keep up with the allocation of transaction IDs.
+(vacuumdb printed 182 failsafe warnings in all; databases: 3)
+vacuumdb took 0s
+t+0s: oldest database age = 2145385730
+t+2s: oldest database age = 37748736
+lab=# [lab] SELECT datname, datfrozenxid, age(datfrozenxid) FROM pg_database ORDER BY 3 DESC
+  datname  | datfrozenxid |   age    
+-----------+--------------+----------
+ lab       |   2107637760 | 37748736
+ template0 |   2107637761 | 37748735
+ postgres  |   2145386496 |        0
+ template1 |   2145386496 |        0
+(4 rows)
+
+lab=# [lab] INSERT INTO t (v) VALUES (3)
+INSERT 0 1
+lab=# [lab] SELECT count(*) FROM t
+ count 
+-------
+  1002
+(1 row)
+
+$ pg_controldata | grep -E 'NextXID|oldestXID'
+Latest checkpoint's NextXID:          0:2145386497
+Latest checkpoint's oldestXID:        2107637760
+Latest checkpoint's oldestXID's DB:   16388
+done

@@ -1,0 +1,40 @@
+2026-11-22 17:28:27.071 UTC [31] WARNING:  database with OID 16388 must be vacuumed within 2097917 transactions
+2026-11-22 17:28:27.077 UTC [1] LOG:  database system is ready to accept connections
+2026-11-22 17:28:27.690 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.690 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_statistic" as a failsafe after 0 index scans
+2026-11-22 17:28:27.690 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.692 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_statistic": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.692 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.692 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_type" as a failsafe after 0 index scans
+2026-11-22 17:28:27.692 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.693 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_type": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.694 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_foreign_table" as a failsafe after 0 index scans
+2026-11-22 17:28:27.694 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.694 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_foreign_table": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (100.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.694 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_authid" as a failsafe after 0 index scans
+2026-11-22 17:28:27.694 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.694 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_authid": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.694 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_statistic_ext_data" as a failsafe after 0 index scans
+2026-11-22 17:28:27.694 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.694 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_statistic_ext_data": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (100.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.694 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_user_mapping" as a failsafe after 0 index scans
+2026-11-22 17:28:27.694 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.694 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_user_mapping": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (100.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.694 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_subscription" as a failsafe after 0 index scans
+2026-11-22 17:28:27.694 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
+2026-11-22 17:28:27.694 UTC [41] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.pg_catalog.pg_subscription": index scans: 0
+	index scan bypassed by failsafe: 0 pages from table (100.00% of total) have 0 dead item identifiers
+2026-11-22 17:28:27.694 UTC [41] WARNING:  cutoff for removing and freezing tuples is far in the past
+2026-11-22 17:28:27.695 UTC [41] WARNING:  bypassing nonessential maintenance of table "postgres.pg_catalog.pg_attribute" as a failsafe after 0 index scans
+2026-11-22 17:28:27.695 UTC [41] DETAIL:  The table's relfrozenxid or relminmxid is too far in the past.
