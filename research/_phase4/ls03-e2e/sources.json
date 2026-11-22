@@ -1,0 +1,178 @@
+[
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc10017.html",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc10017.html",
+  "cache": "cache/91cdcec2ae16.txt",
+  "fetched": "2026-11-22T15:38:20Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 123214,
+  "sha256": "cba460903589775c8102beb22cee56147f2ecde10307ba597846c454b516b6a3"
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc7519.html",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc7519.html",
+  "cache": "cache/a0f7f2c88ab3.txt",
+  "fetched": "2026-11-22T15:38:20Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 55644,
+  "sha256": "f4890a28630c665a740331d986c16302c122891148f07dbf93c3fc77c0800db2"
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/rfc9700",
+  "normalized": "https://datatracker.ietf.org/doc/html/rfc9700",
+  "fetched_from": "https://datatracker.ietf.org/doc/html/rfc9700",
+  "cache": "cache/3663f2ef567b.txt",
+  "fetched": "2026-11-22T15:38:21Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 120560,
+  "sha256": "1e7f6bdd00aace5ce20fe287a80719a7fa0eb0dfdf0e3f3818360b668c19604e"
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/rfc6749",
+  "normalized": "https://datatracker.ietf.org/doc/html/rfc6749",
+  "fetched_from": "https://datatracker.ietf.org/doc/html/rfc6749",
+  "cache": "cache/a1a8e2928216.txt",
+  "fetched": "2026-11-22T15:38:21Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 145988,
+  "sha256": "2976033e90cf3cab8a2ab6feb24c75f322cb049a180a7a4daf41a34df285c157"
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/rfc7009",
+  "normalized": "https://datatracker.ietf.org/doc/html/rfc7009",
+  "fetched_from": "https://datatracker.ietf.org/doc/html/rfc7009",
+  "cache": "cache/97a18f31edc7.txt",
+  "fetched": "2026-11-22T15:46:45Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 23894,
+  "sha256": "c53ebdd2c45f7369e19bc8a9afd98a6618e3b270c4b6bac8b61070fd70c045fc"
+ },
+ {
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "normalized": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "fetched_from": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "cache": "cache/760e80d938bb.txt",
+  "fetched": "2026-11-22T15:47:10Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 34235,
+  "sha256": "740aeb58e3574ff98fad1e2e08c5a51db2b82abe64d3622f115592dc558c4324"
+ },
+ {
+  "url": "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+  "normalized": "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+  "fetched_from": "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+  "cache": "cache/e1dbb2cd4730.txt",
+  "fetched": "2026-11-22T15:47:12Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 18383,
+  "sha256": "2b720bb0a01e518baeefc1dbfcfd50a9b536f85fe992abc8996548068a4bf741"
+ },
+ {
+  "url": "https://hasura.io/blog/best-practices-of-using-jwt-with-graphql",
+  "normalized": "https://hasura.io/blog/best-practices-of-using-jwt-with-graphql",
+  "fetched_from": "https://hasura.io/blog/best-practices-of-using-jwt-with-graphql",
+  "cache": "cache/3bdc5b8250cc.txt",
+  "fetched": "2026-11-22T15:47:13Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 38967,
+  "sha256": "ea4d000549ea9e1ed44f37d7da8dd632c6083f9380b2b3c8ba2c3b16ac9a23dc"
+ },
+ {
+  "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+  "normalized": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+  "fetched_from": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+  "cache": "cache/f87cd786f36f.txt",
+  "fetched": "2026-11-22T15:47:13Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 7954,
+  "sha256": "527b5659f8d8169638a9c31e741968aece5c319548f267db8ecfd8c043a8a7d3"
+ },
+ {
+  "url": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+  "normalized": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+  "fetched_from": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+  "cache": "cache/d1402f8e38cb.txt",
+  "fetched": "2026-11-22T15:47:22Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 15295,
+  "sha256": "7b0e119d2ad0ee86762a40e44e3de91d92ab2ac4df2afa5c95caad0abb2ea26b"
+ },
+ {
+  "url": "https://nvd.nist.gov/vuln/detail/CVE-2015-9235",
+  "normalized": "https://nvd.nist.gov/vuln/detail/CVE-2015-9235",
+  "fetched_from": "https://nvd.nist.gov/vuln/detail/CVE-2015-9235",
+  "cache": "cache/5b000f7695b5.txt",
+  "fetched": "2026-11-22T15:47:23Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 11,
+  "sha256": "f0116046638b8c28da6804440ad1dc1768d4e0a4c8835bf86e0bca08c499e11b"
+ },
+ {
+  "url": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+  "normalized": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+  "fetched_from": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+  "cache": "cache/c903f71e5ec6.txt",
+  "fetched": "2026-11-22T15:47:25Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 13512,
+  "sha256": "9de3779a03e773193bc0efac253cd76bca581f6335ec42034f085be45563c5b9"
+ },
+ {
+  "url": "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+  "normalized": "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+  "fetched_from": "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+  "cache": "cache/b3739f3168b3.txt",
+  "fetched": "2026-11-22T15:47:27Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 18741,
+  "sha256": "f2b1750796d19b9a179bcdb8dfcd0a2b3402153b1624f42539e32f56c9d03f1e"
+ },
+ {
+  "url": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+  "normalized": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+  "fetched_from": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+  "cache": "cache/a8bfb5bfb1bc.txt",
+  "fetched": "2026-11-22T15:47:48Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 6184,
+  "sha256": "6844d2d8ceb60c28b5c5b8eb84cbf9b65c63b6b4e2663db8256c98dc7304fc35"
+ },
+ {
+  "url": "https://workos.com/blog/stateless-jwt-logout-problem",
+  "normalized": "https://workos.com/blog/stateless-jwt-logout-problem",
+  "fetched_from": "https://workos.com/blog/stateless-jwt-logout-problem",
+  "cache": "cache/894627767181.txt",
+  "fetched": "2026-11-22T15:48:23Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 9625,
+  "sha256": "86ed7ad1bf192a8cddb21dae9419f53a06d693ecd377ae80ff05e052cdd21cee"
+ },
+ {
+  "url": "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+  "normalized": "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+  "fetched_from": "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+  "cache": "cache/4afdcd295399.txt",
+  "fetched": "2026-11-22T15:48:29Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 11888,
+  "sha256": "5b663b950ee74cee02d37d854cf6821b02e811a030eff455b41677081dce9f3d"
+ }
+]

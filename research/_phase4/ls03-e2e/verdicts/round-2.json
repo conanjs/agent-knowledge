@@ -1,0 +1,1311 @@
+{
+  "verdict": "PASS",
+  "overall_score": 4.75,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": null,
+      "note": "envelope; its claims are judged as role 1"
+    },
+    {
+      "heading": "## 1. Mental model",
+      "role": 1
+    },
+    {
+      "heading": "### The problem",
+      "role": 1
+    },
+    {
+      "heading": "### The thesis",
+      "role": 1
+    },
+    {
+      "heading": "### Analogy",
+      "role": 1
+    },
+    {
+      "heading": "### Scope",
+      "role": 1
+    },
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "### Tokens",
+      "role": 2
+    },
+    {
+      "heading": "### Three architectures",
+      "role": 2
+    },
+    {
+      "heading": "### Revocation building blocks",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How it works",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 Why a valid signature outlives a logout",
+      "role": 3
+    },
+    {
+      "heading": "### 3.2 Revoking at the authorization server (RFC 7009)",
+      "role": 3
+    },
+    {
+      "heading": "### 3.3 Refresh token rotation and replay detection",
+      "role": 3
+    },
+    {
+      "heading": "### 3.4 The BFF session and its CSRF defense",
+      "role": 3
+    },
+    {
+      "heading": "### 3.5 Sender-constrained tokens in a browser",
+      "role": 3
+    },
+    {
+      "heading": "### 3.6 A `jti` denylist at the resource server",
+      "role": 3
+    },
+    {
+      "heading": "## 4. Worked examples",
+      "role": 4
+    },
+    {
+      "heading": "### 4.1 Reading the RFC 7519 example token",
+      "role": 4
+    },
+    {
+      "heading": "### 4.2 Revoking a refresh token (RFC 7009)",
+      "role": 4
+    },
+    {
+      "heading": "### 4.3 A refresh token lifetime that rotation cannot stretch (RFC 10017)",
+      "role": 4
+    },
+    {
+      "heading": "### 4.4 Okta: rotation and reuse detection",
+      "role": 4
+    },
+    {
+      "heading": "### 4.5 Duende.BFF: a server-side session behind one cookie",
+      "role": 4
+    },
+    {
+      "heading": "### 4.6 dj-rest-auth: both JWTs in `HttpOnly` cookies",
+      "role": 4
+    },
+    {
+      "heading": "### 4.7 A denylist bypass through a re-encoded signature",
+      "role": 4
+    },
+    {
+      "heading": "## 5. Reference & invariants",
+      "role": 5
+    },
+    {
+      "heading": "### JWT processing (RFC 7519)",
+      "role": 5
+    },
+    {
+      "heading": "### OAuth tokens (RFC 6749, updated by RFC 9700)",
+      "role": 5
+    },
+    {
+      "heading": "### Browser-based applications (RFC 10017)",
+      "role": 5
+    },
+    {
+      "heading": "### Revocation endpoint (RFC 7009)",
+      "role": 5
+    },
+    {
+      "heading": "### A library rule: jsonwebtoken (CVE-2022-23540)",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "### \"Keep the token in memory and XSS cannot get it\"",
+      "role": 6
+    },
+    {
+      "heading": "### Rotation detects some theft, not all",
+      "role": 6
+    },
+    {
+      "heading": "### Short lifetimes versus a denylist",
+      "role": 6
+    },
+    {
+      "heading": "### Sender-constrained tokens and XSS",
+      "role": 6
+    },
+    {
+      "heading": "### Cookies: SameSite and Domain",
+      "role": 6
+    },
+    {
+      "heading": "### `alg: none` and algorithm confusion",
+      "role": 6
+    },
+    {
+      "heading": "### Older text that a newer Rank 1 source replaces",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": null,
+      "note": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": null,
+      "note": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^rfc10017]",
+      "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+      "cache": "cache/91cdcec2ae16.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: rfc-editor.org/rfc/"
+    },
+    {
+      "ref": "[^rfc7519]",
+      "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+      "cache": "cache/a0f7f2c88ab3.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: rfc-editor.org/rfc/"
+    },
+    {
+      "ref": "[^rfc9700]",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9700",
+      "cache": "cache/3663f2ef567b.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc"
+    },
+    {
+      "ref": "[^rfc7009]",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7009",
+      "cache": "cache/97a18f31edc7.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc"
+    },
+    {
+      "ref": "[^rfc6749]",
+      "url": "https://datatracker.ietf.org/doc/html/rfc6749",
+      "cache": "cache/a1a8e2928216.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc"
+    },
+    {
+      "ref": "[^duende]",
+      "url": "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+      "cache": "cache/e1dbb2cd4730.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "Duende.BFF",
+      "rank_basis": "step 2 rule 2 (project's own home): the saved page is Duende Software's own docs site for its Duende.BFF library (Copyright Duende Software); it is cited only in 4.5 for claims about Duende.BFF."
+    },
+    {
+      "ref": "[^okta]",
+      "url": "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+      "cache": "cache/b3739f3168b3.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "Okta (its authorization server and app settings)",
+      "rank_basis": "step 2 rule 2: the saved page is Okta's own developer docs (Okta Developer, Copyright Okta); cited only in 4.4 for Okta's own behaviour and settings."
+    },
+    {
+      "ref": "[^djra]",
+      "url": "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+      "cache": "cache/4afdcd295399.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "dj-rest-auth (its JWT cookie setup, including its SimpleJWT settings and logout)",
+      "rank_basis": "step 2 rule 2: the saved page is dj-rest-auth's own docs (site title dj-rest-auth, repo link iMerica/dj-rest-auth, Copyright iMerica); cited in 4.6 (role 4) and 6 for claims about dj-rest-auth's own setup. Outside that scope a project's docs on another library would rate rank 4 by class, still allowed in role 4."
+    },
+    {
+      "ref": "[^ghsa]",
+      "url": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+      "cache": "cache/a8bfb5bfb1bc.txt",
+      "tier": "B",
+      "rank": 3,
+      "rank_basis": "step 2 rule 4 (class): GitHub Advisory Database entry marked GitHub Reviewed, a curated reference. Not the project's home (the URL is GitHub's database, not auth0/node-jsonwebtoken), and the publisher's role is not shown, so rules 2 and 3 do not apply. Rank 2 (official dataset) could also fit; the higher number, 3, is taken. Allowed in role 5."
+    },
+    {
+      "ref": "[^owasp]",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+      "cache": "cache/760e80d938bb.txt",
+      "tier": "B",
+      "rank": 3,
+      "rank_basis": "step 2 rule 4 (class): OWASP Cheat Sheet Series, maintained by the Cheat Sheets Series Team, a curated security reference (rank 3). It is not a tertiary overview or a company blog. Allowed in role 3."
+    },
+    {
+      "ref": "[^auth0]",
+      "url": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+      "cache": "cache/d1402f8e38cb.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "step 2 rule 4 (class): guest post by Tim McLean on Auth0's company blog (rank 4). The page says he found the flaws but not that he coined or first published the concepts, so rule 1 is not applied. Cited only in role 6."
+    },
+    {
+      "ref": "[^workos]",
+      "url": "https://workos.com/blog/stateless-jwt-logout-problem",
+      "cache": "cache/894627767181.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "step 2 rule 4 (class): a company blog (WorkOS), rank 4. Cited in role 3 (allows 1 to 4) and role 6."
+    },
+    {
+      "ref": "[^pws]",
+      "url": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+      "cache": "cache/c903f71e5ec6.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "step 2 rule 4 (class): single-author article by Philippe De Ryck on his own consultancy site; personal blog (rank 6) and one-person company blog (rank 4) both fit, the higher number is taken. Cited only in role 6."
+    },
+    {
+      "ref": "[^probe-01]",
+      "url": "probes/probe-01.js",
+      "cache": "probes/probe-01.js",
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "probe run by the harness (harness.json, status pass, node:24.22.1-alpine)"
+    },
+    {
+      "ref": "[^probe-02]",
+      "url": "probes/probe-02.js",
+      "cache": "probes/probe-02.js",
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "probe run by the harness (harness.json, status pass, node:24.22.1-alpine)"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 5,
+    "factual_grounding": 5,
+    "diataxis_rigor": 4
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 62,
+    "checked_roles_1_5": 62,
+    "claims_role_6": 18,
+    "checked_role_6": 18,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Summary",
+      "role": 1,
+      "claim": "RFC 10017 names three architectures for a browser app that uses OAuth and lists them in decreasing order of security: a Backend for Frontend (BFF), where a backend handles OAuth and forwards all requests; a token-mediating backend, where a backend handles OAuth but the app calls resource servers with the access token; and a browser-based OAuth client that handles all of OAuth in the browser",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The patterns in this section are presented in decreasing order of security.",
+      "note": "L15. Section 6 intro lists the three patterns with these responsibilities and states the security ordering."
+    },
+    {
+      "id": "C2",
+      "section": "## Summary",
+      "role": 1,
+      "claim": "None of the browser's persistent storage APIs (`localStorage`, `sessionStorage`, IndexedDB) can fully stop token exfiltration once attacker code runs in the app",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "none of these options can fully mitigate token exfiltration when the attacker can execute malicious code in the application's execution environment.",
+      "note": "L15. Section 8.5 names exactly these three as the persistent storage APIs and then gives this statement."
+    },
+    {
+      "id": "C3",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "A JSON Web Token (JWT) is \"a string representing a set of claims as a JSON object that is encoded in a JWS or JWE\", which lets the claims be signed or protected with a message authentication code (MAC) and/or encrypted",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A string representing a set of claims as a JSON object that is encoded in a JWS or JWE, enabling the claims to be digitally signed or MACed and/or encrypted.",
+      "note": "L22. Terminology definition of JWT, quoted correctly."
+    },
+    {
+      "id": "C4",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "RFC 10017 says the BFF counters token theft by exposing no tokens to the browser app: \"Even when the attacker gains full control over the application, there are simply no tokens to be stolen.\"",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Even when the attacker gains full control over the application, there are simply no tokens to be stolen.",
+      "note": "L28. The page says the BFF counters the first two attack scenarios, which are single-execution and persistent token theft."
+    },
+    {
+      "id": "C5",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "RFC 7009 contrasts two token styles. An authorization server can revoke a handle-style access token, because the resource server relays each received token to it; for a self-contained token, \"some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired\"",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "server is able to revoke an access token previously issued to a client when the resource server relays a received access token.",
+      "note": "L29. Implementation Note contrasts self-contained and handle tokens; the quoted self-contained sentence matches the page."
+    },
+    {
+      "id": "C6",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "Its other design option is short-lived access tokens renewed with refresh tokens, which lets the authorization server limit how long a revoked access token stays in use",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Another design alternative is to issue short-lived access tokens, which can be refreshed at any time using the corresponding refresh tokens. This allows the authorization server to impose a limit",
+      "note": "L29. Same Implementation Note paragraph."
+    },
+    {
+      "id": "C7",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "\"Browser-based application\" has RFC 10017's meaning: an application downloaded and executed in a web browser, usually written in JavaScript, also called a single-page application (SPA)",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "usually written in JavaScript. Also sometimes referred to as a \"single-page application\" or \"SPA\".",
+      "note": "L35. Terminology entry; the alias is given by the page."
+    },
+    {
+      "id": "C8",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Access token: \"credentials used to access protected resources\"; the token \"may denote an identifier used to retrieve the authorization information or may self-contain the authorization information in a verifiable manner\"",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The token may denote an identifier used to retrieve the authorization information or may self-contain the authorization information in a verifiable manner",
+      "note": "L40. Section 1.4, both quotes match."
+    },
+    {
+      "id": "C9",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Refresh token: a credential used to obtain a new access token when the current one becomes invalid or expires; issuing one is optional for the authorization server, RFC 6749 says it denotes an identifier, and it is used only with authorization servers, never sent to resource servers",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "refresh tokens are intended for use only with authorization servers and are never sent to resource servers.",
+      "note": "L41. Section 1.5 gives each part, including that issuing one is optional at the server's discretion."
+    },
+    {
+      "id": "C10",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Bearer token: the \"bearer\" type is used by simply including the access token string in the request, as in `Authorization: Bearer mF_9.B5f-4.1JqM`",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "by simply including the access token string in the request: GET /resource/1 HTTP/1.1 Host: example.com Authorization: Bearer mF_9.B5f-4.1JqM",
+      "note": "L42. Section 7.1 example."
+    },
+    {
+      "id": "C11",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "In browser-based clients the refresh token is typically a bearer token too, unless the app explicitly uses Demonstrating Proof of Possession (DPoP, RFC 9449)",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "For browser-based clients, the refresh token is typically a bearer token unless the application explicitly uses DPoP [RFC9449].",
+      "note": "L42. Section 6.3.2.3."
+    },
+    {
+      "id": "C12",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "BFF: the backend acts as a confidential OAuth client, manages the access and refresh tokens in a cookie-based session so no token reaches the browser app, and forwards every request to the resource server with the right access token added",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The BFF manages OAuth access and refresh tokens in the context of a cookie-based session, avoiding the direct exposure of any tokens to the browser-based application.",
+      "note": "L46. Section 6.1 lists the three core responsibilities, including the confidential client role and forwarding with the access token added."
+    },
+    {
+      "id": "C13",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Attacker script in the page can still send requests to the BFF from within the user's browser, but `HttpOnly` cookies stop it from reading the session state itself",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Note that the use of HttpOnly cookies prevents the attacker from directly accessing the session state, which prevents the escalation from client hijacking to session hijacking.",
+      "note": "L46. Same paragraph also says the attacker is able to send requests to the BFF from within the user's browser."
+    },
+    {
+      "id": "C14",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Token-mediating backend: the backend obtains the tokens as a confidential client and gives the browser app the access token, which it uses to call resource servers directly; attacker script cannot abuse refresh tokens or obtain a fresh set of tokens, but it can steal the access token from client-side storage or request a fresh one from the backend",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the application architecture is able to prevent the attacker from abusing refresh tokens",
+      "note": "L47. Section 6.2 continues that the attacker can steal the access token from client-side storage or request a fresh one; 6.2.3 says the backend MUST act as a confidential client."
+    },
+    {
+      "id": "C15",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Revocation endpoint (RFC 7009): lets a client invalidate its tokens if the end user logs out, changes identity, or uninstalls the application",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This revocation mechanism allows a client to invalidate its tokens if the end-user logs out, changes identity, or uninstalls the respective application.",
+      "note": "L51. Introduction."
+    },
+    {
+      "id": "C16",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Sender-constrained token: an access token scoped to one sender, which must show knowledge of a secret before the resource server accepts it; RFC 9700 names two methods in use, mutual TLS certificate-bound tokens (RFC 8705, the client identified by the fingerprint of its public key) and DPoP (RFC 9449, an application-level key pair and signing, usable by public clients)",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Two methods for sender-constrained access tokens using proof of possession have been defined by the OAuth working group and are in use in practice:",
+      "note": "L52. Section 4.10.1 gives the definition, the fingerprint detail for RFC 8705, and DPoP as application-level signing usable with public clients."
+    },
+    {
+      "id": "C17",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "A stateless API trusts a JWT \"because the signature checks out and the exp claim is in the future\"; it never asks a database whether the session is still good, which is why the token cannot be taken back",
+      "source": "[^workos]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Your API trusts it because the signature checks out and the exp claim is in the future — it never asks a database whether the session is still good.",
+      "note": "L59. The next sentence on the page says that is also why the token cannot be taken back. Rank 4 is allowed in role 3."
+    },
+    {
+      "id": "C18",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "The authorization server validates the client credentials (for a confidential client), then checks that the token was issued to the client asking, and refuses the request if either check fails",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The authorization server first validates the client credentials (in case of a confidential client) and then verifies whether the token was issued to the client making the revocation request.",
+      "note": "L63. Section 2.1; the page adds that a failed validation refuses the request."
+    },
+    {
+      "id": "C19",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "It invalidates the token immediately; in practice there can be a propagation delay in which some servers know and others do not, and clients must not use the token after an HTTP 200 response",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Implementations should minimize that window, and clients must not try to use the token after receipt of an HTTP 200 response from the server.",
+      "note": "L64. The same paragraph says the invalidation takes place immediately and describes the propagation delay; the lowercase must matches the page."
+    },
+    {
+      "id": "C20",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Access tokens of the same grant: if the authorization server does not support access token revocation, they are not immediately invalidated when the matching refresh token is revoked",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the authorization server does not support access token revocation, access tokens will not be immediately invalidated when the corresponding refresh token is revoked.",
+      "note": "L65. Section 5, Security Considerations."
+    },
+    {
+      "id": "C21",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "With rotation, the authorization server issues a new refresh token with every access token refresh response; the previous one is invalidated, but the server keeps the relationship between them",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Refresh token rotation: the authorization server issues a new refresh token with every access token refresh response. The previous refresh token is invalidated, but information about the relationship is retained",
+      "note": "L68. Section 4.14.2."
+    },
+    {
+      "id": "C22",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Detection works when a stolen refresh token is used by both the attacker and the legitimate client: one of them presents an invalidated token, the server cannot tell which, and it revokes the active refresh token, which stops the attack at the cost of forcing the legitimate client to obtain a fresh grant",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The authorization server cannot determine which party submitted the invalid refresh token, but it will revoke the active refresh token. This stops the attack at the cost of forcing",
+      "note": "L69. Section 4.14.2; the both-parties condition is in the preceding sentence."
+    },
+    {
+      "id": "C23",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "With short-lived access tokens, the refresh exchange is also where revocation happens: it \"means refusing to issue the next access token\", at the refresh boundary instead of mid-token",
+      "source": "[^workos]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Revocation then means refusing to issue the next access token: you revoke at the refresh boundary instead of mid-token.",
+      "note": "L70. Rank 4 in role 3, allowed."
+    },
+    {
+      "id": "C24",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "With a client-side session (data pushed to the browser in a signed, optionally encrypted object) used in a BFF, the cookie only serves to obtain the user's tokens, so all control and revocation follow from the tokens: it suffices to revoke the user's access token and/or refresh token, without invalidating the cookie-based session",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "It suffices to revoke the user's access token and/or refresh token to prevent ongoing access to protected resources, without the need to explicitly invalidate the cookie-based session.",
+      "note": "L75. Section 6.1.2.3."
+    },
+    {
+      "id": "C25",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Because the interactions between the app and the BFF rely on cookies, the BFF has to account for CSRF (the MUST is in §5); the `SameSite=Strict` attribute ensures its cookies are included only on same-site requests",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Configuring the cookies with the SameSite=Strict attribute (see Section 6.1.3.2) ensures that the BFF's cookies are only included on same-site requests",
+      "note": "L76. Section 6.1.3.3 also says the BFF is required to account for CSRF attacks."
+    },
+    {
+      "id": "C26",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "A custom request header closes the gap that CORS leaves for requests sent without a preflight: cross-origin requests that carry a custom header always need a preflight, which makes CORS an effective CSRF defense",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Cross-origin requests with a custom request header always require a preflight, which makes CORS an effective CSRF defense.",
+      "note": "L77. Section 6.1.3.3.2; the gap is the CORS-safelisted requests described just before. The SHOULD for the header is stated in section 5 of the doc."
+    },
+    {
+      "id": "C27",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "The client has to prove possession of a private key to use the token, so a stolen token is not usable by itself; RFC 10017 says this shifts the challenge from storing the token securely to storing the private key securely",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "using sender-constrained tokens shifts the challenge of securely storing the token to securely storing the private key.",
+      "note": "L80. Section 9.2."
+    },
+    {
+      "id": "C28",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "In a browser OAuth client using DPoP, the signing key is a non-extractable `CryptoKeyPair` stored in IndexedDB, which \"effectively prevents scenarios where the XSS attacker exfiltrates the application's tokens\"",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the private key used to sign DPoP proofs is handled by the browser (a non-extractable [CryptoKeyPair] is stored using [W3C.IndexedDB]).",
+      "note": "L81. Section 6.3.4; the quoted effect follows in the same paragraph."
+    },
+    {
+      "id": "C29",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "It does not stop the attacker from running a new flow to get fresh tokens; even when DPoP is mandatory, the attacker can bind the fresh tokens to a key pair under its own control",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Even when DPoP is mandatory, the attacker can bind the fresh set of tokens to a key pair under their control",
+      "note": "L82. Same section."
+    },
+    {
+      "id": "C30",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "A token consumer may keep a JWT denylist as a simple form of replay protection or \"as a workaround for the “stateless session” invalidation problem\"; OWASP's sketch keys it on the (`jti`, `iss`) pair, inserts each entry with the token's `exp`, and checks a token by looking up the same pair",
+      "source": "[^owasp]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This might be for example used a simple form of JWT replay protection or as a workaround for the “stateless session” invalidation problem.",
+      "note": "L85. The sketch on the page inserts (jti, iss) with exp and checks the same pair. Rank 3 in role 3, allowed."
+    },
+    {
+      "id": "C31",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Keying it on the raw JWT or its SHA-256 hash \"is not safe\": an attacker holding a revoked JWT may produce another representation that still passes signature verification, through non-strict JWT parsing or, for ECDSA (Elliptic Curve Digital Signature Algorithm) JWTs, signature malleability",
+      "source": "[^owasp]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Using the raw JWT or a secure hash of the JWT (SHA-256(token)) as the denylist key is not safe and might expose the application to denylist bypass through JWT malleability.",
+      "note": "L86. The page lists the same two causes; may matches the page's might."
+    },
+    {
+      "id": "C32",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "RFC 7519 §3.1 gives the header `{\"typ\":\"JWT\",\"alg\":\"HS256\"}`, the claims `{\"iss\":\"joe\",\"exp\":1300819380,\"http://example.com/is_root\":true}` and the complete token below",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Concatenating these encoded parts in this order with period ('.') characters between the parts yields this complete JWT",
+      "note": "L91. Section 3.1 shows this header, these claims and the token; the probe's token string matches the page once the display line breaks are removed."
+    },
+    {
+      "id": "C33",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "On Node 24.22.1 (image `node:24.22.1-alpine`, kernel `7.2.12-orbstack-00394-gbecdd6130068`), this probe decoded the header and claims with no key and printed `alg=HS256 iss=joe is_root=true` and `exp=2011-03-22T18:43:00.000Z expired=true`",
+      "source": "[^probe-01]",
+      "verdict": "observed",
+      "severity": "none",
+      "page_says": "alg=HS256 iss=joe is_root=true exp=2011-03-22T18:43:00.000Z expired=true",
+      "note": "L108. Probe status pass on node:24.22.1-alpine. The code base64url-decodes header and payload with no key and computes expiry from the decoded exp, so it can fail (a bad decode throws) and its output is computed, not printed blindly. Worded as an observation with the version.",
+      "probe": "probe-01"
+    },
+    {
+      "id": "C34",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The RFC's example request, and its rule that the server answers HTTP 200 whether the token was revoked or the client sent an invalid token",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The authorization server responds with HTTP status code 200 if the token has been revoked successfully or if the client submitted an invalid token.",
+      "note": "L111. The request block matches the section 2.1 example line for line; the doc says plainly that the 200 block is derived, not quoted."
+    },
+    {
+      "id": "C35",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "A user authorizes an app, which gets a 10-minute access token and an 8-hour refresh token. After 10 minutes the app refreshes and gets a new 10-minute access token and a new refresh token that lasts 7 hours 50 minutes; this repeats until 8 hours have passed, and then the refresh request fails and the app must start a new Authorization Code flow",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The authorization server returns a new access token that lasts 10 minutes and a new refresh token that lasts 7 hours and 50 minutes.",
+      "note": "L127. Section 6.3.2.3 example; every number matches."
+    },
+    {
+      "id": "C36",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "Rotation is the default for SPAs when you create or edit one; if a used refresh token is presented again, Okta immediately invalidates the most recently issued refresh token and all access tokens issued since the user authenticated",
+      "source": "[^okta]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "As a result, Okta immediately invalidates the most recently issued refresh token and all access tokens issued since the user authenticated.",
+      "note": "L130. The page also notes rotation is the default for SPAs when you create or edit a SPA."
+    },
+    {
+      "id": "C37",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The grace period, during which the previous token stays valid after rotation, defaults to 30 seconds and can be set from 0 through 60; in the app's `settings.oauthClient`, the `refresh_token` object takes a `rotation_type` of `ROTATE` or `STATIC` and a `leeway` of 0 through 60, as in `\"refresh_token\": { \"rotation_type\": \"ROTATE\", \"leeway\": 30 }`",
+      "source": "[^okta]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The default number of seconds for the Grace period for token rotation is set to 30 seconds. You can change the value to any number from 0 through 60 seconds.",
+      "note": "L131. The rotation properties paragraph gives settings.oauthClient, ROTATE or STATIC, leeway 0 through 60 and the same JSON example."
+    },
+    {
+      "id": "C38",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The refresh call is a form POST to `/oauth2/v1/token` with `grant_type=refresh_token`, `scope=offline_access%20openid` and the `refresh_token`; the example response carries `\"token_type\": \"Bearer\"` and `\"expires_in\": 3600`",
+      "source": "[^okta]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "To refresh your access token and an ID token, you send a token request with a grant_type of refresh_token.",
+      "note": "L132. The example request is http --form POST to /oauth2/v1/token with these parameters; the response shows token_type Bearer and expires_in 3600."
+    },
+    {
+      "id": "C39",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The BFF 4.0 example of a host that stores the session server-side uses `ResponseType = \"code\"`, `SaveTokens = true` and the `offline_access` scope for refresh tokens, and sets the cookie to `SameSite=Lax` because its identity provider is on a different site; the comment says `Strict` would stop the cookie being sent after login, and recommends `Strict` when the identity provider is on the same site as the BFF",
+      "source": "[^duende]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Setting it to Strict would cause the authentication cookie not to be sent after logging in.",
+      "note": "L135. The BFF 4.0 and later Program.cs tab has these values and comments; the guide's goal is a host that stores the session server-side. Rank 1 within Duende.BFF scope."
+    },
+    {
+      "id": "C40",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The front end sends `X-CSRF: 1` on every request to a BFF API endpoint, or the BFF answers 401 Unauthorized; local API routes must be marked with `.AsBffApiEndpoint()`, without which the header is not enforced",
+      "source": "[^duende]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Every request to a BFF API endpoint must include the X-CSRF: 1 header. Without it, the BFF will reject the request with 401 Unauthorized.",
+      "note": "L136. The page's tip says to always call .AsBffApiEndpoint() on local API routes, and that without it the X-CSRF header is not enforced."
+    },
+    {
+      "id": "C41",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "These are the guide's settings from its step \"Configure Django Settings\", whose comment says `JWT_AUTH_SECURE` must be `True` in production",
+      "source": "[^djra]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "'JWT_AUTH_SECURE': False, # True in production!",
+      "note": "L159. The REST_AUTH and SIMPLE_JWT blocks match step 2 of the guide; the page elsewhere says to always set JWT_AUTH_SECURE to True in production."
+    },
+    {
+      "id": "C42",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "At login the API sets `HttpOnly` cookies for both tokens; when a request comes back 401 because the access cookie expired, the SPA calls `POST /token/refresh/` with the refresh cookie and receives a new access cookie",
+      "source": "[^djra]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "SPA->>API: POST /token/refresh/ with refresh cookie",
+      "note": "L160. The How It Works sequence diagram shows the HttpOnly cookies at login, the 401, the refresh call and the new access cookie."
+    },
+    {
+      "id": "C43",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The production example sets `JWT_AUTH_SECURE: True`, an access token lifetime of 5 minutes and a refresh token lifetime of 1 day, and the checklist asks for 5 to 15 minutes",
+      "source": "[^djra]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Short access token lifetime (5-15 minutes)",
+      "note": "L161. The production settings block has JWT_AUTH_SECURE True, minutes=5 and days=1."
+    },
+    {
+      "id": "C44",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "With SimpleJWT's `token_blacklist` app installed, a user's refresh token is blacklisted at logout and cannot be reused",
+      "source": "[^djra]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Now when users logout, their refresh token is blacklisted and cannot be reused.",
+      "note": "L162. The page reaches this after three steps: add the app, run migrations, set ROTATE_REFRESH_TOKENS and BLACKLIST_AFTER_ROTATION. The two flags are set in the section's settings block, and running migrations is part of installing a Django app, so the bullet in context holds. Logout is dj-rest-auth's own endpoint, so the claim stays inside the dj-rest-auth scope."
+    },
+    {
+      "id": "C45",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "On Node 24.22.1 (image `node:24.22.1-alpine`, kernel `7.2.12-orbstack-00394-gbecdd6130068`), the verifier written for this probe, which decodes the signature with `Buffer.from(s, 'base64url')` and compares bytes, accepted both the issued token and a copy whose last signature character differs in the lower of its two unused bits; the SHA-256-keyed list missed the copy and the (`jti`, `iss`)-keyed list caught it, printing `same-string=false both-verify=true` and `hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true`",
+      "source": "[^probe-02]",
+      "verdict": "observed",
+      "severity": "none",
+      "page_says": "same-string=false both-verify=true hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true",
+      "note": "L196. Probe status pass on node:24.22.1-alpine. A 32-byte HMAC is 43 base64url characters with 2 spare bits; the code flips the lowest one, verifies the copy with its own byte-comparing verifier, and reads jti and iss from the verified copy, so a rejected copy would crash the probe. Worded as one lenient decoder on one version, not a library rule.",
+      "probe": "probe-02"
+    },
+    {
+      "id": "C46",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "`exp`, `nbf`, `iat`: A JWT MUST NOT be accepted on or after `exp`, nor before `nbf`; implementers MAY allow a small leeway, usually no more than a few minutes, for clock skew; `iat` is the time of issue and can be used to determine the token's age; all are NumericDate values and OPTIONAL",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Implementers MAY provide for some small leeway, usually no more than a few minutes, to account for clock skew.",
+      "note": "L204. Sections 4.1.4 to 4.1.6 give each modal as written, including OPTIONAL and NumericDate for all three."
+    },
+    {
+      "id": "C47",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "`aud`: Each principal intended to process the JWT MUST identify itself with a value in `aud`; when `aud` is present and the processor is not in it, the JWT MUST be rejected; the claim is OPTIONAL",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Each principal intended to process the JWT MUST identify itself with a value in the audience claim.",
+      "note": "L205. Section 4.1.3, including the reject rule when present and OPTIONAL."
+    },
+    {
+      "id": "C48",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "`jti`: The value MUST be assigned so that an accidental collision is negligibly likely, and with several issuers collisions MUST be prevented across issuers too; it \"can be used to prevent the JWT from being replayed\"; OPTIONAL",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if the application uses multiple issuers, collisions MUST be prevented among values produced by different issuers as well.",
+      "note": "L206. Section 4.1.7."
+    },
+    {
+      "id": "C49",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Validation: If any validation step fails, the JWT MUST be rejected; which algorithms are acceptable is an application decision, and a JWT that validates with an unacceptable algorithm SHOULD be rejected",
+      "source": "[^rfc7519]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Even if a JWT can be successfully validated, unless the algorithms used in the JWT are acceptable to the application, it SHOULD reject the JWT.",
+      "note": "L207. Section 7.2; the MUST for a failed step is in the section's opening."
+    },
+    {
+      "id": "C50",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Refresh token storage: MUST be kept confidential in transit and storage, shared only between the authorization server and its client, and sent only over TLS (Transport Layer Security); the authorization server MUST maintain the binding between a refresh token and its client",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Refresh tokens MUST be kept confidential in transit and storage, and shared only among the authorization server and the client to whom the refresh tokens were issued.",
+      "note": "L213. Section 10.4; TLS and the binding are MUST in the same paragraph."
+    },
+    {
+      "id": "C51",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "New refresh token on refresh: The authorization server MAY issue one; the client MUST then discard the old refresh token, and the server MAY revoke it",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The authorization server MAY issue a new refresh token, in which case the client MUST discard the old refresh token and replace it with the new refresh token.",
+      "note": "L214. Section 6; the MAY revoke follows."
+    },
+    {
+      "id": "C52",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Sender-constraining: Authorization and resource servers SHOULD sender-constrain access tokens (mutual TLS or DPoP); refresh tokens for public clients MUST be sender-constrained or use refresh token rotation",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Refresh tokens for public clients MUST be sender-constrained or use refresh token rotation as described in Section 4.14.",
+      "note": "L215. Section 2.2.1 has the SHOULD with mutual TLS and DPoP given as examples; the parenthesis reads as examples too."
+    },
+    {
+      "id": "C53",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Audience: Access tokens SHOULD be audience-restricted to one resource server or, if that is not feasible, to a small set; a resource server MUST refuse a token not meant for it; the `aud` claim MAY carry the restriction",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "In particular, access tokens SHOULD be audience-restricted to a specific resource server or, if that is not feasible, to a small set of resource servers.",
+      "note": "L216. Section 2.3 has the MUST refuse and the MAY for aud."
+    },
+    {
+      "id": "C54",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Security events and idle refresh tokens: Authorization servers MAY revoke refresh tokens automatically on a password change or a logout at the authorization server; refresh tokens SHOULD expire after the client has been inactive for some time, a period the server chooses",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Refresh tokens SHOULD expire if the client has been inactive for some time, i.e., the refresh token has not been used to obtain fresh access tokens for some time.",
+      "note": "L217. Section 4.14.2 has the MAY for security events and leaves the period to the server."
+    },
+    {
+      "id": "C55",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "BFF cookies: MUST set `Secure`; MUST set `HttpOnly`; SHOULD set `SameSite=Strict`; SHOULD use `Path=/`; SHOULD NOT set `Domain`; SHOULD give the cookie name a prefix showing it was set over HTTP, for example `__Host-Http-` from the `[COOKIES]` reference, which is draft-ietf-httpbis-layered-cookies-02 (21 May 2026), an Internet-Draft marked work in progress",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Work in Progress, Internet-Draft, draft-ietf-httpbis-layered-cookies-02, 21 May 2026",
+      "note": "L223. Section 6.1.3.2 lists each attribute with the same modal; the draft name and date come from the reference list."
+    },
+    {
+      "id": "C56",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "CSRF: The BFF MUST implement a proper CSRF defense; when it relies on CORS it SHOULD require a custom request header, and when it uses one it MUST ensure every incoming request carries that header",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When this mechanism is used, the BFF MUST ensure that every incoming request carries this static header.",
+      "note": "L224. Section 6.1.3.3 has the MUST defense and the SHOULD custom header."
+    },
+    {
+      "id": "C57",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Refresh tokens issued to browser-based apps: Authorization servers MUST rotate refresh tokens on each use OR sender-constrain them; MUST set a maximum lifetime OR expire unused refresh tokens; MUST NOT let a rotated refresh token outlive the initial one when it has a preset expiry",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "MUST either set a maximum lifetime on refresh tokens OR expire if the refresh token has not been used within some amount of time",
+      "note": "L225. Section 6.3.2.3 lists all three rules for authorization servers."
+    },
+    {
+      "id": "C58",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Logout: Authorization servers SHOULD link the refresh token's lifetime to the user's session at the authorization server, so logout invalidates the refresh tokens issued to browser-based apps",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Authorization servers SHOULD link the lifetime of the refresh token to the user's authenticated session with the authorization server.",
+      "note": "L226. Same section."
+    },
+    {
+      "id": "C59",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Script-set cookies: Storing a token in a cookie through the JavaScript Cookie API is NOT RECOMMENDED, because the browser also sends that cookie to the app's own server",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Because of these unintentional side effects of using cookies for JavaScript-based storage, this practice is NOT RECOMMENDED.",
+      "note": "L227. Section 8.1."
+    },
+    {
+      "id": "C60",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Support and transport: Implementations MUST support revoking refresh tokens and SHOULD support revoking access tokens; revocation endpoint URLs MUST be HTTPS URLs",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Implementations MUST support the revocation of refresh tokens and SHOULD support the revocation of access tokens",
+      "note": "L233. Section 2 also says URLs for token revocation endpoints MUST be HTTPS URLs."
+    },
+    {
+      "id": "C61",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "Cascade: Revoking a refresh token SHOULD also invalidate all access tokens of the same grant when the server supports access token revocation; revoking an access token MAY revoke its refresh token",
+      "source": "[^rfc7009]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the particular token is a refresh token and the authorization server supports the revocation of access tokens, then the authorization server SHOULD also invalidate all access tokens",
+      "note": "L234. Section 2.1; the MAY for the reverse direction follows."
+    },
+    {
+      "id": "C62",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "`jsonwebtoken` <= 8.5.1: Signature validation can be bypassed because `jwt.verify()` defaults to the `none` algorithm; an app is affected if all three hold: a token with no signature arrives, no algorithms are specified, and a falsy secret or key (`null`, `false`, `undefined`) is passed; 9.0.0 removes the default support for `none`, which must then be named in the options if needed",
+      "source": "[^ghsa]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "In versions <=8.5.1 of jsonwebtoken library, lack of algorithm definition and a falsy secret or key in the jwt.verify() function can lead to signature validation bypass",
+      "note": "L240. The advisory lists the same three conditions and the 9.0.0 fix. Rank 3 in role 5, allowed."
+    },
+    {
+      "id": "C63",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "The misconception: some SPA OAuth libraries keep the access token in memory and isolate the refresh token in a Web Worker, which looks hard to steal. A proof of concept that redefines `MessageChannel` intercepts each access token the Web Worker sends back, so the attacker steals access tokens for as long as the app runs in the user's browser",
+      "source": "[^pws]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This attack scenario allows the attacker to steal access tokens as long as the application is running in the user’s browser.",
+      "note": "L245. Rank 6 source, checked in full; confined to role 6."
+    },
+    {
+      "id": "C64",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "The author's advice is not to worry much about storage: in-memory or Web Worker storage \"makes an attack harder, but it never solves the root problem\" (XSS itself)",
+      "source": "[^pws]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If you know what you are doing, use in-memory storage or the Web Worker option. It makes an attack harder, but it never solves the root problem.",
+      "note": "L245. Step 1 of the author's recommendations."
+    },
+    {
+      "id": "C65",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "Persistent theft: injected code that steals the latest tokens on a timer always holds the newest ones, which \"already suffices to counter typical defenses against token theft, such as short lifetimes or refresh token rotation\"; it can also make sure the app never uses the latest refresh token (clear the tokens, wait until the app closes or goes offline), so no reuse is ever detected",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This slight variation in the attack scenario already suffices to counter typical defenses against token theft, such as short lifetimes or refresh token rotation.",
+      "note": "L246. Section 5.1.2 also gives the three ways to keep the app off the latest refresh token."
+    },
+    {
+      "id": "C66",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "New tokens: attacker code can ignore stored tokens altogether, open a hidden iframe and run a silent Authorization Code flow on the user's existing authorization-server session, getting a new, independent access token; this relies on the authorization server supporting silent frame-based flows",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "With that ability, the attacker can inject a hidden iframe and launch a silent Authorization Code flow.",
+      "note": "L247. Section 5.1.3, including the reliance on silent frame-based flows."
+    },
+    {
+      "id": "C67",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "The vendor post says a replayed stale refresh token is the signal by which rotation detects theft",
+      "source": "[^workos]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If a stale refresh token is replayed, that's a signal something is wrong",
+      "note": "L250. Part of a recorded split between sources; checked."
+    },
+    {
+      "id": "C68",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "With short access tokens, \"instant\" revocation really means \"within one token lifetime\", so the lifetime is a security-versus-latency choice",
+      "source": "[^workos]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "so the TTL you choose is a direct security-versus-latency decision.",
+      "note": "L253."
+    },
+    {
+      "id": "C69",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "A server-side denylist is precise, but every request then does a lookup, the database round-trip JWTs were adopted to avoid",
+      "source": "[^workos]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "now every request does a lookup, which is the database round-trip you adopted JWTs to avoid.",
+      "note": "L254."
+    },
+    {
+      "id": "C70",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "Stateless JWT sessions: OWASP says JWT user sessions need a way to invalidate sessions, such as a deny list, after which they are no longer completely stateless, and suggests considering a plain session system",
+      "source": "[^owasp]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If your application implements such a deny list, user sessions won't be completely stateless anymore which might defeat the benefits of stateless sessions.",
+      "note": "L255."
+    },
+    {
+      "id": "C71",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "RFC 9700 says sender-constraining is undermined when an attacker gets both the token and the key material, in particular through cross-site scripting when the client runs in the browser",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Note that the security of sender-constrained tokens is undermined when an attacker gets access to the token and the key material.",
+      "note": "L259. Records a reconciled tension with RFC 10017; checked."
+    },
+    {
+      "id": "C72",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "`SameSite=Strict` is adequate only if the BFF is never same-site with another app: `https://a.example.com` and `https://b.example.com` share the site `example.com`, so a subdomain takeover of `b.example.com` can enable CSRF against the BFF on `a.example.com`",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "As a result, a subdomain-takeover attack against b.example.com can enable CSRF attacks against the BFF of a.example.com.",
+      "note": "L262. Section 6.1.3.3.1."
+    },
+    {
+      "id": "C73",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "dj-rest-auth calls `Lax` its default and recommended value and says `Strict` \"may break some flows\", and documents `JWT_AUTH_COOKIE_DOMAIN: '.example.com'` to share cookies across subdomains",
+      "source": "[^djra]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "'JWT_AUTH_SAMESITE': 'Lax', # Default, recommended",
+      "note": "L263. The SameSite table says Strict may break some flows, and the cookie domain section shows .example.com. Records a disagreement with RFC 10017; checked."
+    },
+    {
+      "id": "C74",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "Encrypting a client-side session cookie keeps the tokens out of plaintext on disk, but an attacker can still use the encrypted cookie in a session hijacking attack",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Note that while encrypting the cookie contents prevents direct access to embedded tokens, it still allows the attacker to use the encrypted cookie in a session hijacking attack.",
+      "note": "L264. Section 6.1.3.2."
+    },
+    {
+      "id": "C75",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "A verifier that reads the `alg` header to pick the algorithm lets the attacker choose how the signature is checked; some libraries treated `alg: none` tokens as validly signed, so anyone could create tokens with any payload",
+      "source": "[^auth0]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Unfortunately, some libraries treated tokens signed with the none algorithm as a valid token with a verified signature.",
+      "note": "L267."
+    },
+    {
+      "id": "C76",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "Algorithm confusion: a server expecting an RSA-signed token that receives an HMAC (hash-based message authentication code) one treats its RSA public key as the HMAC secret, so anyone with the public key can forge tokens that pass, provided the key string matches the server's exactly, format and line breaks included",
+      "source": "[^auth0]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If a server is expecting a token signed with RSA, but actually receives a token signed with HMAC, it will think the public key is actually an HMAC secret key.",
+      "note": "L268. The page also says the strings must match exactly, same format and line breaks."
+    },
+    {
+      "id": "C77",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "The 2015 post says most implementations by then failed `none` tokens \"if a secret key was provided\"",
+      "source": "[^auth0]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Most (hopefully all?) implementations now have a basic check to prevent this attack: if a secret key was provided, then token verification will fail for tokens using the none algorithm.",
+      "note": "L269. The saved page shows a 2020 byline but its TL;DR is marked Updated 2015-04-20, so the 2015 dating holds. Records a disagreement with the advisory; checked."
+    },
+    {
+      "id": "C78",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "RFC 6749 says that, when client authentication is not possible, the authorization server SHOULD deploy other means to detect refresh token abuse, and gives rotation as something it \"could employ\"",
+      "source": "[^rfc6749]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When client authentication is not possible, the authorization server SHOULD deploy other means to detect refresh token abuse.",
+      "note": "L272. Section 10.4 continues with could employ refresh token rotation."
+    },
+    {
+      "id": "C79",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "RFC 9700 updates RFC 6749",
+      "source": "[^rfc9700]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Updates RFC 6749, RFC 6750, RFC 6819",
+      "note": "L272. Header metadata."
+    },
+    {
+      "id": "C80",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "RFC 9700 says refresh tokens SHOULD expire after client inactivity (§5); for browser-based apps RFC 10017's MUST (cap the lifetime or expire unused tokens) governs, since RFC 10017 \"expands on and further restricts various recommendations given in [RFC9700]\"",
+      "source": "[^rfc10017]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This document expands on and further restricts various recommendations given in [RFC9700].",
+      "note": "L273. Introduction."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Refresh token rotation detects replay (RFC 9700) versus persistent theft that keeps the app off the latest refresh token, so no reuse is seen (RFC 10017); WorkOS (rank 4) and the PWS proof of concept (rank 6) split along the same line",
+      "winner": "[^rfc9700] and [^rfc10017] rank 1, each under its own condition",
+      "loser": "[^workos] rank 4; [^pws] rank 6",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "In-memory or Web Worker token storage presented as an XSS defense",
+      "winner": "[^rfc10017] rank 1 (no persistent storage API fully stops exfiltration)",
+      "loser": "[^pws] rank 6 (agrees: it never solves the root problem)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Sender-constraining is undermined by XSS when the attacker gets the key (RFC 9700) versus a non-extractable DPoP key that prevents token exfiltration (RFC 10017)",
+      "winner": "[^rfc9700] and [^rfc10017] rank 1, reconciled by the key-reachability condition",
+      "loser": "none (same rank, conditions differ)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "BFF cookie SameSite and Domain: RFC 10017 SHOULD Strict and SHOULD NOT Domain versus dj-rest-auth's recommended Lax and cookie domain, and Duende's Lax for a cross-site identity provider",
+      "winner": "[^rfc10017] rank 1 governs section 5",
+      "loser": "[^djra] and [^duende], rank 1 only for their own products",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "alg none: the 2015 post says most libraries fail none tokens when a key is given, versus CVE-2022-23540 where no key and no algorithm list let a none token through",
+      "winner": "[^ghsa] rank 3",
+      "loser": "[^auth0] rank 4",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Refresh token abuse detection: RFC 6749 SHOULD with rotation as an option versus RFC 9700 MUST sender-constrain or rotate for public clients",
+      "winner": "[^rfc9700] rank 1 (updates RFC 6749)",
+      "loser": "[^rfc6749] rank 1, older text",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Idle refresh token expiry: RFC 9700 SHOULD versus RFC 10017 MUST cap or expire for browser-based apps",
+      "winner": "[^rfc10017] rank 1 (further restricts RFC 9700)",
+      "loser": "[^rfc9700] rank 1, general case",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "aud OPTIONAL in the JWT format (RFC 7519) versus SHOULD audience-restrict access tokens (RFC 9700)",
+      "winner": "both rank 1, different layers (format versus OAuth policy)",
+      "loser": "none",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Revoking tokens suffices for a client-side BFF session (RFC 10017) versus access tokens that outlive a revoked refresh token (RFC 7009)",
+      "winner": "both rank 1, compatible",
+      "loser": "none",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "A stateless JWT cannot be taken back (WorkOS, section 3.1) versus RFC 7009's non-standardized backend interaction for self-contained tokens",
+      "winner": "[^rfc7009] rank 1, stated in section 1",
+      "loser": "[^workos] rank 4, conditional on a stateless API with no server lookup; section 3.1 then lists the stateful ways out",
+      "where_loser_is": "## 3. How it works",
+      "ok": true
+    },
+    {
+      "topic": "Okta's rotation grace period (previous refresh token stays valid 0 to 60 s, default 30) versus RFC 9700's rotation, where the previous token is invalidated",
+      "winner": "[^rfc9700] rank 1 for rotation in general (section 3.3)",
+      "loser": "[^okta] rank 1 only for Okta's own setting (section 4.4)",
+      "where_loser_is": "## 4. Worked examples",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 4. Worked examples",
+      "rule": "structure",
+      "evidence": "4.1, 4.3 and 4.7 are real runs with inputs and outputs, but 4.5 (Duende.BFF) and most of 4.6 (dj-rest-auth) restate vendor settings and documented behaviour rather than showing a request and its response, and 4.2's response line is derived from the rule (the doc says so)."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## 4. Worked examples",
+      "action": "In 4.5, add one input/output pair from the Duende guide: the guide's bffFetch wrapper sending X-CSRF: 1 to a route marked .AsBffApiEndpoint(), and the same request without the header answered 401 Unauthorized ([^duende], section Calling BFF API endpoints). Optional, not a failure: add a role 6 note that Okta's rotation grace period keeps the previous refresh token valid for up to 60 s ([^okta]), which RFC 9700's rotation does not ([^rfc9700] 4.14.2)."
+    }
+  ],
+  "final": {
+    "verdict": "PASS",
+    "checkable": 80,
+    "claims": 80,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

@@ -1,0 +1,352 @@
+{
+ "doc_claims": 80,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## Summary": [
+   2,
+   1
+  ],
+  "## 1. Mental model": [
+   5,
+   3
+  ],
+  "## 2. Concept architecture": [
+   9,
+   5
+  ],
+  "## 3. How it works": [
+   15,
+   8
+  ],
+  "## 4. Worked examples": [
+   14,
+   8
+  ],
+  "## 5. Reference & invariants": [
+   17,
+   10
+  ],
+  "## 6. Trade-offs, pitfalls & misconceptions": [
+   18,
+   10
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 16,
+   "heading": "## Summary",
+   "claim": "**TL;DR:** RFC 10017 names three architectures for a browser app that uses OAuth and lists them in decreasing order of security: a Backend for Frontend (BFF), where a backend handles OAuth and forwards all requests; a token-mediating backend, where a backend handles OAuth but the app calls resource servers with the access token; and a browser-based OAuth client that handles all of OAuth in the browser ✅[^rfc10017]",
+   "context": "**TL;DR:** RFC 10017 names three architectures for a browser app that uses OAuth and lists them in decreasing order of security: a Backend for Frontend (BFF), where a backend handles OAuth and forwards all requests; a token-mediating backend, where a backend handles OAuth but the app calls resource servers with the access token; and a browser-based OAuth client that handles all of OAuth in the browser ✅[^rfc10017]. None of the browser's persistent storage APIs (`localStorage`, `sessionStorage`, IndexedDB) can fully stop token exfiltration once attacker code runs in the app ✅[^rfc10017]. For revocation, a self-contained JWT is the hard case: §1 and §3 show why, and what servers do instead (short-lived access tokens, refresh tokens they can refuse or rotate, a `jti` denylist)."
+  },
+  {
+   "id": "S2",
+   "line": 29,
+   "heading": "## 1. Mental model",
+   "claim": "RFC 10017 says the BFF counters token theft by exposing no tokens to the browser app: \"Even when the attacker gains full control over the application, there are simply no tokens to be stolen.\" ✅[^rfc10017]",
+   "context": "- **Storage:** the fewer tokens the browser holds, the less XSS can take. RFC 10017 says the BFF counters token theft by exposing no tokens to the browser app: \"Even when the attacker gains full control over the application, there are simply no tokens to be stolen.\" ✅[^rfc10017]"
+  },
+  {
+   "id": "S3",
+   "line": 30,
+   "heading": "## 1. Mental model",
+   "claim": "Its other design option is short-lived access tokens renewed with refresh tokens, which lets the authorization server limit how long a revoked access token stays in use ✅[^rfc7009]",
+   "context": "- **Revocation:** RFC 7009 contrasts two token styles. An authorization server can revoke a handle-style access token, because the resource server relays each received token to it; for a self-contained token, \"some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired\" ✅[^rfc7009]. Its other design option is short-lived access tokens renewed with refresh tokens, which lets the authorization server limit how long a revoked access token stays in use ✅[^rfc7009]."
+  },
+  {
+   "id": "S4",
+   "line": 30,
+   "heading": "## 1. Mental model",
+   "claim": "An authorization server can revoke a handle-style access token, because the resource server relays each received token to it; for a self-contained token, \"some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired\" ✅[^rfc7009]",
+   "context": "- **Revocation:** RFC 7009 contrasts two token styles. An authorization server can revoke a handle-style access token, because the resource server relays each received token to it; for a self-contained token, \"some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired\" ✅[^rfc7009]. Its other design option is short-lived access tokens renewed with refresh tokens, which lets the authorization server limit how long a revoked access token stays in use ✅[^rfc7009]."
+  },
+  {
+   "id": "S5",
+   "line": 41,
+   "heading": "## 2. Concept architecture",
+   "claim": "- **Access token:** \"credentials used to access protected resources\"; the token \"may denote an identifier used to retrieve the authorization information or may self-contain the authorization information in a verifiable manner\" ✅[^rfc6749]",
+   "context": "- **Access token:** \"credentials used to access protected resources\"; the token \"may denote an identifier used to retrieve the authorization information or may self-contain the authorization information in a verifiable manner\" ✅[^rfc6749]."
+  },
+  {
+   "id": "S6",
+   "line": 43,
+   "heading": "## 2. Concept architecture",
+   "claim": "- **Bearer token:** the \"bearer\" type is used by simply including the access token string in the request, as in `Authorization: Bearer mF_9.B5f-4.1JqM` ✅[^rfc6749]",
+   "context": "- **Bearer token:** the \"bearer\" type is used by simply including the access token string in the request, as in `Authorization: Bearer mF_9.B5f-4.1JqM` ✅[^rfc6749]. In browser-based clients the refresh token is typically a bearer token too, unless the app explicitly uses Demonstrating Proof of Possession (DPoP, RFC 9449) ✅[^rfc10017]."
+  },
+  {
+   "id": "S7",
+   "line": 47,
+   "heading": "## 2. Concept architecture",
+   "claim": "- **BFF:** the backend acts as a confidential OAuth client, manages the access and refresh tokens in a cookie-based session so no token reaches the browser app, and forwards every request to the resource server with the right access token added ✅[^rfc10017]",
+   "context": "- **BFF:** the backend acts as a confidential OAuth client, manages the access and refresh tokens in a cookie-based session so no token reaches the browser app, and forwards every request to the resource server with the right access token added ✅[^rfc10017]. Attacker script in the page can still send requests to the BFF from within the user's browser, but `HttpOnly` cookies stop it from reading the session state itself ✅[^rfc10017]."
+  },
+  {
+   "id": "S8",
+   "line": 52,
+   "heading": "## 2. Concept architecture",
+   "claim": "- **Revocation endpoint (RFC 7009):** lets a client invalidate its tokens if the end user logs out, changes identity, or uninstalls the application ✅[^rfc7009]",
+   "context": "- **Revocation endpoint (RFC 7009):** lets a client invalidate its tokens if the end user logs out, changes identity, or uninstalls the application ✅[^rfc7009]."
+  },
+  {
+   "id": "S9",
+   "line": 53,
+   "heading": "## 2. Concept architecture",
+   "claim": "- **Sender-constrained token:** an access token scoped to one sender, which must show knowledge of a secret before the resource server accepts it; RFC 9700 names two methods in use, mutual TLS certificate-bound tokens (RFC 8705, the client identified by the fingerprint of its public key) and DPoP (RFC 9449, an application-level key pair and signing, usable by public clients) ✅[^rfc9700]",
+   "context": "- **Sender-constrained token:** an access token scoped to one sender, which must show knowledge of a secret before the resource server accepts it; RFC 9700 names two methods in use, mutual TLS certificate-bound tokens (RFC 8705, the client identified by the fingerprint of its public key) and DPoP (RFC 9449, an application-level key pair and signing, usable by public clients) ✅[^rfc9700]."
+  },
+  {
+   "id": "S10",
+   "line": 60,
+   "heading": "## 3. How it works",
+   "claim": "A stateless API trusts a JWT \"because the signature checks out and the exp claim is in the future\"; it never asks a database whether the session is still good, which is why the token cannot be taken back ✅[^workos]",
+   "context": "A stateless API trusts a JWT \"because the signature checks out and the exp claim is in the future\"; it never asks a database whether the session is still good, which is why the token cannot be taken back ✅[^workos]. Each way out below brings back some server state: the authorization server's record of revoked or rotated tokens (§3.2, §3.3), a BFF session (§3.4), or a list at the resource server (§3.6)."
+  },
+  {
+   "id": "S11",
+   "line": 64,
+   "heading": "## 3. How it works",
+   "claim": "The authorization server validates the client credentials (for a confidential client), then checks that the token was issued to the client asking, and refuses the request if either check fails ✅[^rfc7009]",
+   "context": "2. The authorization server validates the client credentials (for a confidential client), then checks that the token was issued to the client asking, and refuses the request if either check fails ✅[^rfc7009]."
+  },
+  {
+   "id": "S12",
+   "line": 65,
+   "heading": "## 3. How it works",
+   "claim": "It invalidates the token immediately; in practice there can be a propagation delay in which some servers know and others do not, and clients must not use the token after an HTTP 200 response ✅[^rfc7009]",
+   "context": "3. It invalidates the token immediately; in practice there can be a propagation delay in which some servers know and others do not, and clients must not use the token after an HTTP 200 response ✅[^rfc7009]."
+  },
+  {
+   "id": "S13",
+   "line": 69,
+   "heading": "## 3. How it works",
+   "claim": "With rotation, the authorization server issues a new refresh token with every access token refresh response; the previous one is invalidated, but the server keeps the relationship between them ✅[^rfc9700]",
+   "context": "1. With rotation, the authorization server issues a new refresh token with every access token refresh response; the previous one is invalidated, but the server keeps the relationship between them ✅[^rfc9700]."
+  },
+  {
+   "id": "S14",
+   "line": 70,
+   "heading": "## 3. How it works",
+   "claim": "Detection works when a stolen refresh token is used by both the attacker and the legitimate client: one of them presents an invalidated token, the server cannot tell which, and it revokes the active refresh token, which stops the attack at the cost of forcing the legitimate client to obtain a fresh grant ✅[^rfc9700]",
+   "context": "2. Detection works when a stolen refresh token is used by both the attacker and the legitimate client: one of them presents an invalidated token, the server cannot tell which, and it revokes the active refresh token, which stops the attack at the cost of forcing the legitimate client to obtain a fresh grant ✅[^rfc9700]."
+  },
+  {
+   "id": "S15",
+   "line": 76,
+   "heading": "## 3. How it works",
+   "claim": "**Session state.** With a client-side session (data pushed to the browser in a signed, optionally encrypted object) used in a BFF, the cookie only serves to obtain the user's tokens, so all control and revocation follow from the tokens: it suffices to revoke the user's access token and/or refresh token, without invalidating the cookie-based session ✅[^rfc10017]",
+   "context": "1. **Session state.** With a client-side session (data pushed to the browser in a signed, optionally encrypted object) used in a BFF, the cookie only serves to obtain the user's tokens, so all control and revocation follow from the tokens: it suffices to revoke the user's access token and/or refresh token, without invalidating the cookie-based session ✅[^rfc10017]."
+  },
+  {
+   "id": "S16",
+   "line": 81,
+   "heading": "## 3. How it works",
+   "claim": "The client has to prove possession of a private key to use the token, so a stolen token is not usable by itself; RFC 10017 says this shifts the challenge from storing the token securely to storing the private key securely ✅[^rfc10017]",
+   "context": "1. The client has to prove possession of a private key to use the token, so a stolen token is not usable by itself; RFC 10017 says this shifts the challenge from storing the token securely to storing the private key securely ✅[^rfc10017]."
+  },
+  {
+   "id": "S17",
+   "line": 86,
+   "heading": "## 3. How it works",
+   "claim": "A token consumer may keep a JWT denylist as a simple form of replay protection or \"as a workaround for the “stateless session” invalidation problem\"; OWASP's sketch keys it on the (`jti`, `iss`) pair, inserts each entry with the token's `exp`, and checks a token by looking up the same pair ✅[^owasp]",
+   "context": "1. A token consumer may keep a JWT denylist as a simple form of replay protection or \"as a workaround for the “stateless session” invalidation problem\"; OWASP's sketch keys it on the (`jti`, `iss`) pair, inserts each entry with the token's `exp`, and checks a token by looking up the same pair ✅[^owasp]."
+  },
+  {
+   "id": "S18",
+   "line": 112,
+   "heading": "## 4. Worked examples",
+   "claim": "The RFC's example request, and its rule that the server answers HTTP 200 whether the token was revoked or the client sent an invalid token ✅[^rfc7009]",
+   "context": "The RFC's example request, and its rule that the server answers HTTP 200 whether the token was revoked or the client sent an invalid token ✅[^rfc7009]. The second block is the status line that rule gives; the RFC shows no response example."
+  },
+  {
+   "id": "S19",
+   "line": 131,
+   "heading": "## 4. Worked examples",
+   "claim": "- Rotation is the default for SPAs when you create or edit one; if a used refresh token is presented again, Okta immediately invalidates the most recently issued refresh token and all access tokens issued since the user authenticated ✅[^okta]",
+   "context": "- Rotation is the default for SPAs when you create or edit one; if a used refresh token is presented again, Okta immediately invalidates the most recently issued refresh token and all access tokens issued since the user authenticated ✅[^okta]."
+  },
+  {
+   "id": "S20",
+   "line": 132,
+   "heading": "## 4. Worked examples",
+   "claim": "- The grace period, during which the previous token stays valid after rotation, defaults to 30 seconds and can be set from 0 through 60; in the app's `settings.oauthClient`, the `refresh_token` object takes a `rotation_type` of `ROTATE` or `STATIC` and a `leeway` of 0 through 60, as in `\"refresh_token\": { \"rotation_type\": \"ROTATE\", \"leeway\": 30 }` ✅[^okta]",
+   "context": "- The grace period, during which the previous token stays valid after rotation, defaults to 30 seconds and can be set from 0 through 60; in the app's `settings.oauthClient`, the `refresh_token` object takes a `rotation_type` of `ROTATE` or `STATIC` and a `leeway` of 0 through 60, as in `\"refresh_token\": { \"rotation_type\": \"ROTATE\", \"leeway\": 30 }` ✅[^okta]."
+  },
+  {
+   "id": "S21",
+   "line": 137,
+   "heading": "## 4. Worked examples",
+   "claim": "- The front end sends `X-CSRF: 1` on every request to a BFF API endpoint, or the BFF answers 401 Unauthorized; local API routes must be marked with `.AsBffApiEndpoint()`, without which the header is not enforced ✅[^duende]",
+   "context": "- The front end sends `X-CSRF: 1` on every request to a BFF API endpoint, or the BFF answers 401 Unauthorized; local API routes must be marked with `.AsBffApiEndpoint()`, without which the header is not enforced ✅[^duende]."
+  },
+  {
+   "id": "S22",
+   "line": 160,
+   "heading": "## 4. Worked examples",
+   "claim": "- These are the guide's settings from its step \"Configure Django Settings\", whose comment says `JWT_AUTH_SECURE` must be `True` in production ✅[^djra]",
+   "context": "- These are the guide's settings from its step \"Configure Django Settings\", whose comment says `JWT_AUTH_SECURE` must be `True` in production ✅[^djra]."
+  },
+  {
+   "id": "S23",
+   "line": 161,
+   "heading": "## 4. Worked examples",
+   "claim": "- At login the API sets `HttpOnly` cookies for both tokens; when a request comes back 401 because the access cookie expired, the SPA calls `POST /token/refresh/` with the refresh cookie and receives a new access cookie ✅[^djra]",
+   "context": "- At login the API sets `HttpOnly` cookies for both tokens; when a request comes back 401 because the access cookie expired, the SPA calls `POST /token/refresh/` with the refresh cookie and receives a new access cookie ✅[^djra]."
+  },
+  {
+   "id": "S24",
+   "line": 163,
+   "heading": "## 4. Worked examples",
+   "claim": "- With SimpleJWT's `token_blacklist` app installed, a user's refresh token is blacklisted at logout and cannot be reused ✅[^djra]",
+   "context": "- With SimpleJWT's `token_blacklist` app installed, a user's refresh token is blacklisted at logout and cannot be reused ✅[^djra]."
+  },
+  {
+   "id": "S25",
+   "line": 197,
+   "heading": "## 4. Worked examples",
+   "claim": "On Node 24.22.1 (image `node:24.22.1-alpine`, kernel `7.2.12-orbstack-00394-gbecdd6130068`), the verifier written for this probe, which decodes the signature with `Buffer.from(s, 'base64url')` and compares bytes, accepted both the issued token and a copy whose last signature character differs in the lower of its two unused bits; the SHA-256-keyed list missed the copy and the (`jti`, `iss`)-keyed list caught it, printing `same-string=false both-verify=true` and `hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true` ✅[^probe-02]",
+   "context": "On Node 24.22.1 (image `node:24.22.1-alpine`, kernel `7.2.12-orbstack-00394-gbecdd6130068`), the verifier written for this probe, which decodes the signature with `Buffer.from(s, 'base64url')` and compares bytes, accepted both the issued token and a copy whose last signature character differs in the lower of its two unused bits; the SHA-256-keyed list missed the copy and the (`jti`, `iss`)-keyed list caught it, printing `same-string=false both-verify=true` and `hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true` ✅[^probe-02]. A verifier that compares the base64url strings instead would reject the copy; the probe shows one lenient decoder, not every library."
+  },
+  {
+   "id": "S26",
+   "line": 205,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc7519]",
+   "context": "| `exp`, `nbf`, `iat` | A JWT MUST NOT be accepted on or after `exp`, nor before `nbf`; implementers MAY allow a small leeway, usually no more than a few minutes, for clock skew; `iat` is the time of issue and can be used to determine the token's age; all are NumericDate values and OPTIONAL | ✅[^rfc7519] |"
+  },
+  {
+   "id": "S27",
+   "line": 206,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc7519]",
+   "context": "| `aud` | Each principal intended to process the JWT MUST identify itself with a value in `aud`; when `aud` is present and the processor is not in it, the JWT MUST be rejected; the claim is OPTIONAL | ✅[^rfc7519] |"
+  },
+  {
+   "id": "S28",
+   "line": 208,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc7519]",
+   "context": "| Validation | If any validation step fails, the JWT MUST be rejected; which algorithms are acceptable is an application decision, and a JWT that validates with an unacceptable algorithm SHOULD be rejected | ✅[^rfc7519] |"
+  },
+  {
+   "id": "S29",
+   "line": 217,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc9700]",
+   "context": "| Audience | Access tokens SHOULD be audience-restricted to one resource server or, if that is not feasible, to a small set; a resource server MUST refuse a token not meant for it; the `aud` claim MAY carry the restriction | ✅[^rfc9700] |"
+  },
+  {
+   "id": "S30",
+   "line": 224,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc10017]",
+   "context": "| BFF cookies | MUST set `Secure`; MUST set `HttpOnly`; SHOULD set `SameSite=Strict`; SHOULD use `Path=/`; SHOULD NOT set `Domain`; SHOULD give the cookie name a prefix showing it was set over HTTP, for example `__Host-Http-` from the `[COOKIES]` reference, which is draft-ietf-httpbis-layered-cookies-02 (21 May 2026), an Internet-Draft marked work in progress | ✅[^rfc10017] |"
+  },
+  {
+   "id": "S31",
+   "line": 226,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc10017]",
+   "context": "| Refresh tokens issued to browser-based apps | Authorization servers MUST rotate refresh tokens on each use OR sender-constrain them; MUST set a maximum lifetime OR expire unused refresh tokens; MUST NOT let a rotated refresh token outlive the initial one when it has a preset expiry | ✅[^rfc10017] |"
+  },
+  {
+   "id": "S32",
+   "line": 228,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc10017]",
+   "context": "| Script-set cookies | Storing a token in a cookie through the JavaScript Cookie API is NOT RECOMMENDED, because the browser also sends that cookie to the app's own server | ✅[^rfc10017] |"
+  },
+  {
+   "id": "S33",
+   "line": 234,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc7009]",
+   "context": "| Support and transport | Implementations MUST support revoking refresh tokens and SHOULD support revoking access tokens; revocation endpoint URLs MUST be HTTPS URLs | ✅[^rfc7009] |"
+  },
+  {
+   "id": "S34",
+   "line": 235,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^rfc7009]",
+   "context": "| Cascade | Revoking a refresh token SHOULD also invalidate all access tokens of the same grant when the server supports access token revocation; revoking an access token MAY revoke its refresh token | ✅[^rfc7009] |"
+  },
+  {
+   "id": "S35",
+   "line": 241,
+   "heading": "## 5. Reference & invariants",
+   "claim": "✅[^ghsa]",
+   "context": "| `jsonwebtoken` <= 8.5.1 | Signature validation can be bypassed because `jwt.verify()` defaults to the `none` algorithm; an app is affected if all three hold: a token with no signature arrives, no algorithms are specified, and a falsy secret or key (`null`, `false`, `undefined`) is passed; 9.0.0 removes the default support for `none`, which must then be named in the options if needed | ✅[^ghsa] |"
+  },
+  {
+   "id": "S36",
+   "line": 246,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "The author's advice is not to worry much about storage: in-memory or Web Worker storage \"makes an attack harder, but it never solves the root problem\" (XSS itself) ✅[^pws]",
+   "context": "- The misconception: some SPA OAuth libraries keep the access token in memory and isolate the refresh token in a Web Worker, which looks hard to steal. A proof of concept that redefines `MessageChannel` intercepts each access token the Web Worker sends back, so the attacker steals access tokens for as long as the app runs in the user's browser ✅[^pws]. The author's advice is not to worry much about storage: in-memory or Web Worker storage \"makes an attack harder, but it never solves the root problem\" (XSS itself) ✅[^pws]. This blog is Rank 6; RFC 10017's §8.5 statement in the Summary is the Rank 1 version of the same point."
+  },
+  {
+   "id": "S37",
+   "line": 254,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- With short access tokens, \"instant\" revocation really means \"within one token lifetime\", so the lifetime is a security-versus-latency choice ✅[^workos]",
+   "context": "- With short access tokens, \"instant\" revocation really means \"within one token lifetime\", so the lifetime is a security-versus-latency choice ✅[^workos]."
+  },
+  {
+   "id": "S38",
+   "line": 255,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- A server-side denylist is precise, but every request then does a lookup, the database round-trip JWTs were adopted to avoid ✅[^workos]",
+   "context": "- A server-side denylist is precise, but every request then does a lookup, the database round-trip JWTs were adopted to avoid ✅[^workos]."
+  },
+  {
+   "id": "S39",
+   "line": 260,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "RFC 9700 says sender-constraining is undermined when an attacker gets both the token and the key material, in particular through cross-site scripting when the client runs in the browser ✅[^rfc9700]",
+   "context": "RFC 9700 says sender-constraining is undermined when an attacker gets both the token and the key material, in particular through cross-site scripting when the client runs in the browser ✅[^rfc9700]. RFC 10017's non-extractable key (§3.5) is the case where script cannot reach the key, so both Rank 1 statements hold under their own condition; and §3.5 step 3 shows what a key does not stop."
+  },
+  {
+   "id": "S40",
+   "line": 263,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- `SameSite=Strict` is adequate only if the BFF is never same-site with another app: `https://a.example.com` and `https://b.example.com` share the site `example.com`, so a subdomain takeover of `b.example.com` can enable CSRF against the BFF on `a.example.com` ✅[^rfc10017]",
+   "context": "- `SameSite=Strict` is adequate only if the BFF is never same-site with another app: `https://a.example.com` and `https://b.example.com` share the site `example.com`, so a subdomain takeover of `b.example.com` can enable CSRF against the BFF on `a.example.com` ✅[^rfc10017]."
+  },
+  {
+   "id": "S41",
+   "line": 265,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- Encrypting a client-side session cookie keeps the tokens out of plaintext on disk, but an attacker can still use the encrypted cookie in a session hijacking attack ✅[^rfc10017]",
+   "context": "- Encrypting a client-side session cookie keeps the tokens out of plaintext on disk, but an attacker can still use the encrypted cookie in a session hijacking attack ✅[^rfc10017]."
+  },
+  {
+   "id": "S42",
+   "line": 269,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- Algorithm confusion: a server expecting an RSA-signed token that receives an HMAC (hash-based message authentication code) one treats its RSA public key as the HMAC secret, so anyone with the public key can forge tokens that pass, provided the key string matches the server's exactly, format and line breaks included ✅[^auth0]",
+   "context": "- Algorithm confusion: a server expecting an RSA-signed token that receives an HMAC (hash-based message authentication code) one treats its RSA public key as the HMAC secret, so anyone with the public key can forge tokens that pass, provided the key string matches the server's exactly, format and line breaks included ✅[^auth0]."
+  },
+  {
+   "id": "S43",
+   "line": 270,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- The 2015 post says most implementations by then failed `none` tokens \"if a secret key was provided\" ✅[^auth0]",
+   "context": "- The 2015 post says most implementations by then failed `none` tokens \"if a secret key was provided\" ✅[^auth0]. CVE-2022-23540 (§5, Rank 3) is the case that check leaves open: no key at all (a falsy one) and no algorithm list. The Rank 3 advisory governs; the Rank 4 statement holds only when a key is passed."
+  },
+  {
+   "id": "S44",
+   "line": 273,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "RFC 9700 updates RFC 6749 ✅[^rfc9700]",
+   "context": "- RFC 6749 says that, when client authentication is not possible, the authorization server SHOULD deploy other means to detect refresh token abuse, and gives rotation as something it \"could employ\" ✅[^rfc6749]. RFC 9700 updates RFC 6749 ✅[^rfc9700], and its MUST for public clients (§5) governs."
+  },
+  {
+   "id": "S45",
+   "line": 274,
+   "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+   "claim": "- RFC 9700 says refresh tokens SHOULD expire after client inactivity (§5); for browser-based apps RFC 10017's MUST (cap the lifetime or expire unused tokens) governs, since RFC 10017 \"expands on and further restricts various recommendations given in [RFC9700]\" ✅[^rfc10017]",
+   "context": "- RFC 9700 says refresh tokens SHOULD expire after client inactivity (§5); for browser-based apps RFC 10017's MUST (cap the lifetime or expire unused tokens) governs, since RFC 10017 \"expands on and further restricts various recommendations given in [RFC9700]\" ✅[^rfc10017]."
+  }
+ ]
+}

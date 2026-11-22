@@ -1,0 +1,275 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/a0f7f2c88ab3.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/91cdcec2ae16.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9700.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/4e6d674bf887.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/760e80d938bb.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://www.gabriel.urdhr.fr/2026/06/27/ecdsa-jwt-malleability/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/9e9088d453fb.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc7009.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/6de02dfd2c80.txt"
+  },
+  {
+   "labels": [
+    "[^7]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc7662.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/80790969b697.txt"
+  },
+  {
+   "labels": [
+    "[^8]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/82174bcfac03.txt"
+  },
+  {
+   "labels": [
+    "[^9]"
+   ],
+   "url": "https://openid.net/specs/openid-connect-backchannel-1_0.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/84105357f86e.txt"
+  },
+  {
+   "labels": [
+    "[^10]"
+   ],
+   "url": "https://openid.net/specs/openid-caep-1_0.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/a131c35ecbc3.txt"
+  },
+  {
+   "labels": [
+    "[^11]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9449.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/0f35f1b5e9f3.txt"
+  },
+  {
+   "labels": [
+    "[^12]"
+   ],
+   "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+   "tier": "A",
+   "rank": 3,
+   "rule": "developer.mozilla.org/en-US/docs/",
+   "written_rank": null,
+   "cache": "cache/4fcf30d482ce.txt"
+  },
+  {
+   "labels": [
+    "[^13]"
+   ],
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/a11c069b26bd.txt"
+  },
+  {
+   "labels": [
+    "[^14]"
+   ],
+   "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/f87cd786f36f.txt"
+  },
+  {
+   "labels": [
+    "[^15]"
+   ],
+   "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/62afe23bacc9.txt"
+  },
+  {
+   "labels": [
+    "[^16]"
+   ],
+   "url": "https://redis.io/docs/latest/commands/expire/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/52945e014298.txt"
+  },
+  {
+   "labels": [
+    "[^17]"
+   ],
+   "url": "https://redis.io/docs/latest/commands/set/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/e987368157bc.txt"
+  },
+  {
+   "labels": [
+    "[^18]"
+   ],
+   "url": "https://curity.io/resources/learn/phantom-token-pattern/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/5a19b1897b04.txt"
+  },
+  {
+   "labels": [
+    "[^19]"
+   ],
+   "url": "https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/ced6f065df1d.txt"
+  },
+  {
+   "labels": [
+    "[^20]"
+   ],
+   "url": "https://nodejs.org/api/buffer.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "nodejs.org/api/",
+   "written_rank": null,
+   "cache": "cache/74721b2a7a28.txt"
+  },
+  {
+   "labels": [
+    "[^21]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9068.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/c36d79fcad94.txt"
+  },
+  {
+   "labels": [
+    "[^22]"
+   ],
+   "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API",
+   "tier": "A",
+   "rank": 3,
+   "rule": "developer.mozilla.org/en-US/docs/",
+   "written_rank": null,
+   "cache": "cache/c4aeaabb5e43.txt"
+  },
+  {
+   "labels": [
+    "[^23]"
+   ],
+   "url": "https://github.com/OWASP/CheatSheetSeries/pull/2242",
+   "tier": "A",
+   "rank": 6,
+   "rule": "github.com/*/*/pull/",
+   "written_rank": null,
+   "cache": "cache/bf395586eec7.txt"
+  }
+ ],
+ "tier_b": [
+  "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "https://www.gabriel.urdhr.fr/2026/06/27/ecdsa-jwt-malleability/",
+  "https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/",
+  "https://openid.net/specs/openid-connect-backchannel-1_0.html",
+  "https://openid.net/specs/openid-caep-1_0.html",
+  "https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html",
+  "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+  "https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation",
+  "https://redis.io/docs/latest/commands/expire/",
+  "https://redis.io/docs/latest/commands/set/",
+  "https://curity.io/resources/learn/phantom-token-pattern/",
+  "https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/"
+ ]
+}

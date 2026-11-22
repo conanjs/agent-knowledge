@@ -10,7 +10,7 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 |---|---|---|
 | An example in the reader's input is the answer to the test | E1, E6 | Take examples from topics no test covers; check every file an agent reads for test answers |
 | An agent that can read the repo finds test material by search | E4, E5 | Forbid the folders by name *and* give the agent what it was going to look for; audit its reads after each run |
-| A rule silent on a case is read as permission | E7, E11, E14, E22 | Name the case and what to do in it ("after a PASS, change nothing") |
+| A rule silent on a case is read as permission | E7, E11, E14, E22, E24 | Name the case and what to do in it ("after a PASS, change nothing") |
 | Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
 | A criterion that names several sections can be read as each or as all | E8 | Write "each of sections 2 and 3" or "sections 2 and 3 together" |
 | A message copied in place of the rule | E20 | State the rule; quote the message only as the message |
@@ -156,3 +156,9 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Read as:** two commits sit on top of what the remote has.
 - **Expected:** the remote had only `main` at `d324cb4`; those two stand on 9 more commits of the same branch, which a push must carry too.
 - **Fix:** asked first; V approved pushing the branch as its own remote branch, and it was pushed at `10d49af`.
+
+### E24 "Write only your ledger" and a helper script (LS-03 taxonomy worker)
+- **Words:** the worker body: "**Write only `RUN/ledger/<PROFILE>.json`.**" The LS-03 taxonomy worker wrote a 31 KB `build-ledger.mjs` in the session's scratchpad and built its ledger with it.
+- **Read as:** the rule is about the run folder; a throwaway script elsewhere is fine.
+- **Expected (the rule's purpose):** no doc text and no edited pages. A script outside the repo breaks neither, and the ledger check passed (0 errors).
+- **Fix (open):** say which writes are allowed: "In the repo, write only your ledger; a throwaway script may go in the session's scratch folder." The judges already do the same with their verdict scripts.
