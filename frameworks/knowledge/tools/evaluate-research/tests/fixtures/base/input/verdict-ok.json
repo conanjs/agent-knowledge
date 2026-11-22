@@ -1,0 +1,38 @@
+{
+  "sources": [
+    {
+      "ref": "[^a]",
+      "cache": "cache/src.txt"
+    },
+    {
+      "ref": "[^b]",
+      "cache": "cache/other.txt"
+    }
+  ],
+  "claim_checks": [
+    {
+      "id": "C1",
+      "source": "[^a]",
+      "verdict": "overstates",
+      "page_says": "Currently io_uring sets EPOLLET for multishot polls, so it gets the same behaviour."
+    },
+    {
+      "id": "C2",
+      "source": "[^a]",
+      "verdict": "entails",
+      "page_says": "text that is not checked"
+    },
+    {
+      "id": "C4",
+      "source": "[^a] (judged with [^b])",
+      "verdict": "overstates",
+      "page_says": "[^a] 'sets EPOLLET for multishot polls' [^b] 'MAY send JSON-RPC requests and notifications'"
+    },
+    {
+      "id": "C5",
+      "source": "[^b]",
+      "verdict": "unsupported",
+      "page_says": "other page: \"The server MAY send JSON-RPC requests and notifications\""
+    }
+  ]
+}

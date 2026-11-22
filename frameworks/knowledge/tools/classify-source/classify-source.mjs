@@ -9,7 +9,7 @@
 //
 // Tier A is this script's rank. Tier B means no rule covers the URL: the research worker rates it, and the judge re-rates it.
 // Exit codes: 0 done, 1 an argument is not a URL, 2 usage error or invalid rules file.
-// The validator imports loadRules and classify for KB-14.
+// The validator imports loadRules, classify and referenceEntries for KB-14; evaluate-research.mjs uses them too.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -59,6 +59,24 @@ export function classify(url, rules) {
     return a;
   });
   return { rank: best.rank, tier: 'A', rule: best.label };
+}
+
+/** The external entries of a References section's text: { labels, refs, urls, rank } per top-level list item, continuation lines
+ * joined. labels are the [^x] footnotes; refs are how the doc cites the entry: its [^x] footnotes, or a leading [x] label. */
+export function referenceEntries(refs) {
+  const items = [];
+  for (const line of refs.split('\n')) {
+    if (/^[-*] /.test(line)) items.push(line);
+    else if (/^\s+\S/.test(line) && items.length) items[items.length - 1] += ' ' + line.trim();
+  }
+  return items
+    .map((e) => ({
+      labels: [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]),
+      refs: [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => `[^${m[1]}]`).concat(/\[\^\w+\]/.test(e) ? [] : [e.match(/^[-*] (\[[\w.-]+\])(?!\()/)?.[1]].filter(Boolean)),
+      urls: [...e.matchAll(/https?:\/\/[^\s)>\]`|]+/g)].map((m) => m[0].replace(/[.,;]+$/, '')),
+      rank: Number(e.match(/\bRank ([1-6])\./)?.[1]) || null,
+    }))
+    .filter((e) => e.urls.length);
 }
 
 function census(root, rules) {

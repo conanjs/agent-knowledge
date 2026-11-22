@@ -1,0 +1,5 @@
+/* fs/pipe.c excerpt */
+	/*
+	 * Currently io_uring sets EPOLLET for multishot polls, so it gets the
+	 * same behaviour.
+	 */

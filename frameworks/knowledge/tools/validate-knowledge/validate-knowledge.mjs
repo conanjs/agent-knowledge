@@ -24,7 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classify, loadRules } from '../classify-source/classify-source.mjs';
+import { classify, loadRules, referenceEntries } from '../classify-source/classify-source.mjs';
 
 const args = process.argv.slice(2);
 const checkUrls = args.includes('--urls'); if (checkUrls) args.splice(args.indexOf('--urls'), 1);
@@ -190,22 +190,11 @@ function checkTail(f, t, fm) {
 // KB-14 and KB-15, for a doc with `ranked-sources: true`.
 function checkRanks(f, t) {
   rankRules ??= loadRules();
-  const refs = section(t, 'References') ?? '';
-  const entries = [];
-  for (const line of refs.split('\n')) {
-    if (/^[-*] /.test(line)) entries.push(line);
-    else if (/^\s+\S/.test(line) && entries.length) entries[entries.length - 1] += ' ' + line.trim();
-  }
   const rankOf = new Map(); // footnote label -> rank of its entry (external entries only)
   let highest = 0;
-  for (const e of entries) {
-    const found = [...e.matchAll(/https?:\/\/[^\s)>\]`|]+/g)].map((m) => m[0].replace(/[.,;]+$/, ''));
-    if (!found.length) continue;
-    const labels = [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]);
+  for (const { labels, urls: found, rank } of referenceEntries(section(t, 'References') ?? '')) {
     const name = labels.length ? labels.map((l) => `[^${l}]`).join(' ') : found[0];
-    const m = e.match(/\bRank ([1-6])\./);
-    if (!m) { fail('KB-14', `${rel(f)}: References entry ${name} has no "Rank <1–6>." (${found[0]})`); continue; }
-    const rank = Number(m[1]);
+    if (!rank) { fail('KB-14', `${rel(f)}: References entry ${name} has no "Rank <1–6>." (${found[0]})`); continue; }
     if (rank < highest) fail('KB-14', `${rel(f)}: References are not in rank order: ${name} (Rank ${rank}) comes after a Rank ${highest} entry`);
     highest = Math.max(highest, rank);
     for (const u of found) {

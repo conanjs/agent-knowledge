@@ -1,0 +1,21 @@
+{
+  "verdict": "PASS",
+  "claim_checks": [
+    {
+      "id": "C1",
+      "verdict": "entails"
+    },
+    {
+      "id": "C2",
+      "verdict": "entails"
+    },
+    {
+      "id": "C3",
+      "verdict": "overstates"
+    },
+    {
+      "id": "C4",
+      "verdict": "not_checkable"
+    }
+  ]
+}

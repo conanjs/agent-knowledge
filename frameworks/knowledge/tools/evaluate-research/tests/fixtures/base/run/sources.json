@@ -1,0 +1,4 @@
+[
+ { "url": "https://www.rfc-editor.org/rfc/rfc9113", "normalized": "https://www.rfc-editor.org/rfc/rfc9113", "cache": "cache/aaa.txt", "status": 200 },
+ { "url": "https://example.dev/blog/h2", "normalized": "https://example.dev/blog/h2", "cache": "cache/bbb.txt", "status": 200 }
+]

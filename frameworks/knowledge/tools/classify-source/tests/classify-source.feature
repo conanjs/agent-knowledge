@@ -23,7 +23,7 @@ Feature: Source rank classifier
       """
     Then it exits with 0 and prints:
       """
-      Rank 1 | tier A | github.com/microsoft/typescript/ | https://github.com/microsoft/TypeScript/blob/v5.0.2/README.md
+      Rank 1 | tier A | github.com/microsoft/TypeScript/ | https://github.com/microsoft/TypeScript/blob/v5.0.2/README.md
       Rank 6 | tier A | github.com/*/*/issues/ | https://github.com/microsoft/TypeScript/issues/36282
       """
 

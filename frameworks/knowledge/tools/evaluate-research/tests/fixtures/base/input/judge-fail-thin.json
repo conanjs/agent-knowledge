@@ -1,0 +1,21 @@
+{
+  "verdict": "FAIL",
+  "claim_checks": [
+    {
+      "id": "C1",
+      "verdict": "unsupported"
+    },
+    {
+      "id": "C2",
+      "verdict": "not_checkable"
+    },
+    {
+      "id": "C3",
+      "verdict": "not_checkable"
+    },
+    {
+      "id": "C4",
+      "verdict": "not_checkable"
+    }
+  ]
+}

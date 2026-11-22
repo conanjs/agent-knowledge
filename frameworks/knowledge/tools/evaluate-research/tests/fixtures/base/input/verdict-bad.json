@@ -1,0 +1,6 @@
+{
+  "sources": [ { "ref": "[^a]", "cache": "cache/src.txt" }, { "ref": "[^b]", "cache": "cache/other.txt" } ],
+  "claim_checks": [
+    { "id": "C3", "source": "[^a]", "verdict": "unsupported", "page_says": "The server MAY send JSON-RPC requests" }
+  ]
+}
