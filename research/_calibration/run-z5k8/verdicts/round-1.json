@@ -1,0 +1,964 @@
+{
+ "verdict": "FAIL",
+ "overall_score": 3.25,
+ "judge": {
+  "model": "claude-opus-5-5",
+  "prompt_sha": "f166f98",
+  "scope": "all"
+ },
+ "section_map": [
+  {
+   "heading": "## Summary",
+   "role": "envelope"
+  },
+  {
+   "heading": "## 1. Context: one problem with two halves",
+   "role": 1
+  },
+  {
+   "heading": "## 2. Actors, tokens and settings",
+   "role": 2
+  },
+  {
+   "heading": "## 3. Threat model: what injected JavaScript can do",
+   "role": 1
+  },
+  {
+   "heading": "## 4. Where the browser can keep a token",
+   "role": 5
+  },
+  {
+   "heading": "## 5. Architectures",
+   "role": 2
+  },
+  {
+   "heading": "## 6. Revocation mechanisms",
+   "role": 3
+  },
+  {
+   "heading": "## 7. Cross-side interactions",
+   "role": 6
+  },
+  {
+   "heading": "## 8. Worked example: one full pass through a BFF",
+   "role": 4
+  },
+  {
+   "heading": "## 9. Edge-case and failure matrix",
+   "role": 6
+  },
+  {
+   "heading": "## 10. Recommended baseline",
+   "role": 5
+  },
+  {
+   "heading": "## 11. Lab notes",
+   "role": 5
+  },
+  {
+   "heading": "## Verification status",
+   "role": "envelope"
+  },
+  {
+   "heading": "## References",
+   "role": "envelope"
+  },
+  {
+   "heading": "## Related",
+   "role": "envelope"
+  }
+ ],
+ "sources": [
+  {
+   "ref": "[^1]",
+   "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+   "cache": "cache/a0f7f2c88ab3.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org: a spec."
+  },
+  {
+   "ref": "[^2]",
+   "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+   "cache": "cache/91cdcec2ae16.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC (BCP) on rfc-editor.org: a spec."
+  },
+  {
+   "ref": "[^3]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9700.html",
+   "cache": "cache/4e6d674bf887.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC (BCP 240) on rfc-editor.org: a spec."
+  },
+  {
+   "ref": "[^4]",
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+   "cache": "cache/760e80d938bb.txt",
+   "rank": 3,
+   "rank_basis": "OWASP Cheat Sheet Series: a curated reference, not a spec."
+  },
+  {
+   "ref": "[^5]",
+   "url": "https://www.gabriel.urdhr.fr/2026/06/27/ecdsa-jwt-malleability/",
+   "cache": "cache/9e9088d453fb.txt",
+   "rank": 6,
+   "rank_basis": "Personal blog. The author may be the originator of the denylist-bypass finding (rank 1), but when two ranks fit the higher number applies."
+  },
+  {
+   "ref": "[^6]",
+   "url": "https://www.rfc-editor.org/rfc/rfc7009.html",
+   "cache": "cache/6de02dfd2c80.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC: a spec."
+  },
+  {
+   "ref": "[^7]",
+   "url": "https://www.rfc-editor.org/rfc/rfc7662.html",
+   "cache": "cache/80790969b697.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC: a spec."
+  },
+  {
+   "ref": "[^8]",
+   "url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/",
+   "cache": "cache/82174bcfac03.txt",
+   "rank": 1,
+   "rank_basis": "IETF OAuth WG Internet-Draft 21 on datatracker: the spec's own text, not yet an RFC (in RFC Editor queue)."
+  },
+  {
+   "ref": "[^9]",
+   "url": "https://openid.net/specs/openid-connect-backchannel-1_0.html",
+   "cache": "cache/84105357f86e.txt",
+   "rank": 1,
+   "rank_basis": "OpenID Foundation final specification on openid.net/specs."
+  },
+  {
+   "ref": "[^10]",
+   "url": "https://openid.net/specs/openid-caep-1_0.html",
+   "cache": "cache/a131c35ecbc3.txt",
+   "rank": 1,
+   "rank_basis": "OpenID Foundation specification on openid.net/specs."
+  },
+  {
+   "ref": "[^11]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9449.html",
+   "cache": "cache/0f35f1b5e9f3.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC: a spec."
+  },
+  {
+   "ref": "[^12]",
+   "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+   "cache": "cache/4fcf30d482ce.txt",
+   "rank": 3,
+   "rank_basis": "MDN Web Docs (developer.mozilla.org/en-US/docs/)."
+  },
+  {
+   "ref": "[^13]",
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html",
+   "cache": "cache/a11c069b26bd.txt",
+   "rank": 3,
+   "rank_basis": "OWASP Cheat Sheet Series: a curated reference."
+  },
+  {
+   "ref": "[^14]",
+   "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation",
+   "cache": "cache/f87cd786f36f.txt",
+   "rank": 1,
+   "rank_basis": "Vendor's official docs site, cited only for that vendor's own behaviour."
+  },
+  {
+   "ref": "[^15]",
+   "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation",
+   "cache": "cache/62afe23bacc9.txt",
+   "rank": 1,
+   "rank_basis": "Vendor's official docs site, cited only for that vendor's own defaults."
+  },
+  {
+   "ref": "[^16]",
+   "url": "https://redis.io/docs/latest/commands/expire/",
+   "cache": "cache/52945e014298.txt",
+   "rank": 1,
+   "rank_basis": "Project's official docs (redis.io/docs)."
+  },
+  {
+   "ref": "[^17]",
+   "url": "https://redis.io/docs/latest/commands/set/",
+   "cache": "cache/e987368157bc.txt",
+   "rank": 1,
+   "rank_basis": "Project's official docs (redis.io/docs)."
+  },
+  {
+   "ref": "[^18]",
+   "url": "https://curity.io/resources/learn/phantom-token-pattern/",
+   "cache": "cache/5a19b1897b04.txt",
+   "rank": 4,
+   "rank_basis": "Vendor learning article: either the pattern originator's publication (1) or company engineering literature (4); the higher number is taken."
+  },
+  {
+   "ref": "[^19]",
+   "url": "https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/",
+   "cache": "cache/ced6f065df1d.txt",
+   "rank": 4,
+   "rank_basis": "Google's company blog announcing its own Chrome feature: official announcement (1) or company blog (4); the higher number is taken."
+  },
+  {
+   "ref": "[^20]",
+   "url": "https://nodejs.org/api/buffer.html",
+   "cache": "cache/74721b2a7a28.txt",
+   "rank": 1,
+   "rank_basis": "Project's official API docs (nodejs.org/api)."
+  },
+  {
+   "ref": "[^21]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9068.html",
+   "cache": "cache/c36d79fcad94.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC: a spec."
+  },
+  {
+   "ref": "[^22]",
+   "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API",
+   "cache": "cache/c4aeaabb5e43.txt",
+   "rank": 3,
+   "rank_basis": "MDN Web Docs (developer.mozilla.org/en-US/docs/)."
+  },
+  {
+   "ref": "[^23]",
+   "url": "https://github.com/OWASP/CheatSheetSeries/pull/2242",
+   "cache": "cache/bf395586eec7.txt",
+   "rank": 6,
+   "rank_basis": "github.com/<org>/<repo>/pull/ is rank 6 by rule, even for the project's own repository."
+  },
+  {
+   "ref": "[^24]",
+   "url": "experiments/jwt-revocation-lab.mjs, experiments/jwt-revocation-lab.output.txt",
+   "cache": null,
+   "rank": "local",
+   "rank_basis": "Local experiment and captured output; no saved text in INPUT."
+  },
+  {
+   "ref": "[^25]",
+   "url": "experiments/cookie-visibility-server.mjs, experiments/cookie-visibility.output.txt",
+   "cache": null,
+   "rank": "local",
+   "rank_basis": "Local experiment and captured output; no saved text in INPUT."
+  }
+ ],
+ "deterministic_checks": {
+  "checked_by": "judge",
+  "sections_present": true,
+  "zero_orphan_citations": true,
+  "rank_quarantine_intact": false,
+  "core_claims_cited": true
+ },
+ "rubric_scores": {
+  "citation_integrity": 5,
+  "rank_compliance": 1,
+  "factual_grounding": 3,
+  "diataxis_rigor": 4
+ },
+ "coverage": {
+  "sampled": true,
+  "claims_roles_1_5": 173,
+  "checked_roles_1_5": 37,
+  "claims_role_6": 45,
+  "checked_role_6": 8,
+  "no_cache": 0,
+  "not_checkable": 6
+ },
+ "claim_checks": [
+  {
+   "id": "S1",
+   "section": "## 1. Context: one problem with two halves",
+   "role": 1,
+   "claim": "- Every registered claim is optional in RFC 7519 itself ✅[^1]",
+   "source": "[^1]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "None of the claims defined below are intended to be mandatory to use or implement in all cases",
+   "note": "RFC 7519 4.1 plus 'Use of this claim is OPTIONAL.' on each registered claim."
+  },
+  {
+   "id": "S2",
+   "section": "## 1. Context: one problem with two halves",
+   "role": 1,
+   "claim": "Short access-token lifetimes make revocation of access tokens matter less, which moves the risk to the long-lived **refresh token**: it carries the client's full grant and is not tied to one API, so a stolen, replayable refresh token lets an attacker mint new access tokens ✅[^3]",
+   "source": "[^3]",
+   "verdict": "unsupported",
+   "severity": "CRITICAL_FAIL",
+   "page_says": "allow the authorization server to issue access tokens with a short lifetime and reduced scope, thus reducing the potential impact of access token leakage.",
+   "note": "The refresh-token half (full scope, not tied to one resource, replay mints access tokens) is in RFC 9700 4.14. The leading clause is not: the page says short lifetimes reduce the impact of leakage, not that revocation matters less, and it never calls refresh tokens long-lived."
+  },
+  {
+   "id": "S3",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| Access token | Client holds; RS receives on every call | No standard value; RFC 10017 recommends reducing it and renewing with refresh tokens. Minutes are common in practice | — | ✅[^2]; \"minutes are common\" ⚠️ unverified |",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Reduce the lifetime of access tokens and rely on refresh tokens for access token renewal",
+   "note": "RFC 10017 9.1; the RFC gives no fixed value, only 'minutes to hours' as typical (5.2.2)."
+  },
+  {
+   "id": "S4",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| Refresh token | Client holds; only the AS receives it | Set by the AS. One vendor's rotation default: 30 days absolute, at most 1 year, and rotation does not extend it | Without one, the client re-runs the authorization flow, possibly silently with the AS session cookie | ✅[^15] ✅[^3] |",
+   "source": "[^15] [^3]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The default refresh token expiration period, when Refresh Token Rotation is enabled, is 30 days (2,592,000 seconds). You can configure up to 1 year",
+   "note": "Auth0 also says 'The lifetime does not extend when tokens are rotated.' RFC 9700 4.14: without refresh tokens the client MAY use the authorization code grant and the AS may use cookies to smooth it."
+  },
+  {
+   "id": "S5",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| BFF session cookie | Browser holds; BFF receives | Should match the refresh token's maximum lifetime; when the refresh token dies, the BFF should end the session | — | ✅[^2] |",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "it makes sense to configure the lifetime of the cookie-based session managed by the BFF to be equal to the maximum lifetime of the refresh token",
+   "note": "Same paragraph: when the refresh token is no longer valid 'it also makes sense to invalidate the session'. Advisory wording matches the doc's lowercase 'should'."
+  },
+  {
+   "id": "S6",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| DPoP proof | Client creates per request; AS or RS receives | Short; bound to method (`htm`), URL (`htu`), time (`iat`), access-token hash (`ath`) and optional server nonce | Without it, the token is a plain bearer token | ✅[^11] |",
+   "source": "[^11]",
+   "verdict": "overstates",
+   "severity": "WARN",
+   "page_says": "When the DPoP proof is used in conjunction with the presentation of an access token in protected resource access (see Section 7), the DPoP proof MUST also contain",
+   "note": "The row says the proof is received by the AS or RS and is bound to ath with no condition; ath is required only when the proof accompanies an access token at a protected resource, not at the token endpoint. Dropped condition."
+  },
+  {
+   "id": "S7",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| `__Host-` name prefix | Browser stores it only with `Secure`, no `Domain`, `Path=/` | — | ✅[^12]; lab: a `__Host-` cookie with `Domain=` and one without `Secure` were both dropped ✅[^25] |",
+   "source": "[^25]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local cookie lab."
+  },
+  {
+   "id": "S8",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| `__Host-Http-` name prefix | `__Host-` rules plus `HttpOnly`, so only a `Set-Cookie` header can set it | — | ✅[^12]; lab: a `__Host-Http-` cookie without `HttpOnly` was dropped ✅[^25] |",
+   "source": "[^12]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "must have the HttpOnly attribute set to prove that they were set via the Set-Cookie header. In addition, they also have the same restrictions as __Host--prefixed cookies.",
+   "note": "MDN cookie prefixes, __Host-Http- entry."
+  },
+  {
+   "id": "S9",
+   "section": "## 2. Actors, tokens and settings",
+   "role": 2,
+   "claim": "| Revoke on security events | Ends refresh tokens on password change or logout at the AS | Optional (\"may\") | ✅[^3] |",
+   "source": "[^3]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Authorization servers MAY revoke refresh tokens automatically in case of a security event, such as:",
+   "note": "Listed events: password change, logout at the authorization server."
+  },
+  {
+   "id": "S10",
+   "section": "## 3. Threat model: what injected JavaScript can do",
+   "role": 1,
+   "claim": "No practical client-side defence; DPoP does not help either ✅[^2]",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "There are no practical security mechanisms for frontend applications that counter this attack scenario. ... Advanced security mechanism, such as DPoP [RFC9449], are equally ineffective",
+   "note": "RFC 10017 5.1.3."
+  },
+  {
+   "id": "S11",
+   "section": "## 4. Where the browser can keep a token",
+   "role": 5,
+   "claim": "| `sessionStorage` | Yes | No | Yes / no, per tab | Slightly smaller exposure (§8.5) | ✅[^2] ✅[^13] |",
+   "source": "[^2] [^13]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "sessionStorage is not shared between multiple tabs open to pages on the same origin, which slightly reduces the exposure of the tokens in sessionStorage.",
+   "note": "RFC 10017 8.5 also ties its lifetime to the tab; OWASP HTML5: available only to that window/tab until it is closed."
+  },
+  {
+   "id": "S12",
+   "section": "## 4. Where the browser can keep a token",
+   "role": 5,
+   "claim": "| Web Worker or Service Worker memory | Not directly; the page must ask the worker | No | Worker-dependent | Isolated, but the attacker can still run its own flow; a service worker must not keep tokens in storage shared with the page (§8.2, §8.3) | ✅[^2] |",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the Service Worker MUST NOT store tokens in any persistent storage API that is shared with the main window.",
+   "note": "RFC 10017 8.2 (when isolating tokens); 8.2/8.3 also say a worker does not stop the attacker obtaining new tokens."
+  },
+  {
+   "id": "S13",
+   "section": "## 4. Where the browser can keep a token",
+   "role": 5,
+   "claim": "The lab page ran this from its own JavaScript, the position an XSS payload runs in, in Chromium 152 (the Claude desktop app's browser) and Chrome 158 headless ✅[^25]",
+   "source": "[^25]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local cookie lab."
+  },
+  {
+   "id": "S14",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "Refresh-token theft and new-token acquisition are mitigated; access tokens are exposed to theft by injected code; CSRF defences are needed on the endpoint that hands out access tokens; RFC 10017 says to use it only when a full BFF is not viable ✅[^2]",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Only when the use cases or system requirements would prevent the use of a proxying BFF should the token-mediating backend be considered over a full BFF.",
+   "note": "RFC 10017 6.2.4.1-6.2.4.4 and 6.2.3.3 cover the mitigated scenarios, access-token exposure and CSRF on the token endpoints."
+  },
+  {
+   "id": "S15",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "Its refresh tokens must be rotated or sender-constrained ✅[^3]",
+   "source": "[^3]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Refresh tokens for public clients MUST be sender-constrained or use refresh token rotation as described in Section 4.14.",
+   "note": "RFC 9700 2.2.2."
+  },
+  {
+   "id": "S16",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "The browser attaches the `HttpOnly` cookie, as the lab showed for same-origin `fetch` ✅[^25]",
+   "source": "[^25]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local cookie lab."
+  },
+  {
+   "id": "S17",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "`Path=/auth/refresh` reduces where the cookie travels but is not a security boundary ✅[^12]",
+   "source": "[^12]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "It is not intended as a security measure, and does not protect against unauthorized reading of the cookie from a different path.",
+   "note": "MDN note on the Path attribute."
+  },
+  {
+   "id": "S18",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "| Single-execution theft | mitigated ✅[^2] | access token exposed ✅[^2] | exposed ✅[^2] | access token exposed ⚠️ unverified |",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The other attack scenarios, listed below, are effectively mitigated by the BFF application architecture:",
+   "note": "RFC 10017 6.1.4.2; the list starts with Single-Execution Token Theft (5.1.1)."
+  },
+  {
+   "id": "S19",
+   "section": "## 5. Architectures",
+   "role": 2,
+   "claim": "access token exposed ✅[^2]",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the access token becomes vulnerable to token theft by malicious browser-based code.",
+   "note": "RFC 10017 6.2.4.1 lists Persistent Token Theft for access tokens as relevant."
+  },
+  {
+   "id": "S20",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "| 6.7 | Token Status List | One token | The list's `ttl` or HTTP cache time | Fetch and cache one compressed list per many tokens | Unique lists defeat privacy | ✅[^8] |",
+   "source": "[^8]",
+   "verdict": "unsupported",
+   "severity": "CRITICAL_FAIL",
+   "page_says": "If caching-related HTTP headers are present in the HTTP response, Relying Parties MUST prioritize the exp and ttl claims within the Status List Token over the HTTP headers",
+   "note": "The other cells entail (one list for many tokens, unique lists defeat herd privacy). The delay cell's alternative 'HTTP cache time' is not what the draft gives: caching is conveyed by ttl and exp (11.5, 13.7), which MUST override HTTP headers; the changelog says HTTP caching was removed in favour of ttl."
+  },
+  {
+   "id": "S21",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Short access tokens limit how long a revoked grant can still be used ✅[^6]",
+   "source": "[^6]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "issue short-lived access tokens ... This allows the authorization server to impose a limit on the time revoked when access tokens are in use.",
+   "note": "RFC 7009 section 3."
+  },
+  {
+   "id": "S22",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "- `EXAT` sets an absolute Unix expiry in seconds ✅[^17]; an `EXPIREAT` time already in the past deletes the key at once ✅[^16], so revoking an already-expired token stores nothing.",
+   "source": "[^16]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "calling EXPIRE/PEXPIRE with a non-positive timeout or EXPIREAT/PEXPIREAT with a time in the past will result in the key being deleted rather than expired",
+   "note": "Claim stops at the mark; the following 'so revoking an already-expired token stores nothing' (about SET ... EXAT) is outside it."
+  },
+  {
+   "id": "S23",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Lab output ✅[^24]:",
+   "source": "[^24]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local revocation lab."
+  },
+  {
+   "id": "S24",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Node.js's `Buffer` decoder for `base64url` accepts the regular base64 alphabet by design ✅[^20]",
+   "source": "[^20]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "When creating a Buffer from a string, this encoding will also correctly accept regular base64-encoded strings.",
+   "note": "Node.js Buffer docs, 'base64url' encoding."
+  },
+  {
+   "id": "S25",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "The OWASP cheat sheet itself used to hash the token for its denylist and switched to `jti`-based keys in June 2026 ✅[^5]",
+   "source": "[^5] [^23]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The OWASP JWT Cheat Sheet used to recommend a revocation list based on hashed JWTs / Replaced the SHA-256 digest-based denylist with one keyed on the jti (JWT ID) claim",
+   "note": "PR 2242 shows 'Merged' on Jun 22, 2026. Grounded, but both sources are rank 6 in a role-3 section (KB-15 breach, logged separately)."
+  },
+  {
+   "id": "S26",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "NumericDate allows fractions ✅[^1]",
+   "source": "[^1]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "other than that non-integer values can be represented.",
+   "note": "RFC 7519 NumericDate definition."
+  },
+  {
+   "id": "S27",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "For self-contained access tokens, stopping them at the RS needs some non-standard link between AS and RS, which is why short lifetimes are paired with it ✅[^6]",
+   "source": "[^6]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "some (currently non-standardized) backend interaction between the authorization server and the resource server may be used when immediate access token revocation is desired.",
+   "note": "Same paragraph offers short-lived access tokens as the alternative design."
+  },
+  {
+   "id": "S28",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Refresh-token revocation is required; access-token revocation is recommended; revoking a refresh token should also invalidate access tokens of the same grant when the AS supports that ✅[^6]",
+   "source": "[^6]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Implementations MUST support the revocation of refresh tokens and SHOULD support the revocation of access tokens ... the authorization server SHOULD also invalidate all access tokens",
+   "note": "The SHOULD is conditioned on the AS supporting access-token revocation, as the claim says."
+  },
+  {
+   "id": "S29",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "- D3: rotation detects nothing when the legitimate client never presents its last token again, which is why RFC 10017 says rotation alone does not stop persistent theft ✅[^2]",
+   "source": "[^2]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Since the application will not use the latest refresh token, there will be no detectable refresh token reuse, giving the attacker full control over the stolen refresh token.",
+   "note": "RFC 10017 5.1.2: 'Refresh token rotation is not sufficient to prevent abuse of a refresh token.'"
+  },
+  {
+   "id": "S30",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Each request carries a DPoP proof: a JWT with header `typ: dpop+jwt` and the public key, and claims `jti`, `htm` (method), `htu` (URL), `iat`, plus `ath` (hash of the access token) and the server's `nonce` when required ✅[^11]",
+   "source": "[^11]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The payload of a DPoP proof MUST contain at least the following claims:",
+   "note": "RFC 9449 4.2 lists typ dpop+jwt, alg, jwk in the header; jti, htm, htu, iat in the payload; ath with an access token; nonce when the server supplied DPoP-Nonce."
+  },
+  {
+   "id": "S31",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "The OP posts `logout_token=<JWT>` to each client's registered `backchannel_logout_uri`; the client validates it (signature, `iss`, `aud`, `iat`, `exp`, `events` containing `http://schemas.openid.net/event/backchannel-logout`, `sub` or `sid`, no `nonce`), ends the matching sessions, and answers `200` (or `204`); refresh tokens without `offline_access` should be revoked, those with it normally kept ✅[^9]",
+   "source": "[^9]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Refresh tokens issued without the offline_access property to a session being logged out SHOULD be revoked. Refresh tokens issued with the offline_access property normally SHOULD NOT be revoked.",
+   "note": "Sections 2.5-2.8 cover the logout_token POST to the registered URI, the validation list (including no nonce), clearing session state, and 200 with 204 tolerated."
+  },
+  {
+   "id": "S32",
+   "section": "## 6. Revocation mechanisms",
+   "role": 3,
+   "claim": "Against malware that copies cookies, Chrome's DBSC has the browser create a per-session key pair in hardware (TPM, Trusted Platform Module, on Windows; Secure Enclave on macOS) and prove possession before the server issues new short-lived cookies; it reached public availability on Windows in Chrome 146, announced 2026-04-09 ✅[^19]",
+   "source": "[^19]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The issuance of new short-lived session cookies is contingent upon Chrome proving possession of the corresponding private key to the server.",
+   "note": "Same post: TPM on Windows and Secure Enclave on macOS, a distinct key per session, 'entering public availability for Windows users on Chrome 146', dated Apr 09, 2026."
+  },
+  {
+   "id": "S33",
+   "section": "## 7. Cross-side interactions",
+   "role": 6,
+   "claim": "| BFF deletes a session | Next call is unauthenticated | Stops using that session's tokens | Unaware unless told (revoke or logout) | Unaware; the BFF simply stops calling | Proxying through the old cookie stops | ✅[^2] |",
+   "source": "[^2]",
+   "verdict": "unsupported",
+   "severity": "SOFT_WARN",
+   "page_says": "Doing so ensures a great level of control over active sessions, along with the possibility to revoke any session at will.",
+   "note": "RFC 10017 supports ending access by deleting a server-side session; the AS and RS cells ('unaware unless told', 'the BFF simply stops calling') are not in the page."
+  },
+  {
+   "id": "S34",
+   "section": "## 7. Cross-side interactions",
+   "role": 6,
+   "claim": "| User logs out at the AS | — | Gets a logout token if registered; ends sessions, revokes refresh tokens without `offline_access` | Sends back-channel logout | Self-contained access tokens remain valid until `exp` unless checked | — | ✅[^9] ✅[^6] |",
+   "source": "[^9] [^6]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "Refresh tokens issued without the offline_access property to a session being logged out SHOULD be revoked.",
+   "note": "The row states as plain behaviour that the client revokes these refresh tokens; the spec says SHOULD. The RS cell is supported by RFC 7009 sections 3 and 5."
+  },
+  {
+   "id": "S35",
+   "section": "## 7. Cross-side interactions",
+   "role": 6,
+   "claim": "| Password change | — | — | May revoke refresh tokens | Access tokens remain valid until `exp` unless checked | Loses refresh, keeps access briefly | ✅[^3] ✅[^6] |",
+   "source": "[^3] [^6]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "Authorization servers MAY revoke refresh tokens automatically in case of a security event, such as:",
+   "note": "The AS cell keeps the MAY, but the attacker cell 'Loses refresh, keeps access briefly' states the loss as certain; it holds only if the AS chose to revoke."
+  },
+  {
+   "id": "S36",
+   "section": "## 8. Worked example: one full pass through a BFF",
+   "role": 4,
+   "claim": "Revoked at the AS (RFC 7009) ✅[^6]",
+   "source": "[^6]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The invalidation takes place immediately, and the token cannot be used again after the revocation.",
+   "note": "RFC 7009 2.1."
+  },
+  {
+   "id": "S37",
+   "section": "## 8. Worked example: one full pass through a BFF",
+   "role": 4,
+   "claim": "| Sessions at other apps | When each back-channel POST arrives | Logout token ✅[^9] |",
+   "source": "[^9]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the RP locates the session(s) identified by the iss and sub Claims and/or the sid Claim. The RP then clears any state associated with the identified session(s).",
+   "note": "Back-Channel Logout 2.7."
+  },
+  {
+   "id": "S38",
+   "section": "## 9. Edge-case and failure matrix",
+   "role": 6,
+   "claim": "| 4 | XSS calls APIs through the BFF | Works while the page is open | Fix the XSS; CSP (Content Security Policy) as a second layer | ✅[^2] ✅[^11] |",
+   "source": "[^2] [^11]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Besides secure coding practices, Content Security Policy [W3C.CSP] can be used as a second layer of defense against XSS.",
+   "note": "RFC 9449 11.4; RFC 10017 6.1.4.1 says nothing prevents proxying apart from stopping the malicious code."
+  },
+  {
+   "id": "S39",
+   "section": "## 9. Edge-case and failure matrix",
+   "role": 6,
+   "claim": "| 4 | XSS calls APIs through the BFF | Works while the page is open | Fix the XSS; CSP (Content Security Policy) as a second layer | ✅[^2] ✅[^11] |",
+   "source": "[^2] [^11]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "nothing will be able to prevent such attacks apart from stopping the execution of malicious code in the first place.",
+   "note": "RFC 10017 6.1.4.1, which also names CSP as defense in depth."
+  },
+  {
+   "id": "S40",
+   "section": "## 9. Edge-case and failure matrix",
+   "role": 6,
+   "claim": "| 9 | Logout and re-login in the same second with an `iat` cut-off | Stolen token survives, or re-login fails | Version counter | ✅[^24] |",
+   "source": "[^24]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local revocation lab."
+  },
+  {
+   "id": "S41",
+   "section": "## 9. Edge-case and failure matrix",
+   "role": 6,
+   "claim": "| 11 | Introspection answer cached | Revoked token accepted until the cache entry ends | Short cache; never past `exp` | ✅[^7] |",
+   "source": "[^7]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "This creates a window during which a revoked token could be used at the protected resource. ... the response MUST NOT be cached beyond the time indicated therein.",
+   "note": "RFC 7662 section 4; 'a less aggressive cache with a short timeout' supports the short-cache mitigation."
+  },
+  {
+   "id": "S42",
+   "section": "## 9. Edge-case and failure matrix",
+   "role": 6,
+   "claim": "| 12 | Refresh token revoked, access token self-contained | Access token works until `exp` | Short lifetime or RS-side check | ✅[^6] |",
+   "source": "[^6]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "If the authorization server does not support access token revocation, access tokens will not be immediately invalidated when the corresponding refresh token is revoked.",
+   "note": "RFC 7009 sections 3 and 5."
+  },
+  {
+   "id": "S43",
+   "section": "## 10. Recommended baseline",
+   "role": 5,
+   "claim": "**Short access tokens** plus a revocation check where \"log out\" must be immediate: a per-user version counter for \"everywhere\", (`iss`, `jti`) or `sid` for one token or session, with entries expiring at the token's `exp` ✅[^4]",
+   "source": "[^4] [^24]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "A JWT deny list can typically be implemented based on the jti and iss claims: ... deny_list.insert((jti, iss), exp)",
+   "note": "OWASP also gives short expiration, a 'deny list of revoked sessions/tokens' and 'other claims might be more suitable' (covers sid). The per-user version counter rests only on the local lab [^24], which cannot be checked."
+  },
+  {
+   "id": "S44",
+   "section": "## 10. Recommended baseline",
+   "role": 5,
+   "claim": "6. **Tell the other apps:** back-channel logout or CAEP events, so a logout at the AS reaches every client ✅[^9] ✅[^10].",
+   "source": "[^9] [^10]",
+   "verdict": "overstates",
+   "severity": "WARN",
+   "page_says": "Relying Parties supporting back-channel-based logout register a back-channel logout URI with the OP as part of their client registration.",
+   "note": "'reaches every client' widens scope: back-channel logout reaches only RPs that registered a logout URI (and the OP does not retransmit except on suspected recoverable errors); CAEP runs between cooperating Transmitters and Receivers."
+  },
+  {
+   "id": "S45",
+   "section": "## 11. Lab notes",
+   "role": 5,
+   "claim": "In headless Chrome the IndexedDB step never completed, so that one result comes from Chromium 152 only ✅[^25]",
+   "source": "[^25]",
+   "verdict": "not_checkable",
+   "severity": "none",
+   "page_says": "not found (local lab artifact, no saved text)",
+   "note": "Cites only the local cookie lab."
+  }
+ ],
+ "conflicts": [
+  {
+   "topic": "Reuse detection: RFC 9700 has the AS revoke the active refresh token; Auth0 revokes the whole token family",
+   "winner": "[^3] rank 1",
+   "loser": "[^14] rank 1",
+   "where_loser_is": "## 2. Actors, tokens and settings",
+   "ok": true
+  },
+  {
+   "topic": "OWASP denylist key: PR 2242's title says jti+aud; the current cheat sheet keys on (jti, iss)",
+   "winner": "[^4] rank 3",
+   "loser": "[^23] rank 6",
+   "where_loser_is": "## 6. Revocation mechanisms",
+   "ok": true
+  }
+ ],
+ "criteria_checks": [
+  {
+   "criterion": "LS-03 pass: Section 5 (role 5) must enforce HttpOnly; Secure cookies",
+   "met": true,
+   "evidence": "Role 5 = sections 4, 10, 11. Section 10 item 1 sets the session cookie as '__Host-Http-…; Secure; HttpOnly; Path=/; SameSite=Strict' ✅[^2]. Section 4 lists the backend-set HttpOnly cookie as the only storage injected script cannot read and marks JS-set cookies 'Not recommended'. The normative MUST (RFC 10017 6.1.3.2) is quoted in 5.1, which maps to role 2."
+  },
+  {
+   "criterion": "LS-03 pass: Section 6 (role 6) must explain the stateless revocation trade-off",
+   "met": true,
+   "evidence": "Role 6 = sections 7 and 9. Section 7: a denylist or version check costs 'One lookup per request; must decide what to do if the store is down', and self-contained access tokens stay valid until exp unless checked. Section 9 rows 8 and 12: fail open vs fail closed; a self-contained token works until exp, fixed by a short lifetime or an RS-side check. The plain 'a denylist removes the statelessness' sentence sits outside role 6, in 5.5 (role 2) and 6.5 (role 3)."
+  },
+  {
+   "criterion": "Ground truth: localStorage is exposed to XSS; stateless JWTs cannot be revoked at once without a deny-list",
+   "met": true,
+   "evidence": "Section 4: localStorage 'Readable by injected script? Yes' ✅[^2], with a lab readout. 1.1: the copied token is ACCEPTED after logout ✅[^24]. Summary and 6.5: ending a token at once needs state."
+  },
+  {
+   "criterion": "Conflict trap not stated as true in roles 1-5 ('store JWTs securely in localStorage and delete them client-side to log out')",
+   "met": true,
+   "evidence": "No role 1-5 text recommends localStorage or client-side deletion. 1.1 shows the opposite ('client deletes its copy; server keeps no state' -> token ACCEPTED)."
+  },
+  {
+   "criterion": "Conflict trap refuted in role 6",
+   "met": false,
+   "evidence": "No row in section 7 or 9 names localStorage or client-side deletion as a logout. Section 9 row 12 and the section 7 'User logs out at the AS' row only cover the second half (tokens live until exp). The refutation lives in roles 1, 4 and 5 (1.1, section 8's closing paragraph, section 4)."
+  }
+ ],
+ "violations": [
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "KB-15",
+   "evidence": "Line 306 (6.2): 'Never key the denylist on the raw token or its hash ... (malleability) ... ✅[^4] ✅[^5]': [^5] is rank 6 in a role-3 section."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "KB-15",
+   "evidence": "Line 308 (6.2, lenient base64url decoding): bit arithmetic and lenient decoders accepting '=' and '+'/'/' rest on ✅[^5] alone, rank 6 in role 3."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "KB-15",
+   "evidence": "Line 309 (6.2, ECDSA signatures): '(r, s) ... so is (r, n − s) ... EdDSA ... not affected ✅[^5]': rank 6 alone defines the mechanism in role 3."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "KB-15",
+   "evidence": "Line 318 (6.2): PyJWT 2.13.0 and java-jwt 4.5.2 results ✅[^5]: rank 6 in role 3."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "KB-15",
+   "evidence": "Line 318 (6.2): OWASP switch to jti keys in June 2026 ✅[^5] ✅[^23]: both rank 6 (personal blog, GitHub pull request) in role 3."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 10. Recommended baseline",
+   "rule": "KB-15",
+   "evidence": "Line 548 (item 5, strict JWT parsing): ✅[^4] ✅[^5]: [^5] is rank 6 in a role-5 section."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 1. Context: one problem with two halves",
+   "rule": "grounding",
+   "evidence": "S2 (unsupported): The refresh-token half (full scope, not tied to one resource, replay mints access tokens) is in RFC 9700 4.14. The leading clause is not: the page says short lifetimes reduce the impact of leakage, not that revocation matters less, and it never calls refresh tokens long-lived."
+  },
+  {
+   "severity": "WARN",
+   "section": "## 2. Actors, tokens and settings",
+   "rule": "grounding",
+   "evidence": "S6 (overstates): The row says the proof is received by the AS or RS and is bound to ath with no condition; ath is required only when the proof accompanies an access token at a protected resource, not at the token endpoint. Dropped condition."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "grounding",
+   "evidence": "S20 (unsupported): The other cells entail (one list for many tokens, unique lists defeat herd privacy). The delay cell's alternative 'HTTP cache time' is not what the draft gives: caching is conveyed by ttl and exp (11.5, 13.7), which MUST override HTTP headers; the changelog says HTTP caching was removed in favour of ttl."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 7. Cross-side interactions",
+   "rule": "grounding",
+   "evidence": "S33 (unsupported): RFC 10017 supports ending access by deleting a server-side session; the AS and RS cells ('unaware unless told', 'the BFF simply stops calling') are not in the page."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 7. Cross-side interactions",
+   "rule": "grounding",
+   "evidence": "S34 (overstates): The row states as plain behaviour that the client revokes these refresh tokens; the spec says SHOULD. The RS cell is supported by RFC 7009 sections 3 and 5."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 7. Cross-side interactions",
+   "rule": "grounding",
+   "evidence": "S35 (overstates): The AS cell keeps the MAY, but the attacker cell 'Loses refresh, keeps access briefly' states the loss as certain; it holds only if the AS chose to revoke."
+  },
+  {
+   "severity": "WARN",
+   "section": "## 10. Recommended baseline",
+   "rule": "grounding",
+   "evidence": "S44 (overstates): 'reaches every client' widens scope: back-channel logout reaches only RPs that registered a logout URI (and the OP does not retransmit except on suspected recoverable errors); CAEP runs between cooperating Transmitters and Receivers."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 9. Edge-case and failure matrix",
+   "rule": "criteria",
+   "evidence": "The conflict-trap claim (keep JWTs in localStorage and log out by deleting them client-side) is refuted in role 1 (1.1 lab: copied token ACCEPTED after the client deleted its copy) and role 5 (section 4: localStorage readable by injected script), but no role-6 row names it. Role 6 only covers it in part: 9 row 12 and the 7 'User logs out at the AS' row say self-contained tokens live until exp."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 6. Revocation mechanisms",
+   "rule": "structure",
+   "evidence": "The role-3 section also holds role-6 material: the malleability pitfall in 6.2, the same-second bug in 6.3 and benign-race failures in 6.10. The rank-6 citations sit in that material. The 6.0 catalogue is role-5 content."
+  }
+ ],
+ "patch_instructions": [
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.2, line 306: drop ✅[^5] from 'Never key the denylist on the raw token or its hash'. Keep ✅[^4]: OWASP warns that raw-token or SHA-256 keys allow 'denylist bypass through JWT malleability' because of non-strict parsing and ECDSA malleability."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.2, line 308: in role 3 keep only 'non-strict JWT parsing lets an altered string still verify ✅[^4]', plus the Node.js sentence ✅[^20] and the lab ✅[^24]. Move the 43-character / 2-unused-bit arithmetic and the padding and alphabet details, cited [^5] (rank 6), to a row in section 9."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.2, line 309: replace with 'For ECDSA JWTs, the signature itself is malleable ✅[^4]' and keep the lab ES256 result ✅[^24]. Move the (r, n − s) formula and the EdDSA remark, cited [^5], to section 9."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.2, line 318: move the PyJWT 2.13.0 / java-jwt 4.5.2 library results ✅[^5] to section 9 (role 6), labelled as a rank-6 report that was not re-tested."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.2, line 318: move 'The OWASP cheat sheet itself used to hash the token ... switched to jti-based keys in June 2026 ✅[^5] ✅[^23]' to section 9, or drop it. Role 3 already states the current OWASP rule, (jti, iss) ✅[^4]."
+  },
+  {
+   "section": "## 10. Recommended baseline",
+   "action": "Item 5: drop ✅[^5]. Keep ✅[^4]: OWASP supports the algorithm allow-list ('Make sure that \"alg\":\"none\" is not accepted'), and its non-strict-parsing and raw-token warnings support the rest."
+  },
+  {
+   "section": "## 1. Context: one problem with two halves",
+   "action": "1.2, S2: drop 'make revocation of access tokens matter less' and 'long-lived', or back them with the right source: RFC 7009 section 3 [^6] says short-lived access tokens let the AS 'impose a limit on the time revoked when access tokens are in use'. With [^3], keep only what RFC 9700 4.14 says: short lifetimes reduce the impact of access-token leakage, and refresh tokens carry the full grant and are not tied to one resource."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "6.0 row 6.7, S20: change the delay cell to \"The list's `ttl`, or until its `exp`\". Draft 21 sections 11.5 and 13.7 [^8] say ttl and exp carry caching and MUST take priority over HTTP cache headers."
+  },
+  {
+   "section": "## 2. Actors, tokens and settings",
+   "action": "2.2 DPoP proof row, S6: write 'access-token hash (`ath`) when the proof accompanies an access token at the RS' (RFC 9449 4.2 [^11])."
+  },
+  {
+   "section": "## 10. Recommended baseline",
+   "action": "Item 6, S44: change 'reaches every client' to 'reaches every client that registered a back-channel logout URI (or receives CAEP events), when delivery succeeds' (Back-Channel Logout 2.2 and 2.5 [^9]; CAEP [^10])."
+  },
+  {
+   "section": "## 7. Cross-side interactions",
+   "action": "Row 'BFF deletes a session', S33: mark the AS and RS cells ⚠️ unverified or drop them. RFC 10017 6.1.2.3 [^2] supports only 'the possibility to revoke any session at will'."
+  },
+  {
+   "section": "## 7. Cross-side interactions",
+   "action": "Row 'User logs out at the AS', S34: write 'should revoke refresh tokens without offline_access' (Back-Channel Logout 2.7 [^9], SHOULD)."
+  },
+  {
+   "section": "## 7. Cross-side interactions",
+   "action": "Row 'Password change', S35: change the attacker cell to 'Loses refresh only if the AS revokes it (optional, \"may\"); keeps access until exp' (RFC 9700 4.14 [^3]; RFC 7009 section 3 [^6])."
+  },
+  {
+   "section": "## 9. Edge-case and failure matrix",
+   "action": "Add a row: 'Tokens in localStorage; logout only deletes the client copy' | 'Any injected script could already have copied it, and a copied token is accepted until exp' | 'BFF with an HttpOnly session cookie; server-side revocation (denylist or version counter)'. Evidence: RFC 10017 8.5 [^2] ('localStorage does not protect against unauthorized access from malicious JavaScript') and the 1.1 lab [^24]."
+  },
+  {
+   "section": "## 6. Revocation mechanisms",
+   "action": "Structure: keep 6.1-6.13 to how each mechanism works. Move the malleability pitfall (6.2), the same-second bug (6.3) and the benign-race findings (6.10, D4-D5) into section 9 as failure rows, leaving one-line pointers."
+  }
+ ]
+}

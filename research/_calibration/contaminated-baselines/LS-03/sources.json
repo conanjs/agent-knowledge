@@ -1,0 +1,250 @@
+[
+ {
+  "url": "http://127.0.0.1:8801",
+  "normalized": "http://127.0.0.1:8801",
+  "cache": "cache/2d7e6d97f266.txt",
+  "fetched": "2026-11-22T02:55:26Z",
+  "status": "error",
+  "error": "CalledProcessError(7, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "http://localhost",
+  "normalized": "http://localhost",
+  "cache": "cache/8605b8ba08c2.txt",
+  "fetched": "2026-11-22T02:55:26Z",
+  "status": "error",
+  "error": "CalledProcessError(7, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "http://localhost:8801",
+  "normalized": "http://localhost:8801",
+  "cache": "cache/990a4780f9b8.txt",
+  "fetched": "2026-11-22T02:55:26Z",
+  "status": "error",
+  "error": "CalledProcessError(7, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "http://schemas.openid.net/event/backchannel-logout",
+  "normalized": "http://schemas.openid.net/event/backchannel-logout",
+  "cache": "cache/95b672d5a4d2.txt",
+  "fetched": "2026-11-22T02:55:26Z",
+  "status": "error",
+  "error": "CalledProcessError(6, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "https://app.example",
+  "normalized": "https://app.example",
+  "cache": "cache/2bf585a6f689.txt",
+  "fetched": "2026-11-22T02:55:28Z",
+  "status": "error",
+  "error": "CalledProcessError(6, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "https://app.example.com:443",
+  "normalized": "https://app.example.com:443",
+  "cache": "cache/b19851760d99.txt",
+  "fetched": "2026-11-22T02:55:28Z",
+  "status": "error",
+  "error": "CalledProcessError(6, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "https://as.example",
+  "normalized": "https://as.example",
+  "cache": "cache/93e20fbd9d94.txt",
+  "fetched": "2026-11-22T02:55:28Z",
+  "status": "error",
+  "error": "CalledProcessError(6, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation",
+  "normalized": "https://auth0.com/docs/secure/tokens/refresh-tokens/configure-refresh-token-rotation",
+  "cache": "cache/62afe23bacc9.txt",
+  "fetched": "2026-11-22T02:55:28Z",
+  "status": 200,
+  "chars": 5961
+ },
+ {
+  "url": "https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/",
+  "normalized": "https://blog.google/security/protecting-cookies-with-device-bound-session-credentials/",
+  "cache": "cache/ced6f065df1d.txt",
+  "fetched": "2026-11-22T02:55:29Z",
+  "status": 200,
+  "chars": 9334
+ },
+ {
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
+  "normalized": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html",
+  "cache": "cache/8edfb658f22c.txt",
+  "fetched": "2026-11-22T02:55:29Z",
+  "status": 200,
+  "chars": 54371
+ },
+ {
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html",
+  "normalized": "https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html",
+  "cache": "cache/a11c069b26bd.txt",
+  "fetched": "2026-11-22T02:55:30Z",
+  "status": 200,
+  "chars": 20508
+ },
+ {
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "normalized": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "cache": "cache/760e80d938bb.txt",
+  "fetched": "2026-11-22T02:55:30Z",
+  "status": 200,
+  "chars": 35890
+ },
+ {
+  "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+  "normalized": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+  "cache": "cache/7fa0f5ed50b5.txt",
+  "fetched": "2026-11-22T02:55:30Z",
+  "status": 200,
+  "chars": 61485
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/",
+  "normalized": "https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/",
+  "cache": "cache/82174bcfac03.txt",
+  "fetched": "2026-11-22T02:55:30Z",
+  "status": 200,
+  "chars": 163099
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cookies-02",
+  "normalized": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-layered-cookies-02",
+  "cache": "cache/f539f9b3e43c.txt",
+  "fetched": "2026-11-22T02:55:31Z",
+  "status": 200,
+  "chars": 81336
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22",
+  "normalized": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22",
+  "cache": "cache/f1489b76f769.txt",
+  "fetched": "2026-11-22T02:55:31Z",
+  "status": 200,
+  "chars": 122617
+ },
+ {
+  "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+  "normalized": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie",
+  "cache": "cache/4fcf30d482ce.txt",
+  "fetched": "2026-11-22T02:55:31Z",
+  "status": 200,
+  "chars": 25515
+ },
+ {
+  "url": "https://github.com/OWASP/CheatSheetSeries/blob/fd8d87b8cde1a15148512ced24348c7e525a1b47/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.md",
+  "normalized": "https://github.com/OWASP/CheatSheetSeries/blob/fd8d87b8cde1a15148512ced24348c7e525a1b47/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.md",
+  "cache": "cache/7ebf02c0a075.txt",
+  "fetched": "2026-11-22T02:55:32Z",
+  "status": 200,
+  "chars": 34418
+ },
+ {
+  "url": "https://openid.net/specs/openid-caep-1_0.html",
+  "normalized": "https://openid.net/specs/openid-caep-1_0.html",
+  "cache": "cache/a131c35ecbc3.txt",
+  "fetched": "2026-11-22T02:55:33Z",
+  "status": 200,
+  "chars": 31912
+ },
+ {
+  "url": "https://openid.net/specs/openid-connect-backchannel-1_0.html",
+  "normalized": "https://openid.net/specs/openid-connect-backchannel-1_0.html",
+  "cache": "cache/84105357f86e.txt",
+  "fetched": "2026-11-22T02:55:33Z",
+  "status": 200,
+  "chars": 34758
+ },
+ {
+  "url": "https://orders-api.example",
+  "normalized": "https://orders-api.example",
+  "cache": "cache/da0064edc0dd.txt",
+  "fetched": "2026-11-22T02:55:33Z",
+  "status": "error",
+  "error": "CalledProcessError(6, ['curl', '-sSL', '--max-time', '40', '-A', 'Mozilla/5.0 (compatible; kb-phase0-fetch/0.1)', '-H', 'Accept: text/html,text/plain;q=0.9,*/*;q=0.5', '-w', '\\n__META__%{http_code} %{"
+ },
+ {
+  "url": "https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/",
+  "normalized": "https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/",
+  "cache": "cache/38a819442200.txt",
+  "fetched": "2026-11-22T02:55:33Z",
+  "status": 200,
+  "chars": 9351
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc10017",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc10017",
+  "cache": "cache/86575c9e03d7.txt",
+  "fetched": "2026-11-22T02:55:35Z",
+  "status": 200,
+  "chars": 125496
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc6265",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc6265",
+  "cache": "cache/e003fbf5ed0d.txt",
+  "fetched": "2026-11-22T02:55:35Z",
+  "status": 200,
+  "chars": 82003
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc7009",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc7009",
+  "cache": "cache/fb809888a902.txt",
+  "fetched": "2026-11-22T02:55:35Z",
+  "status": 200,
+  "chars": 24991
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc7519",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc7519",
+  "cache": "cache/7bb6aaba0f31.txt",
+  "fetched": "2026-11-22T02:55:36Z",
+  "status": 200,
+  "chars": 65434
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc7662",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc7662",
+  "cache": "cache/8b0a8d60bcb3.txt",
+  "fetched": "2026-11-22T02:55:36Z",
+  "status": 200,
+  "chars": 37931
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc8725",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc8725",
+  "cache": "cache/e7ad626f84a8.txt",
+  "fetched": "2026-11-22T02:55:36Z",
+  "status": 200,
+  "chars": 29427
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9068",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9068",
+  "cache": "cache/3d0f795dfa20.txt",
+  "fetched": "2026-11-22T02:55:37Z",
+  "status": 200,
+  "chars": 33918
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9449",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9449",
+  "cache": "cache/2001689010b3.txt",
+  "fetched": "2026-11-22T02:55:37Z",
+  "status": 200,
+  "chars": 86611
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9700",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9700",
+  "cache": "cache/3d02f88bc2be.txt",
+  "fetched": "2026-11-22T02:55:37Z",
+  "status": 200,
+  "chars": 116781
+ }
+]

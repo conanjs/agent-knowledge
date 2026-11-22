@@ -1,0 +1,50 @@
+[
+ {
+  "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html",
+  "normalized": "https://www.typescriptlang.org/docs/handbook/2/classes.html",
+  "cache": "cache/56877450f820.txt",
+  "fetched": "2026-11-22T02:32:58Z",
+  "status": 200,
+  "chars": 41949
+ },
+ {
+  "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements",
+  "normalized": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements",
+  "cache": "cache/bef9a389da4e.txt",
+  "fetched": "2026-11-22T02:32:58Z",
+  "status": 200,
+  "chars": 30223
+ },
+ {
+  "url": "https://v8.dev/blog/faster-class-features",
+  "normalized": "https://v8.dev/blog/faster-class-features",
+  "cache": "cache/bfccfe616eb2.txt",
+  "fetched": "2026-11-22T02:32:58Z",
+  "status": 200,
+  "chars": 15648
+ },
+ {
+  "url": "https://nodejs.org/api/typescript.html",
+  "normalized": "https://nodejs.org/api/typescript.html",
+  "cache": "cache/88356b0b53c0.txt",
+  "fetched": "2026-11-22T02:32:58Z",
+  "status": 200,
+  "chars": 9731
+ },
+ {
+  "url": "https://stackoverflow.com/questions/59641564/what-are-the-differences-between-the-private-keyword-and-private-fields-in-types",
+  "normalized": "https://stackoverflow.com/questions/59641564/what-are-the-differences-between-the-private-keyword-and-private-fields-in-types",
+  "cache": "cache/3515de6b59e8.txt",
+  "fetched": "2026-11-22T02:32:59Z",
+  "status": "error",
+  "error": "RuntimeError('HTTP 403')"
+ },
+ {
+  "url": "https://github.com/tc39/proposal-class-fields",
+  "normalized": "https://github.com/tc39/proposal-class-fields",
+  "cache": "cache/75a7a16ac9d9.txt",
+  "fetched": "2026-11-22T02:32:59Z",
+  "status": 200,
+  "chars": 15837
+ }
+]

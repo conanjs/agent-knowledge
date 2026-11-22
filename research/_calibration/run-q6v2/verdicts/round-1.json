@@ -1,0 +1,1006 @@
+{
+ "verdict": "FAIL",
+ "overall_score": 3.25,
+ "judge": {
+  "model": "claude-opus-5-5",
+  "prompt_sha": "f166f98",
+  "scope": "all"
+ },
+ "section_map": [
+  {
+   "heading": "## Summary",
+   "role": "envelope"
+  },
+  {
+   "heading": "## 1. Words first",
+   "role": 1,
+   "note": "Glossary with plain-English meaning, analogy and a concrete artifact per term: mental model."
+  },
+  {
+   "heading": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "role": 1,
+   "note": "Problem and thesis: why HoL blocking matters and how each HTTP version moved it."
+  },
+  {
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "note": "Layer-by-version matrix: the parts (layers) and where HoL blocking sits in each."
+  },
+  {
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "role": "split",
+   "note": "Container heading; its subsections carry the roles below."
+  },
+  {
+   "heading": "### 4.1 HTTP/2 stack: 5 actors",
+   "role": 2,
+   "note": "Actors and their jobs (parts and relations)."
+  },
+  {
+   "heading": "### 4.2 HTTP/3 stack: 5 actors",
+   "role": 2,
+   "note": "Actors and their jobs (parts and relations)."
+  },
+  {
+   "heading": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "note": "Settings catalog with defaults and unset behaviour."
+  },
+  {
+   "heading": "## 5. One lost packet, step by step",
+   "role": 3,
+   "note": "Step-by-step timeline of one lost packet: mechanism."
+  },
+  {
+   "heading": "## 6. Worked example: the numbers",
+   "role": 4,
+   "note": "Concrete runs of a local model with inputs and outputs."
+  },
+  {
+   "heading": "## 7. Header compression: HPACK vs. QPACK",
+   "role": 3,
+   "note": "HPACK/QPACK mechanism; also holds a small worked example (Q1) and risks."
+  },
+  {
+   "heading": "## 8. What HTTP/3 does not remove",
+   "role": 6,
+   "note": "Remaining HoL blocking: limits and gaps."
+  },
+  {
+   "heading": "## 9. Cross-side interactions",
+   "role": 6,
+   "note": "Cross-side interactions: trade-off table."
+  },
+  {
+   "heading": "## 10. Edge cases and failure combinations",
+   "role": 6,
+   "note": "Edge-case and failure matrix."
+  },
+  {
+   "heading": "## 11. How much it matters in practice",
+   "role": 6,
+   "note": "Practical impact, measurements, when to expect a gain."
+  },
+  {
+   "heading": "## 12. The local experiment",
+   "role": "envelope",
+   "note": "Method of the local model behind role 4; no verified claims."
+  },
+  {
+   "heading": "## 13. Verification",
+   "role": "envelope"
+  },
+  {
+   "heading": "## References",
+   "role": "envelope"
+  },
+  {
+   "heading": "## Related",
+   "role": "envelope"
+  }
+ ],
+ "sources": [
+  {
+   "ref": "[^rfc9113]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+   "cache": "cache/31239d03b783.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, HTTP/2); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9114]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9114.html",
+   "cache": "cache/6e32398e9dda.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, HTTP/3); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9000]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+   "cache": "cache/46f5fb0985f4.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, QUIC transport); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9001]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9001.html",
+   "cache": "cache/e4a1204bbad5.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, QUIC-TLS); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9002]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9002.html",
+   "cache": "cache/76c666916ee3.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, QUIC recovery); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9204]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9204.html",
+   "cache": "cache/cd95813fed2c.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, QPACK); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9218]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9218.html",
+   "cache": "cache/4181964aef1b.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, extensible priorities); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9308]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9308.html",
+   "cache": "cache/0c7f13d09b97.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Informational applicability statement from the IETF QUIC WG); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9293]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9293.html",
+   "cache": "cache/cf23f6ee70bf.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, TCP); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc5681]",
+   "url": "https://www.rfc-editor.org/rfc/rfc5681.html",
+   "cache": "cache/1e0d82b20332.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, TCP congestion control); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc8446]",
+   "url": "https://www.rfc-editor.org/rfc/rfc8446.html",
+   "cache": "cache/e28608fb71a7.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, TLS 1.3); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^rfc9112]",
+   "url": "https://www.rfc-editor.org/rfc/rfc9112.html",
+   "cache": "cache/8ea310bd7119.txt",
+   "rank": 1,
+   "rank_basis": "IETF RFC on rfc-editor.org (Standards Track, HTTP/1.1); RFCs are Rank 1 by class."
+  },
+  {
+   "ref": "[^marx]",
+   "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+   "cache": "cache/7144e96a4a52.txt",
+   "rank": 6,
+   "rank_basis": "Web Performance Calendar: a guest-article series that the page itself calls 'A project by Stoyan Stefanov', with a 'How to contribute' link. The publisher is one individual's community site, not a company or project engineering blog, a spec or a paper. It fits Rank 4 (curated, expert-reviewed engineering writing) only loosely and Rank 6 (community or personal publication) at least as well, so the tie rule gives the higher number. The author's expertise does not change provenance. If the caller rates this venue Rank 4, the 9 KB-15 breaches on [^marx] drop out."
+  },
+  {
+   "ref": "[^h3explained]",
+   "url": "https://http3-explained.haxx.se/en/why-quic/why-tcphol",
+   "cache": "cache/bb442869f5e4.txt",
+   "rank": 6,
+   "rank_basis": "'HTTP/3 explained': a free online book, self-published on GitBook under the author's own domain (haxx.se), with no outside publisher or editorial review. It fits Rank 3 (book) or Rank 5 (general overview) by form, and Rank 6 (individual, unvetted publication) by provenance, so the tie rule gives the higher number. If the caller rates it Rank 3 or 5, the 2 KB-15 breaches on [^h3explained] drop out."
+  },
+  {
+   "ref": "[^sander_blog]",
+   "url": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+   "cache": "cache/ceef397d803d.txt",
+   "rank": 4,
+   "rank_basis": "APNIC Blog: an organization's editorially run blog (code of conduct, editorial staff). This is a 'Guest Post' by the paper's author summarizing a TMA 2022 paper. The paper (Rank 2) is not the cited page, so the blog post gets Rank 4. It is cited only in role 6."
+  },
+  {
+   "ref": "(none)",
+   "url": "research/_golden/SE-02/baseline/experiments/hol_model.py",
+   "cache": null,
+   "rank": "local",
+   "rank_basis": "Local experiment script behind §5–§7 (model numbers). Not opened: it is outside INPUT."
+  },
+  {
+   "ref": "(none)",
+   "url": "research/_golden/SE-02/baseline/experiments/results.txt",
+   "cache": null,
+   "rank": "local",
+   "rank_basis": "Local experiment output. Not opened: it is outside INPUT."
+  }
+ ],
+ "deterministic_checks": {
+  "checked_by": "judge",
+  "sections_present": true,
+  "zero_orphan_citations": true,
+  "rank_quarantine_intact": false,
+  "core_claims_cited": true
+ },
+ "rubric_scores": {
+  "citation_integrity": 5,
+  "rank_compliance": 1,
+  "factual_grounding": 3,
+  "diataxis_rigor": 4
+ },
+ "coverage": {
+  "sampled": true,
+  "claims_roles_1_5": 108,
+  "checked_roles_1_5": 33,
+  "claims_role_6": 38,
+  "checked_role_6": 12,
+  "no_cache": 0,
+  "not_checkable": 0
+ },
+ "claim_checks": [
+  {
+   "id": "S1",
+   "section": "## 1. Words first",
+   "role": 1,
+   "claim": "TCP gives no link between segment boundaries and the application's write boundaries",
+   "source": "[^rfc9293]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "TCP guarantees no correlation between the boundaries of TCP segments sent and received and the boundaries of the read or write buffers of user application data.",
+   "note": ""
+  },
+  {
+   "id": "S2",
+   "section": "## 1. Words first",
+   "role": 1,
+   "claim": "A 16 KB (kilobyte) record spans about 11 TCP packets",
+   "source": "[^marx]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "In practice, TLS can encrypt resources in blocks of up to 16KB, which is enough to fill about 11 typical TCP packets (give or take).",
+   "note": "Grounded. The source is Rank 6, a quarantine breach in role 1 (see violations)."
+  },
+  {
+   "id": "S3",
+   "section": "## 1. Words first",
+   "role": 1,
+   "claim": "capacity 0 in HTTP/3 until the decoder allows more",
+   "source": "[^rfc9204]",
+   "verdict": "overstates",
+   "severity": "WARN",
+   "page_says": "The initial capacity of the dynamic table is zero. The encoder sends a Set Dynamic Table Capacity instruction",
+   "note": "The capacity starts at 0, and only the encoder raises it with a Set Dynamic Table Capacity instruction. The decoder's SETTINGS_QPACK_MAX_TABLE_CAPACITY only caps how high the encoder may go, and the encoder 'can choose to use a lower dynamic table capacity'. The claim drops the encoder step and implies the capacity rises as soon as the decoder allows it. It also omits the 0-RTT exception, where the remembered setting applies. Dropped condition."
+  },
+  {
+   "id": "S4",
+   "section": "## 1. Words first",
+   "role": 1,
+   "claim": "HTTP/2: 65,535-byte window per stream and per connection at start",
+   "source": "[^rfc9113]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The initial value for the flow-control window is 65,535 octets for both new streams and the overall connection.",
+   "note": ""
+  },
+  {
+   "id": "S5",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "role": 1,
+   "claim": "Pipelining lets a client send several requests without waiting, but the server must send the responses in the order the requests arrived",
+   "source": "[^rfc9112]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "MAY \"pipeline\" its requests (i.e., send multiple requests without waiting for each response) ... it MUST send the corresponding responses in the same order that the requests were received",
+   "note": ""
+  },
+  {
+   "id": "S6",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "role": 1,
+   "claim": ", so HTTP/2 features that assumed one total order (HPACK, the priority tree) had to be redesigned",
+   "source": "[^rfc9114]",
+   "verdict": "unsupported",
+   "severity": "CRITICAL_FAIL",
+   "page_says": "Because this total ordering is not provided by QUIC, HTTP/3 uses a modified version of HPACK, called QPACK. ... HTTP/3 does not provide a means of signaling priority.",
+   "note": "The HPACK half is grounded: RFC 9114 A.2.2 says HPACK assumed in-order delivery and was replaced by QPACK. The priority-tree half is not. RFC 9114 A.2.1 says HTTP/3 drops priority signaling, not that the tree was redesigned, and it does not say the tree assumed total order. Both facts are in RFC 9218 §2 ('protocols that do not have strong ordering guarantees across streams, like HTTP/3'; 'can act as a substitute'), which this claim does not cite."
+  },
+  {
+   "id": "S7",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "role": 1,
+   "claim": "The price: QUIC guarantees no order across streams",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "QUIC does not provide any means of ensuring ordering between bytes on different streams.",
+   "note": ""
+  },
+  {
+   "id": "S8",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "role": 1,
+   "claim": "At around 2% packet loss, HTTP/1.1 users are usually better off",
+   "source": "[^h3explained]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "At 2% packet loss (which is a terrible network quality, mind you), tests have proven that HTTP/1 users are usually better off",
+   "note": "Grounded. The page's 'HTTP/1' is the 1.x family with 'up to six TCP connections', which covers the HTTP/1.1 setup the claim names. The source is Rank 6, a quarantine breach in role 1. Its explanation of the cause conflicts with [^marx] (see conflicts)."
+  },
+  {
+   "id": "S9",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/1.1 HTTP messages: Yes: responses in request order on a connection",
+   "source": "[^rfc9112]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "it MUST send the corresponding responses in the same order that the requests were received ... Multiple connections are typically used to avoid the \"head-of-line blocking\" problem",
+   "note": ""
+  },
+  {
+   "id": "S10",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/3 header compression: Optional: a request stream that references a dynamic-table entry not yet received is blocked; the decoder caps how many streams may block",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the stream cannot be processed immediately and is considered \"blocked\" ... The decoder specifies an upper bound on the number of streams that can be blocked",
+   "note": "'Optional' matches 'An encoder can decide whether to risk having a stream become blocked.'"
+  },
+  {
+   "id": "S11",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/2 TLS record: so one lost packet can stall a whole record of about 11 packets",
+   "source": "[^marx]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Imagine that the TLS record was spread out over 11 TCP packets, and the last TCP packet is lost. Since the TLS record is incomplete, it cannot be decrypted",
+   "note": "Grounded. The source is Rank 6, a quarantine breach in role 2."
+  },
+  {
+   "id": "S12",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/3, a packet holding several streams' frames: Allowed",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "A single QUIC packet can include multiple STREAM frames from one or more streams.",
+   "note": ""
+  },
+  {
+   "id": "S13",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/2, a packet holding several streams' frames: Always shared: TCP carries every stream in one ordered byte stream",
+   "source": "[^marx]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "HTTP/2 sees multiple, independent resource bytestreams, but TCP sees just a single, opaque bytestream.",
+   "note": "Grounded. The source is Rank 6, a quarantine breach in role 2. RFC 9114 and RFC 9293 say the same and could be cited instead."
+  },
+  {
+   "id": "S14",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/2 flow control: Per stream and per connection; only DATA frames count",
+   "source": "[^rfc9113]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Receivers advertise how many octets they are prepared to receive on a stream and for the entire connection. ... only DATA frames are subject to flow control",
+   "note": ""
+  },
+  {
+   "id": "S15",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "HTTP/3 congestion control: one controller per path, covering the whole connection",
+   "source": "[^rfc9114]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "By providing reliability at the stream level and congestion control across the entire connection",
+   "note": ""
+  },
+  {
+   "id": "S16",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "role": 2,
+   "claim": "Inside one stream: Yes: TCP is in-order",
+   "source": "[^rfc9293]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "TCP provides a reliable, in-order, byte-stream service to applications.",
+   "note": ""
+  },
+  {
+   "id": "S17",
+   "section": "### 4.1 HTTP/2 stack: 5 actors",
+   "role": 2,
+   "claim": "; TLS needs a reliable, in-order transport underneath",
+   "source": "[^rfc8446]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the only requirement from the underlying transport is a reliable, in-order data stream.",
+   "note": ""
+  },
+  {
+   "id": "S18",
+   "section": "### 4.2 HTTP/3 stack: 5 actors",
+   "role": 2,
+   "claim": ", and connection-wide signals (SETTINGS, GOAWAY) on a unidirectional control stream",
+   "source": "[^rfc9114]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Frames that apply to the entire connection are conveyed on a dedicated control stream. ... The GOAWAY frame is always sent on the control stream.",
+   "note": ""
+  },
+  {
+   "id": "S19",
+   "section": "### 4.2 HTTP/3 stack: 5 actors",
+   "role": 2,
+   "claim": "QPACK encoder and decoder: dynamic-table updates sent on a separate encoder stream (type 0x02) and acknowledgments sent back on a decoder stream (type 0x03)",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "An encoder stream is a unidirectional stream of type 0x02. ... A decoder stream is a unidirectional stream of type 0x03.",
+   "note": ""
+  },
+  {
+   "id": "S20",
+   "section": "### 4.2 HTTP/3 stack: 5 actors",
+   "role": 2,
+   "claim": ", packets protected one by one",
+   "source": "[^rfc9001]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "TLS record protection is not used by QUIC. ... The input plaintext, P, for the AEAD is the payload of the QUIC packet",
+   "note": ""
+  },
+  {
+   "id": "S21",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "HTTP/2 SETTINGS_MAX_CONCURRENT_STREAMS: No limit at first",
+   "source": "[^rfc9113]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Initially, there is no limit to this value.",
+   "note": ""
+  },
+  {
+   "id": "S22",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "HTTP/2 connection window: 65,535 bytes; SETTINGS cannot change it, only WINDOW_UPDATE frames can",
+   "source": "[^rfc9113]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "The connection flow-control window is also 65,535 octets. ... The connection flow-control window can only be changed using WINDOW_UPDATE frames.",
+   "note": ""
+  },
+  {
+   "id": "S23",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "QPACK SETTINGS_QPACK_BLOCKED_STREAMS default: 0",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "SETTINGS_QPACK_BLOCKED_STREAMS (0x07): The default value is zero.",
+   "note": ""
+  },
+  {
+   "id": "S24",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "Upper bound on request streams allowed to wait for dynamic-table updates; exceeding it is connection error QPACK_DECOMPRESSION_FAILED",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "If a decoder encounters more blocked streams than it promised to support, it MUST treat this as a connection error of type QPACK_DECOMPRESSION_FAILED.",
+   "note": ""
+  },
+  {
+   "id": "S25",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "With 0, no stream may risk blocking, so the encoder may reference only acknowledged entries: this follows from the rule that the encoder must keep the number of streams that could block within this limit at all times",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "An encoder MUST limit the number of streams that could become blocked to the value of SETTINGS_QPACK_BLOCKED_STREAMS at all times.",
+   "note": "The derivation holds. RFC 9204 §2.1 adds: 'References to the dynamic table risk head-of-line blocking if the encoder has not received an acknowledgment'."
+  },
+  {
+   "id": "S26",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "QUIC initial_max_streams_bidi: Absent or 0: the peer cannot open bidirectional streams until a MAX_STREAMS frame arrives",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "If this parameter is absent or zero, the peer cannot open bidirectional streams until a MAX_STREAMS frame is sent.",
+   "note": ""
+  },
+  {
+   "id": "S27",
+   "section": "### 4.3 Settings that change HoL behaviour",
+   "role": 5,
+   "claim": "QUIC max_ack_delay default: 25 ms",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "If this value is absent, a default of 25 milliseconds is assumed.",
+   "note": ""
+  },
+  {
+   "id": "S28",
+   "section": "## 5. One lost packet, step by step",
+   "role": 3,
+   "claim": "QUIC: passes C2, A3, C3, A4, C4 to streams C and A at once, because ordering is per stream",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "When a packet loss occurs, only streams with data in that packet are blocked waiting for a retransmission to be received, while other streams can continue making progress.",
+   "note": ""
+  },
+  {
+   "id": "S29",
+   "section": "## 5. One lost packet, step by step",
+   "role": 3,
+   "claim": "; holds B3 and B4 in stream B's buffer (up to its flow-control limit)",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Delivering an ordered byte stream requires that an endpoint buffer any data that is received out of order, up to the advertised flow control limit.",
+   "note": ""
+  },
+  {
+   "id": "S30",
+   "section": "## 6. Worked example: the numbers",
+   "role": 4,
+   "claim": "Under HTTP/3 nothing changes (first data at 25, 26, 27 ms), because each QUIC packet is decrypted on its own",
+   "source": "[^rfc9001]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "TLS record protection is not used by QUIC. QUIC assembles CRYPTO frames into QUIC packets, which are protected using QUIC packet protection.",
+   "note": "The cited reason is grounded. The millisecond figures are local-model output, which the citation does not cover."
+  },
+  {
+   "id": "S31",
+   "section": "## 7. Header compression: HPACK vs. QPACK",
+   "role": 3,
+   "claim": "Because QUIC does not order data across streams, a request stream can arrive before the insertion it references",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Because QUIC does not guarantee order between data on different streams, a decoder might encounter a representation that references a dynamic table entry that it has not yet received.",
+   "note": ""
+  },
+  {
+   "id": "S32",
+   "section": "## 7. Header compression: HPACK vs. QPACK",
+   "role": 3,
+   "claim": "The encoder should not write an instruction unless there is credit for all of it",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "an encoder SHOULD NOT write an instruction unless sufficient stream and connection flow-control credit is available for the entire instruction.",
+   "note": ""
+  },
+  {
+   "id": "S33",
+   "section": "## 7. Header compression: HPACK vs. QPACK",
+   "role": 3,
+   "claim": "Cancelled streams: when a stream is reset, the decoder sends a Stream Cancellation instruction so the encoder stops counting that stream's references",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "When a stream is reset or reading is abandoned, the decoder emits a Stream Cancellation instruction. ... all references to the dynamic table on that stream are no longer outstanding",
+   "note": ""
+  },
+  {
+   "id": "S34",
+   "section": "## 8. What HTTP/3 does not remove",
+   "role": 6,
+   "claim": "Several streams' frames in one lost packet: One packet may carry frames of several streams",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "A single QUIC packet can include multiple STREAM frames from one or more streams.",
+   "note": ""
+  },
+  {
+   "id": "S35",
+   "section": "## 8. What HTTP/3 does not remove",
+   "role": 6,
+   "claim": "Shared connection flow control: Credit consumed by one stream cannot be used by others; interdependent streams can deadlock",
+   "source": "[^rfc9308]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "connection flow control limits can be consumed by other streams ... Deadlocking can also occur if data on different streams is interdependent.",
+   "note": ""
+  },
+  {
+   "id": "S36",
+   "section": "## 8. What HTTP/3 does not remove",
+   "role": 6,
+   "claim": "UDP blocked by the network: Then clients should fall back to TCP-based HTTP",
+   "source": "[^rfc9114]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "clients SHOULD attempt to use TCP-based versions of HTTP in this case.",
+   "note": ""
+  },
+  {
+   "id": "S37",
+   "section": "## 9. Cross-side interactions",
+   "role": 6,
+   "claim": "Client marks a response incremental: Server should share bandwidth between same-urgency incremental responses",
+   "source": "[^rfc9218]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "Incremental responses of the same urgency SHOULD be served by sharing bandwidth among them.",
+   "note": ""
+  },
+  {
+   "id": "S38",
+   "section": "## 9. Cross-side interactions",
+   "role": 6,
+   "claim": "Sender packs frames of several streams into one QUIC packet: One loss blocks all streams in that packet (S5)",
+   "source": "[^rfc9000]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "when data from multiple streams is included in a single QUIC packet, loss of that packet blocks all those streams from making progress.",
+   "note": ""
+  },
+  {
+   "id": "S39",
+   "section": "## 9. Cross-side interactions",
+   "role": 6,
+   "claim": "Network path blocks UDP: Client falls back to TCP",
+   "source": "[^rfc9114]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "Connectivity problems (e.g., blocking UDP) can result in a failure to establish a QUIC connection; clients SHOULD attempt to use TCP-based versions of HTTP in this case.",
+   "note": "The page gives a SHOULD rule ('SHOULD attempt'), and the claim writes it as a plain statement of behaviour. §8 states the same fact correctly ('clients should fall back')."
+  },
+  {
+   "id": "S40",
+   "section": "## 10. Edge cases and failure combinations",
+   "role": 6,
+   "claim": "One large file: blocked on each loss in both stacks. One stream: per-stream ordering is total ordering",
+   "source": "[^rfc9308]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "A single stream provides ordering. If the application requires certain data to be received in order, that data should be sent on the same stream.",
+   "note": ""
+  },
+  {
+   "id": "S41",
+   "section": "## 10. Edge cases and failure combinations",
+   "role": 6,
+   "claim": "Loss inside a render-blocking resource: page waits in both stacks. The resource itself is late either way (S3)",
+   "source": "[^marx]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "the received green packets after the loss cannot be processed by the browser as they belong to the same stream that experienced the loss.",
+   "note": ""
+  },
+  {
+   "id": "S42",
+   "section": "## 10. Edge cases and failure combinations",
+   "role": 6,
+   "claim": "Lost encoder-stream packet, blocked streams > 0: Referencing request streams wait for it (Q1)",
+   "source": "[^rfc9204]",
+   "verdict": "entails",
+   "severity": "none",
+   "page_says": "if there is loss or reordering, the stream can become blocked at the decoder.",
+   "note": ""
+  },
+  {
+   "id": "S43",
+   "section": "## 10. Edge cases and failure combinations",
+   "role": 6,
+   "claim": "One stream never read by the application: HTTP/2 connection window drains, all streams stall; deadlock risk if frames are not read. HTTP/3 connection limit drains, all streams stall",
+   "source": "[^rfc9308]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "This is possible even where stream flow control limits are not reached because connection flow control limits can be consumed by other streams.",
+   "note": "Judged with the row's other citation [^rfc9113] ('Failure to read promptly could lead to a deadlock'). Both pages say 'can', 'possible' and 'could'. The row states that the connection window drains and all streams stall in every case. That happens only when the unread stream's window is large enough to absorb the connection credit, and §9 does state that condition ('while the connection window is small')."
+  },
+  {
+   "id": "S44",
+   "section": "## 11. How much it matters in practice",
+   "role": 6,
+   "claim": "Loss is rare on many networks. One estimate: about 0.01% on wired networks and rarely above 2% on cellular; loss is also bursty, which makes it hard to predict which streams a loss hits",
+   "source": "[^marx]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "Especially on high-speed, cabled networks, packet loss rates are on the order of 0.01%. ... packet loss and also jitter (delay variations in the network), are often bursty.",
+   "note": "Two qualifiers are dropped: 'high-speed' (cabled networks) becomes 'wired networks', and 'often bursty' becomes 'bursty'. The cellular figure and the unpredictability point are grounded ('the loss pattern is difficult to predict')."
+  },
+  {
+   "id": "S45",
+   "section": "## 11. How much it matters in practice",
+   "role": 6,
+   "claim": "A 2022 testbed study (35 replayed websites, Chromium): parallel scheduling strategies clearly reduced HoL-blocked bytes; SpeedIndex improved only a little for the median site at low bandwidth, and mainly for larger sites under random loss; at 10 Mbps differences vanished; bursty loss erased the gains",
+   "source": "[^sander_blog]",
+   "verdict": "overstates",
+   "severity": "SOFT_WARN",
+   "page_says": "for more than a quarter of all websites, barely any difference can be seen ... bursts of size 5 already pushed the performance improvements below the S-line",
+   "note": "These parts are grounded: 35 replayed websites, Chromium, reduced HoL blocking, a small median SpeedIndex gain at low bandwidth, and gains mainly for larger sites under random loss. Two parts overstate. '10 Mbps differences vanished': the page says barely any difference for more than a quarter of sites at 10 Mbps, and a 'vanishing difference' as bandwidth grows. 'Bursty loss erased the gains': the page says bursts of size 5 pushed the improvements below its comparison S-line, which is narrower."
+  }
+ ],
+ "conflicts": [
+  {
+   "topic": "Why HTTP/2 can do worse than HTTP/1.1 under loss. [^h3explained] and §2's own sentence give the reason as spreading losses over six connections, so only one stalls (HoL). [^marx] says HTTP/2's difficulty against HTTP/1.1 on 6 connections 'is mainly due to TCP's “congestion control” mechanism': each HTTP/1.1 connection backs off on its own, while HTTP/2's one connection slows down on any loss.",
+   "winner": "none: both are Rank 6, and no Rank 1 source decides between them",
+   "loser": "[^h3explained] rank 6 (as used in §2) vs [^marx] rank 6",
+   "where_loser_is": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "ok": false,
+   "note": "§2 (role 1) presents the HoL-only explanation as fact and never mentions the congestion-control cause. No role-6 section records the disagreement. RFC 9114 §1.1 ('TCP does not share congestion control across multiple connections') supports that per-connection congestion control differs, but it does not rank the two causes."
+  },
+  {
+   "topic": "How much HoL removal helps in practice: Marx 2020 (probably not much) vs. Sander 2022 (gains on lossy, low-bandwidth links with parallel scheduling; none at high bandwidth or with bursty loss).",
+   "winner": "[^sander_blog] rank 4",
+   "loser": "[^marx] rank 6",
+   "where_loser_is": "## 11. How much it matters in practice",
+   "ok": true,
+   "note": "Both views sit in role 6, each with its date and author, and they largely agree that gains are limited. No action needed."
+  }
+ ],
+ "criteria_checks": [
+  {
+   "criterion": "Sections 2 and 3 (roles 2 and 3) must differentiate Application-layer vs Transport-layer HoL blocking.",
+   "met": true,
+   "evidence": "Role 2 (§3): the 'HTTP messages' row (HTTP/1.1 Yes, HTTP/2 No) is set against the 'Transport ordering' row (HTTP/2 Yes across all streams; HTTP/3 only within a stream). Role 3: §7 separates header-compression blocking, which TCP's in-order delivery masks for HPACK, from transport ordering, and §5 contrasts TCP's single ordered byte stream with QUIC's per-stream order. §2 (role 1) also names 'application-layer HoL blocking' and 'TCP-level HoL blocking' explicitly. Role 3's application-layer contrast rests mainly on §7, since §5 is transport-only."
+  },
+  {
+   "criterion": "Section 6 (role 6) must explain HTTP/2 packet loss degradation.",
+   "met": true,
+   "evidence": "§10: 'Many small parallel responses, random loss' row, HTTP/2 'Every loss stalls all', and 'Bursty loss' row, 'All stall'. §9: round-robin 'worse under HTTP/2'. §8: with UDP blocked, 'HTTP/2's HoL blocking returns'. §11: when to expect a gain. The explanation is thin and HoL-only. The congestion-control part of the degradation, which a cited source calls the main cause against HTTP/1.1, is missing (see the KB-17 conflict)."
+  },
+  {
+   "criterion": "conflict_trap_claim 'HTTP/2 completely eliminated Head-of-Line blocking' must not be stated as true in roles 1–5.",
+   "met": true,
+   "evidence": "§2 says HTTP/2 removes only HTTP-layer HoL blocking and 'does not address TCP-level HoL blocking' (RFC 9113, grounded). The Summary says HTTP/2 'kept it in the transport'. §3 marks HTTP/2 'Yes' for transport ordering."
+  },
+  {
+   "criterion": "conflict_trap_claim should be refuted in role 6.",
+   "met": true,
+   "evidence": "Refuted only implicitly: §10 says HTTP/2 'Every loss stalls all', and §8 says 'HTTP/2's HoL blocking returns'. No role-6 entry names the misconception and corrects it (see the structure SOFT_WARN)."
+  }
+ ],
+ "violations": [
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "rule": "grounding",
+   "evidence": "S6: the claim 'HTTP/2 features that assumed one total order (HPACK, the priority tree) had to be redesigned ✅[^rfc9114]' is unsupported for the priority tree. RFC 9114 A.2.1 says only 'HTTP/3 does not provide a means of signaling priority'."
+  },
+  {
+   "severity": "WARN",
+   "section": "## 1. Words first",
+   "rule": "grounding",
+   "evidence": "S3: 'capacity 0 in HTTP/3 until the decoder allows more ✅[^rfc9204]' drops the encoder step. Per RFC 9204 §3.2.1–3.2.3, the encoder sets the capacity with a Set Dynamic Table Capacity instruction, and the decoder's setting only caps it."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 9. Cross-side interactions",
+   "rule": "grounding",
+   "evidence": "S39: 'Client falls back to TCP ✅[^rfc9114]' writes RFC 9114's 'clients SHOULD attempt to use TCP-based versions of HTTP' as a plain statement."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 10. Edge cases and failure combinations",
+   "rule": "grounding",
+   "evidence": "S43: the 'One stream never read' row says the window 'drains' and 'all streams stall' with no condition. RFC 9308 §4.4 and RFC 9113 §5.2.2 say this 'can' or 'could' happen."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 11. How much it matters in practice",
+   "rule": "grounding",
+   "evidence": "S44: 'about 0.01% on wired networks ... loss is also bursty' drops the qualifiers 'high-speed' (cabled) and 'often' (bursty) from [^marx]."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 11. How much it matters in practice",
+   "rule": "grounding",
+   "evidence": "S45: 'at 10 Mbps differences vanished; bursty loss erased the gains' is stronger than the APNIC post. It says barely any difference for more than a quarter of sites at 10 Mbps, and bursts of size 5 pushed improvements below its comparison S-line."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "rule": "KB-17",
+   "evidence": "Unarbitrated conflict in role 1. §2 explains 'Why HTTP/2 can lose to HTTP/1.1' only by HoL blocking (one loss stalls everything), resting on [^h3explained]. The also-cited [^marx], of the same rank, says it 'is mainly due to TCP's “congestion control” mechanism'. No Rank 1 source decides between them, and no role-6 section records the disagreement."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 1. Words first",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 1 section (allowed ranks 1–5): line 27, Head-of-line blocking definition ✅[^marx]: a core concept defined by a Rank 6 source only."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 1. Words first",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 1 section (allowed ranks 1–5): line 35, 'A 16 KB record spans about 11 TCP packets ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 1. Words first",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 1 section (allowed ranks 1–5): line 40, Scheduling 'Sequential AAAABBBBCCCC vs. round-robin ABCABCABCABC ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 1 section (allowed ranks 1–5): line 48, 'browsers use about six per host ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 1 section (allowed ranks 1–5): line 52, 'At around 2% packet loss, HTTP/1.1 users are usually better off ✅[^h3explained]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 62, TLS record row 'about 11 packets ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 63, HTTP/1.1 'Transport ordering: Per connection: a loss stalls only that connection ✅[^h3explained]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 64, HTTP/2 'Always shared: TCP carries every stream in one ordered byte stream ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 64, HTTP/3 'Most implementations rarely mix streams in one packet ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 67, HTTP/3 'QUIC keeps order within a stream ✅[^marx]'."
+  },
+  {
+   "severity": "CRITICAL_FAIL",
+   "section": "### 4.2 HTTP/3 stack: 5 actors",
+   "rule": "KB-15",
+   "evidence": "Rank 6 citation in a role 2 section (allowed ranks 1–5): line 87, 'STREAM frames that carry per-stream byte ranges ✅[^marx]'."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 6. Worked example: the numbers",
+   "rule": "KB-15",
+   "evidence": "line 168, 'HoL removal helps only streams that are active at the same time ✅[^marx]': Rank 6 in role 4."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 6. Worked example: the numbers",
+   "rule": "KB-15",
+   "evidence": "line 169, 'Resources that must be complete before use ... gain less than progressive ones ✅[^marx]': Rank 6 in role 4."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "### 4.1 HTTP/2 stack: 5 actors",
+   "rule": "structure",
+   "evidence": "Role 2 holds mechanism text. §4.1 TCP actor: 'a receiver ACKs out-of-order segments at once, and the sender retransmits after 3 duplicate ACKs'. §4.2 QUIC actor: retransmission and packet-number detail. Values from §1 (65,535 window, 16,384 frame and record sizes) are repeated in §4."
+  },
+  {
+   "severity": "SOFT_WARN",
+   "section": "## 10. Edge cases and failure combinations",
+   "rule": "structure",
+   "evidence": "Role 6 has no misconceptions entry. The trap claim 'HTTP/2 completely eliminated HoL blocking' is refuted only implicitly."
+  }
+ ],
+ "patch_instructions": [
+  {
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "action": "Rewrite the clause as: 'HPACK relies on in-order delivery, which QUIC does not provide, so HTTP/3 replaces it with QPACK ✅[^rfc9114]; HTTP/3 itself defines no priority signaling ✅[^rfc9114], and the RFC 7540 priority tree, hard to fit to protocols without ordering across streams, is replaced by the RFC 9218 scheme ✅[^rfc9218]'. RFC 9218 §2: 'protocols that do not have strong ordering guarantees across streams, like HTTP/3'; §1: 'can act as a substitute for RFC 7540 stream priority'."
+  },
+  {
+   "section": "## 1. Words first",
+   "action": "Change the cell to: 'capacity 0 in HTTP/3 until the encoder raises it with a Set Dynamic Table Capacity instruction, at most to the decoder's SETTINGS_QPACK_MAX_TABLE_CAPACITY ✅[^rfc9204]'."
+  },
+  {
+   "section": "## 9. Cross-side interactions",
+   "action": "Change the cell to 'Client should fall back to TCP-based HTTP ✅[^rfc9114]' (RFC 9114 §3.1: SHOULD)."
+  },
+  {
+   "section": "## 10. Edge cases and failure combinations",
+   "action": "Rewrite the cells as 'Connection window can drain and stall all streams if the unread stream's window lets it absorb the connection credit; deadlock risk if frames are not read' (HTTP/2) and 'Connection limit can be consumed by the unread stream, stalling the others' (HTTP/3), citing RFC 9113 §5.2.2 and RFC 9308 §4.4."
+  },
+  {
+   "section": "## 11. How much it matters in practice",
+   "action": "Write 'on the order of 0.01% on high-speed cabled networks ... loss is often bursty ✅[^marx]'."
+  },
+  {
+   "section": "## 11. How much it matters in practice",
+   "action": "Write 'as bandwidth rose to 10 Mbps the difference shrank (barely any for more than a quarter of sites at 10 Mbps); bursts of 5 lost packets pushed the improvements below the study's comparison line ✅[^sander_blog]'."
+  },
+  {
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "action": "Move the 'Why HTTP/2 can lose to HTTP/1.1' paragraph and its 2% figure into §11 as an open conflict marked ⚠️, giving both explanations with their sources and ranks: [^h3explained] (HoL over one connection) and [^marx] (per-connection congestion control, 'in addition to causing TCP HOL blocking'). If §2 keeps a sentence, limit it to what RFC 9114 §1.1 says: a loss stalls all HTTP/2 transactions, and TCP does not share congestion control across connections."
+  },
+  {
+   "section": "## 1. Words first",
+   "action": "Re-cite the definition to Rank 1 text, keeping its wording to what the RFCs say: RFC 9112 §9.4 ('a request that ... would block subsequent requests on the same connection') for the HTTP form and RFC 9000 §13 ('only streams with data in that packet are blocked') for the transport form. Keep [^marx] only as an extra reference in role 6."
+  },
+  {
+   "section": "## 1. Words first",
+   "action": "Replace the citation with the arithmetic (16,384-byte record limit ✅[^rfc8446] ÷ a typical ~1,460-byte segment payload ≈ 11), marked ⚠️ as a derivation, or move the figure to role 6."
+  },
+  {
+   "section": "## 1. Words first",
+   "action": "Cite [^rfc9218] §4.2 and §10 instead: non-incremental responses served 'one by one'; incremental responses served 'by sharing bandwidth among them'."
+  },
+  {
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "action": "Mark it ⚠️ (Rank 6 only) or move it to §11; no Rank 1–5 page in the cache states the number."
+  },
+  {
+   "section": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "action": "Move it to role 6 (§11) with its source and rank, as part of the open conflict above."
+  },
+  {
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "action": "Keep 'a record is decrypted as a whole ✅[^rfc8446]' and drop the packet count, or mark it ⚠️ as a derivation (see the §1 patch)."
+  },
+  {
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "action": "Cite [^rfc9293] ('TCP provides a reliable, in-order, byte-stream service') for the per-connection ordering and mark the 'stalls only that connection' step as inference ⚠️."
+  },
+  {
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "action": "Cite [^rfc9114] §1.1 ('the parallel nature of HTTP/2's multiplexing is not visible to TCP's loss recovery mechanisms') and [^rfc9293] instead."
+  },
+  {
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "action": "Replace it with 'RFC 9000 advises including as few streams as necessary in outgoing packets ✅[^rfc9000]' (§13). Move the claim about what implementations actually do to role 6 with [^marx]."
+  },
+  {
+   "section": "## 3. Where HoL blocking can happen, layer by layer",
+   "action": "Cite [^rfc9000] §2 ('Streams in QUIC provide a lightweight, ordered byte-stream abstraction') instead."
+  },
+  {
+   "section": "### 4.2 HTTP/3 stack: 5 actors",
+   "action": "Cite [^rfc9000] §2.2 ('An endpoint uses the Stream ID and Offset fields in STREAM frames to place data in order') instead."
+  },
+  {
+   "section": "## 6. Worked example: the numbers",
+   "action": "Optional: add RFC 9000 §13 ('only streams with data in that packet are blocked') as the primary citation, keeping [^marx] beside it."
+  },
+  {
+   "section": "## 6. Worked example: the numbers",
+   "action": "Optional: add [^rfc9218] §4.2 ('there is no benefit in serving responses with the same urgency concurrently' when not incremental) beside [^marx]."
+  },
+  {
+   "section": "### 4.1 HTTP/2 stack: 5 actors",
+   "action": "Keep each actor to its job and interfaces. Move the ACK and retransmission rules to §5 (role 3), which already uses them."
+  },
+  {
+   "section": "## 10. Edge cases and failure combinations",
+   "action": "Add a row to §10 (or a short misconceptions list): 'Misconception: HTTP/2 eliminated HoL blocking. It removed the HTTP-layer form only; TCP-level HoL blocking is not addressed ✅[^rfc9113], and a loss stalls all active transactions ✅[^rfc9114].'"
+  }
+ ]
+}

@@ -1,0 +1,146 @@
+[
+ {
+  "url": "https://android-kvm.googlesource.com/linux/+/3a34b13a88caeb2800ab44a4918f230041b37dd9",
+  "normalized": "https://android-kvm.googlesource.com/linux/+/3a34b13a88caeb2800ab44a4918f230041b37dd9",
+  "cache": "cache/24ef74951934.txt",
+  "fetched": "2026-11-22T02:50:10Z",
+  "status": 200,
+  "chars": 4283
+ },
+ {
+  "url": "https://docs.rs/mio/latest/mio/struct.Poll.html",
+  "normalized": "https://docs.rs/mio/latest/mio/struct.Poll.html",
+  "cache": "cache/2eded5b23bb5.txt",
+  "fetched": "2026-11-22T02:50:11Z",
+  "status": 200,
+  "chars": 15933
+ },
+ {
+  "url": "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+  "normalized": "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+  "cache": "cache/4d5f5e9bddf3.txt",
+  "fetched": "2026-11-22T02:50:11Z",
+  "status": 200,
+  "chars": 11759
+ },
+ {
+  "url": "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22/",
+  "normalized": "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22/",
+  "cache": "cache/fd7757896fb2.txt",
+  "fetched": "2026-11-22T02:50:12Z",
+  "status": 200,
+  "chars": 4337
+ },
+ {
+  "url": "https://lkml.iu.edu/2108.3/00913.html",
+  "normalized": "https://lkml.iu.edu/2108.3/00913.html",
+  "cache": "cache/23ad1e00f491.txt",
+  "fetched": "2026-11-22T02:50:12Z",
+  "status": 200,
+  "chars": 6070
+ },
+ {
+  "url": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04363.html",
+  "normalized": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04363.html",
+  "cache": "cache/54e094a41d0f.txt",
+  "fetched": "2026-11-22T02:50:13Z",
+  "status": 200,
+  "chars": 5431
+ },
+ {
+  "url": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04469.html",
+  "normalized": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04469.html",
+  "cache": "cache/54f3778f3684.txt",
+  "fetched": "2026-11-22T02:50:15Z",
+  "status": 200,
+  "chars": 3690
+ },
+ {
+  "url": "https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2",
+  "normalized": "https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2",
+  "cache": "cache/be2e8fe9e521.txt",
+  "fetched": "2026-11-22T02:50:16Z",
+  "status": 200,
+  "chars": 38143
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+  "normalized": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+  "cache": "cache/d4cb145dde9c.txt",
+  "fetched": "2026-11-22T02:50:17Z",
+  "status": 200,
+  "chars": 12330
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man2/epoll_wait.2.html",
+  "normalized": "https://man7.org/linux/man-pages/man2/epoll_wait.2.html",
+  "cache": "cache/ff4afcb11fec.txt",
+  "fetched": "2026-11-22T02:50:18Z",
+  "status": 200,
+  "chars": 8587
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+  "normalized": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+  "cache": "cache/c225d5946a26.txt",
+  "fetched": "2026-11-22T02:50:19Z",
+  "status": 200,
+  "chars": 19532
+ },
+ {
+  "url": "https://man7.org/linux/man-pages/man7/pipe.7.html",
+  "normalized": "https://man7.org/linux/man-pages/man7/pipe.7.html",
+  "cache": "cache/07e67c2cc480.txt",
+  "fetched": "2026-11-22T02:50:20Z",
+  "status": 200,
+  "chars": 14355
+ },
+ {
+  "url": "https://raw.githubusercontent.com/golang/go/master/src/runtime/netpoll_epoll.go",
+  "normalized": "https://raw.githubusercontent.com/golang/go/master/src/runtime/netpoll_epoll.go",
+  "cache": "cache/8510ba299836.txt",
+  "fetched": "2026-11-22T02:50:21Z",
+  "status": 200,
+  "chars": 5462
+ },
+ {
+  "url": "https://raw.githubusercontent.com/nginx/nginx/master/src/event/modules/ngx_epoll_module.c",
+  "normalized": "https://raw.githubusercontent.com/nginx/nginx/master/src/event/modules/ngx_epoll_module.c",
+  "cache": "cache/af1caee8515a.txt",
+  "fetched": "2026-11-22T02:50:21Z",
+  "status": 200,
+  "chars": 25608
+ },
+ {
+  "url": "https://raw.githubusercontent.com/tokio-rs/mio/master/src/sys/unix/selector/epoll.rs",
+  "normalized": "https://raw.githubusercontent.com/tokio-rs/mio/master/src/sys/unix/selector/epoll.rs",
+  "cache": "cache/4be4c0505d22.txt",
+  "fetched": "2026-11-22T02:50:21Z",
+  "status": 200,
+  "chars": 7223
+ },
+ {
+  "url": "https://raw.githubusercontent.com/torvalds/linux/master/fs/eventpoll.c",
+  "normalized": "https://raw.githubusercontent.com/torvalds/linux/master/fs/eventpoll.c",
+  "cache": "cache/5f09b0ce2b7f.txt",
+  "fetched": "2026-11-22T02:50:22Z",
+  "status": 200,
+  "chars": 85284
+ },
+ {
+  "url": "https://raw.githubusercontent.com/torvalds/linux/master/fs/pipe.c",
+  "normalized": "https://raw.githubusercontent.com/torvalds/linux/master/fs/pipe.c",
+  "cache": "cache/c8307c5c7722.txt",
+  "fetched": "2026-11-22T02:50:22Z",
+  "status": 200,
+  "chars": 39384
+ },
+ {
+  "url": "https://raw.githubusercontent.com/torvalds/linux/master/net/unix/af_unix.c",
+  "normalized": "https://raw.githubusercontent.com/torvalds/linux/master/net/unix/af_unix.c",
+  "cache": "cache/ec62ffb1c62f.txt",
+  "fetched": "2026-11-22T02:50:25Z",
+  "status": 200,
+  "chars": 94472
+ }
+]

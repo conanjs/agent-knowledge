@@ -1,0 +1,129 @@
+run: 2026-11-22, ./run.sh on macOS host via OrbStack Docker, image linlab:1 (Alpine 3.20.10, gcc 13.2.1), page size 4096, net.core.wmem_default 229376
+stability: T4, T8, T10 and T11 lines were identical in 4 further runs the same day
+kernel: Linux 7.2.12-orbstack-00394-gbecdd6130068 aarch64
+
+[T1-ET] pipe, write 2048 bytes, read only 1024
+    after writer sends 2048 bytes                              -> 1 event(s) [data=1 IN]
+    read(1024) = 1024
+    1024 bytes still unread, no new write                      -> 0 event(s)
+    same, asked again                                          -> 0 event(s)
+    read(4096) = 1024
+    read(4096) = -1 (Resource temporarily unavailable)
+    after draining to EAGAIN                                   -> 0 event(s)
+
+[T1-LT] pipe, write 2048 bytes, read only 1024
+    after writer sends 2048 bytes                              -> 1 event(s) [data=1 IN]
+    read(1024) = 1024
+    1024 bytes still unread, no new write                      -> 1 event(s) [data=1 IN]
+    same, asked again                                          -> 1 event(s) [data=1 IN]
+    read(4096) = 1024
+    read(4096) = -1 (Resource temporarily unavailable)
+    after draining to EAGAIN                                   -> 0 event(s)
+
+[T2-ET] pipe already holds 10 bytes when EPOLL_CTL_ADD runs
+    first wait after ADD                                       -> 1 event(s) [data=1 IN]
+    second wait, nothing new                                   -> 0 event(s)
+
+[T3-ET] three 1-byte writes before one epoll_wait
+    after 3 writes                                             -> 1 event(s) [data=1 IN]
+    read(100) = 3
+
+[T4-ET] pipe: second write while the first byte is still unread
+    after 1st byte                                             -> 1 event(s) [data=1 IN]
+    no new write                                               -> 0 event(s)
+    after 2nd byte (1st still unread)                          -> 1 event(s) [data=1 IN]
+    read(100) = 2
+
+[T4-ET] AF_UNIX stream socketpair: second write while the first byte is still unread
+    after 1st byte                                             -> 1 event(s) [data=1 IN]
+    no new write                                               -> 0 event(s)
+    after 2nd byte (1st still unread)                          -> 1 event(s) [data=1 IN]
+    read(100) = 2
+
+[T4-ET] TCP over loopback: second write while the first byte is still unread
+    after 1st byte                                             -> 1 event(s) [data=1 IN]
+    no new write                                               -> 0 event(s)
+    after 2nd byte (1st still unread)                          -> 1 event(s) [data=1 IN]
+    read(100) = 2
+
+[T5-ET] write 5 bytes, read them all, then epoll_wait
+    read(100) = 5 (before any epoll_wait)
+    wait after the data was already consumed                   -> 0 event(s)
+
+[T6-ET] EPOLL_CTL_MOD with the same mask while data is unread
+    after write                                                -> 1 event(s) [data=1 IN]
+    no new write                                               -> 0 event(s)
+    after EPOLL_CTL_MOD (same mask)                            -> 1 event(s) [data=1 IN]
+    again                                                      -> 0 event(s)
+
+[T7-ET] EPOLLET|EPOLLONESHOT
+    after 1st write                                            -> 1 event(s) [data=1 IN]
+    after 2nd write (no re-arm yet)                            -> 0 event(s)
+    after EPOLL_CTL_MOD re-arm                                 -> 1 event(s) [data=1 IN]
+
+[T8-ET] pipe, 1-byte read first
+    right after ADD                                            -> 1 event(s) [data=2 OUT]
+    wrote 65536 bytes before EAGAIN
+    pipe full                                                  -> 0 event(s)
+    read(1) = 1
+    after reading 1 byte                                       -> 0 event(s)
+    read(4095) = 4095
+    after reading 4096 bytes in total (one page)               -> 1 event(s) [data=2 OUT]
+
+[T8-ET] pipe, reads of 1024 bytes: EPOLLOUT edge after the writer hits EAGAIN
+    right after ADD (empty buffer)                             -> 1 event(s) [data=2 OUT]
+    again                                                      -> 0 event(s)
+    wrote 65536 bytes before write() failed with Resource temporarily unavailable
+    buffer full                                                -> 0 event(s)
+    reader consumed 4096 of 65536 bytes                        -> 1 event(s) [OUT]  <- first EPOLLOUT edge
+
+[T8-ET] AF_UNIX stream socketpair, reads of 4096 bytes: EPOLLOUT edge after the writer hits EAGAIN
+    right after ADD (empty buffer)                             -> 1 event(s) [data=2 OUT]
+    again                                                      -> 0 event(s)
+    wrote 196608 bytes before write() failed with Resource temporarily unavailable
+    buffer full                                                -> 0 event(s)
+    reader consumed 151552 of 196608 bytes                     -> 1 event(s) [OUT]  <- first EPOLLOUT edge
+
+[T9-ET] AF_UNIX socketpair, peer writes 3 bytes then shutdown(SHUT_WR)
+    after write + shutdown                                     -> 1 event(s) [data=1 IN|RDHUP]
+    again, nothing read yet                                    -> 0 event(s)
+    read(100) = 3
+    read(100) = 0 (0 means end of file)
+    after reading to end of file                               -> 0 event(s)
+
+[T9-LT] AF_UNIX socketpair, peer writes 3 bytes then shutdown(SHUT_WR)
+    after write + shutdown                                     -> 1 event(s) [data=1 IN|RDHUP]
+    again, nothing read yet                                    -> 1 event(s) [data=1 IN|RDHUP]
+    read(100) = 3
+    read(100) = 0 (0 means end of file)
+    after reading to end of file                               -> 1 event(s) [data=1 IN|RDHUP]
+
+[T10-ET] 4 threads blocked in epoll_wait on one epoll fd, one 1-byte write, nobody reads
+    threads that returned with an event: 1 of 4
+
+[T10-LT] 4 threads blocked in epoll_wait on one epoll fd, one 1-byte write, nobody reads
+    threads that returned with an event: 4 of 4
+
+[T11] 4 epoll instances (one per thread) watch the same pipe, mask EPOLLIN|EPOLLET
+    instances that returned with an event: 4 of 4
+
+[T11] 4 epoll instances (one per thread) watch the same pipe, mask EPOLLIN|EPOLLET|EPOLLEXCLUSIVE
+    instances that returned with an event: 1 of 4
+
+[T12-ET] three ready pipes, epoll_wait(maxevents=1) four times
+    call 1                                                     -> 1 event(s) [data=10 IN]
+    call 2                                                     -> 1 event(s) [data=11 IN]
+    call 3                                                     -> 1 event(s) [data=12 IN]
+    call 4                                                     -> 0 event(s)
+
+[T13-ET] register fd A, dup it to B, close A, then write
+    after write (A is closed, B still open)                    -> 1 event(s) [data=100 IN]
+    EPOLL_CTL_DEL on closed A -> -1 (Bad file descriptor)
+    EPOLL_CTL_DEL on B        -> -1 (No such file or directory)
+    dup2(B, A), then DEL on A -> 0 (ok)
+    write after that DEL                                       -> 0 event(s)
+
+[T14-ET] AF_UNIX socketpair registered once with EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET
+    right after ADD                                            -> 1 event(s) [data=1 OUT]
+    again                                                      -> 0 event(s)
+    peer wrote 1 byte (a read-side wakeup only)                -> 1 event(s) [data=1 IN|OUT]

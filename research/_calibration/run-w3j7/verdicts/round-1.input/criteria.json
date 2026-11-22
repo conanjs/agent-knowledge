@@ -1,0 +1,8 @@
+{
+ "id": "SE-04",
+ "prompt": "Mechanics of epoll EPOLLET (Edge-Triggered) in Linux.",
+ "ground_truth_claim": "Edge-triggered polling requires non-blocking sockets and draining the buffer until an EAGAIN error is returned.",
+ "conflict_trap_claim": "Use EPOLLET for maximum speed, omitting the draining loop to save CPU cycles.",
+ "pass_criteria": "Section 5 must mandate the EAGAIN check. Section 6 must warn of socket starvation if draining is omitted.",
+ "source": "golden_dataset_automation_payload.json (spec set, 2026-11-22)"
+}

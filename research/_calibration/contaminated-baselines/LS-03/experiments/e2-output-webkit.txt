@@ -1,0 +1,32 @@
+=== webkit 26.5 ===
+cookies stored (context.cookies): ho(HttpOnly):Lax, js:Lax, strict(HttpOnly):Strict, lax(HttpOnly):Lax, nosamesite(HttpOnly):None, fits:None
+in-page report: {
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+ "documentCookieNames": [
+  "fits",
+  "js"
+ ],
+ "afterJsWrites": [
+  "fits",
+  "ho",
+  "js"
+ ],
+ "hoAsSeenByJs": "ho=overwritten-by-js",
+ "localStorageRead": "eyJ.fake.token",
+ "cookiesSentWithJsFetch": [
+  "fits",
+  "ho",
+  "js",
+  "lax",
+  "nosamesite",
+  "strict"
+ ],
+ "hoValueSeenByServer": "server-value",
+ "rawCookieHeaderSeenByServer": "fits=yyyyyyyyyyyyyyyyyyyy...; ho=server-value; js=1; lax=1; nosamesite=1; strict=1"
+}
+2026-11-22T02:44:36.614Z  GET  /echo?via=same-origin-fetch              sec-fetch-site=same-origin cookies=[fits, ho, js, lax, nosamesite, strict]
+2026-11-22T02:44:36.827Z  GET  /echo?via=xsite-fetch-get                sec-fetch-site=cross-site  cookies=[]
+2026-11-22T02:44:36.828Z  POST /echo?via=xsite-fetch-post               sec-fetch-site=cross-site  cookies=[]
+2026-11-22T02:44:36.831Z  GET  /echo?via=xsite-img                      sec-fetch-site=cross-site  cookies=[]
+2026-11-22T02:44:36.954Z  POST /echo?via=xsite-toplevel-form-post       sec-fetch-site=cross-site  cookies=[fits, nosamesite]
+2026-11-22T02:44:37.229Z  GET  /echo?via=xsite-toplevel-nav-get         sec-fetch-site=cross-site  cookies=[fits, ho, js, lax, nosamesite]

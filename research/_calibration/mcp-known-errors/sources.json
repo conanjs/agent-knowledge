@@ -1,0 +1,242 @@
+[
+ {
+  "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/releases",
+  "normalized": "https://github.com/modelcontextprotocol/modelcontextprotocol/releases",
+  "cache": "cache/139640d70140.txt",
+  "fetched": "2026-11-22T02:33:53Z",
+  "status": 200,
+  "chars": 14354
+ },
+ {
+  "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+  "normalized": "https://github.com/modelcontextprotocol/typescript-sdk",
+  "cache": "cache/f7fb7d70e0ff.txt",
+  "fetched": "2026-11-22T02:33:54Z",
+  "status": 200,
+  "chars": 11553
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2025-11-25",
+  "normalized": "https://modelcontextprotocol.io/specification/2025-11-25",
+  "cache": "cache/7b138caa8e63.txt",
+  "fetched": "2026-11-22T02:33:55Z",
+  "status": 200,
+  "chars": 5724
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle",
+  "normalized": "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle",
+  "cache": "cache/44399078c55f.txt",
+  "fetched": "2026-11-22T02:33:55Z",
+  "status": 200,
+  "chars": 8538
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices",
+  "normalized": "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices",
+  "cache": "cache/44f3cfe0d3ba.txt",
+  "fetched": "2026-11-22T02:33:56Z",
+  "status": 200,
+  "chars": 31700
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+  "normalized": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+  "cache": "cache/937fae6437b3.txt",
+  "fetched": "2026-11-22T02:33:57Z",
+  "status": 200,
+  "chars": 14054
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28",
+  "cache": "cache/d1aed5d46f78.txt",
+  "fetched": "2026-11-22T02:33:57Z",
+  "status": 200,
+  "chars": 6045
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/architecture",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/architecture",
+  "cache": "cache/eee6cbbccab2.txt",
+  "fetched": "2026-11-22T02:33:57Z",
+  "status": 200,
+  "chars": 5725
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization",
+  "cache": "cache/34fabf499cb7.txt",
+  "fetched": "2026-11-22T02:33:58Z",
+  "status": 200,
+  "chars": 21081
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery",
+  "cache": "cache/117c3edbfcd7.txt",
+  "fetched": "2026-11-22T02:33:58Z",
+  "status": 200,
+  "chars": 6784
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration",
+  "cache": "cache/5655f61af2a0.txt",
+  "fetched": "2026-11-22T02:33:58Z",
+  "status": 200,
+  "chars": 8832
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations",
+  "cache": "cache/4b9b953ca683.txt",
+  "fetched": "2026-11-22T02:33:59Z",
+  "status": 200,
+  "chars": 9323
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/index",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/index",
+  "cache": "cache/e8d957787d4b.txt",
+  "fetched": "2026-11-22T02:33:59Z",
+  "status": 200,
+  "chars": 22704
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr",
+  "cache": "cache/39e0293cbb4e.txt",
+  "fetched": "2026-11-22T02:33:59Z",
+  "status": 200,
+  "chars": 12095
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions",
+  "cache": "cache/7345b33e447b.txt",
+  "fetched": "2026-11-22T02:33:59Z",
+  "status": 200,
+  "chars": 7084
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+  "cache": "cache/0120b26ae8e5.txt",
+  "fetched": "2026-11-22T02:34:00Z",
+  "status": 200,
+  "chars": 37453
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+  "cache": "cache/7296cd40e850.txt",
+  "fetched": "2026-11-22T02:34:01Z",
+  "status": 200,
+  "chars": 4715
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio",
+  "cache": "cache/d615a0183fe5.txt",
+  "fetched": "2026-11-22T02:34:01Z",
+  "status": 200,
+  "chars": 7011
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http",
+  "cache": "cache/6e1c66cfb825.txt",
+  "fetched": "2026-11-22T02:34:01Z",
+  "status": 200,
+  "chars": 26397
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning",
+  "cache": "cache/c6bfb6f59aa5.txt",
+  "fetched": "2026-11-22T02:34:01Z",
+  "status": 200,
+  "chars": 8381
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/changelog",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/changelog",
+  "cache": "cache/a739f7343f18.txt",
+  "fetched": "2026-11-22T02:34:02Z",
+  "status": 200,
+  "chars": 10224
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation",
+  "cache": "cache/0049ed6bcde6.txt",
+  "fetched": "2026-11-22T02:34:02Z",
+  "status": 200,
+  "chars": 24670
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/roots",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/client/roots",
+  "cache": "cache/f431985927ec.txt",
+  "fetched": "2026-11-22T02:34:02Z",
+  "status": 200,
+  "chars": 5203
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/sampling",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/client/sampling",
+  "cache": "cache/b13d8c59508c.txt",
+  "fetched": "2026-11-22T02:34:03Z",
+  "status": 200,
+  "chars": 20269
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/deprecated",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/deprecated",
+  "cache": "cache/3adf6f101c1f.txt",
+  "fetched": "2026-11-22T02:34:03Z",
+  "status": 200,
+  "chars": 3316
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
+  "cache": "cache/1d962c091f09.txt",
+  "fetched": "2026-11-22T02:34:03Z",
+  "status": 200,
+  "chars": 4413
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/prompts",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/server/prompts",
+  "cache": "cache/626e6a88e5b1.txt",
+  "fetched": "2026-11-22T02:34:03Z",
+  "status": 200,
+  "chars": 9307
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/resources",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/server/resources",
+  "cache": "cache/a4347016e843.txt",
+  "fetched": "2026-11-22T02:34:04Z",
+  "status": 200,
+  "chars": 12175
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/tools",
+  "normalized": "https://modelcontextprotocol.io/specification/2026-07-28/server/tools",
+  "cache": "cache/920caecd56af.txt",
+  "fetched": "2026-11-22T02:34:04Z",
+  "status": 200,
+  "chars": 22483
+ },
+ {
+  "url": "https://modelcontextprotocol.io/specification/versioning",
+  "normalized": "https://modelcontextprotocol.io/specification/versioning",
+  "cache": "cache/a55ad56b64e9.txt",
+  "fetched": "2026-11-22T02:34:04Z",
+  "status": 200,
+  "chars": 3736
+ }
+]

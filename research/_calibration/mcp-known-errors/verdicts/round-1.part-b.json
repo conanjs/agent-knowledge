@@ -1,0 +1,812 @@
+{
+ "verdict": null,
+ "overall_score": null,
+ "judge": {
+  "model": "claude-opus-5-5",
+  "prompt_sha": "cded4d1",
+  "scope": [
+   "## 2. Q2: Primitives",
+   "## 4. Q4: Security and trust",
+   "## 5. What the experiments showed that the spec text does not say"
+  ]
+ },
+ "section_map": [
+  {
+   "heading": "## 2. Q2: Primitives",
+   "role": 2
+  },
+  {
+   "heading": "### 2.1 Server primitives (who controls them)",
+   "role": 5
+  },
+  {
+   "heading": "### 2.2 Client primitives",
+   "role": 3
+  },
+  {
+   "heading": "## 4. Q4: Security and trust",
+   "role": 5
+  },
+  {
+   "heading": "### 4.1 The spec's trust principles",
+   "role": 5
+  },
+  {
+   "heading": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5
+  },
+  {
+   "heading": "### 4.3 Token passthrough",
+   "role": 5
+  },
+  {
+   "heading": "### 4.4 Confused deputy",
+   "role": 5
+  },
+  {
+   "heading": "### 4.5 Session handling",
+   "role": 5
+  },
+  {
+   "heading": "## 5. What the experiments showed that the spec text does not say",
+   "role": 6
+  }
+ ],
+ "sources": [],
+ "deterministic_checks": {},
+ "rubric_scores": null,
+ "coverage": {
+  "claims_roles_1_5": 71,
+  "checked_roles_1_5": 71,
+  "claims_role_6": 3,
+  "checked_role_6": 3,
+  "no_cache": 0,
+  "not_checkable": 3
+ },
+ "claim_checks": [
+  {
+   "id": "C1",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Each is gated by a capability the server declares (tools, resources, prompts)",
+   "source": "[14][17][18]",
+   "verdict": "entails",
+   "page_says": "[14] \"Servers that support tools MUST declare the tools capability\"; [17] \"Servers that support resources MUST declare the resources capability\"",
+   "note": "[18] says the same for prompts."
+  },
+  {
+   "id": "C2",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "In 2026-07-28 the declaration is returned by server/discover",
+   "source": "[18]",
+   "verdict": "overstates",
+   "page_says": "\"Servers that support prompts MUST declare the prompts capability in their DiscoverResult\"",
+   "note": "The cited page states this for prompts only; the sentence covers tools and resources too. True per [11] (DiscoverResult 'capabilities: Capabilities the server supports (tools, resources, prompts, etc.)'), which is not cited here. Fix: cite [11]."
+  },
+  {
+   "id": "C3",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tools: functions the model can run | controlled by the model (\"model-controlled\")",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"Tools in MCP are designed to be model-controlled, meaning that the language model can discover and invoke tools automatically\"",
+   "note": ""
+  },
+  {
+   "id": "C4",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tools methods: tools/list (paginated, cacheable), tools/call",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"To discover available tools, clients send a tools/list request. This operation supports pagination and caching.\"",
+   "note": "tools/call shown under 'Calling Tools'."
+  },
+  {
+   "id": "C5",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tools notification: notifications/tools/list_changed",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"servers that declared the listChanged capability SHOULD send a notification to clients that have opened a subscriptions/listen stream with toolsListChanged: true\"",
+   "note": "The example notification's method is notifications/tools/list_changed."
+  },
+  {
+   "id": "C6",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Resources: data identified by URI | controlled by the application (\"application-driven\")",
+   "source": "[17]",
+   "verdict": "entails",
+   "page_says": "\"Each resource is uniquely identified by a URI.\" ... \"Resources in MCP are designed to be application-driven\"",
+   "note": ""
+  },
+  {
+   "id": "C7",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Resources methods: resources/list, resources/read, resources/templates/list",
+   "source": "[17]",
+   "verdict": "entails",
+   "page_says": "\"To retrieve resource contents, clients send a resources/read request.\"",
+   "note": "resources/list and resources/templates/list requests also shown on the page."
+  },
+  {
+   "id": "C8",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Resources notifications: notifications/resources/list_changed, notifications/resources/updated",
+   "source": "[17]",
+   "verdict": "entails",
+   "page_says": "\"The server delivers notifications/resources/updated on the resulting stream whenever a watched resource changes.\"",
+   "note": "notifications/resources/list_changed shown in the List Changed example."
+  },
+  {
+   "id": "C9",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Prompts: user-selected templates | controlled by the user (\"user-controlled\"), for example slash commands",
+   "source": "[18]",
+   "verdict": "entails",
+   "page_says": "\"Prompts are designed to be user-controlled\" ... \"For example, as slash commands\"",
+   "note": ""
+  },
+  {
+   "id": "C10",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Prompts methods: prompts/list, prompts/get",
+   "source": "[18]",
+   "verdict": "entails",
+   "page_says": "\"clients send a prompts/list request\" ... \"clients send a prompts/get request\"",
+   "note": ""
+  },
+  {
+   "id": "C11",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Prompts notification: notifications/prompts/list_changed",
+   "source": "[18]",
+   "verdict": "entails",
+   "page_says": "\"SHOULD send a notification to clients that have opened a subscriptions/listen stream with promptsListChanged: true\"",
+   "note": "Example method is notifications/prompts/list_changed."
+  },
+  {
+   "id": "C12",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tool definition: name, optional title, description, inputSchema (JSON Schema object, never null), optional outputSchema, optional annotations, optional icons",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"MUST be a valid JSON Schema object (not null)\" ... \"annotations: Optional properties describing tool behavior\"",
+   "note": ""
+  },
+  {
+   "id": "C13",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tool names should be 1 to 128 characters from A-Za-z0-9_-.",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"Tool names SHOULD be between 1 and 128 characters in length (inclusive).\"",
+   "note": "Allowed characters list matches; modal SHOULD kept."
+  },
+  {
+   "id": "C14",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Tool result: content blocks (text, image, audio, resource_link, embedded resource) and optional structuredContent (any JSON value in 2026-07-28; if outputSchema exists the server must conform)",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"This can be any JSON value (object, array, string, number, boolean, or null) that conforms to the tool’s outputSchema if one is defined.\"",
+   "note": "Also: 'Servers MUST provide structured results that conform to this schema.'"
+  },
+  {
+   "id": "C15",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Two error channels: protocol errors are JSON-RPC errors; tool execution errors come back as a result with isError: true so the model can self-correct",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"Tool Execution Errors contain actionable feedback that language models can use to self-correct\" ... \"They are reported in tool results with isError: true\"",
+   "note": ""
+  },
+  {
+   "id": "C16",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Resource contents are text or base64 blob. A missing resource is -32602 in 2026-07-28 (was -32002; clients should still accept -32002)",
+   "source": "[17][3]",
+   "verdict": "entails",
+   "page_says": "\"servers MUST return a JSON-RPC error with code -32602 (Invalid Params)\" ... \"clients SHOULD also accept -32002 as a resource not found error\"",
+   "note": "[3]: 'Change resource not found error code from -32002 to -32602'."
+  },
+  {
+   "id": "C17",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Prompt messages have role (user or assistant) and content (text, image, audio, resource link, embedded resource)",
+   "source": "[18]",
+   "verdict": "entails",
+   "page_says": "\"role: Either “user” or “assistant” to indicate the speaker\"",
+   "note": "Content types listed on the page match."
+  },
+  {
+   "id": "C18",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Pagination and cache hints (2026-07-28): list results carry nextCursor, ttlMs, cacheScope (public or private)",
+   "source": "[14][3]",
+   "verdict": "entails",
+   "page_says": "\"cacheScope (\"public\" or \"private\") controls whether shared intermediaries may cache the response\"",
+   "note": "[14] example result carries nextCursor, ttlMs, cacheScope."
+  },
+  {
+   "id": "C19",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Lists must not vary per connection. They may vary with the authorization presented on the request",
+   "source": "[14]",
+   "verdict": "overstates",
+   "page_says": "\"MUST NOT vary per-connection or as a side effect of other requests on the connection. The set MAY vary by the authorization presented on the request\"",
+   "note": "[14] states this for tools/list only; the claim covers all lists. The same rule is on [17] and [18] and in [3] ('List endpoints (tools/list, resources/list, prompts/list) no longer vary per-connection'), none cited here. Fix: add [17][18] or [3]."
+  },
+  {
+   "id": "C20",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Stateful tools use an explicit handle (basket_id from create_basket passed to add_item), because there is no session",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"should do so by returning an explicit handle from a creation tool and accepting that handle as an argument on subsequent calls\"",
+   "note": "The page marks this section non-normative guidance; the claim is descriptive, not a requirement, so it passes."
+  },
+  {
+   "id": "C21",
+   "section": "### 2.1 Server primitives (who controls them)",
+   "role": 5,
+   "claim": "Standard utilities: completion (completion/complete for prompt and template arguments), pagination, progress, cancellation",
+   "source": "[17][18][5]",
+   "verdict": "unsupported",
+   "page_says": "not found: searched 'progress', 'cancel', 'cancellation' in [17], [18], [5]",
+   "note": "[17]/[18] support the completion API and pagination only ('Arguments may be auto-completed through the completion API'). Progress and cancellation appear on [31] ('Progress tracking', 'Cancellation') and [7] (progressToken), which are not cited. Fix: cite [31] or [7] for progress and cancellation."
+  },
+  {
+   "id": "C22",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Elicitation: server asks the user for input | elicitation/create, modes form and url; response action is accept, decline or cancel",
+   "source": "[19]",
+   "verdict": "entails",
+   "page_says": "\"Elicitation supports two modes\" ... \"Elicitation responses use a three-action model to clearly distinguish between different user actions.\"",
+   "note": "accept/decline/cancel listed."
+  },
+  {
+   "id": "C23",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Elicitation 2025-11-25 status: active; also had notifications/elicitation/complete",
+   "source": "[3]",
+   "verdict": "entails",
+   "page_says": "\"Remove the notifications/elicitation/complete notification and the elicitationId field of URL mode elicitation requests, both introduced in 2025-11-25.\"",
+   "note": ""
+  },
+  {
+   "id": "C24",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Elicitation 2026-07-28 status: active; that notification and elicitationId removed",
+   "source": "[3]",
+   "verdict": "entails",
+   "page_says": "\"Remove the notifications/elicitation/complete notification and the elicitationId field of URL mode elicitation requests\"",
+   "note": ""
+  },
+  {
+   "id": "C25",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Sampling: sampling/createMessage; optional tools/toolChoice when the client declares sampling.tools",
+   "source": "[20]",
+   "verdict": "entails",
+   "page_says": "\"Clients MUST declare support for tool use via the sampling.tools capability to receive tool-enabled sampling requests.\"",
+   "note": ""
+  },
+  {
+   "id": "C26",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Sampling 2026-07-28 status: deprecated (SEP-2577)",
+   "source": "[20][21]",
+   "verdict": "entails",
+   "page_says": "\"Deprecated: The Sampling feature is deprecated as of protocol version 2026-07-28 (SEP-2577).\"",
+   "note": "[21] registry row agrees."
+  },
+  {
+   "id": "C27",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Roots: client tells server which file-URI directories matter | roots/list; notifications/roots/list_changed (legacy)",
+   "source": "[22][3]",
+   "verdict": "entails",
+   "page_says": "\"Roots inform servers about the directories and files the client considers relevant\"",
+   "note": "[3]: 'Remove ping, logging/setLevel, and notifications/roots/list_changed.'"
+  },
+  {
+   "id": "C28",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Roots 2026-07-28 status: deprecated; notifications/roots/list_changed removed",
+   "source": "[22][3]",
+   "verdict": "entails",
+   "page_says": "\"Deprecated: The Roots feature is deprecated as of protocol version 2026-07-28 (SEP-2577).\"",
+   "note": ""
+  },
+  {
+   "id": "C29",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Roots are informational, not access control: \"The protocol does not enforce that servers stay within roots\"",
+   "source": "[22]",
+   "verdict": "entails",
+   "page_says": "\"They are informational guidance rather than an access-control mechanism. The protocol does not enforce that servers stay within roots.\"",
+   "note": ""
+  },
+  {
+   "id": "C30",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "MRTR: in 2026-07-28 a server must not send its own JSON-RPC request; it answers with resultType input_required, an inputRequests map (elicitation/create, sampling/createMessage or roots/list) and optionally an opaque requestState; the client retries with a new id, inputResponses and the echoed requestState",
+   "source": "[23]",
+   "verdict": "overstates",
+   "page_says": "\"inputRequests (optional): An InputRequests map of server-initiated requests that the client must fulfill.\"",
+   "note": "The claim marks requestState optional but presents inputRequests as always present. The page makes both optional: 'Servers MUST include at least one of inputRequests or requestState'. Fix: say inputRequests is optional too, and at least one of the two is required."
+  },
+  {
+   "id": "C31",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Only tools/call, resources/read and prompts/get may return input_required",
+   "source": "[23]",
+   "verdict": "entails",
+   "page_says": "\"Servers MUST NOT send InputRequiredResult responses on any other client requests.\"",
+   "note": "Table lists prompts/get, resources/read, tools/call."
+  },
+  {
+   "id": "C32",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Worked example: tools/call id 2 returns input_required asking for a GitHub username via form elicitation; the client retries as id 3 with inputResponses github_login accept octocat and the same requestState",
+   "source": "[14][23]",
+   "verdict": "entails",
+   "page_says": "\"Please provide your GitHub username\" ... \"Note that the JSON-RPC id MUST be different between the initial request and the retry.\"",
+   "note": "[14] example uses ids 2 and 3 and the same requestState."
+  },
+  {
+   "id": "C33",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Legacy equivalent: the server sent elicitation/create as its own request on the open connection or SSE stream, and the client replied with a JSON-RPC response",
+   "source": "[13][4]",
+   "verdict": "entails",
+   "page_says": "\"This is a change from Streamable HTTP in protocol versions 2025-03-26 through 2025-11-25, where servers could send such requests on SSE streams.\"",
+   "note": "[4] transports: 'The server MAY send JSON-RPC requests and notifications on the stream.'"
+  },
+  {
+   "id": "C34",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Subscriptions: subscriptions/listen is a long-lived request; filter has toolsListChanged, promptsListChanged, resourcesListChanged, resourceSubscriptions; first message must be notifications/subscriptions/acknowledged; later notifications carry io.modelcontextprotocol/subscriptionId (the request id); replaces resources/subscribe/unsubscribe and the HTTP GET stream",
+   "source": "[15][3]",
+   "verdict": "entails",
+   "page_says": "\"The server MUST send notifications/subscriptions/acknowledged as the first message carrying the subscription’s ID in _meta under io.modelcontextprotocol/subscriptionId\"",
+   "note": "On stdio the ordering is per subscription, not per channel; the claim's summary still holds."
+  },
+  {
+   "id": "C35",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Other methods removed in 2026-07-28: ping, logging/setLevel, notifications/roots/list_changed; log level is per-request _meta key io.modelcontextprotocol/logLevel. Logging is deprecated",
+   "source": "[3][21]",
+   "verdict": "entails",
+   "page_says": "\"Remove ping, logging/setLevel, and notifications/roots/list_changed. Log level is now set per-request via io.modelcontextprotocol/logLevel in _meta\"",
+   "note": "[21] lists Logging as Deprecated (SEP-2577)."
+  },
+  {
+   "id": "C36",
+   "section": "### 2.2 Client primitives",
+   "role": 3,
+   "claim": "Tasks moved out of core into the extension io.modelcontextprotocol/tasks",
+   "source": "[3]",
+   "verdict": "entails",
+   "page_says": "\"Move experimental tasks out of the core protocol and into an official extension (io.modelcontextprotocol/tasks).\"",
+   "note": ""
+  },
+  {
+   "id": "C37",
+   "section": "### 4.1 The spec's trust principles",
+   "role": 5,
+   "claim": "Quoted principles (same text in 2025-11-25 and 2026-07-28; 2025-11-25 adds a fourth on sampling): user consent and control; data privacy; tool safety (annotations untrusted unless from a trusted server; hosts must obtain explicit consent before invoking any tool)",
+   "source": "[4a][31]",
+   "verdict": "entails",
+   "page_says": "\"Hosts must obtain explicit user consent before invoking any tool\"",
+   "note": "Compared both overview pages: the three principles are word-for-word identical; [4a] alone adds 'LLM Sampling Controls'."
+  },
+  {
+   "id": "C38",
+   "section": "### 4.1 The spec's trust principles",
+   "role": 5,
+   "claim": "Sampling controls (2025-11-25): users must approve sampling requests and control the prompt and what the server sees",
+   "source": "[4a][31]",
+   "verdict": "overstates",
+   "page_says": "\"Users must explicitly approve any LLM sampling requests\" ... \"Users should control:\"",
+   "note": "The page uses 'must' for approval but 'should' for control of the prompt and results; the claim puts both under 'must'. Fix: 'users must approve sampling requests and should control the prompt and what the server sees'."
+  },
+  {
+   "id": "C39",
+   "section": "### 4.1 The spec's trust principles",
+   "role": 5,
+   "claim": "The spec states MCP cannot enforce these at protocol level; implementors \"SHOULD\" build consent flows",
+   "source": "[4a][31]",
+   "verdict": "entails",
+   "page_says": "\"While MCP itself cannot enforce these security principles at the protocol level, implementors SHOULD:\"",
+   "note": "First item: 'Build robust consent and authorization flows into their applications'."
+  },
+  {
+   "id": "C40",
+   "section": "### 4.1 The spec's trust principles",
+   "role": 5,
+   "claim": "The normative tools page uses SHOULD: \"there SHOULD always be a human in the loop with the ability to deny tool invocations\", with UI that shows exposed tools, visual indicators on invocation, and confirmation prompts",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"there SHOULD always be a human in the loop with the ability to deny tool invocations.Applications SHOULD:\"",
+   "note": "The three UI items follow on the page."
+  },
+  {
+   "id": "C41",
+   "section": "### 4.1 The spec's trust principles",
+   "role": 5,
+   "claim": "The one hard requirement on tool metadata: \"clients MUST consider tool annotations to be untrusted unless they come from trusted servers\"",
+   "source": "[14]",
+   "verdict": "overstates",
+   "page_says": "\"MUST be a valid JSON Schema object (not null)\"",
+   "note": "The quote is exact, but 'the one hard requirement' is not: the same page puts other MUSTs on tool definitions (inputSchema not null; x-mcp-header constraints, and clients 'MUST reject tool definitions where any x-mcp-header value violates these constraints'). Fix: 'the one MUST among the tools page's trust-and-safety statements'."
+  },
+  {
+   "id": "C42",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Tools: servers must validate inputs, enforce access control, rate limit and sanitize outputs. Clients should confirm sensitive operations, show tool inputs before the call, validate results before passing to the LLM, apply timeouts, and log usage",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"Show tool inputs to the user before calling the server, to avoid malicious or accidental data exfiltration\"",
+   "note": "Servers MUST and Clients SHOULD lists match the claim's modals."
+  },
+  {
+   "id": "C43",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Resources: servers must validate URIs and sanitize file:// paths against traversal",
+   "source": "[17]",
+   "verdict": "entails",
+   "page_says": "\"Servers MUST sanitize file paths to prevent directory traversal attacks when serving file:// resources\"",
+   "note": "'Servers MUST validate all resource URIs' also present."
+  },
+  {
+   "id": "C44",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Elicitation: servers must not request passwords, API keys, tokens or payment credentials in form mode; use URL mode instead",
+   "source": "[19]",
+   "verdict": "entails",
+   "page_says": "\"Servers MUST NOT use form mode elicitation to request sensitive information such as passwords, API keys, access tokens, or payment credentials\"",
+   "note": "'Servers MUST use URL mode for interactions involving such sensitive information'."
+  },
+  {
+   "id": "C45",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Elicitation: clients must show which server is asking, offer decline/cancel, and for URL mode show the full URL and obtain consent before opening it; must not pre-fetch the URL; must open it in a way the client and LLM cannot inspect",
+   "source": "[19]",
+   "verdict": "entails",
+   "page_says": "\"MUST NOT automatically pre-fetch the URL or any of its metadata.\" ... \"MUST show the full URL to the user for examination before consent.\"",
+   "note": "Decline/cancel and server identification are under 'MCP clients MUST:'."
+  },
+  {
+   "id": "C46",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Elicitation: servers must not put sensitive data or pre-authenticated links in the URL, and must verify that the user who opens the URL is the user who started the request",
+   "source": "[19]",
+   "verdict": "entails",
+   "page_says": "\"MUST NOT provide a URL which is pre-authenticated to access a protected resource\" ... \"the server MUST ensure that the user who started the elicitation request\"",
+   "note": ""
+  },
+  {
+   "id": "C47",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Sampling (deprecated): human in the loop \"SHOULD\" be present; clients should let users review and edit prompts and responses",
+   "source": "[20]",
+   "verdict": "overstates",
+   "page_says": "\"Allow users to view and edit prompts before sending\" ... \"Present generated responses for review before delivery\"",
+   "note": "The page lets users edit prompts and review responses; it never says users edit responses. Fix: 'review and edit prompts, and review responses before delivery'."
+  },
+  {
+   "id": "C48",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Multi round-trip state: requestState is attacker-controlled; if it affects authorization, resource access or business logic servers must protect its integrity (HMAC or AEAD) and reject failures; should bind it to principal, short expiry, originating request; once-only use must be enforced by the server",
+   "source": "[23]",
+   "verdict": "entails",
+   "page_says": "\"servers MUST treat requestState as an attacker-controlled input. If requestState influences authorization, resource access, or business logic, servers MUST protect its integrity (e.g. HMAC or AEAD)\"",
+   "note": "SHOULD binding list and 'MUST enforce that invariant server-side' also match."
+  },
+  {
+   "id": "C49",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Icons and schemas: icon URIs must be HTTPS or data:, fetched without credentials; clients must not auto-dereference $ref to a network URI",
+   "source": "[7]",
+   "verdict": "entails",
+   "page_says": "\"Implementations MUST NOT automatically dereference $ref values that resolve to a network URI.\"",
+   "note": "Icon items sit under 'Consumers of icon metadata MUST take appropriate security precautions'."
+  },
+  {
+   "id": "C50",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "Header trust: Mcp-* headers must match the body, otherwise 400 (prevents routing on a different truth than the one executed)",
+   "source": "[13]",
+   "verdict": "entails",
+   "page_says": "\"Servers that process the request body MUST reject requests where the values specified in the headers do not match the corresponding values in the request body.\"",
+   "note": "400 Bad Request required on header validation failure."
+  },
+  {
+   "id": "C51",
+   "section": "### 4.2 Requirements by actor (2026-07-28)",
+   "role": 5,
+   "claim": "clientInfo/serverInfo are self-reported and must not be used for security decisions",
+   "source": "[7][11]",
+   "verdict": "overstates",
+   "page_says": "\"Implementations SHOULD NOT use them to change the behavior of the client or server, and SHOULD NOT rely on them for security decisions.\"",
+   "note": "Both cited pages say SHOULD NOT ([11]: 'SHOULD NOT rely on it for security decisions'); the claim says 'must not'. Fix: 'should not be relied on for security decisions'."
+  },
+  {
+   "id": "C52",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "Definition: an MCP server accepts tokens it was not issued and passes them to a downstream API",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"an MCP server accepts tokens from an MCP client without validating that the tokens were properly issued to the MCP server and passes them through to the downstream API\"",
+   "note": ""
+  },
+  {
+   "id": "C53",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "The spec forbids it: \"MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server\"",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server.\"",
+   "note": "Exact quote."
+  },
+  {
+   "id": "C54",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "The authorization page adds that servers \"MUST NOT accept or transit any other tokens\" and that clients must not send tokens issued by a different authorization server",
+   "source": "[26]",
+   "verdict": "entails",
+   "page_says": "\"MUST NOT send tokens to the MCP server other than ones issued by the MCP server’s authorization server.\" ... \"MCP servers MUST NOT accept or transit any other tokens.\"",
+   "note": ""
+  },
+  {
+   "id": "C55",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "If the server calls an upstream API it uses a separate token from the upstream authorization server",
+   "source": "[29]",
+   "verdict": "entails",
+   "page_says": "\"The access token used at the upstream API is a separate token, issued by the upstream authorization server.\"",
+   "note": ""
+  },
+  {
+   "id": "C56",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "Why: bypasses rate limits and audience controls, breaks audit trails, breaks trust boundaries, makes later security hardening harder",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"Security Control Circumvention\" ... \"Accountability and Audit Trail Issues\" ... \"Trust Boundary Issues\" ... \"Future Compatibility Risk\"",
+   "note": "Rate limiting is named under Security Control Circumvention."
+  },
+  {
+   "id": "C57",
+   "section": "### 4.3 Token passthrough",
+   "role": 5,
+   "claim": "Mechanism that enforces it: RFC 8707 resource at issuance plus audience validation at the server",
+   "source": "[26][29]",
+   "verdict": "entails",
+   "page_says": "\"MCP clients MUST implement and use the resource parameter as defined in RFC 8707\"",
+   "note": "[26]: 'MCP servers MUST validate that access tokens were issued specifically for them as the intended audience'."
+  },
+  {
+   "id": "C58",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Confused deputy applies to an MCP proxy server with one static client id that lets MCP clients register dynamically; with a third-party consent cookie, an attacker-registered client with an attacker redirect_uri plus a crafted link skips consent and the code goes to the attacker",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"the third-party authorization server sets a cookie on the user agent indicating consent for the static client ID\"",
+   "note": "Attack steps on the page match."
+  },
+  {
+   "id": "C59",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "All four conditions must hold (static client id, dynamic registration, consent cookie, no per-client consent)",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"This attack becomes possible when all of the following conditions are present:\"",
+   "note": "Four conditions listed."
+  },
+  {
+   "id": "C60",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Mandatory mitigations (\"MUST\") for proxies: per-user client_id registry; MCP-owned consent page (client name, scopes, redirect_uri, CSRF, anti-framing); consent cookies with __Host-, Secure, HttpOnly, SameSite=Lax, signed, bound to client_id; exact-string redirect_uri match; random single-use state stored only after consent",
+   "source": "[30]",
+   "verdict": "overstates",
+   "page_says": "\"Be cryptographically signed or use server-side sessions\"",
+   "note": "All items are MUSTs on the page, but the cookie item drops the alternative: the page allows signed cookies or server-side sessions; the claim makes signing mandatory. Fix: 'signed (or backed by server-side sessions)'."
+  },
+  {
+   "id": "C61",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Mix-up: verify iss; PKCE alone does not stop it",
+   "source": "[30][26]",
+   "verdict": "entails",
+   "page_says": "\"PKCE alone does not prevent this attack because the client transmits the code_verifier to the attacker’s token endpoint.\"",
+   "note": "[26]: clients 'MUST apply the validation in RFC9207 Section 2.4'."
+  },
+  {
+   "id": "C62",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "SSRF through metadata URLs: clients should require HTTPS and block private ranges, and use an egress proxy on servers",
+   "source": "[30]",
+   "verdict": "overstates",
+   "page_says": "\"MCP clients SHOULD require HTTPS for all OAuth-related URLs in production environments\" ... \"operators SHOULD consider using an egress proxy\"",
+   "note": "Two qualifiers dropped: HTTPS is required 'in production environments', and the egress proxy is something to 'consider'. Fix: restore both qualifiers."
+  },
+  {
+   "id": "C63",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Localhost redirect impersonation: authorization servers must display the redirect host",
+   "source": "[29][30]",
+   "verdict": "entails",
+   "page_says": "\"MUST clearly display the redirect URI hostname during authorization\"",
+   "note": ""
+  },
+  {
+   "id": "C64",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Dangerous authorization URLs (javascript:, shell-opening) must be rejected",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"MUST reject javascript:, data:, file:, vbscript:, and other potentially dangerous schemes\"",
+   "note": "'MUST NOT use shell commands (e.g., cmd.exe, sh, PowerShell) to open URLs'."
+  },
+  {
+   "id": "C65",
+   "section": "### 4.4 Confused deputy",
+   "role": 5,
+   "claim": "Local-server one-click install: client must show the exact command and get approval",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"Show the exact command that will be executed, without truncation\"",
+   "note": "'Require explicit user approval before proceeding' under 'The MCP client MUST:'."
+  },
+  {
+   "id": "C66",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "2026-07-28 has no protocol sessions; the security page names the risk 'state handle hijacking'; servers that authorize must verify every inbound request, must not treat a handle as authentication, should use cryptographically random handles, should bind handles to the verified user (<user_id>:<handle>)",
+   "source": "[30]",
+   "verdict": "entails",
+   "page_says": "\"MCP servers MUST NOT treat possession of a state handle as authentication.\"",
+   "note": "Verify-all MUST, random-handle SHOULD, and <user_id>:<handle> binding SHOULD all match."
+  },
+  {
+   "id": "C67",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "The tools page adds: a handle on an authenticated server \"is a name, not a capability\"; validate authorization on every call; state the retention policy in the creating tool's description",
+   "source": "[14]",
+   "verdict": "entails",
+   "page_says": "\"For authenticated servers, a handle is a name, not a capability.\"",
+   "note": "Retention-policy text: 'the server’s retention policy should be stated in the creation tool’s description'."
+  },
+  {
+   "id": "C68",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "2025-11-25 sessions: id optional; should be globally unique and cryptographically secure, visible ASCII only, sent as MCP-Session-Id on every later request; server answers 400 without it, 404 after termination; client getting 404 must re-initialize; clients should DELETE when done",
+   "source": "[4]",
+   "verdict": "overstates",
+   "page_says": "\"Servers that require a session ID SHOULD respond to requests without an MCP-Session-Id header (other than initialization) with HTTP 400 Bad Request.\"",
+   "note": "400 is a SHOULD, and only for servers that require a session ID; the claim states it as fixed behaviour. The 404 (MUST), re-initialize (MUST) and other parts match. Fix: 'servers that require it should answer 400 without it'."
+  },
+  {
+   "id": "C69",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "2025-11-25 security requirements: servers that authorize must verify all inbound requests and MUST NOT use sessions for authentication; session ids must be secure and non-deterministic; session ids should be bound to user data",
+   "source": "[4a-sess]",
+   "verdict": "entails",
+   "page_says": "\"MCP Servers MUST NOT use sessions for authentication. MCP servers MUST use secure, non-deterministic session IDs.\"",
+   "note": "'MCP servers SHOULD bind session IDs to user-specific information.'"
+  },
+  {
+   "id": "C70",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "Attack variants: session-hijack prompt injection across multiple servers sharing an event queue, and impersonation by a guessed id",
+   "source": "[4a-sess]",
+   "verdict": "entails",
+   "page_says": "\"Server B enqueues the event (associated with session ID) into a shared queue.\"",
+   "note": "Impersonation: the page says the attacker 'obtains' the id, and the mitigation text covers a guessed id."
+  },
+  {
+   "id": "C71",
+   "section": "### 4.5 Session handling",
+   "role": 5,
+   "claim": "Experiment E6 shows the 400/404 behavior",
+   "source": "[E6]",
+   "verdict": "not_checkable",
+   "page_says": "",
+   "note": "Local experiment only."
+  },
+  {
+   "id": "C72",
+   "section": "## 5. What the experiments showed that the spec text does not say",
+   "role": 6,
+   "claim": "The spec says a server must reject an unsupported version",
+   "source": "[5]",
+   "verdict": "entails",
+   "page_says": "\"it MUST respond with an UnsupportedProtocolVersionError listing the versions it does support\"",
+   "note": "Role 6 claim citing Rank 1; taken because only 3 role-6 claims exist (k = 1)."
+  },
+  {
+   "id": "C73",
+   "section": "## 5. What the experiments showed that the spec text does not say",
+   "role": 6,
+   "claim": "McpServer + StdioServerTransport in SDK 2.4.0 is the legacy path: server/discover returned -32601 (E3); the modern path needs serveStdio (E4)",
+   "source": "[E3][E4]",
+   "verdict": "not_checkable",
+   "page_says": "",
+   "note": "Local experiments only."
+  },
+  {
+   "id": "C74",
+   "section": "## 5. What the experiments showed that the spec text does not say",
+   "role": 6,
+   "claim": "v1 SDK has no server/discover; its initialize negotiated an unknown version down to 2025-11-25 (E2)",
+   "source": "(E2), no bracketed citation",
+   "verdict": "not_checkable",
+   "page_says": "",
+   "note": "The check mark carries no bracketed citation; only '(E2)' in the text points to a local experiment. Role 6, so this is not a citation failure, but a [E2] marker would be clearer."
+  }
+ ],
+ "conflicts": [],
+ "criteria_checks": [],
+ "violations": [],
+ "patch_instructions": []
+}

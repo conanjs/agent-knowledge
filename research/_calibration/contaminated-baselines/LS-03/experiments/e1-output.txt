@@ -1,0 +1,34 @@
+A. Stateless JWT, "logout" = browser deletes its copy; attacker kept a copy
+  ACCEPTED  attacker copy 5 min after logout
+  REJECTED  attacker copy at exp + 1 s  (expired)
+  ACCEPTED  attacker copy at exp + 1 s with 60 s leeway
+B. Denylist keyed by (iss, jti), entry kept until the token exp
+  REJECTED  revoked token right after revocation  (jti denylisted)
+  denylist size after token exp: 0 (entry pruned; the token is rejected as expired anyway)
+  REJECTED  revoked token after exp  (expired)
+C. Per-user cut-off timestamp vs. per-user version counter
+  ACCEPTED  old token (before logout), rule iat <  cutoff
+  ACCEPTED  new token (after re-login), rule iat <  cutoff
+  REJECTED  old token (before logout), rule iat <= cutoff  (iat <= cutoff)
+  REJECTED  new token (after re-login), rule iat <= cutoff  (iat <= cutoff)
+  REJECTED  old token, version check  (ver 1 != 2)
+  ACCEPTED  new token, version check
+D. Refresh token rotation, reuse detection, absolute lifetime cap (RFC 9700 4.14.2, RFC 10017 6.3.2.3)
+  ACCEPTED  client refresh #1 (new RT expires in 28200 s, not reset to 28800)
+  REJECTED  attacker replays stolen RT1  (REUSE detected -> whole family revoked)
+  REJECTED  client uses its current RT2  (family revoked)
+  REJECTED  attacker refresh after 46 undetected refreshes, 8.00 h after login  (absolute lifetime reached)
+E. Denylist keyed by SHA-256(token) vs. by jti, against ECDSA signature malleability
+  tokens differ: true; signature of variant verifies: true
+  REJECTED  original token, hash denylist  (hash denylisted)
+  ACCEPTED  malleated token, hash denylist
+  REJECTED  malleated token, jti denylist  (jti denylisted)
+F. Removing a signing key from the accepted set (JWKS) invalidates every token it signed
+  REJECTED  token signed with removed key k1  (unknown kid k1)
+  ACCEPTED  token signed with current key k2
+G. alg header that does not match the key entry
+  REJECTED  alg=none token  (alg none not allowed for kid k1)
+H. Token sizes (characters = octets, base64url is ASCII) vs. the 4096-octet name+value cookie limit
+  ES256, 8 claims: token 421 chars; cookie name+value 440 -> fits
+  RS256, 8 claims: token 677 chars; cookie name+value 696 -> fits
+  RS256, 8 claims + 100 group ids: token 5891 chars; cookie name+value 5910 -> OVER 4096, the browser ignores the whole Set-Cookie

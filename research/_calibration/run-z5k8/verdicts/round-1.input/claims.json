@@ -1,0 +1,368 @@
+{
+ "doc_claims": 218,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## 1. Context: one problem with two halves": [
+   9,
+   2
+  ],
+  "## 2. Actors, tokens and settings": [
+   35,
+   7
+  ],
+  "## 3. Threat model: what injected JavaScript can do": [
+   7,
+   1
+  ],
+  "## 4. Where the browser can keep a token": [
+   15,
+   3
+  ],
+  "## 5. Architectures": [
+   29,
+   6
+  ],
+  "## 6. Revocation mechanisms": [
+   62,
+   13
+  ],
+  "## 7. Cross-side interactions": [
+   17,
+   3
+  ],
+  "## 8. Worked example: one full pass through a BFF": [
+   4,
+   2
+  ],
+  "## 9. Edge-case and failure matrix": [
+   28,
+   5
+  ],
+  "## 10. Recommended baseline": [
+   11,
+   2
+  ],
+  "## 11. Lab notes": [
+   1,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 50,
+   "heading": "## 1. Context: one problem with two halves",
+   "claim": "- Every registered claim is optional in RFC 7519 itself ✅[^1]",
+   "context": "- Every registered claim is optional in RFC 7519 itself ✅[^1]; the JWT access-token profile, RFC 9068, makes `iss`, `exp`, `aud`, `sub`, `client_id`, `iat` and `jti` required and asks for `typ: at+jwt`, which resource servers must check ✅[^21]."
+  },
+  {
+   "id": "S2",
+   "line": 69,
+   "heading": "## 1. Context: one problem with two halves",
+   "claim": "Short access-token lifetimes make revocation of access tokens matter less, which moves the risk to the long-lived **refresh token**: it carries the client's full grant and is not tied to one API, so a stolen, replayable refresh token lets an attacker mint new access tokens ✅[^3]",
+   "context": "They are linked. Short access-token lifetimes make revocation of access tokens matter less, which moves the risk to the long-lived **refresh token**: it carries the client's full grant and is not tied to one API, so a stolen, replayable refresh token lets an attacker mint new access tokens ✅[^3]."
+  },
+  {
+   "id": "S3",
+   "line": 106,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^2]",
+   "context": "| Access token | Client holds; RS receives on every call | No standard value; RFC 10017 recommends reducing it and renewing with refresh tokens. Minutes are common in practice | — | ✅[^2]; \"minutes are common\" ⚠️ unverified |"
+  },
+  {
+   "id": "S4",
+   "line": 107,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^3]",
+   "context": "| Refresh token | Client holds; only the AS receives it | Set by the AS. One vendor's rotation default: 30 days absolute, at most 1 year, and rotation does not extend it | Without one, the client re-runs the authorization flow, possibly silently with the AS session cookie | ✅[^15] ✅[^3] |"
+  },
+  {
+   "id": "S5",
+   "line": 108,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^2]",
+   "context": "| BFF session cookie | Browser holds; BFF receives | Should match the refresh token's maximum lifetime; when the refresh token dies, the BFF should end the session | — | ✅[^2] |"
+  },
+  {
+   "id": "S6",
+   "line": 110,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^11]",
+   "context": "| DPoP proof | Client creates per request; AS or RS receives | Short; bound to method (`htm`), URL (`htu`), time (`iat`), access-token hash (`ath`) and optional server nonce | Without it, the token is a plain bearer token | ✅[^11] |"
+  },
+  {
+   "id": "S7",
+   "line": 138,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "; lab: a `__Host-` cookie with `Domain=` and one without `Secure` were both dropped ✅[^25]",
+   "context": "| `__Host-` name prefix | Browser stores it only with `Secure`, no `Domain`, `Path=/` | — | ✅[^12]; lab: a `__Host-` cookie with `Domain=` and one without `Secure` were both dropped ✅[^25] |"
+  },
+  {
+   "id": "S8",
+   "line": 139,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^12]",
+   "context": "| `__Host-Http-` name prefix | `__Host-` rules plus `HttpOnly`, so only a `Set-Cookie` header can set it | — | ✅[^12]; lab: a `__Host-Http-` cookie without `HttpOnly` was dropped ✅[^25] |"
+  },
+  {
+   "id": "S9",
+   "line": 152,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^3]",
+   "context": "| Revoke on security events | Ends refresh tokens on password change or logout at the AS | Optional (\"may\") | ✅[^3] |"
+  },
+  {
+   "id": "S10",
+   "line": 162,
+   "heading": "## 3. Threat model: what injected JavaScript can do",
+   "claim": "No practical client-side defence; DPoP does not help either ✅[^2]",
+   "context": "| Acquisition of new tokens (5.1.3) | Runs its own silent authorization flow in a hidden iframe, using the user's session at the AS | No practical client-side defence; DPoP does not help either ✅[^2] |"
+  },
+  {
+   "id": "S11",
+   "line": 176,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "✅[^2]",
+   "context": "| `sessionStorage` | Yes | No | Yes / no, per tab | Slightly smaller exposure (§8.5) | ✅[^2] ✅[^13] |"
+  },
+  {
+   "id": "S12",
+   "line": 179,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "✅[^2]",
+   "context": "| Web Worker or Service Worker memory | Not directly; the page must ask the worker | No | Worker-dependent | Isolated, but the attacker can still run its own flow; a service worker must not keep tokens in storage shared with the page (§8.2, §8.3) | ✅[^2] |"
+  },
+  {
+   "id": "S13",
+   "line": 182,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "The lab page ran this from its own JavaScript, the position an XSS payload runs in, in Chromium 152 (the Claude desktop app's browser) and Chrome 158 headless ✅[^25]",
+   "context": "The lab page ran this from its own JavaScript, the position an XSS payload runs in, in Chromium 152 (the Claude desktop app's browser) and Chrome 158 headless ✅[^25]:"
+  },
+  {
+   "id": "S14",
+   "line": 227,
+   "heading": "## 5. Architectures",
+   "claim": "Refresh-token theft and new-token acquisition are mitigated; access tokens are exposed to theft by injected code; CSRF defences are needed on the endpoint that hands out access tokens; RFC 10017 says to use it only when a full BFF is not viable ✅[^2]",
+   "context": "A confidential backend runs the flow and keeps the refresh token, but hands the access token to the browser, which calls the APIs directly ✅[^2]. Refresh-token theft and new-token acquisition are mitigated; access tokens are exposed to theft by injected code; CSRF defences are needed on the endpoint that hands out access tokens; RFC 10017 says to use it only when a full BFF is not viable ✅[^2]."
+  },
+  {
+   "id": "S15",
+   "line": 231,
+   "heading": "## 5. Architectures",
+   "claim": "Its refresh tokens must be rotated or sender-constrained ✅[^3]",
+   "context": "The SPA is a public OAuth client and runs the whole authorization-code flow with PKCE (Proof Key for Code Exchange) itself; all four attack scenarios apply ✅[^2]. Its refresh tokens must be rotated or sender-constrained ✅[^3]. Storage follows section 4; no option prevents exfiltration once a script runs on the page ✅[^2]."
+  },
+  {
+   "id": "S16",
+   "line": 239,
+   "heading": "## 5. Architectures",
+   "claim": "The browser attaches the `HttpOnly` cookie, as the lab showed for same-origin `fetch` ✅[^25]",
+   "context": "1. **Injected script → browser:** `fetch('/auth/refresh', { method: 'POST' })`. The browser attaches the `HttpOnly` cookie, as the lab showed for same-origin `fetch` ✅[^25]."
+  },
+  {
+   "id": "S17",
+   "line": 242,
+   "heading": "## 5. Architectures",
+   "claim": "`Path=/auth/refresh` reduces where the cookie travels but is not a security boundary ✅[^12]",
+   "context": "So the refresh token cannot be copied, but access tokens can be minted on demand while the page is open. `Path=/auth/refresh` reduces where the cookie travels but is not a security boundary ✅[^12]. In effect this is a token-mediating backend (section 5.2) whose token endpoint is guarded by a cookie ⚠️ unverified (this mapping is analysis, not a statement in RFC 10017), and it needs the same CSRF defence on the refresh endpoint ✅[^2]."
+  },
+  {
+   "id": "S18",
+   "line": 252,
+   "heading": "## 5. Architectures",
+   "claim": "mitigated ✅[^2]",
+   "context": "| Single-execution theft | mitigated ✅[^2] | access token exposed ✅[^2] | exposed ✅[^2] | access token exposed ⚠️ unverified |"
+  },
+  {
+   "id": "S19",
+   "line": 253,
+   "heading": "## 5. Architectures",
+   "claim": "access token exposed ✅[^2]",
+   "context": "| Persistent theft | mitigated ✅[^2] | access token exposed ✅[^2] | exposed ✅[^2] | access tokens on demand ⚠️ unverified |"
+  },
+  {
+   "id": "S20",
+   "line": 271,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "✅[^8]",
+   "context": "| 6.7 | Token Status List | One token | The list's `ttl` or HTTP cache time | Fetch and cache one compressed list per many tokens | Unique lists defeat privacy | ✅[^8] |"
+  },
+  {
+   "id": "S21",
+   "line": 281,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Short access tokens limit how long a revoked grant can still be used ✅[^6]",
+   "context": "Short access tokens limit how long a revoked grant can still be used ✅[^6], which is why most designs keep them to minutes and accept that window ⚠️ unverified. Worked number: with a 15-minute lifetime, a token issued at 09:30:00 and a logout at 09:40:00 leave a 5-minute window (until 09:45:00); a token issued at 09:39:59 leaves almost the full 15 minutes."
+  },
+  {
+   "id": "S22",
+   "line": 291,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "; an `EXPIREAT` time already in the past deletes the key at once ✅[^16]",
+   "context": "- `EXAT` sets an absolute Unix expiry in seconds ✅[^17]; an `EXPIREAT` time already in the past deletes the key at once ✅[^16], so revoking an already-expired token stores nothing."
+  },
+  {
+   "id": "S23",
+   "line": 297,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Lab output ✅[^24]",
+   "context": "Lab output ✅[^24]:"
+  },
+  {
+   "id": "S24",
+   "line": 308,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Node.js's `Buffer` decoder for `base64url` accepts the regular base64 alphabet by design ✅[^20]",
+   "context": "- **Lenient base64url decoding.** A 32-byte HS256 signature is 43 base64url characters, 258 bits for 256 bits of data, so the last character carries 2 unused bits; lenient decoders also accept `=` padding and the `+`/`/` alphabet ✅[^5]. Node.js's `Buffer` decoder for `base64url` accepts the regular base64 alphabet by design ✅[^20]. In the lab, five altered strings of one HS256 token all verified with a lenient decoder, none was on the hash denylist, and a strict decoder that re-encodes and compares rejected all five ✅[^24]."
+  },
+  {
+   "id": "S25",
+   "line": 318,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The OWASP cheat sheet itself used to hash the token for its denylist and switched to `jti`-based keys in June 2026 ✅[^5]",
+   "context": "The author of the malleability write-up reports, among others, that PyJWT 2.13.0 accepted all three non-canonical forms and java-jwt 4.5.2 accepted padding and trailing bits; those library results were not re-tested here ✅[^5]. The OWASP cheat sheet itself used to hash the token for its denylist and switched to `jti`-based keys in June 2026 ✅[^5] ✅[^23]."
+  },
+  {
+   "id": "S26",
+   "line": 336,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "NumericDate allows fractions ✅[^1]",
+   "context": "NumericDate allows fractions ✅[^1], so millisecond `iat` would fix the comparison only if every issuer and library keeps the fraction ⚠️ unverified. A counter (6.4) avoids clocks entirely."
+  },
+  {
+   "id": "S27",
+   "line": 362,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "For self-contained access tokens, stopping them at the RS needs some non-standard link between AS and RS, which is why short lifetimes are paired with it ✅[^6]",
+   "context": "The client posts `token=…&token_type_hint=refresh_token` with its client authentication; the AS answers `200` even for an invalid token ✅[^6]. Refresh-token revocation is required; access-token revocation is recommended; revoking a refresh token should also invalidate access tokens of the same grant when the AS supports that ✅[^6]. For self-contained access tokens, stopping them at the RS needs some non-standard link between AS and RS, which is why short lifetimes are paired with it ✅[^6]."
+  },
+  {
+   "id": "S28",
+   "line": 362,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Refresh-token revocation is required; access-token revocation is recommended; revoking a refresh token should also invalidate access tokens of the same grant when the AS supports that ✅[^6]",
+   "context": "The client posts `token=…&token_type_hint=refresh_token` with its client authentication; the AS answers `200` even for an invalid token ✅[^6]. Refresh-token revocation is required; access-token revocation is recommended; revoking a refresh token should also invalidate access tokens of the same grant when the AS supports that ✅[^6]. For self-contained access tokens, stopping them at the RS needs some non-standard link between AS and RS, which is why short lifetimes are paired with it ✅[^6]."
+  },
+  {
+   "id": "S29",
+   "line": 392,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "- D3: rotation detects nothing when the legitimate client never presents its last token again, which is why RFC 10017 says rotation alone does not stop persistent theft ✅[^2]",
+   "context": "- D3: rotation detects nothing when the legitimate client never presents its last token again, which is why RFC 10017 says rotation alone does not stop persistent theft ✅[^2]. An inactivity expiry, which RFC 9700 says refresh tokens should have ✅[^3], bounds this case: with a 30-minute inactivity limit, the thief's attempt one hour later would fail."
+  },
+  {
+   "id": "S30",
+   "line": 397,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Each request carries a DPoP proof: a JWT with header `typ: dpop+jwt` and the public key, and claims `jti`, `htm` (method), `htu` (URL), `iat`, plus `ath` (hash of the access token) and the server's `nonce` when required ✅[^11]",
+   "context": "Analogy: a bank card that also needs a PIN at every purchase; a copied card number alone buys nothing. The client holds a key pair. Each request carries a DPoP proof: a JWT with header `typ: dpop+jwt` and the public key, and claims `jti`, `htm` (method), `htu` (URL), `iat`, plus `ath` (hash of the access token) and the server's `nonce` when required ✅[^11]. The access token names the key's thumbprint in `cnf.jkt`, and the RS refuses a DPoP-bound token sent as a plain bearer token ✅[^11]. Public clients get refresh tokens bound to the same key ✅[^11]."
+  },
+  {
+   "id": "S31",
+   "line": 416,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The OP posts `logout_token=<JWT>` to each client's registered `backchannel_logout_uri`; the client validates it (signature, `iss`, `aud`, `iat`, `exp`, `events` containing `http://schemas.openid.net/event/backchannel-logout`, `sub` or `sid`, no `nonce`), ends the matching sessions, and answers `200` (or `204`); refresh tokens without `offline_access` should be revoked, those with it normally kept ✅[^9]",
+   "context": "- **OIDC back-channel logout:** analogy: the hotel's front desk phoning every restaurant where the guest ran a tab, server to server, instead of relying on the guest to walk past each one. The OP posts `logout_token=<JWT>` to each client's registered `backchannel_logout_uri`; the client validates it (signature, `iss`, `aud`, `iat`, `exp`, `events` containing `http://schemas.openid.net/event/backchannel-logout`, `sub` or `sid`, no `nonce`), ends the matching sessions, and answers `200` (or `204`); refresh tokens without `offline_access` should be revoked, those with it normally kept ✅[^9]. The OP should not resend except after a suspected recoverable failure ✅[^9], so a client that is down misses the logout. A decoded logout-token payload, with illustrative values:"
+  },
+  {
+   "id": "S32",
+   "line": 435,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Against malware that copies cookies, Chrome's DBSC has the browser create a per-session key pair in hardware (TPM, Trusted Platform Module, on Windows; Secure Enclave on macOS) and prove possession before the server issues new short-lived cookies; it reached public availability on Windows in Chrome 146, announced 2026-04-09 ✅[^19]",
+   "context": "Against malware that copies cookies, Chrome's DBSC has the browser create a per-session key pair in hardware (TPM, Trusted Platform Module, on Windows; Secure Enclave on macOS) and prove possession before the server issues new short-lived cookies; it reached public availability on Windows in Chrome 146, announced 2026-04-09 ✅[^19]. A stolen cookie then expires quickly. It is a browser-level form of sender-constraining for cookie sessions and needs the site to add registration and refresh endpoints ✅[^19]."
+  },
+  {
+   "id": "S33",
+   "line": 446,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^2]",
+   "context": "| BFF deletes a session | Next call is unauthenticated | Stops using that session's tokens | Unaware unless told (revoke or logout) | Unaware; the BFF simply stops calling | Proxying through the old cookie stops | ✅[^2] |"
+  },
+  {
+   "id": "S34",
+   "line": 447,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^6]",
+   "context": "| User logs out at the AS | — | Gets a logout token if registered; ends sessions, revokes refresh tokens without `offline_access` | Sends back-channel logout | Self-contained access tokens remain valid until `exp` unless checked | — | ✅[^9] ✅[^6] |"
+  },
+  {
+   "id": "S35",
+   "line": 448,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^6]",
+   "context": "| Password change | — | — | May revoke refresh tokens | Access tokens remain valid until `exp` unless checked | Loses refresh, keeps access briefly | ✅[^3] ✅[^6] |"
+  },
+  {
+   "id": "S36",
+   "line": 509,
+   "heading": "## 8. Worked example: one full pass through a BFF",
+   "claim": "Revoked at the AS (RFC 7009) ✅[^6]",
+   "context": "| RT2 | 09:40:00 | Revoked at the AS (RFC 7009) ✅[^6] |"
+  },
+  {
+   "id": "S37",
+   "line": 512,
+   "heading": "## 8. Worked example: one full pass through a BFF",
+   "claim": "Logout token ✅[^9]",
+   "context": "| Sessions at other apps | When each back-channel POST arrives | Logout token ✅[^9] |"
+  },
+  {
+   "id": "S38",
+   "line": 523,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^11]",
+   "context": "| 4 | XSS calls APIs through the BFF | Works while the page is open | Fix the XSS; CSP (Content Security Policy) as a second layer | ✅[^2] ✅[^11] |"
+  },
+  {
+   "id": "S39",
+   "line": 523,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^2]",
+   "context": "| 4 | XSS calls APIs through the BFF | Works while the page is open | Fix the XSS; CSP (Content Security Policy) as a second layer | ✅[^2] ✅[^11] |"
+  },
+  {
+   "id": "S40",
+   "line": 528,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^24]",
+   "context": "| 9 | Logout and re-login in the same second with an `iat` cut-off | Stolen token survives, or re-login fails | Version counter | ✅[^24] |"
+  },
+  {
+   "id": "S41",
+   "line": 530,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^7]",
+   "context": "| 11 | Introspection answer cached | Revoked token accepted until the cache entry ends | Short cache; never past `exp` | ✅[^7] |"
+  },
+  {
+   "id": "S42",
+   "line": 531,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^6]",
+   "context": "| 12 | Refresh token revoked, access token self-contained | Access token works until `exp` | Short lifetime or RS-side check | ✅[^6] |"
+  },
+  {
+   "id": "S43",
+   "line": 546,
+   "heading": "## 10. Recommended baseline",
+   "claim": "**Short access tokens** plus a revocation check where \"log out\" must be immediate: a per-user version counter for \"everywhere\", (`iss`, `jti`) or `sid` for one token or session, with entries expiring at the token's `exp` ✅[^4]",
+   "context": "3. **Short access tokens** plus a revocation check where \"log out\" must be immediate: a per-user version counter for \"everywhere\", (`iss`, `jti`) or `sid` for one token or session, with entries expiring at the token's `exp` ✅[^4] ✅[^24]."
+  },
+  {
+   "id": "S44",
+   "line": 549,
+   "heading": "## 10. Recommended baseline",
+   "claim": "✅[^10]",
+   "context": "6. **Tell the other apps:** back-channel logout or CAEP events, so a logout at the AS reaches every client ✅[^9] ✅[^10]."
+  },
+  {
+   "id": "S45",
+   "line": 559,
+   "heading": "## 11. Lab notes",
+   "claim": "In headless Chrome the IndexedDB step never completed, so that one result comes from Chromium 152 only ✅[^25]",
+   "context": "To rerun: `node experiments/jwt-revocation-lab.mjs`; `node experiments/cookie-visibility-server.mjs 8787`, then open `http://localhost:8787/` and, afterwards, `http://localhost:8787/clear` to remove the lab's cookies, storage and database. In headless Chrome the IndexedDB step never completed, so that one result comes from Chromium 152 only ✅[^25]."
+  }
+ ]
+}

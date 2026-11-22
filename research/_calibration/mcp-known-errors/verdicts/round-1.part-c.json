@@ -1,0 +1,754 @@
+{
+  "verdict": null,
+  "overall_score": null,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "cded4d1",
+    "scope": [
+      "## 3. Q3: Transports and authorization",
+      "### 3.1 The standard transports",
+      "### 3.2 What became of HTTP+SSE",
+      "### 3.3 Era detection for clients that must support both",
+      "### 3.4 Choosing a transport",
+      "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "### 3.6 Choosing an auth setup"
+    ]
+  },
+  "section_map": [
+    {
+      "heading": "## 3. Q3: Transports and authorization",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 The standard transports",
+      "role": 3
+    },
+    {
+      "heading": "### 3.2 What became of HTTP+SSE",
+      "role": 5
+    },
+    {
+      "heading": "### 3.3 Era detection for clients that must support both",
+      "role": 3
+    },
+    {
+      "heading": "### 3.4 Choosing a transport",
+      "role": 6
+    },
+    {
+      "heading": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3
+    },
+    {
+      "heading": "### 3.6 Choosing an auth setup",
+      "role": 6
+    }
+  ],
+  "sources": [],
+  "deterministic_checks": {},
+  "rubric_scores": null,
+  "coverage": {
+    "claims_roles_1_5": 57,
+    "checked_roles_1_5": 57,
+    "claims_role_6": 12,
+    "checked_role_6": 12,
+    "no_cache": 0,
+    "not_checkable": 3
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "A transport is a \"binding\": it defines framing and delivery, not meaning; protocol semantics are the same on every transport",
+      "source": "[24]",
+      "verdict": "entails",
+      "page_says": "Protocol semantics are identical on every transport. A transport is a binding: it defines how messages are framed and delivered",
+      "note": ""
+    },
+    {
+      "id": "C2",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Two standard transports",
+      "source": "[24][4]",
+      "verdict": "entails",
+      "page_says": "The protocol currently defines two standard transport mechanisms for client-server communication",
+      "note": "[24] also lists exactly stdio and Streamable HTTP."
+    },
+    {
+      "id": "C3",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "stdio. The client launches the server as a subprocess; messages are newline-delimited JSON-RPC on stdin/stdout and must not contain embedded newlines; the server may log to stderr and must write nothing else to stdout",
+      "source": "[12][4]",
+      "verdict": "entails",
+      "page_says": "Messages are delimited by newlines, and MUST NOT contain embedded newlines. … The server MUST NOT write anything to its stdout that is not a valid MCP message.",
+      "note": ""
+    },
+    {
+      "id": "C4",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Clients should support stdio whenever possible (2025-11-25 text)",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "Clients SHOULD support stdio whenever possible.",
+      "note": ""
+    },
+    {
+      "id": "C5",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "In 2026-07-28 the server must not write JSON-RPC requests to stdout, cancellation is a `notifications/cancelled` message, and if the process dies the client should restart it and retry",
+      "source": "[12]",
+      "verdict": "overstates",
+      "page_says": "the client SHOULD restart it. Because the protocol is stateless, any in-flight requests are simply lost and the client can retry them against the fresh process.",
+      "note": "Stronger modal: the page makes restart a SHOULD but retry only permitted ('can retry'); the claim puts 'should' on both. The stdout and cancellation parts entail. Fix: 'the client should restart it and can retry the lost requests'. Role 3, so CRITICAL_FAIL at merge."
+    },
+    {
+      "id": "C6",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Framing experiment (E1/E3): each message above was exactly one line, with the SDK server logging \"server: ready\" only on stderr",
+      "source": "[E1][E3]",
+      "verdict": "not_checkable",
+      "page_says": "n/a: cites only local experiments",
+      "note": ""
+    },
+    {
+      "id": "C7",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Streamable HTTP. One MCP endpoint (for example `https://example.com/mcp`).",
+      "source": "[13][4]",
+      "verdict": "entails",
+      "page_says": "The server MUST provide a single HTTP endpoint path (hereafter referred to as the MCP endpoint) that supports POST. For example, this could be a URL like https://example.com/mcp.",
+      "note": "example.com/mcp is an example URL, not a citation; its 'not fetched' status in sources.json does not matter."
+    },
+    {
+      "id": "C8",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Client to server, 2025-11-25: every message is a new HTTP POST with `Accept: application/json, text/event-stream`; body is one request, notification or response",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "listing both application/json and text/event-stream as supported content types. The body of the POST request MUST be a single JSON-RPC request, notification, or response.",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Client to server, 2026-07-28: POST of a single request or notification; clients must not POST responses; must send `MCP-Protocol-Version`, `Mcp-Method` (and `Mcp-Name` for `tools/call`, `resources/read`, `prompts/get`)",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "The body of the HTTP POST MUST be a single JSON-RPC request or notification. The client MUST NOT send JSON-RPC responses. … These headers are REQUIRED for compliance.",
+      "note": "The Standard Request Headers table names Mcp-Name for tools/call, resources/read, prompts/get."
+    },
+    {
+      "id": "C10",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Server reply to a request, 2025-11-25: `application/json` or `text/event-stream`",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "the server MUST either return Content-Type: text/event-stream, to initiate an SSE stream, or Content-Type: application/json, to return one JSON object.",
+      "note": ""
+    },
+    {
+      "id": "C11",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Server reply to a request, 2026-07-28: same",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "the server MUST return either Content-Type: application/json (a single JSON object) or Content-Type: text/event-stream (an SSE response stream).",
+      "note": ""
+    },
+    {
+      "id": "C12",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Notification accepted, 2025-11-25: 202, no body",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "If the server accepts the input, the server MUST return HTTP status code 202 Accepted with no body.",
+      "note": ""
+    },
+    {
+      "id": "C13",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Notification accepted, 2026-07-28: 202, no body",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "If the server accepts it, the server MUST return HTTP status code 202 Accepted with no body.",
+      "note": ""
+    },
+    {
+      "id": "C14",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Server-to-client channel, 2025-11-25: optional GET SSE stream; server may send requests on streams",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "The client MAY issue an HTTP GET to the MCP endpoint. … The server MAY send JSON-RPC requests and notifications on the stream.",
+      "note": ""
+    },
+    {
+      "id": "C15",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Server-to-client channel, 2026-07-28: GET removed (405); no independent server requests; use MRTR and `subscriptions/listen`",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "HTTP GET or DELETE to the MCP endpoint: respond with 405 Method Not Allowed. … The server MUST NOT send independent JSON-RPC requests on this stream.",
+      "note": "The 405 is a SHOULD for modern-only servers; the cell states no modal, so no overstatement."
+    },
+    {
+      "id": "C16",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Sessions, 2025-11-25: optional `MCP-Session-Id`; 400 without it; 404 when ended; client `DELETE` to end",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "Servers that require a session ID SHOULD respond to requests without an MCP-Session-Id header (other than initialization) with HTTP 400 Bad Request.",
+      "note": "404 after termination is a MUST and DELETE is a client SHOULD on the same page. The cell compresses the 'servers that require a session ID' condition, which the word 'optional' covers."
+    },
+    {
+      "id": "C17",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Sessions, 2026-07-28: none; a server should ignore an incoming `Mcp-Session-Id`",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "An Mcp-Session-Id header on a request: ignore it, and do not mint or echo session IDs.",
+      "note": ""
+    },
+    {
+      "id": "C18",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Resumability, 2025-11-25: SSE event ids and `Last-Event-ID`",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "it SHOULD issue an HTTP GET to the MCP endpoint, and include the Last-Event-ID header to indicate the last event ID it received.",
+      "note": ""
+    },
+    {
+      "id": "C19",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Resumability, 2026-07-28: not supported; a broken stream loses the request and the client re-sends it with a new id",
+      "source": "[13][3]",
+      "verdict": "entails",
+      "page_says": "Resumable SSE streams via Last-Event-ID are not supported. … A broken response stream loses the in-flight request; clients MUST re-issue it as a new request with a new request ID",
+      "note": "The second quote is from [3] (changelog)."
+    },
+    {
+      "id": "C20",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Cancellation, 2025-11-25: explicit `notifications/cancelled`; a dropped connection is not a cancel",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "Disconnection SHOULD NOT be interpreted as the client cancelling its request. … To cancel, the client SHOULD explicitly send an MCP CancelledNotification.",
+      "note": "The cited page names the message CancelledNotification, not the wire method name notifications/cancelled; same message."
+    },
+    {
+      "id": "C21",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Cancellation, 2026-07-28: closing the response stream is the cancel",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "Closing the SSE response stream MUST be treated by the server as cancellation of that request.",
+      "note": ""
+    },
+    {
+      "id": "C22",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Origin check, 2025-11-25: server must validate `Origin`, 403 if invalid; local servers should bind to 127.0.0.1",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "If the Origin header is present and invalid, servers MUST respond with HTTP 403 Forbidden. … When running locally, servers SHOULD bind only to localhost (127.0.0.1)",
+      "note": ""
+    },
+    {
+      "id": "C23",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Origin check, 2026-07-28: same",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "Servers MUST validate the Origin header on all incoming connections to prevent DNS rebinding attacks. … servers SHOULD bind only to localhost (127.0.0.1)",
+      "note": ""
+    },
+    {
+      "id": "C24",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Header/body check, 2025-11-25: version header on later requests; 400 on unsupported version",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "the client MUST include the MCP-Protocol-Version: <protocol-version> HTTP header on all subsequent requests … with an invalid or unsupported MCP-Protocol-Version, it MUST respond with 400 Bad Request",
+      "note": ""
+    },
+    {
+      "id": "C25",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Header/body check, 2026-07-28: headers are mirrored from the body; mismatch must be rejected with 400 and `-32020`",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "mirrors selected JSON-RPC body fields into HTTP headers … Servers MUST reject requests with a 400 Bad Request HTTP status and JSON-RPC error code -32020 (HeaderMismatch) if any validation fails.",
+      "note": ""
+    },
+    {
+      "id": "C26",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Custom headers, 2026-07-28: tool parameters marked `x-mcp-header` become `Mcp-Param-{Name}` headers; clients must support it",
+      "source": "[13][14]",
+      "verdict": "entails",
+      "page_says": "While the use of x-mcp-header is optional for servers, clients MUST support this feature. … construct the header name Mcp-Param-{name}",
+      "note": ""
+    },
+    {
+      "id": "C27",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Experiment E5 table (SDK 2.4.0 createMcpHandler): seven request/result rows",
+      "source": "[E5]",
+      "verdict": "not_checkable",
+      "page_says": "n/a: cites only local experiments",
+      "note": ""
+    },
+    {
+      "id": "C28",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "The first six rows match the spec text",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "If the server does not implement the requested protocol version … it MUST respond with 400 Bad Request and an UnsupportedProtocolVersionError listing its supported versions.",
+      "note": "Rows 2, 4, 5 and 6 match [13] directly (-32020 for mismatch and missing headers, 405 for GET). For row 3, [13] gives 400 plus an error that lists supported versions; the code -32022 itself appears only in [5]. Consider citing [5] beside [13]."
+    },
+    {
+      "id": "C29",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "The last row is SDK behavior (dual-era fallback), which the spec permits for dual-era servers",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "A server that wishes to support both legacy clients (which expect an initialize handshake) and modern clients (which use per-request metadata) MAY implement both behaviors.",
+      "note": ""
+    },
+    {
+      "id": "C30",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "Experiment E6 (SDK 1.32.2, legacy sessions over real HTTP on 127.0.0.1): session id, 202, 400, DELETE 200, 404",
+      "source": "[E6]",
+      "verdict": "not_checkable",
+      "page_says": "n/a: cites only local experiments",
+      "note": ""
+    },
+    {
+      "id": "C31",
+      "section": "### 3.1 The standard transports",
+      "role": 3,
+      "claim": "This matches the 2025-11-25 session rules",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "The server MAY terminate the session at any time, after which it MUST respond to requests containing that session ID with HTTP 404 Not Found.",
+      "note": "Session ID at initialize (MAY), 202 for the notification, 400 without the id (SHOULD) and client DELETE (SHOULD) are all on the same page."
+    },
+    {
+      "id": "C32",
+      "section": "### 3.2 What became of HTTP+SSE",
+      "role": 5,
+      "claim": "HTTP+SSE is the transport of the 2024-11-05 revision. Streamable HTTP was introduced in 2025-03-26 as its replacement",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "Streamable HTTP was introduced in protocol version 2025-03-26 as a replacement for the HTTP+SSE transport from protocol version 2024-11-05.",
+      "note": ""
+    },
+    {
+      "id": "C33",
+      "section": "### 3.2 What became of HTTP+SSE",
+      "role": 5,
+      "claim": "It is formally Deprecated (registry, SEP-2596): deprecated since 2025-03-26, new implementations should not adopt it, migrate to Streamable HTTP",
+      "source": "[21][13]",
+      "verdict": "entails",
+      "page_says": "deprecated since protocol version 2025-03-26 and is classified as Deprecated under the feature lifecycle policy (SEP-2596). New implementations SHOULD NOT adopt it; existing implementations SHOULD migrate to Streamable HTTP.",
+      "note": "Quote from [13]; the [21] registry row agrees (SEP-2596, 2025-03-26, Streamable HTTP)."
+    },
+    {
+      "id": "C34",
+      "section": "### 3.2 What became of HTTP+SSE",
+      "role": 5,
+      "claim": "It is \"eligible for removal in a future revision\"; the registry says earliest removal is \"Three months after SEP-2596 reaches Final\"",
+      "source": "[21]",
+      "verdict": "entails",
+      "page_says": "HTTP+SSE transport | SEP-2596 | 2025-03-26 | Streamable HTTP | Three months after SEP-2596 reaches Final … The earliest removal marks when a feature becomes eligible for removal",
+      "note": "The substance holds on [21]. But the first quoted phrase is copied word for word from [13], not from [21], which the bullet does not cite. Add [13] to this bullet."
+    },
+    {
+      "id": "C35",
+      "section": "### 3.2 What became of HTTP+SSE",
+      "role": 5,
+      "claim": "No feature has been removed yet",
+      "source": "[21]",
+      "verdict": "overstates",
+      "page_says": "No features have been removed under this policy yet.",
+      "note": "Dropped qualifier 'under this policy'. Without it the claim is wider than the page and clashes with the doc's own text: 3.1 says 2026-07-28 removed the GET stream, sessions and resumability. Fix: 'No feature has been removed under the SEP-2596 lifecycle policy yet'. Role 5, so CRITICAL_FAIL at merge."
+    },
+    {
+      "id": "C36",
+      "section": "### 3.2 What became of HTTP+SSE",
+      "role": 5,
+      "claim": "Backward-compat probe (both eras): POST a request to the URL; if it fails with 400, 404 or 405 (and in 2026-07-28 the body is not a recognized modern JSON-RPC error), GET the URL expecting an SSE stream whose first event is `endpoint`; if so, use the old transport",
+      "source": "[4][13]",
+      "verdict": "entails",
+      "page_says": "If it fails with HTTP status code 400 Bad Request, 404 Not Found, or 405 Method Not Allowed and the response body is not a recognized modern JSON-RPC error",
+      "note": "[4] gives the same probe without the body condition, using an InitializeRequest."
+    },
+    {
+      "id": "C37",
+      "section": "### 3.3 Era detection for clients that must support both",
+      "role": 3,
+      "claim": "stdio: send `server/discover` first. A `DiscoverResult` or a recognized modern error means modern; any other error or a timeout means legacy, so fall back to `initialize`. Do not key the fallback to one error code",
+      "source": "[12]",
+      "verdict": "entails",
+      "page_says": "The fallback MUST NOT be keyed to one specific error code … The server returns any other error, or does not respond within a reasonable timeout: the server is legacy.",
+      "note": ""
+    },
+    {
+      "id": "C38",
+      "section": "### 3.3 Era detection for clients that must support both",
+      "role": 3,
+      "claim": "HTTP: send a modern request; on a 400, read the body; a recognized modern error means modern (retry), anything else means legacy",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "the client SHOULD inspect the response body before falling back … If the body is empty or is not a recognized modern JSON-RPC error, fall back to initialize",
+      "note": ""
+    },
+    {
+      "id": "C39",
+      "section": "### 3.3 Era detection for clients that must support both",
+      "role": 3,
+      "claim": "Cache the answer per process (stdio) or origin (HTTP)",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "Clients SHOULD cache the result for the lifetime of the server process (stdio) or origin (HTTP)",
+      "note": ""
+    },
+    {
+      "id": "C40",
+      "section": "### 3.3 Era detection for clients that must support both",
+      "role": 3,
+      "claim": "Compatibility matrix highlights: modern client against legacy server fails; legacy client against modern-only server fails; dual-era implementations on either side work",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "Modern | Legacy | Fails. … Legacy | Modern | Fails. … Dual-era | Legacy | Works. … Legacy | Dual-era | Works.",
+      "note": ""
+    },
+    {
+      "id": "C41",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Row 'Server runs on the user's machine, launched by the host' -> stdio. Why: no network surface; spec says local servers should use stdio to limit access to the client",
+      "source": "[25]",
+      "verdict": "overstates",
+      "page_says": "SHOULD implement measures to prevent unauthorized usage from malicious processes: … Use the stdio transport to limit access to just the MCP client … Restrict access if using an HTTP transport",
+      "note": "The SHOULD applies to 'implement measures'. Stdio is one listed measure, beside a restricted HTTP transport, so 'local servers should use stdio' overstates. 'No network surface' is the doc's inference, not page text. Fix: 'spec lists stdio as one way to limit access to just the client'. Role 6, so SOFT_WARN."
+    },
+    {
+      "id": "C42",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Same row: credentials come from the environment, not OAuth",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Implementations using an STDIO transport SHOULD NOT follow this specification, and instead retrieve credentials from the environment.",
+      "note": ""
+    },
+    {
+      "id": "C43",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Row 'Shared or remote server, many users' -> Streamable HTTP + OAuth. Why: single endpoint, works through ordinary HTTP infrastructure; load balancers can route on `Mcp-Method`/`Mcp-Name` headers",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "mirrors selected JSON-RPC body fields into HTTP headers so that intermediaries (load balancers, gateways, observability tooling) can route and inspect requests without parsing the body.",
+      "note": ""
+    },
+    {
+      "id": "C44",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Row 'Local HTTP server' -> Streamable HTTP bound to 127.0.0.1, validate `Origin`, require a token",
+      "source": "[13][25]",
+      "verdict": "entails",
+      "page_says": "When running locally, servers SHOULD bind only to localhost (127.0.0.1) … Require an authorization token … Servers MUST validate the Origin header",
+      "note": ""
+    },
+    {
+      "id": "C45",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Row 'Existing HTTP+SSE server' -> keep old endpoints only for old clients, add Streamable HTTP",
+      "source": "[13]",
+      "verdict": "entails",
+      "page_says": "Continue to host both the SSE and POST endpoints of the old transport, alongside the new “MCP endpoint” defined for the Streamable HTTP transport.",
+      "note": ""
+    },
+    {
+      "id": "C46",
+      "section": "### 3.4 Choosing a transport",
+      "role": 6,
+      "claim": "Row 'Need server push of tool-list changes' -> `subscriptions/listen` (2026-07-28) or GET stream (legacy)",
+      "source": "[15][4]",
+      "verdict": "entails",
+      "page_says": "toolsListChanged | boolean | Receive notifications/tools/list_changed when tools change … The server MAY send JSON-RPC requests and notifications on the stream.",
+      "note": ""
+    },
+    {
+      "id": "C47",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Scope. Authorization is optional. HTTP implementations should follow the spec; stdio implementations should not, and should read credentials from the environment",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Authorization is OPTIONAL for MCP implementations. … Implementations using an HTTP-based transport SHOULD conform to this specification. … STDIO transport SHOULD NOT follow this specification, and instead retrieve credentials from the environment.",
+      "note": ""
+    },
+    {
+      "id": "C48",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Alternative transports must follow established best practice for their protocol",
+      "source": "[26]",
+      "verdict": "overstates",
+      "page_says": "Implementations using alternative transports MUST follow established security best practices for their protocol.",
+      "note": "Dropped qualifier: 'security best practices' written as 'best practice', which widens the MUST to all best practice. Fix: 'must follow established security best practices for their protocol'. Role 3, so CRITICAL_FAIL at merge."
+    },
+    {
+      "id": "C49",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Roles. The MCP server is an OAuth 2.1 resource server; the MCP client is an OAuth 2.1 client; the authorization server issues tokens and may be separate from the MCP server",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "A protected MCP server acts as an OAuth 2.1 resource server … It may be hosted with the resource server or a separate entity.",
+      "note": "The page says 'a protected MCP server'. Here the context (authorization for HTTP servers, authorization optional) keeps the meaning. Optional wording fix: 'A protected MCP server'."
+    },
+    {
+      "id": "C50",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Flow (steps are normative unless marked), with step 1: client calls with no token; server returns 401 with `WWW-Authenticate: Bearer resource_metadata=\"...\"` (and optionally `scope=\"...\"`)",
+      "source": "[26][27][28]",
+      "verdict": "entails",
+      "page_says": "MCP servers MUST implement one of the following discovery mechanisms … Include the resource metadata URL in the WWW-Authenticate HTTP header under resource_metadata when returning 401 Unauthorized responses",
+      "note": "Step 1 has no mark of its own and is grounded under the Flow mark. It shows only the header route, which is one of two allowed mechanisms; step 2 states the either/or correctly, so it is not flagged. A scope in the challenge is a server SHOULD in [26]; 'optionally' understates it, which is not a violation."
+    },
+    {
+      "id": "C51",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "2. Client fetches the Protected Resource Metadata (RFC 9728), which must list at least one entry in `authorization_servers`. Servers must support either the header or the well-known URI (`/.well-known/oauth-protected-resource[/path]`); clients must support both, header first",
+      "source": "[27]",
+      "verdict": "entails",
+      "page_says": "containing at least one authorization server. … MCP clients MUST support both discovery mechanisms and use the resource metadata URL from the parsed WWW-Authenticate headers when present",
+      "note": ""
+    },
+    {
+      "id": "C52",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "3. Client discovers authorization server metadata, trying RFC 8414 and OpenID Connect well-known URLs in a fixed priority order, and must reject metadata whose `issuer` differs from the issuer used to build the URL",
+      "source": "[27]",
+      "verdict": "entails",
+      "page_says": "the issuer value in the document MUST be identical to the issuer identifier used to construct the well-known URL. If they differ, the client MUST NOT use the metadata.",
+      "note": ""
+    },
+    {
+      "id": "C53",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "4. Client obtains a client id. Priority for clients that support all: pre-registered credentials, then Client ID Metadata Documents (an HTTPS URL as `client_id`, if the server advertises `client_id_metadata_document_supported`), then Dynamic Client Registration, then prompt the user",
+      "source": "[28]",
+      "verdict": "entails",
+      "page_says": "Clients supporting all options SHOULD use the following priority order: … Use Dynamic Client Registration as a fallback if the Authorization Server supports it",
+      "note": "The 'server' that advertises CIMD support is the authorization server, per the page."
+    },
+    {
+      "id": "C54",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Dynamic Client Registration is deprecated in 2026-07-28",
+      "source": "[21][28]",
+      "verdict": "entails",
+      "page_says": "Dynamic Client Registration | PR #2858 | 2026-07-28 | Client ID Metadata Documents … Dynamic Client Registration is deprecated.",
+      "note": ""
+    },
+    {
+      "id": "C55",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "5. Client runs authorization code flow with PKCE (`S256`); it must verify the server advertises `code_challenge_methods_supported` and refuse to continue otherwise",
+      "source": "[29]",
+      "verdict": "entails",
+      "page_says": "the S256 code challenge method when technically capable … If code_challenge_methods_supported is absent, the authorization server does not support PKCE and MCP clients MUST refuse to proceed.",
+      "note": "S256 is a MUST 'when technically capable'. The claim's '(S256)' states no modal, so it is not flagged; adding the qualifier would make it exact."
+    },
+    {
+      "id": "C56",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "6. Both authorization and token requests must include the RFC 8707 `resource` parameter naming the MCP server's canonical URI, whether or not the authorization server supports it",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "MUST be included in both authorization requests and token requests. … MCP clients MUST send this parameter regardless of whether authorization servers support it.",
+      "note": ""
+    },
+    {
+      "id": "C57",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "7. Client records the authorization server `issuer` before redirecting and checks the `iss` parameter on the response (RFC 9207) before sending the code anywhere",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Before redirecting the user-agent, the client MUST record the issuer value … MCP clients MUST apply the validation in RFC9207 Section 2.4 before transmitting the authorization code to any token endpoint",
+      "note": ""
+    },
+    {
+      "id": "C58",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "8. Client sends `Authorization: Bearer <token>` on every HTTP request; tokens must not go in the query string",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Note that authorization MUST be included in every HTTP request from client to server. … Access tokens MUST NOT be included in the URI query string",
+      "note": ""
+    },
+    {
+      "id": "C59",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "9. Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Invalid or expired tokens MUST receive an HTTP 401 response. … the server SHOULD respond with: … HTTP 403 Forbidden status code … error=\"insufficient_scope\"",
+      "note": "The 403 challenge contents are a SHOULD and the 401 is a MUST; the claim states no modal for either."
+    },
+    {
+      "id": "C60",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "10. Step-up: the client unions previously requested scopes with the challenged scopes, re-authorizes, and retries a limited number of times",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Determine required scopes by computing the union of the client’s previously requested scope set and the scopes from the current challenge. … no more than a few times",
+      "note": ""
+    },
+    {
+      "id": "C61",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Scope selection at first authorization: use the `scope` from the `WWW-Authenticate` header if present; otherwise all `scopes_supported` from the resource metadata; otherwise omit `scope`",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "Use scope parameter from the initial WWW-Authenticate header in the 401 response, if provided … use all scopes defined in scopes_supported … omitting the scope parameter if scopes_supported is undefined",
+      "note": ""
+    },
+    {
+      "id": "C62",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "Refresh tokens: clients must keep them confidential and must not assume they will be issued; servers should not put `offline_access` in their challenges or `scopes_supported`",
+      "source": "[26]",
+      "verdict": "entails",
+      "page_says": "MUST keep refresh tokens confidential in transit and storage … MUST NOT assume refresh tokens will be issued … SHOULD NOT include offline_access in WWW-Authenticate scope or Protected Resource Metadata scopes_supported",
+      "note": ""
+    },
+    {
+      "id": "C63",
+      "section": "### 3.5 Authorization for HTTP servers (2026-07-28)",
+      "role": 3,
+      "claim": "The 2026-07-28 changelog confirms the `iss` addition and the DCR deprecation",
+      "source": "[3]",
+      "verdict": "entails",
+      "page_says": "MCP clients MUST validate a present iss against the recorded issuer before redeeming the authorization code (SEP-2468). … Deprecate the OAuth 2.0 Dynamic Client Registration Protocol (RFC7591)",
+      "note": ""
+    },
+    {
+      "id": "C64",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Local stdio server: no OAuth; pass secrets by environment variable or config",
+      "source": "[26]",
+      "verdict": "overstates",
+      "page_says": "Implementations using an STDIO transport SHOULD NOT follow this specification, and instead retrieve credentials from the environment.",
+      "note": "Wider scope: the page names only the environment; 'or config' is not on the cited page. Fix: 'pass secrets by environment variable' (or cite a source for config files). Role 6, so SOFT_WARN."
+    },
+    {
+      "id": "C65",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Public or enterprise remote server, unknown clients: OAuth 2.1 + PKCE + Protected Resource Metadata + `resource` parameter; accept Client ID Metadata Documents; keep Dynamic Client Registration only for old authorization servers",
+      "source": "[26][28]",
+      "verdict": "entails",
+      "page_says": "Authorization servers and MCP clients SHOULD support OAuth Client ID Metadata Documents … retained for backwards compatibility with authorization servers that do not support Client ID Metadata Documents.",
+      "note": "PKCE is required in [29], which this row does not cite; [26] refers to the PKCE code verifier and requires following Security Considerations."
+    },
+    {
+      "id": "C66",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Known client and server relationship: pre-registered client id",
+      "source": "[28]",
+      "verdict": "entails",
+      "page_says": "Pre-registration: When client and server have an existing relationship",
+      "note": ""
+    },
+    {
+      "id": "C67",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Server calls third-party APIs for the user: server runs its own OAuth client to the third party (URL-mode elicitation to get the user there); never forward the MCP token",
+      "source": "[19][30]",
+      "verdict": "entails",
+      "page_says": "URL mode elicitation enables a pattern where MCP servers act as OAuth clients to third-party resource servers. … The MCP server MUST NOT use the client’s credentials for the third-party service",
+      "note": ""
+    },
+    {
+      "id": "C68",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Server acts as an OAuth proxy with a static client id to a third party: per-client consent before forwarding, exact `redirect_uri` match, `state` checks",
+      "source": "[30]",
+      "verdict": "entails",
+      "page_says": "MCP proxy servers MUST implement per-client consent and proper security controls … Use exact string matching (not pattern matching or wildcards) … Reject any callback requests where the state parameter is missing",
+      "note": ""
+    },
+    {
+      "id": "C69",
+      "section": "### 3.6 Choosing an auth setup",
+      "role": 6,
+      "claim": "Local HTTP server: bind 127.0.0.1, validate `Origin`, require a token or use a Unix socket",
+      "source": "[13][25]",
+      "verdict": "entails",
+      "page_says": "Require an authorization token … Use unix domain sockets or other Interprocess Communication (IPC) mechanisms with restricted access … servers SHOULD bind only to localhost (127.0.0.1)",
+      "note": ""
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [],
+  "patch_instructions": []
+}

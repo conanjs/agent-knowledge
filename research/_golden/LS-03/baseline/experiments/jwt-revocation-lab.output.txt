@@ -1,0 +1,52 @@
+
+=== A. Stateless verification: logout does not stop a copied token ===
+2026-11-22T09:00:00.100Z issued access token, exp in 900 s
+2026-11-22T09:00:00.100Z user clicks "log out" (client deletes its copy; server keeps no state)
+2026-11-22T09:01:00.100Z attacker replays the copied token -> ACCEPTED
+2026-11-22T09:16:00.100Z same token after exp -> rejected: expired
+
+=== B. Denylist keyed on (iss, jti), entry TTL = exp - now ===
+2026-11-22T09:16:00.100Z issued alice token (jti-2) and bob token
+2026-11-22T09:16:30.100Z logout: denylist entry added, remaining TTL 869.9 s, size=1
+2026-11-22T09:16:30.100Z alice token -> rejected: revoked (denylist)
+2026-11-22T09:16:30.100Z bob token   -> ACCEPTED
+2026-11-22T09:31:01.100Z after alice exp: denylist size=0 (entry no longer needed: exp check rejects) -> rejected: expired
+
+=== C. "Revoke all tokens issued before T" with second-precision iat ===
+2026-11-22T09:00:00.100Z T1 issued, iat=1795338000
+2026-11-22T09:00:00.400Z "log out everywhere": cutoff=1795338000 (seconds)
+2026-11-22T09:00:00.700Z user logs in again: T2 issued, iat=1795338000
+rule "reject iat <  cutoff": T1 (stolen, should die) -> ACCEPTED ; T2 (fresh login) -> ACCEPTED
+rule "reject iat <= cutoff": T1 (stolen, should die) -> rejected ; T2 (fresh login) -> rejected
+rule "ver must equal user.tokenVersion": T1(ver=1) -> rejected ; T2(ver=2) -> ACCEPTED
+
+=== D. Refresh token rotation with reuse detection (token families) ===
+-- D1: thief replays an old refresh token after the client rotated it
+2026-11-22T09:00:01.700Z client refresh(RT1) -> new RT issued
+2026-11-22T09:00:02.700Z thief  refresh(RT1) -> REFUSED: REUSE DETECTED -> whole family revoked
+2026-11-22T09:00:03.700Z client refresh(RT2) -> REFUSED: family revoked
+-- D2: thief uses the stolen token first
+2026-11-22T09:00:04.700Z thief  refresh(RT1) -> new RT issued
+2026-11-22T09:00:05.700Z client refresh(RT1) -> REFUSED: REUSE DETECTED -> whole family revoked
+2026-11-22T09:00:06.700Z thief  refresh(RT2') -> REFUSED: family revoked
+-- D3: persistent theft: thief copies the LATEST token, waits until the user closes the app
+2026-11-22T09:10:06.700Z user closes the tab; the client never presents its last RT again
+2026-11-22T10:10:06.700Z thief  refresh(latest RT) -> new RT issued
+-- D4: benign race: two tabs refresh with the same RT at once (no leeway)
+2026-11-22T10:10:07.700Z tab A  refresh(RT1) -> new RT issued
+2026-11-22T10:10:07.740Z tab B  refresh(RT1) -> REFUSED: REUSE DETECTED -> whole family revoked
+-- D5: same race with a 2 s leeway (overlap) window
+2026-11-22T10:10:08.740Z tab A  refresh(RT1) -> new RT issued
+2026-11-22T10:10:08.780Z tab B  refresh(RT1) -> new RT issued (reuse inside leeway window, allowed)
+2026-11-22T10:10:13.780Z thief  refresh(RT1) 5 s later -> REFUSED: REUSE DETECTED -> whole family revoked
+
+=== E. JWT malleability vs a denylist keyed on SHA-256(token) ===
+original token hash f903cc8dd6efc850; denylisted
+variant ...OMys3p  hash b82cc0b68c335e99  in hash-denylist: false  lenient verify: VALID  strict verify: invalid (non-canonical base64url (trailing bits))  jti=jti-8
+variant ...OMys3q  hash 7d6c545065f0de9e  in hash-denylist: false  lenient verify: VALID  strict verify: invalid (non-canonical base64url (trailing bits))  jti=jti-8
+variant ...OMys3r  hash 3d5507e827c22bae  in hash-denylist: false  lenient verify: VALID  strict verify: invalid (non-canonical base64url (trailing bits))  jti=jti-8
+variant ...Mys3o=  hash a2d539aa4fae8a6d  in hash-denylist: false  lenient verify: VALID  strict verify: invalid (non-base64url character or padding)  jti=jti-8
+ES256 original (r, s)   hash 0dc51419bb8bcb39 verify=true
+ES256 malleated (r, n-s) hash ca5e964ee3d06c0a verify=true  same claims, different token string: true
+
+node v24.22.1, darwin-arm64, OpenSSL 3.5.9

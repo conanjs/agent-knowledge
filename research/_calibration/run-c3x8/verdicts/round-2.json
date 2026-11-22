@@ -1,0 +1,208 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 4.25,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "9ae51f8", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "envelope", "note": "No ✅ marks; its unmarked claims summarize How it works (role 3) and Worked example (role 4)." },
+    { "heading": "## Problem", "role": 1 },
+    { "heading": "## Mental model", "role": 1 },
+    { "heading": "## How it works", "role": 3, "note": "Includes the 'Where each form fits' decision table, which is guidance rather than mechanism." },
+    { "heading": "## Worked example", "role": 4 },
+    { "heading": "## Edge cases", "role": 6 },
+    { "heading": "## Trade-offs", "role": 6 },
+    { "heading": "## Takeaways", "role": "envelope", "note": "Summary-like rule candidates; no ✅ marks." },
+    { "heading": "## Verification status", "role": "envelope" },
+    { "heading": "## References", "role": "envelope" },
+    { "heading": "## Related", "role": "envelope" }
+  ],
+  "sources": [
+    { "ref": "[^1]", "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html", "cache": "cache/56877450f820.txt", "rank": 1, "rank_basis": "www.typescriptlang.org/docs/ is the TypeScript project's own documentation site." },
+    { "ref": "[^2]", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements", "cache": "cache/bef9a389da4e.txt", "rank": 3, "rank_basis": "developer.mozilla.org/en-US/docs/ is MDN Web Docs, a curated secondary reference, not the ECMAScript spec." },
+    { "ref": "[^3]", "url": "https://v8.dev/blog/faster-class-features", "cache": "cache/bfccfe616eb2.txt", "rank": 4, "rank_basis": "v8.dev/blog/ is the V8 project's engineering blog (named as a rank-4 example); it is a blog post, not V8 docs or release notes." },
+    { "ref": "[^4]", "url": "https://nodejs.org/api/typescript.html", "cache": "cache/88356b0b53c0.txt", "rank": 1, "rank_basis": "nodejs.org/api/ is the Node.js project's own API documentation. The saved page is the Node.js v26.13.1 docs; its History table covers the 22.x-26.x changes." }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": { "citation_integrity": 5, "rank_compliance": 5, "factual_grounding": 3, "diataxis_rigor": 4 },
+  "coverage": { "claims_roles_1_5": 6, "checked_roles_1_5": 6, "claims_role_6": 4, "checked_role_6": 4, "no_cache": 0, "not_checkable": 0 },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`private` and `protected` are enforced only during type checking. Runtime lookups, and bracket notation even during type checking, still reach the member: it is \"soft private\".",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "page_says": "private and protected are only enforced during type checking. … private also allows access using bracket notation during type checking … these fields are soft private",
+      "note": "The runtime-lookup part holds for both modifiers. But the page grants the bracket-notation escape hatch and the 'soft private' label to `private` only; the claim's subject 'the member' covers `protected` too, which is a wider scope."
+    },
+    {
+      "id": "C2",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`#` fields stay private after compilation and have no bracket-notation escape hatch: they are \"hard private\".",
+      "source": "[^1]",
+      "verdict": "entails",
+      "page_says": "JavaScript’s private fields (#) remain private after compilation and do not provide the previously mentioned escape hatches like bracket notation access, making them hard private.",
+      "note": ""
+    },
+    {
+      "id": "C3",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "When compiling to ES2021 or lower, TypeScript replaces `#` with `WeakMap`s. The handbook notes that these runtime privacy checks could affect performance.",
+      "source": "[^1]",
+      "verdict": "entails",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #. … Note that these added privacy checks during runtime could affect performance.",
+      "note": "The modal 'could' is kept. The page's performance note covers closures, WeakMaps and private fields; tying it to WeakMaps alone is narrower, so it is still entailed (see the conflicts entry on runtime cost)."
+    },
+    {
+      "id": "C4",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Private elements are not properties. They cannot be enumerated, deleted, proxied, or reached through `Object` methods, and `structuredClone()` does not copy them.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "page_says": "they cannot be proxied, enumerated, deleted, or interacted with using any Object method. … structuredClone() does not clone private elements",
+      "note": "The page also says MDN avoids 'private property' because private elements have no property key or attributes."
+    },
+    {
+      "id": "C5",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Reading a `#` field from an object whose class did not declare it throws a `TypeError`. `#x in obj` checks for it without throwing.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "page_says": "TypeError: Cannot read private member #x from an object whose class did not declare it … This will return true if the private field or method exists, and false otherwise.",
+      "note": "The first sentence restates the page's example error for an object without the element; the second matches the `in` check returning true or false."
+    },
+    {
+      "id": "C6",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "V8 9.7 moved class-field initialization, including private fields, onto its inline-cache fast path. Before that it went through slower runtime calls.",
+      "source": "[^3]",
+      "verdict": "overstates",
+      "page_says": "With v9.7, when V8 considers the pattern of the initialization to be predictable enough, it uses a new IC to speed up the operation",
+      "note": "The claim drops the qualifier 'when … predictable enough'. The page also says the IC falls back to a runtime call when the pattern does not match, the object is a proxy, the field already exists, or the hidden class is new. The 'before 9.7' sentence is entailed ('Before v9.7, V8 always used a costly runtime call')."
+    },
+    {
+      "id": "C7",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Private elements cannot be proxied (row: Object wrapped in a `Proxy` → `#` access does not go through the proxy)",
+      "source": "[^2]",
+      "verdict": "entails",
+      "page_says": "they cannot be proxied, enumerated, deleted, or interacted with using any Object method.",
+      "note": ""
+    },
+    {
+      "id": "C8",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "TypeScript downlevels it (row: Target ES2021 or lower → `#` becomes `WeakMap` lookups)",
+      "source": "[^1]",
+      "verdict": "entails",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #.",
+      "note": "The row's only ✅ closes the Why cell; judged with the What-happens cell."
+    },
+    {
+      "id": "C9",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "So code meant to run unbuilt keeps injected collaborators as `readonly #field`s assigned in the constructor (row: `--experimental-transform-types` runs on Node 24.22 with an `ExperimentalWarning`, re-tested 2026-11-03; the flag is removed in Node 26.0.0)",
+      "source": "[^4]",
+      "verdict": "unsupported",
+      "page_says": "v26.0.0 | Removed --experimental-transform-types flag. … any TypeScript features that involve replacing TypeScript syntax with new JavaScript syntax will error.",
+      "note": "Removal in 26.0.0 is entailed. The page does not give the recommendation in the ✅ cell: it says only that parameter properties need transformation, and a declared `private readonly` field would also be erasable. The ExperimentalWarning on Node 24.22 is a local re-test that the v26 page does not cover (References says 24.22.1, the body says 24.22). Worst part: unsupported."
+    },
+    {
+      "id": "C10",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Node only deletes types (row: Type stripping is stable (stability 2) since Node 24.12.0 and 25.2.0; no warning since 24.3.0; Node ignores `tsconfig.json` and needs `.ts` extensions in relative imports)",
+      "source": "[^4]",
+      "verdict": "overstates",
+      "page_says": "v25.2.0, v24.12.0 | Type stripping is now stable. … v24.3.0, v22.18.0 | Type stripping no longer emits an experimental warning. … Node.js ignores tsconfig.json files",
+      "note": "The stability versions, Stability 2, tsconfig.json being ignored, mandatory `.ts` extensions in imports and 'only removing inline types' are all entailed. But 'no warning' drops the page's qualifier 'experimental'. The row's only ✅ closes the Why cell; judged with the whole row, since References lists these facts as backed by [^4]."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Runtime cost of native `#` fields",
+      "winner": "[^1] rank 1 (hedged: privacy checks 'could affect performance', said of closures, WeakMaps and private fields)",
+      "loser": "Local benchmark (Worked example), restated without citation in Summary ('costs the same as public fields') and Takeaways ('measured cost is nil')",
+      "where_loser_is": "## Summary, ## Takeaways",
+      "ok": true,
+      "note": "This is not a contradiction: a 'could' hedge against a measurement. [^3] rank 4 supports the doc: there were no Node.js benchmark regressions, and the IC fast path applies to predictable patterns. The Summary would be more accurate scoped to V8 ≥ 9.7 and predictable initialization, as the applies-to field already is."
+    },
+    {
+      "topic": "Access to `#` fields from outside the class",
+      "winner": "[^2] rank 3 ('Code run in the Chrome console can access private elements outside the class. This is a DevTools-only relaxation')",
+      "loser": "Unmarked statements 'no key outside the class' (Mental model analogy) and 'Not possible from outside' (Edge cases, tests row)",
+      "where_loser_is": "## Mental model, ## Edge cases",
+      "ok": true,
+      "note": "This is not a contradiction for program or test code: the relaxation applies only in DevTools. Optionally add it as a role-6 edge case."
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C1 overstates: item 1 applies the bracket-notation escape hatch and the 'soft private' label to `protected` as well; [^1] gives both to `private` only."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C6 overstates: item 6 says V8 9.7 moved class-field initialization onto the IC fast path unconditionally; [^3] says it does so only 'when V8 considers the pattern of the initialization to be predictable enough' and otherwise falls back to a runtime call."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C9 unsupported: the ✅[^4] closes the recommendation to keep injected collaborators as `readonly #field`s, which [^4] does not state; the Node 24.22 ExperimentalWarning is a local re-test not covered by the cited v26 page."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C10 overstates: 'no warning since 24.3.0' drops the qualifier in [^4] 'Type stripping no longer emits an experimental warning'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## How it works",
+      "rule": "structure",
+      "evidence": "The mechanism section holds the 'Where each form fits' decision table, which is guidance, not mechanism. Its statement 'TypeScript error TS18009' is unmarked and uncited (not in any cached page). Its advice to use a `private readonly x` constructor parameter fails under Node type stripping (parameter properties, [^4]) with no pointer to the Edge cases rows that say so."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## How it works",
+      "action": "Rewrite item 1 as: \"`private` and `protected` are enforced only during type checking, so runtime lookups such as `in` or plain property access still reach the member. `private` also allows bracket-notation access during type checking, which makes it 'soft private'. ✅[^1]\" (source: [^1], Caveats: 'private also allows access using bracket notation during type checking … these fields are soft private')."
+    },
+    {
+      "section": "## How it works",
+      "action": "Rewrite item 6 as: \"From V8 9.7, when the initialization pattern is predictable enough, class-field initialization, including private fields, uses a new inline cache, just like ordinary property assignments. Unpredictable cases (a proxy, a field that already exists, an unseen hidden class) still fall back to a runtime call. Before 9.7, V8 always used a costly runtime call. ✅[^3]\" (source: [^3])."
+    },
+    {
+      "section": "## Edge cases",
+      "action": "In the `--experimental-transform-types` row, put ✅[^4] right after 'the flag is **removed in Node 26.0.0**' (source: [^4] History, v26.0.0). Mark the Node 24.22 ExperimentalWarning re-test as a local result (no ✅, or cite the local test artifact). Present 'keep injected collaborators as `readonly #field`s assigned in the constructor' as the doc's own recommendation, without ✅, based on [^4]'s statement that parameter properties require transformation and will error."
+    },
+    {
+      "section": "## Edge cases",
+      "action": "In the 'Type stripping itself' row, change 'no warning since 24.3.0' to 'no experimental warning since 24.3.0 (and 22.18.0)' (source: [^4] History: 'Type stripping no longer emits an experimental warning')."
+    },
+    {
+      "section": "## How it works",
+      "action": "Move the 'Where each form fits' table to ## Trade-offs (or its own decision section). Mark 'TypeScript error TS18009' ⚠️ or cite a page that states it. In the injected-collaborator row, add 'not runnable under Node type stripping; see Edge cases' (source: [^4], TypeScript features: parameter properties require transformation)."
+    }
+  ]
+}

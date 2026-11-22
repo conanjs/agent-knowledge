@@ -1,0 +1,146 @@
+[
+ {
+  "url": "https://arxiv.org/abs/1707.05836",
+  "normalized": "https://arxiv.org/abs/1707.05836",
+  "cache": "cache/afd2afd5b166.txt",
+  "fetched": "2026-11-22T02:48:48Z",
+  "status": 200,
+  "chars": 5156
+ },
+ {
+  "url": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+  "normalized": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+  "cache": "cache/ceef397d803d.txt",
+  "fetched": "2026-11-22T02:48:48Z",
+  "status": 200,
+  "chars": 32756
+ },
+ {
+  "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "normalized": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "cache": "cache/7144e96a4a52.txt",
+  "fetched": "2026-11-22T02:48:48Z",
+  "status": 200,
+  "chars": 54176
+ },
+ {
+  "url": "https://www.comsys.rwth-aachen.de/publication/2022/2022_sander_analyzing-the-influence-of/",
+  "normalized": "https://www.comsys.rwth-aachen.de/publication/2022/2022_sander_analyzing-the-influence-of/",
+  "cache": "cache/93fb5b99e568.txt",
+  "fetched": "2026-11-22T02:48:56Z",
+  "status": 200,
+  "chars": 1863
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc2018",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc2018",
+  "cache": "cache/6095f6fbb2e9.txt",
+  "fetched": "2026-11-22T02:48:57Z",
+  "status": 200,
+  "chars": 26987
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc5681",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc5681",
+  "cache": "cache/3d2c64bf8deb.txt",
+  "fetched": "2026-11-22T02:48:57Z",
+  "status": 200,
+  "chars": 45756
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc8446",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc8446",
+  "cache": "cache/221ec34b296a.txt",
+  "fetched": "2026-11-22T02:48:57Z",
+  "status": 200,
+  "chars": 341170
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9000",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9000",
+  "cache": "cache/ce83b627260c.txt",
+  "fetched": "2026-11-22T02:48:58Z",
+  "status": 200,
+  "chars": 373956
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9001",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9001",
+  "cache": "cache/673ee1b36dcf.txt",
+  "fetched": "2026-11-22T02:48:58Z",
+  "status": 200,
+  "chars": 119236
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9002",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9002",
+  "cache": "cache/2a4a32f971e8.txt",
+  "fetched": "2026-11-22T02:48:59Z",
+  "status": 200,
+  "chars": 84310
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9112",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9112",
+  "cache": "cache/5fb81ccf2887.txt",
+  "fetched": "2026-11-22T02:48:59Z",
+  "status": 200,
+  "chars": 103202
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9113",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9113",
+  "cache": "cache/19b1c63f6292.txt",
+  "fetched": "2026-11-22T02:48:59Z",
+  "status": 200,
+  "chars": 179736
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9114",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9114",
+  "cache": "cache/779be9a2aed0.txt",
+  "fetched": "2026-11-22T02:49:00Z",
+  "status": 200,
+  "chars": 139757
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9204",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9204",
+  "cache": "cache/337f59f9d84c.txt",
+  "fetched": "2026-11-22T02:49:00Z",
+  "status": 200,
+  "chars": 82754
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9218",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9218",
+  "cache": "cache/7df22b890e03.txt",
+  "fetched": "2026-11-22T02:49:01Z",
+  "status": 200,
+  "chars": 51551
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9293",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9293",
+  "cache": "cache/4414e131c177.txt",
+  "fetched": "2026-11-22T02:49:01Z",
+  "status": 200,
+  "chars": 211594
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9308",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9308",
+  "cache": "cache/d9f9f595457b.txt",
+  "fetched": "2026-11-22T02:49:02Z",
+  "status": 200,
+  "chars": 57653
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfcNNNN.txt",
+  "normalized": "https://www.rfc-editor.org/rfc/rfcNNNN.txt",
+  "cache": "cache/bc2f5e1b357f.txt",
+  "fetched": "2026-11-22T02:49:02Z",
+  "status": "error",
+  "error": "RuntimeError('HTTP 404')"
+ }
+]

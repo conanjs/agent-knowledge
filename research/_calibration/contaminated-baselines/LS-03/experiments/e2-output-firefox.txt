@@ -1,0 +1,36 @@
+=== firefox 151.0 ===
+cookies stored (context.cookies): ho(HttpOnly):Lax, js:Lax, strict(HttpOnly):Strict, lax(HttpOnly):Lax, none(HttpOnly)(Secure):None, nosamesite(HttpOnly):None, __Host-Http-sid(HttpOnly)(Secure):Strict, fits:None, __Host-jsok(Secure):None
+in-page report: {
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:151.0) Gecko/20100101 Firefox/151.0",
+ "documentCookieNames": [
+  "js",
+  "fits"
+ ],
+ "afterJsWrites": [
+  "js",
+  "fits",
+  "ho",
+  "__Host-jsok"
+ ],
+ "hoAsSeenByJs": "ho=overwritten-by-js",
+ "localStorageRead": "eyJ.fake.token",
+ "cookiesSentWithJsFetch": [
+  "ho",
+  "js",
+  "strict",
+  "lax",
+  "none",
+  "nosamesite",
+  "__Host-Http-sid",
+  "fits",
+  "__Host-jsok"
+ ],
+ "hoValueSeenByServer": "server-value",
+ "rawCookieHeaderSeenByServer": "ho=server-value; js=1; strict=1; lax=1; none=1; nosamesite=1; __Host-Http-sid=1; fits=yyyyyyyyyyyyyyyyyyyy...; __Host-jsok=1"
+}
+2026-11-22T02:44:34.860Z  GET  /echo?via=same-origin-fetch              sec-fetch-site=same-origin cookies=[ho, js, strict, lax, none, nosamesite, __Host-Http-sid, fits, __Host-jsok]
+2026-11-22T02:44:34.943Z  GET  /echo?via=xsite-fetch-get                sec-fetch-site=cross-site  cookies=[none, nosamesite, fits, __Host-jsok]
+2026-11-22T02:44:35.073Z  POST /echo?via=xsite-fetch-post               sec-fetch-site=cross-site  cookies=[none, nosamesite, fits, __Host-jsok]
+2026-11-22T02:44:35.079Z  GET  /echo?via=xsite-img                      sec-fetch-site=cross-site  cookies=[none, nosamesite, fits, __Host-jsok]
+2026-11-22T02:44:35.108Z  POST /echo?via=xsite-toplevel-form-post       sec-fetch-site=cross-site  cookies=[none, nosamesite, fits, __Host-jsok]
+2026-11-22T02:44:35.133Z  GET  /echo?via=xsite-toplevel-nav-get         sec-fetch-site=cross-site  cookies=[ho, js, lax, none, nosamesite, fits, __Host-jsok]

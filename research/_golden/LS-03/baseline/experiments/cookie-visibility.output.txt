@@ -1,0 +1,37 @@
+# Cookie vs. Web Storage visibility lab — results, 2026-11-22
+# Server: node cookie-visibility-server.mjs 8787 (Node v24.22.1, macOS arm64), page loaded at http://localhost:8787/
+# The page's own JavaScript computes the result: the same position an XSS (cross-site scripting) payload runs in.
+
+## Run 1: Google Chrome 158.0.8127.37, --headless=new, fresh temporary profile
+#   "Google Chrome" --headless=new --user-data-dir=<tmp> --timeout=8000 --dump-dom http://localhost:8787/
+RESULT {
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+  "isSecureContext": true,
+  "documentCookie": "__Host-readable=r1; plain=p1",
+  "localStorageToken": "eyJhbGciOiJIUzI1NiJ9.demo.sig",
+  "cookieHeaderSeenByServerOnFetch": "__Host-Http-sid=s3cr3t; __Host-readable=r1; plain=p1",
+  "exportPrivateKey": "refused: InvalidAccessError",
+  "step": "indexedDB.open"
+}
+# Note: in headless --dump-dom mode indexedDB.open() never completed, so step 5 (sign with a key loaded
+# from IndexedDB) did not finish in this run; it did in run 2.
+# Server log: GET /echo cookie="__Host-Http-sid=s3cr3t; __Host-readable=r1; plain=p1"
+
+## Run 2: Chromium 152.0.7977.167 (the Claude desktop app's built-in browser pane)
+RESULT {
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/4.16336.0 Chrome/152.0.7977.167 Safari/537.36",
+  "isSecureContext": true,
+  "documentCookie": "__Host-readable=r1; plain=p1",
+  "localStorageToken": "eyJhbGciOiJIUzI1NiJ9.demo.sig",
+  "cookieHeaderSeenByServerOnFetch": "__Host-Http-sid=s3cr3t; __Host-readable=r1; plain=p1",
+  "exportPrivateKey": "refused: InvalidAccessError",
+  "signWithKeyLoadedFromIndexedDB": "signed 64 bytes; extractable=false"
+}
+# Server log: GET /echo cookie="__Host-Http-sid=s3cr3t; __Host-readable=r1; plain=p1"
+# Afterwards /clear expired the cookies, cleared localStorage and deleted the IndexedDB database;
+# a follow-up fetch('/echo') showed cookie="" (nothing left in the persistent profile).
+
+## In both runs: set by the server but never stored (absent from document.cookie and every Cookie header)
+#   __Host-Http-noHttpOnly  (missing HttpOnly)
+#   __Host-withDomain       (has Domain=)
+#   __Host-noSecure         (missing Secure)

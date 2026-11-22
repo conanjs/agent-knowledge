@@ -1,0 +1,166 @@
+{
+  "verdict": "PASS",
+  "overall_score": 4.5,
+  "judge": { "model": "claude-opus-5-5", "prompt_sha": "f166f98", "scope": "all" },
+  "section_map": [
+    { "heading": "## Summary", "role": "envelope" },
+    { "heading": "## Problem", "role": 1 },
+    { "heading": "## Mental model", "role": 1 },
+    { "heading": "## How it works", "role": 3 },
+    { "heading": "## Worked example", "role": 4 },
+    { "heading": "## Edge cases", "role": 6 },
+    { "heading": "## Trade-offs", "role": 6 },
+    { "heading": "## Takeaways", "role": 5 },
+    { "heading": "## Verification status", "role": "envelope" },
+    { "heading": "## References", "role": "envelope" },
+    { "heading": "## Related", "role": "envelope" }
+  ],
+  "sources": [
+    { "ref": "[^1]", "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html", "cache": "cache/56877450f820.txt", "rank": 1, "rank_basis": "typescriptlang.org/docs/ is the TypeScript project's own official documentation site." },
+    { "ref": "[^2]", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements", "cache": "cache/bef9a389da4e.txt", "rank": 3, "rank_basis": "developer.mozilla.org/en-US/docs/ is MDN Web Docs, listed as authoritative secondary (Rank 3); it is not the ECMAScript spec." },
+    { "ref": "[^3]", "url": "https://v8.dev/blog/faster-class-features", "cache": "cache/bfccfe616eb2.txt", "rank": 4, "rank_basis": "v8.dev/blog/ is the V8 engineering blog, named in the Rank 4 row; it could also be read as the project's own publication (Rank 1), so the higher number applies." },
+    { "ref": "[^4]", "url": "https://nodejs.org/api/typescript.html", "cache": "cache/88356b0b53c0.txt", "rank": 1, "rank_basis": "nodejs.org/api/ is the Node.js project's official API documentation (cached copy is the v26.13.1 docs, with a version-history table)." },
+    { "ref": "local", "url": "Worked example measurement (Node 24.22 / V8 13.6, 2026-10-25) and Node 24.22 re-tests (2026-11-03)", "cache": "", "rank": "local", "rank_basis": "Author's own experiment; not cited as a footnote and not carrying any ✅." }
+  ],
+  "deterministic_checks": { "checked_by": "judge", "sections_present": true, "zero_orphan_citations": true, "rank_quarantine_intact": true, "core_claims_cited": true },
+  "rubric_scores": { "citation_integrity": 5, "rank_compliance": 5, "factual_grounding": 4, "diataxis_rigor": 4 },
+  "coverage": { "sampled": false, "claims_roles_1_5": 6, "checked_roles_1_5": 6, "claims_role_6": 4, "checked_role_6": 4, "no_cache": 0, "not_checkable": 0 },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`private` and `protected` are enforced only during type checking. Runtime lookups, and bracket notation even during type checking, still reach the member: it is \"soft private\".",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "private and protected are only enforced during type checking. ... private also allows access using bracket notation during type checking ... these fields are soft private",
+      "note": "The first sentence and the runtime-lookup part hold for both modifiers. The page gives the bracket-notation escape and the 'soft private' label to `private` only; the doc's sentence extends them to `protected` members too (wider scope)."
+    },
+    {
+      "id": "C2",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`#` fields stay private after compilation and have no bracket-notation escape hatch: they are \"hard private\".",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "JavaScript’s private fields (#) remain private after compilation and do not provide the previously mentioned escape hatches like bracket notation access, making them hard private.",
+      "note": ""
+    },
+    {
+      "id": "C3",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "When compiling to ES2021 or lower, TypeScript replaces `#` with `WeakMap`s. The handbook notes that these runtime privacy checks could affect performance.",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #. ... Note that these added privacy checks during runtime could affect performance.",
+      "note": "Both parts match, and 'could' is kept. The handbook's performance note covers closures, WeakMaps and private fields alike; the doc applies it to the WeakMap output only (see the Summary violation)."
+    },
+    {
+      "id": "C4",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Private elements are not properties. They cannot be enumerated, deleted, proxied, or reached through `Object` methods, and `structuredClone()` does not copy them.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "they cannot be proxied, enumerated, deleted, or interacted with using any Object method. ... structuredClone() does not clone private elements",
+      "note": "'Not properties' matches MDN's note that a property has a string or symbol key and attributes, and private elements have none."
+    },
+    {
+      "id": "C5",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Reading a `#` field from an object whose class did not declare it throws a `TypeError`. `#x in obj` checks for it without throwing.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If you access a private element from an object that doesn't have the element, a TypeError is thrown ... return true if the private field or method exists, and false otherwise",
+      "note": "The doc's condition wording is the error message MDN prints for C.getX({}): 'Cannot read private member #x from an object whose class did not declare it'."
+    },
+    {
+      "id": "C6",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "V8 9.7 moved class-field initialization, including private fields, onto its inline-cache fast path. Before that it went through slower runtime calls.",
+      "source": "[^3]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "With v9.7, when V8 considers the pattern of the initialization to be predictable enough, it uses a new IC to speed up the operation",
+      "note": "The version and the 'before: costly runtime call' part match. The doc drops the condition: the fast path applies only when the pattern is predictable, and the page says the IC still falls back to the runtime for proxies, a field that already exists, or an unseen hidden class."
+    },
+    {
+      "id": "C7",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Private elements cannot be proxied [row: Object wrapped in a `Proxy` | `#` access does not go through the proxy]",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "While private elements are accessed with the familiar dot notation, they cannot be proxied, enumerated, deleted, or interacted with using any Object method.",
+      "note": "The Why cell matches. The row's 'What happens' cell is vague; see the structure violation for this row."
+    },
+    {
+      "id": "C8",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "TypeScript downlevels it [row: Target ES2021 or lower | `#` becomes `WeakMap` lookups]",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #.",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "So code meant to run unbuilt keeps injected collaborators as `readonly #field`s assigned in the constructor [row: Working around it with `--experimental-transform-types` | Runs on Node 24.22 with an `ExperimentalWarning` (re-tested 2026-11-03); the flag is removed in Node 26.0.0]",
+      "source": "[^4]",
+      "verdict": "unsupported",
+      "severity": "SOFT_WARN",
+      "page_says": "not found (searched: readonly, private, collaborat, #field, unbuilt). The page does say: \"Removed --experimental-transform-types flag.\" (v26.0.0) and lists \"parameter properties\" among unsupported features.",
+      "note": "The ✅ closes the doc's own design recommendation, which [^4] does not state. The row's premises are on the page (flag removed in v26.0.0; parameter properties need transformation), so the mark belongs on the 'What happens' cell."
+    },
+    {
+      "id": "C10",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Node only deletes types [row: Type stripping itself | Stable (stability 2) since Node 24.12.0 and 25.2.0; no warning since 24.3.0; Node ignores `tsconfig.json` and needs `.ts` extensions in relative imports]",
+      "source": "[^4]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Since Node.js is only removing inline types, any TypeScript features that involve replacing TypeScript syntax with new JavaScript syntax will error.",
+      "note": "The context cell's versions, the stability index, tsconfig being ignored and mandatory file extensions also match the page's history table and text."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Runtime cost of hard privacy (`#` fields)",
+      "winner": "[^1] rank 1 (hedged: hard-privacy checks, private fields included, 'could affect performance')",
+      "loser": "local measurement, rank local (Summary: '# fields costs the same as public fields' on any native ES2022+ target; Takeaways: 'measured cost is nil')",
+      "where_loser_is": "## Summary, ## Takeaways",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    { "severity": "WARN", "section": "## How it works", "rule": "grounding", "evidence": "C1: item 1 extends bracket-notation access and the 'soft private' label to `protected`; [^1] gives both to `private` only ('private also allows access using bracket notation during type checking')." },
+    { "severity": "WARN", "section": "## How it works", "rule": "grounding", "evidence": "C6: item 6 says V8 9.7 moved class-field initialization onto the IC fast path with no condition; [^3] says it does so only 'when V8 considers the pattern of the initialization to be predictable enough', and falls back to the runtime otherwise." },
+    { "severity": "SOFT_WARN", "section": "## Edge cases", "rule": "grounding", "evidence": "C9: the ✅[^4] closes the recommendation 'keeps injected collaborators as readonly #fields'; [^4] has nothing on it. It supports only the row's premises (flag removed in v26.0.0; parameter properties unsupported)." },
+    { "severity": "SOFT_WARN", "section": "## Edge cases", "rule": "structure", "evidence": "Proxy row: '# access does not go through the proxy' leaves out the real failure. A method called through the proxy reads this.#x on the proxy object, which lacks the element, so it throws TypeError ([^2]: 'cannot be proxied' plus 'If you access a private element from an object that doesn't have the element, a TypeError is thrown')." },
+    { "severity": "SOFT_WARN", "section": "## Summary", "rule": "structure", "evidence": "The TL;DR states as fact that '# fields costs the same as public fields' on any 'native ES2022+ target', and Takeaways says 'measured cost is nil'. Neither carries ✅ or ⚠️. The only evidence is one local run on V8 13.6 plus [^3] (V8 only, and only for predictable patterns). How it works 3 also limits the rank-1 handbook caveat to the WeakMap output, while [^1] applies it to private fields too. No cached source contradicts the measurement, so this is not a KB-17 failure, but the claim reaches further than its evidence." },
+    { "severity": "SOFT_WARN", "section": "## How it works", "rule": "structure", "evidence": "The 'Where each form fits' table is a decision guide (role 6 content) inside the mechanism section. It overlaps the ## Trade-offs table and holds an uncited, unmarked fact (TS18009). This is the one weak section behind diataxis_rigor 4." }
+  ],
+  "patch_instructions": [
+    { "section": "## How it works", "action": "Item 1: rewrite as \"`private` and `protected` are enforced only during type checking, so runtime lookups still reach the member. `private` also allows bracket-notation access during type checking, which makes it 'soft private'. ✅[^1]\" ([^1], Caveats: 'private also allows access using bracket notation during type checking')." },
+    { "section": "## How it works", "action": "Item 6: rewrite as \"Before V8 9.7, class-field initialization, private fields included, always went through a costly runtime call. From 9.7, when V8 judges the initialization pattern predictable enough, it uses a new inline cache instead; proxies, a field that already exists, or an unseen hidden class still fall back to the runtime. ✅[^3]\" ([^3]: 'when V8 considers the pattern of the initialization to be predictable enough, it uses a new IC')." },
+    { "section": "## Edge cases", "action": "Row 'Working around it with --experimental-transform-types': move ✅[^4] to the 'What happens' cell, right after 'removed in Node 26.0.0' ([^4] history: 'v26.0.0 | Removed --experimental-transform-types flag.'). Keep the recommendation in the Why cell without a ✅, worded as the doc's own conclusion." },
+    { "section": "## Edge cases", "action": "Proxy row, 'What happens' cell: replace it with \"A method called through the proxy reads `this.#x` on the proxy object, which has no such element, so it throws `TypeError`\". Keep the Why cell's ✅[^2] (MDN: 'cannot be proxied'; 'If you access a private element from an object that doesn't have the element, a TypeError is thrown')." },
+    { "section": "## Summary", "action": "Narrow the performance sentence to the evidence: \"On V8 ≥ 9.7 with a native ES2022+ target (measured on Node 24.22 / V8 13.6), reading and creating `#` fields cost the same as public fields.\" Make the same change in ## Takeaways. In ## How it works item 3, say the handbook's 'could affect performance' note covers closures, WeakMaps and private fields ([^1]), and cite [^3] for why V8 closes the gap for predictable initialization patterns." },
+    { "section": "## How it works", "action": "Move the 'Where each form fits' table into ## Trade-offs (role 6) and merge it with the existing Trade-offs table to remove the overlap. Either cite a source for 'TypeScript error TS18009' or mark it as reproduced locally." }
+  ]
+}

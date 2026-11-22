@@ -1,0 +1,77 @@
+
+## S0 no loss, round-robin
+slot order: A1 B1 C1 A2 B2 C2 A3 B3 C3 A4 B4 C4
+lost slot(s): []; TLS record = 1 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 25 | 34 | 25 | 34 | 0 | 0 |
+| B | 26 | 35 | 26 | 35 | 0 | 0 |
+| C | 27 | 36 | 27 | 36 | 0 | 0 |
+
+## S1 round-robin, slot 4 (B2) lost
+slot order: A1 B1 C1 A2 B2 C2 A3 B3 C3 A4 B4 C4
+lost slot(s): [4]; TLS record = 1 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 25 | 82 | 25 | 34 | 99 | 0 |
+| B | 26 | 82 | 26 | 82 | 97 | 97 |
+| C | 27 | 82 | 27 | 36 | 147 | 0 |
+
+## S2 sequential, slot 4 (B1) lost
+slot order: A1 A2 A3 A4 B1 B2 B3 B4 C1 C2 C3 C4
+lost slot(s): [4]; TLS record = 1 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 25 | 28 | 25 | 28 | 0 | 0 |
+| B | 82 | 82 | 82 | 82 | 153 | 153 |
+| C | 82 | 82 | 33 | 36 | 190 | 0 |
+
+## S3 sequential, slot 1 (A2) lost
+slot order: A1 A2 A3 A4 B1 B2 B3 B4 C1 C2 C3 C4
+lost slot(s): [1]; TLS record = 1 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 25 | 79 | 25 | 79 | 103 | 103 |
+| B | 79 | 79 | 29 | 32 | 194 | 0 |
+| C | 79 | 79 | 33 | 36 | 178 | 0 |
+
+## S4 round-robin, slot 4 lost, one 12-packet TLS record (~14 KB, under the 16 KB maximum)
+slot order: A1 B1 C1 A2 B2 C2 A3 B3 C3 A4 B4 C4
+lost slot(s): [4]; TLS record = 12 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 82 | 82 | 25 | 34 | 210 | 0 |
+| B | 82 | 82 | 26 | 82 | 153 | 97 |
+| C | 82 | 82 | 27 | 36 | 202 | 0 |
+
+## S5 round-robin, slot 4 carries frames of B and C and is lost
+slot order: A B C A B+C C A B C A B C
+lost slot(s): [4]; TLS record = 1 packet(s); RTT 50 ms, one-way 25 ms, 1 packet per 1 ms
+| Stream | HTTP/2 first data (ms) | HTTP/2 done (ms) | HTTP/3 first data (ms) | HTTP/3 done (ms) | HTTP/2 HoL wait (packet-ms) | HTTP/3 HoL wait (packet-ms) |
+|---|---|---|---|---|---|---|
+| A | 25 | 82 | 25 | 34 | 99 | 0 |
+| B | 26 | 82 | 26 | 82 | 97 | 97 |
+| C | 27 | 82 | 27 | 82 | 147 | 147 |
+
+## Q1 header compression: 4 requests, slot 0 (carrying the table insert) lost
+arrivals (ms): [78, 26, 27, 28]
+| Request | HPACK over TCP decoded (ms) | QPACK, references allowed (ms) | QPACK, blocked streams = 0 (ms) |
+|---|---|---|---|
+| req1 | 78 | 78 | 78 |
+| req2 | 78 | 78 | 26 |
+| req3 | 78 | 78 | 27 |
+| req4 | 78 | 78 | 28 |
+
+## R1 random loss sweep: 6 streams x 10 packets, 20000 trials per cell, seed 7
+| Loss rate | Scheduling | HTTP/2 mean stream done (ms) | HTTP/3 mean stream done (ms) | Trials where HTTP/2 was slower for >= 1 stream |
+|---|---|---|---|---|
+| 0.01% | round-robin | 81.62 | 81.52 | 0.5% |
+| 0.01% | sequential | 59.10 | 59.05 | 0.5% |
+| 0.10% | round-robin | 82.96 | 81.76 | 5.8% |
+| 0.10% | sequential | 60.06 | 59.47 | 4.6% |
+| 1.00% | round-robin | 93.42 | 84.00 | 43.2% |
+| 1.00% | sequential | 68.68 | 63.62 | 38.7% |
+| 2.00% | round-robin | 102.39 | 86.50 | 68.6% |
+| 2.00% | sequential | 76.27 | 67.90 | 62.3% |
+| 5.00% | round-robin | 116.58 | 92.97 | 94.6% |
+| 5.00% | sequential | 90.10 | 78.59 | 86.8% |

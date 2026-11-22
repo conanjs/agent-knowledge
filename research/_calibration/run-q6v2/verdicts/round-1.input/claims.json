@@ -1,0 +1,368 @@
+{
+ "doc_claims": 146,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## 1. Words first": [
+   12,
+   4
+  ],
+  "## 2. Context: why HoL blocking matters, and how each version moved it": [
+   12,
+   4
+  ],
+  "## 3. Where HoL blocking can happen, layer by layer": [
+   25,
+   8
+  ],
+  "## 4. The actors, and every setting that changes HoL behaviour": [
+   36,
+   11
+  ],
+  "## 5. One lost packet, step by step": [
+   8,
+   2
+  ],
+  "## 6. Worked example: the numbers": [
+   4,
+   1
+  ],
+  "## 7. Header compression: HPACK vs. QPACK": [
+   11,
+   3
+  ],
+  "## 8. What HTTP/3 does not remove": [
+   11,
+   3
+  ],
+  "## 9. Cross-side interactions": [
+   9,
+   3
+  ],
+  "## 10. Edge cases and failure combinations": [
+   13,
+   4
+  ],
+  "## 11. How much it matters in practice": [
+   5,
+   2
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 31,
+   "heading": "## 1. Words first",
+   "claim": "TCP gives no link between segment boundaries and the application's write boundaries ✅[^rfc9293]",
+   "context": "| Byte stream | Ordered bytes; the transport knows no message boundaries inside them | A ticker tape you can only read from the front | TCP gives no link between segment boundaries and the application's write boundaries ✅[^rfc9293] |"
+  },
+  {
+   "id": "S2",
+   "line": 35,
+   "heading": "## 1. Words first",
+   "claim": "A 16 KB (kilobyte) record spans about 11 TCP packets ✅[^marx]",
+   "context": "| TLS record | The unit TLS encrypts and authenticates: at most 2^14 = 16,384 bytes of plaintext ✅[^rfc8446] | A sealed envelope: you can read the letter only after the whole envelope has arrived | A 16 KB (kilobyte) record spans about 11 TCP packets ✅[^marx] |"
+  },
+  {
+   "id": "S3",
+   "line": 37,
+   "heading": "## 1. Words first",
+   "claim": "; capacity 0 in HTTP/3 until the decoder allows more ✅[^rfc9204]",
+   "context": "| Dynamic table | The part of that phrasebook built up during the connection | Pages both sides add to the phrasebook while talking | Initial size 4,096 bytes in HTTP/2 ✅[^rfc9113]; capacity 0 in HTTP/3 until the decoder allows more ✅[^rfc9204] |"
+  },
+  {
+   "id": "S4",
+   "line": 38,
+   "heading": "## 1. Words first",
+   "claim": "HTTP/2: 65,535-byte window per stream and per connection at start ✅[^rfc9113]",
+   "context": "| Flow control | A receiver-set limit on how much data the sender may have outstanding | A mailbox that holds only so many letters before someone empties it | HTTP/2: 65,535-byte window per stream and per connection at start ✅[^rfc9113] |"
+  },
+  {
+   "id": "S5",
+   "line": 48,
+   "heading": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "claim": "Pipelining lets a client send several requests without waiting, but the server must send the responses in the order the requests arrived ✅[^rfc9112]",
+   "context": "- **HTTP/1.1.** One connection carries one response at a time. Pipelining lets a client send several requests without waiting, but the server must send the responses in the order the requests arrived ✅[^rfc9112], so one slow response holds up the rest. RFC 9113 names this application-layer HoL blocking ✅[^rfc9113]. HTTP/1.1 lists HoL blocking as a reason clients open several connections ✅[^rfc9112]; browsers use about six per host ✅[^marx]."
+  },
+  {
+   "id": "S6",
+   "line": 50,
+   "heading": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "claim": ", so HTTP/2 features that assumed one total order (HPACK, the priority tree) had to be redesigned ✅[^rfc9114]",
+   "context": "- **HTTP/3.** QUIC provides streams, per-stream flow control, reliability at the stream level and congestion control across the whole connection ✅[^rfc9114]. Because QUIC streams are independent, a stream that is blocked or loses a packet does not stop progress on other streams ✅[^rfc9114]. The price: QUIC guarantees no order across streams ✅[^rfc9000], so HTTP/2 features that assumed one total order (HPACK, the priority tree) had to be redesigned ✅[^rfc9114]."
+  },
+  {
+   "id": "S7",
+   "line": 50,
+   "heading": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "claim": "The price: QUIC guarantees no order across streams ✅[^rfc9000]",
+   "context": "- **HTTP/3.** QUIC provides streams, per-stream flow control, reliability at the stream level and congestion control across the whole connection ✅[^rfc9114]. Because QUIC streams are independent, a stream that is blocked or loses a packet does not stop progress on other streams ✅[^rfc9114]. The price: QUIC guarantees no order across streams ✅[^rfc9000], so HTTP/2 features that assumed one total order (HPACK, the priority tree) had to be redesigned ✅[^rfc9114]."
+  },
+  {
+   "id": "S8",
+   "line": 52,
+   "heading": "## 2. Context: why HoL blocking matters, and how each version moved it",
+   "claim": "At around 2% packet loss, HTTP/1.1 users are usually better off ✅[^h3explained]",
+   "context": "**Why HTTP/2 can lose to HTTP/1.1 on a bad network.** HTTP/1.1's six connections are six independent byte streams: a loss stalls one of them. HTTP/2 puts everything on one, so one loss stalls everything. At around 2% packet loss, HTTP/1.1 users are usually better off ✅[^h3explained]."
+  },
+  {
+   "id": "S9",
+   "line": 60,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Yes: responses in request order on a connection ✅[^rfc9112]",
+   "context": "| HTTP messages | Yes: responses in request order on a connection ✅[^rfc9112] | No: frames of many streams interleave ✅[^rfc9113] | No: one QUIC stream per request ✅[^rfc9114] |"
+  },
+  {
+   "id": "S10",
+   "line": 61,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Optional: a request stream that references a dynamic-table entry not yet received is blocked; the decoder caps how many streams may block ✅[^rfc9204]",
+   "context": "| Header compression | None across requests (HTTP/1.1 has no header compression ⚠️ unverified) | Masked by TCP: HPACK uses one encoder and one decoder context for all field blocks on the connection ✅[^rfc9113], which is safe only because TCP delivers in order ✅[^rfc9114] | Optional: a request stream that references a dynamic-table entry not yet received is blocked; the decoder caps how many streams may block ✅[^rfc9204] (§7) |"
+  },
+  {
+   "id": "S11",
+   "line": 62,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": ", so one lost packet can stall a whole record of about 11 packets ✅[^marx]",
+   "context": "| TLS record | Per connection ⚠️ unverified (inference) | Yes: a record is decrypted as a whole ✅[^rfc8446], so one lost packet can stall a whole record of about 11 packets ✅[^marx] | No TLS records: each QUIC packet is protected on its own with the AEAD (authenticated encryption with associated data) algorithm negotiated by TLS ✅[^rfc9001] |"
+  },
+  {
+   "id": "S12",
+   "line": 64,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Allowed ✅[^rfc9000]",
+   "context": "| A packet holding several streams' frames | n/a | Always shared: TCP carries every stream in one ordered byte stream ✅[^marx] | Allowed ✅[^rfc9000]; then one loss blocks every stream in that packet. Most implementations rarely mix streams in one packet ✅[^marx] |"
+  },
+  {
+   "id": "S13",
+   "line": 64,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Always shared: TCP carries every stream in one ordered byte stream ✅[^marx]",
+   "context": "| A packet holding several streams' frames | n/a | Always shared: TCP carries every stream in one ordered byte stream ✅[^marx] | Allowed ✅[^rfc9000]; then one loss blocks every stream in that packet. Most implementations rarely mix streams in one packet ✅[^marx] |"
+  },
+  {
+   "id": "S14",
+   "line": 65,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Per stream and per connection; only `DATA` frames count ✅[^rfc9113]",
+   "context": "| Flow control | TCP window per connection ⚠️ unverified | Per stream and per connection; only `DATA` frames count ✅[^rfc9113] | Per stream and per connection ✅[^rfc9000]; all frames on all streams count ✅[^rfc9114] |"
+  },
+  {
+   "id": "S15",
+   "line": 66,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": ", covering the whole connection ✅[^rfc9114]",
+   "context": "| Congestion control | Per connection ⚠️ unverified | One TCP connection, one controller ⚠️ unverified | One controller per path ✅[^rfc9002], covering the whole connection ✅[^rfc9114] |"
+  },
+  {
+   "id": "S16",
+   "line": 67,
+   "heading": "## 3. Where HoL blocking can happen, layer by layer",
+   "claim": "Yes: TCP is in-order ✅[^rfc9293]",
+   "context": "| Inside one stream | Yes: TCP is in-order ✅[^rfc9293] | Yes: TCP is in-order ✅[^rfc9293] | Yes: QUIC keeps order within a stream ✅[^marx], and HTTP/3 does not use QUIC's optional out-of-order delivery ✅[^rfc9114] |"
+  },
+  {
+   "id": "S17",
+   "line": 79,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "; TLS needs a reliable, in-order transport underneath ✅[^rfc8446]",
+   "context": "- **TLS record layer** — its job: encrypt the byte stream, via records of at most 16,384 plaintext bytes, each protected as one unit ✅[^rfc8446]; TLS needs a reliable, in-order transport underneath ✅[^rfc8446]."
+  },
+  {
+   "id": "S18",
+   "line": 85,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": ", and connection-wide signals (`SETTINGS`, `GOAWAY`) on a unidirectional control stream ✅[^rfc9114]",
+   "context": "- **HTTP/3 framing layer** — its job: carry each request/response on its own bidirectional QUIC stream ✅[^rfc9114], and connection-wide signals (`SETTINGS`, `GOAWAY`) on a unidirectional control stream ✅[^rfc9114]."
+  },
+  {
+   "id": "S19",
+   "line": 86,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "- **QPACK encoder and decoder** — its job: compress headers, via dynamic-table updates sent on a separate encoder stream (type 0x02) and acknowledgments sent back on a decoder stream (type 0x03) ✅[^rfc9204]",
+   "context": "- **QPACK encoder and decoder** — its job: compress headers, via dynamic-table updates sent on a separate encoder stream (type 0x02) and acknowledgments sent back on a decoder stream (type 0x03) ✅[^rfc9204]."
+  },
+  {
+   "id": "S20",
+   "line": 87,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": ", packets protected one by one ✅[^rfc9001]",
+   "context": "- **QUIC** — its job: streams, flow control, loss recovery and encryption, via `STREAM` frames that carry per-stream byte ranges ✅[^marx], packets protected one by one ✅[^rfc9001], and packet numbers that are never reused ✅[^rfc9000]."
+  },
+  {
+   "id": "S21",
+   "line": 95,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "No limit at first ✅[^rfc9113]",
+   "context": "| HTTP/2 `SETTINGS_MAX_CONCURRENT_STREAMS` (receiver) | No limit at first ✅[^rfc9113] | More concurrent streams means more streams stalled by one TCP loss |"
+  },
+  {
+   "id": "S22",
+   "line": 97,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "65,535 bytes; `SETTINGS` cannot change it, only `WINDOW_UPDATE` frames can ✅[^rfc9113]",
+   "context": "| HTTP/2 connection window | 65,535 bytes; `SETTINGS` cannot change it, only `WINDOW_UPDATE` frames can ✅[^rfc9113] | A small connection window lets one unread stream starve all others |"
+  },
+  {
+   "id": "S23",
+   "line": 100,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "0 ✅[^rfc9204]",
+   "context": "| QPACK `SETTINGS_QPACK_BLOCKED_STREAMS` (decoder) | 0 ✅[^rfc9204] | Upper bound on request streams allowed to wait for dynamic-table updates; exceeding it is connection error `QPACK_DECOMPRESSION_FAILED` ✅[^rfc9204]. With 0, no stream may risk blocking, so the encoder may reference only acknowledged entries: this follows from the rule that the encoder must keep the number of streams that could block within this limit at all times ✅[^rfc9204] |"
+  },
+  {
+   "id": "S24",
+   "line": 100,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "Upper bound on request streams allowed to wait for dynamic-table updates; exceeding it is connection error `QPACK_DECOMPRESSION_FAILED` ✅[^rfc9204]",
+   "context": "| QPACK `SETTINGS_QPACK_BLOCKED_STREAMS` (decoder) | 0 ✅[^rfc9204] | Upper bound on request streams allowed to wait for dynamic-table updates; exceeding it is connection error `QPACK_DECOMPRESSION_FAILED` ✅[^rfc9204]. With 0, no stream may risk blocking, so the encoder may reference only acknowledged entries: this follows from the rule that the encoder must keep the number of streams that could block within this limit at all times ✅[^rfc9204] |"
+  },
+  {
+   "id": "S25",
+   "line": 100,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "With 0, no stream may risk blocking, so the encoder may reference only acknowledged entries: this follows from the rule that the encoder must keep the number of streams that could block within this limit at all times ✅[^rfc9204]",
+   "context": "| QPACK `SETTINGS_QPACK_BLOCKED_STREAMS` (decoder) | 0 ✅[^rfc9204] | Upper bound on request streams allowed to wait for dynamic-table updates; exceeding it is connection error `QPACK_DECOMPRESSION_FAILED` ✅[^rfc9204]. With 0, no stream may risk blocking, so the encoder may reference only acknowledged entries: this follows from the rule that the encoder must keep the number of streams that could block within this limit at all times ✅[^rfc9204] |"
+  },
+  {
+   "id": "S26",
+   "line": 103,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "Absent or 0: the peer cannot open bidirectional streams until a `MAX_STREAMS` frame arrives ✅[^rfc9000]",
+   "context": "| QUIC `initial_max_streams_bidi` (receiver) | Absent or 0: the peer cannot open bidirectional streams until a `MAX_STREAMS` frame arrives ✅[^rfc9000] | Caps concurrent requests, like HTTP/2's concurrent-streams limit |"
+  },
+  {
+   "id": "S27",
+   "line": 104,
+   "heading": "## 4. The actors, and every setting that changes HoL behaviour",
+   "claim": "25 ms ✅[^rfc9000]",
+   "context": "| QUIC `max_ack_delay` (receiver) | 25 ms ✅[^rfc9000] | Longer ACK delay can slow loss detection, hence how long a gap blocks ⚠️ unverified (inference) |"
+  },
+  {
+   "id": "S28",
+   "line": 141,
+   "heading": "## 5. One lost packet, step by step",
+   "claim": "- QUIC: passes `C2`, `A3`, `C3`, `A4`, `C4` to streams C and A at once, because ordering is per stream ✅[^rfc9000]",
+   "context": "- QUIC: passes `C2`, `A3`, `C3`, `A4`, `C4` to streams C and A at once, because ordering is per stream ✅[^rfc9000]; holds `B3` and `B4` in stream B's buffer (up to its flow-control limit ✅[^rfc9000])."
+  },
+  {
+   "id": "S29",
+   "line": 141,
+   "heading": "## 5. One lost packet, step by step",
+   "claim": "; holds `B3` and `B4` in stream B's buffer (up to its flow-control limit ✅[^rfc9000]",
+   "context": "- QUIC: passes `C2`, `A3`, `C3`, `A4`, `C4` to streams C and A at once, because ordering is per stream ✅[^rfc9000]; holds `B3` and `B4` in stream B's buffer (up to its flow-control limit ✅[^rfc9000])."
+  },
+  {
+   "id": "S30",
+   "line": 172,
+   "heading": "## 6. Worked example: the numbers",
+   "claim": "Under HTTP/3 nothing changes (first data at 25, 26, 27 ms), because each QUIC packet is decrypted on its own ✅[^rfc9001]",
+   "context": "**The TLS record effect (S4).** Same as S1, but HTTP/2's 12 packets form one TLS record of about 14 KB (below the 16 KB maximum). Under HTTP/2, A's first byte now reaches the application at 82 ms instead of 25 ms, because no byte of a record can be used before the whole record is decrypted ✅[^rfc8446]: here the loss delays even data that arrived *before* it. Under HTTP/3 nothing changes (first data at 25, 26, 27 ms), because each QUIC packet is decrypted on its own ✅[^rfc9001]. How large real records are depends on the server; many servers start a connection with small records ⚠️ unverified."
+  },
+  {
+   "id": "S31",
+   "line": 202,
+   "heading": "## 7. Header compression: HPACK vs. QPACK",
+   "claim": "Because QUIC does not order data across streams, a request stream can arrive before the insertion it references ✅[^rfc9204]",
+   "context": "- **QPACK in HTTP/3.** Insertions travel on the encoder stream; request streams carry references. Because QUIC does not order data across streams, a request stream can arrive before the insertion it references ✅[^rfc9204]. The field section then names a *Required Insert Count*, the number of insertions needed to decode it; if the decoder has seen fewer, the stream is blocked until they arrive ✅[^rfc9204]."
+  },
+  {
+   "id": "S32",
+   "line": 217,
+   "heading": "## 7. Header compression: HPACK vs. QPACK",
+   "claim": "The encoder should not write an instruction unless there is credit for all of it ✅[^rfc9204]",
+   "context": "- *Flow-control deadlock:* a decoder may withhold flow-control credit on a request stream until encoder-stream data arrives, while the encoder-stream data itself waits for credit. The encoder should not write an instruction unless there is credit for all of it ✅[^rfc9204]."
+  },
+  {
+   "id": "S33",
+   "line": 218,
+   "heading": "## 7. Header compression: HPACK vs. QPACK",
+   "claim": "- *Cancelled streams:* when a stream is reset, the decoder sends a Stream Cancellation instruction so the encoder stops counting that stream's references ✅[^rfc9204]",
+   "context": "- *Cancelled streams:* when a stream is reset, the decoder sends a Stream Cancellation instruction so the encoder stops counting that stream's references ✅[^rfc9204]."
+  },
+  {
+   "id": "S34",
+   "line": 229,
+   "heading": "## 8. What HTTP/3 does not remove",
+   "claim": "✅[^rfc9000]",
+   "context": "| Several streams' frames in one lost packet | One packet may carry frames of several streams | ✅[^rfc9000] (model S5) |"
+  },
+  {
+   "id": "S35",
+   "line": 230,
+   "heading": "## 8. What HTTP/3 does not remove",
+   "claim": "✅[^rfc9308]",
+   "context": "| Shared connection flow control | Credit consumed by one stream cannot be used by others; interdependent streams can deadlock | ✅[^rfc9308] |"
+  },
+  {
+   "id": "S36",
+   "line": 234,
+   "heading": "## 8. What HTTP/3 does not remove",
+   "claim": "Then clients should fall back to TCP-based HTTP ✅[^rfc9114]",
+   "context": "| UDP blocked by the network | Then clients should fall back to TCP-based HTTP ✅[^rfc9114], and HTTP/2's HoL blocking returns; 3% to 5% of networks blocked all UDP in 2016-era measurements | ✅[^rfc9308] |"
+  },
+  {
+   "id": "S37",
+   "line": 246,
+   "heading": "## 9. Cross-side interactions",
+   "claim": "Server should share bandwidth between same-urgency incremental responses ✅[^rfc9218]",
+   "context": "| Client marks a response `incremental` (RFC 9218) | Server should share bandwidth between same-urgency incremental responses ✅[^rfc9218] | Same as round-robin for those responses |"
+  },
+  {
+   "id": "S38",
+   "line": 248,
+   "heading": "## 9. Cross-side interactions",
+   "claim": "One loss blocks all streams in that packet (S5) ✅[^rfc9000]",
+   "context": "| Sender packs frames of several streams into one QUIC packet | Receiver cannot prevent it | One loss blocks all streams in that packet (S5) ✅[^rfc9000] |"
+  },
+  {
+   "id": "S39",
+   "line": 249,
+   "heading": "## 9. Cross-side interactions",
+   "claim": "Client falls back to TCP ✅[^rfc9114]",
+   "context": "| Network path blocks UDP | Client falls back to TCP ✅[^rfc9114] | HTTP/2 behaviour, with all of §3's HTTP/2 column |"
+  },
+  {
+   "id": "S40",
+   "line": 259,
+   "heading": "## 10. Edge cases and failure combinations",
+   "claim": "One stream: per-stream ordering is total ordering ✅[^rfc9308]",
+   "context": "| One large file | Blocked on each loss | Blocked on each loss | One stream: per-stream ordering is total ordering ✅[^rfc9308] |"
+  },
+  {
+   "id": "S41",
+   "line": 263,
+   "heading": "## 10. Edge cases and failure combinations",
+   "claim": "The resource itself is late either way (S3) ✅[^marx]",
+   "context": "| Loss inside a render-blocking resource | Page waits | Page waits | The resource itself is late either way (S3) ✅[^marx] |"
+  },
+  {
+   "id": "S42",
+   "line": 266,
+   "heading": "## 10. Edge cases and failure combinations",
+   "claim": "✅[^rfc9204]",
+   "context": "| Lost encoder-stream packet, blocked streams > 0 | n/a | Referencing request streams wait for it | ✅[^rfc9204] (Q1) |"
+  },
+  {
+   "id": "S43",
+   "line": 268,
+   "heading": "## 10. Edge cases and failure combinations",
+   "claim": "✅[^rfc9308]",
+   "context": "| One stream never read by the application | Connection window drains, all streams stall; deadlock risk if frames are not read | Connection limit drains, all streams stall | ✅[^rfc9113] ✅[^rfc9308] |"
+  },
+  {
+   "id": "S44",
+   "line": 276,
+   "heading": "## 11. How much it matters in practice",
+   "claim": "- **Loss is rare on many networks.** One estimate: about 0.01% on wired networks and rarely above 2% on cellular; loss is also bursty, which makes it hard to predict which streams a loss hits ✅[^marx]",
+   "context": "- **Loss is rare on many networks.** One estimate: about 0.01% on wired networks and rarely above 2% on cellular; loss is also bursty, which makes it hard to predict which streams a loss hits ✅[^marx]. In R1, 0.01% loss gives HTTP/3 a mean advantage of 0.10 ms."
+  },
+  {
+   "id": "S45",
+   "line": 278,
+   "heading": "## 11. How much it matters in practice",
+   "claim": "- **A 2022 testbed study (35 replayed websites, Chromium):** parallel scheduling strategies clearly reduced HoL-blocked bytes; SpeedIndex (a score for how quickly the visible page fills in) improved only a little for the median site at low bandwidth, and mainly for larger sites under random loss; at 10 Mbps differences vanished; bursty loss erased the gains ✅[^sander_blog]",
+   "context": "- **A 2022 testbed study (35 replayed websites, Chromium):** parallel scheduling strategies clearly reduced HoL-blocked bytes; SpeedIndex (a score for how quickly the visible page fills in) improved only a little for the median site at low bandwidth, and mainly for larger sites under random loss; at 10 Mbps differences vanished; bursty loss erased the gains ✅[^sander_blog]. The authors' advice: keep sequential scheduling for typical low-loss, low-RTT, high-bandwidth conditions, and switch carefully to a parallel strategy on lossy, low-bandwidth links ✅[^sander_blog]."
+  }
+ ]
+}

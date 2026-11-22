@@ -1,0 +1,33 @@
+Model: GAP=1 ms between sends, one-way delay 25 ms (RTT 50 ms), loss detected after 3 later packets are ACKed.
+Times are ms after the first packet is sent; "complete" = the last byte of that response is readable by the application.
+
+Scenario 1 (round-robin): send order A0 B0 C0 A1 B1 C1 A2 B2 C2 A3 B3 C3; packet #2 (B0) lost
+  tcp  complete: A=79 B=79 C=79 | frames that arrived but had to wait: 10/12, total wait 475 frame-ms
+  quic complete: A=34 B=79 C=36 | frames that arrived but had to wait: 3/12, total wait 141 frame-ms
+  no loss    complete: A=34 B=35 C=36
+
+Scenario 1 (sequential): send order A0 A1 A2 A3 B0 B1 B2 B3 C0 C1 C2 C3; packet #2 (A1) lost
+  tcp  complete: A=79 B=79 C=79 | frames that arrived but had to wait: 10/12, total wait 475 frame-ms
+  quic complete: A=79 B=32 C=36 | frames that arrived but had to wait: 2/12, total wait 103 frame-ms
+  no loss    complete: A=28 B=32 C=36
+
+Scenario 2 (shared packet): send order A0 A1 A2+B0 B1 C0 C1 C2 C3; packet #3 (A2+B0) lost
+  tcp  complete: A=80 B=80 C=80 | waited 5/9, total wait 250 frame-ms
+  quic complete: A=80 B=80 C=32 | waited 1/9, total wait 52 frame-ms
+
+Scenario 3 (QPACK, HTTP/3 only): packet #1 = encoder stream insert, lost; A,B,C = HEADERS then body; D = filler
+  risky (blocked_streams>=3)  complete: A=78 B=78 C=78 | waited 6/10
+  limit1 (blocked_streams=1)  complete: A=78 B=30 C=31 | waited 2/10
+  safe (blocked_streams=0)    complete: A=29 B=30 C=31 | waited 0/10
+
+Scenario 4 (Monte Carlo): 10 responses x 10 packets, 5000 trials per row, average loss rate 2% (bursty = runs of 5 consecutive packets, same average rate), seed 42
+  columns: mean completion of a response | mean completion of the last response | mean time a frame sat in the receive buffer after arriving, averaged over all 100 frames (ms) | trials with at least one loss | mean packets lost per trial
+  random sequential  tcp     97.7 |  145.7 | 16.71 | 4314 | 1.97
+  random sequential  quic    88.0 |  145.7 |  4.13 | 4314 | 1.97
+  random round-robin tcp    140.2 |  145.7 | 16.71 | 4314 | 1.97
+  random round-robin quic   122.8 |  145.7 |  1.72 | 4314 | 1.97
+  bursty sequential  tcp     84.2 |  130.5 |  3.90 | 1596 | 1.89
+  bursty sequential  quic    81.7 |  130.5 |  0.79 | 1596 | 1.89
+  bursty round-robin tcp    125.6 |  130.5 |  3.90 | 1596 | 1.89
+  bursty round-robin quic   122.8 |  130.5 |  1.68 | 1596 | 1.89
+  no loss sequential: 79.0 | 124.0 ; no loss round-robin: 119.5 | 124.0

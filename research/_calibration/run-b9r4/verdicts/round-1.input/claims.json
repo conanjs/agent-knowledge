@@ -1,0 +1,138 @@
+{
+ "doc_claims": 191,
+ "sample_size": 15,
+ "seed": 20261122,
+ "strata": {
+  "## Summary": [
+   4,
+   1
+  ],
+  "## 1. Q1: Architecture and lifecycle": [
+   47,
+   3
+  ],
+  "## 2. Q2: Primitives": [
+   36,
+   3
+  ],
+  "## 3. Q3: Transports and authorization": [
+   69,
+   5
+  ],
+  "## 4. Q4: Security and trust": [
+   32,
+   2
+  ],
+  "## 5. What the experiments showed that the spec text does not say": [
+   3,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 21,
+   "heading": "## Summary",
+   "claim": "It removed the `initialize` handshake and protocol-level sessions ✅[3]",
+   "context": "The current spec revision is **2026-07-28** ✅[1][2]. It removed the `initialize` handshake and protocol-level sessions ✅[3]. The previous revision, **2025-11-25**, is what most older tutorials describe, and it still has the handshake ✅[4]. A reader who wants to run an MCP session today must know both, because servers and clients of both eras are deployed and the spec defines how they interoperate ✅[5]. This document describes the current era first and the legacy era beside it."
+  },
+  {
+   "id": "S2",
+   "line": 81,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "Version negotiation (experiment E2): the same server was sent `protocolVersion:\"1.0.0\"` and answered `\"protocolVersion\":\"2025-11-25\"`, matching the \"respond with another supported version\" rule ✅[4][E2]",
+   "context": "Version negotiation (experiment E2): the same server was sent `protocolVersion:\"1.0.0\"` and answered `\"protocolVersion\":\"2025-11-25\"`, matching the \"respond with another supported version\" rule ✅[4][E2]."
+  },
+  {
+   "id": "S3",
+   "line": 118,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "`tools/list` ✅[14]",
+   "context": "| 3. List tools | `tools/list` ✅[14] | `tools/list` plus `_meta`; result has `ttlMs` and `cacheScope` ✅[14] |"
+  },
+  {
+   "id": "S4",
+   "line": 120,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "`notifications/tools/list_changed`, delivered on a GET stream or the open connection ✅[4][13]",
+   "context": "| 5. React to changes | `notifications/tools/list_changed`, delivered on a GET stream or the open connection ✅[4][13] | open `subscriptions/listen` with `toolsListChanged:true`; server acks with `notifications/subscriptions/acknowledged` ✅[14][15] |"
+  },
+  {
+   "id": "S5",
+   "line": 133,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "`tools/list` (paginated, cacheable), `tools/call` ✅[14]",
+   "context": "| **Tools**: functions the model can run | the model (\"model-controlled\") ✅[14] | `tools/list` (paginated, cacheable), `tools/call` ✅[14] | `notifications/tools/list_changed` ✅[14] |"
+  },
+  {
+   "id": "S6",
+   "line": 133,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "the model (\"model-controlled\") ✅[14]",
+   "context": "| **Tools**: functions the model can run | the model (\"model-controlled\") ✅[14] | `tools/list` (paginated, cacheable), `tools/call` ✅[14] | `notifications/tools/list_changed` ✅[14] |"
+  },
+  {
+   "id": "S7",
+   "line": 155,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "`sampling/createMessage`; optional `tools`/`toolChoice` when the client declares `sampling.tools` ✅[20]",
+   "context": "| **Sampling**: server asks the client's LLM for a completion | `sampling/createMessage`; optional `tools`/`toolChoice` when the client declares `sampling.tools` ✅[20] | active | **deprecated** (SEP-2577) ✅[20][21] |"
+  },
+  {
+   "id": "S8",
+   "line": 178,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "**stdio.** The client launches the server as a subprocess; messages are newline-delimited JSON-RPC on stdin/stdout and must not contain embedded newlines; the server may log to stderr and must write nothing else to stdout ✅[12][4]",
+   "context": "**stdio.** The client launches the server as a subprocess; messages are newline-delimited JSON-RPC on stdin/stdout and must not contain embedded newlines; the server may log to stderr and must write nothing else to stdout ✅[12][4]. Clients should support stdio whenever possible (2025-11-25 text) ✅[4]. In 2026-07-28 the server must not write JSON-RPC requests to stdout, cancellation is a `notifications/cancelled` message, and if the process dies the client should restart it and retry ✅[12]."
+  },
+  {
+   "id": "S9",
+   "line": 193,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "server must validate `Origin`, 403 if invalid; local servers should bind to 127.0.0.1 ✅[4]",
+   "context": "| Origin check | server must validate `Origin`, 403 if invalid; local servers should bind to 127.0.0.1 ✅[4] | same ✅[13] |"
+  },
+  {
+   "id": "S10",
+   "line": 234,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "`subscriptions/listen` (2026-07-28) or GET stream (legacy) ✅[15][4]",
+   "context": "| Need server push of tool-list changes | `subscriptions/listen` (2026-07-28) or GET stream (legacy) ✅[15][4] | |"
+  },
+  {
+   "id": "S11",
+   "line": 238,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "Alternative transports must follow established best practice for their protocol ✅[26]",
+   "context": "Scope. Authorization is optional. HTTP implementations should follow the spec; stdio implementations should not, and should read credentials from the environment ✅[26]. Alternative transports must follow established best practice for their protocol ✅[26]."
+  },
+  {
+   "id": "S12",
+   "line": 252,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs ✅[26]",
+   "context": "9. Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs ✅[26]."
+  },
+  {
+   "id": "S13",
+   "line": 329,
+   "heading": "## 4. Q4: Security and trust",
+   "claim": "The tools page adds: a handle on an authenticated server \"is a name, not a capability\"; validate authorization on every call; state the retention policy in the creating tool's description ✅[14]",
+   "context": "**2026-07-28: there are no protocol sessions.** The security page renames the risk \"state handle hijacking\": a server-minted handle (cart id) is an ordinary tool argument. Servers that authorize must verify every inbound request, must not treat possession of a handle as authentication, should use cryptographically random handles, and should bind handles to the user derived from the verified token (for example key `<user_id>:<handle>`) ✅[30]. The tools page adds: a handle on an authenticated server \"is a name, not a capability\"; validate authorization on every call; state the retention policy in the creating tool's description ✅[14]."
+  },
+  {
+   "id": "S14",
+   "line": 331,
+   "heading": "## 4. Q4: Security and trust",
+   "claim": "Experiment E6 shows the 400/404 behavior ✅[E6]",
+   "context": "**2025-11-25 sessions.** Session id is optional; if used it should be globally unique and cryptographically secure, visible ASCII only, sent as `MCP-Session-Id` on every later request; server answers 400 without it, 404 after termination; a client that gets 404 must start over with a fresh `initialize`; clients should `DELETE` when done ✅[4]. Security requirements: servers that authorize must verify all inbound requests and \"MUST NOT use sessions for authentication\"; session ids must be secure and non-deterministic; session ids should be bound to user data ✅[4a-sess]. Attack variants: session-hijack prompt injection across multiple servers sharing an event queue, and impersonation by a guessed id ✅[4a-sess]. Experiment E6 shows the 400/404 behavior ✅[E6]."
+  },
+  {
+   "id": "S15",
+   "line": 339,
+   "heading": "## 5. What the experiments showed that the spec text does not say",
+   "claim": "- v1 SDK has no `server/discover`; its `initialize` negotiated an unknown version down to 2025-11-25 (E2) ✅",
+   "context": "- v1 SDK has no `server/discover`; its `initialize` negotiated an unknown version down to 2025-11-25 (E2) ✅."
+  }
+ ]
+}

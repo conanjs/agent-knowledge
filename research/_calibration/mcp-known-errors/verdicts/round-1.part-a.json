@@ -1,0 +1,573 @@
+{
+  "verdict": null,
+  "overall_score": null,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "cded4d1",
+    "scope": [
+      "## Summary (including the unheaded text after it, before \"## 1.\")",
+      "## 1. Q1: Architecture and lifecycle and all its subsections"
+    ]
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope"
+    },
+    {
+      "heading": "## 1. Q1: Architecture and lifecycle",
+      "role": 3
+    },
+    {
+      "heading": "### 1.1 Roles",
+      "role": 2
+    },
+    {
+      "heading": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5
+    },
+    {
+      "heading": "### 1.3 Which spec version is current",
+      "role": 5
+    },
+    {
+      "heading": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3
+    },
+    {
+      "heading": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3
+    },
+    {
+      "heading": "### 1.6 End-to-end session in six steps",
+      "role": 3
+    }
+  ],
+  "sources": [],
+  "deterministic_checks": {},
+  "rubric_scores": null,
+  "coverage": {
+    "claims_roles_1_5": 51,
+    "checked_roles_1_5": 51,
+    "claims_role_6": 0,
+    "checked_role_6": 0,
+    "no_cache": 0,
+    "not_checkable": 2
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Summary",
+      "role": 5,
+      "claim": "The current spec revision is 2026-07-28.",
+      "source": "[1][2]",
+      "verdict": "entails",
+      "page_says": "[1] The current protocol version is 2026-07-28. [2] Version 2026-07-28 (latest)",
+      "note": "Summarizes 1.3, so role 5."
+    },
+    {
+      "id": "C2",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "It removed the initialize handshake and protocol-level sessions.",
+      "source": "[3]",
+      "verdict": "entails",
+      "page_says": "Remove protocol-level sessions and the Mcp-Session-Id header from the Streamable HTTP transport. ... Make MCP stateless: remove the initialize/notifications/initialized handshake.",
+      "note": "Summarizes 1.5, so role 3."
+    },
+    {
+      "id": "C3",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "The previous revision, 2025-11-25, is what most older tutorials describe, and it still has the handshake.",
+      "source": "[4]",
+      "verdict": "unsupported",
+      "page_says": "The client MUST initiate this phase by sending an initialize request containing:",
+      "note": "The handshake half is supported. 'What most older tutorials describe' is on no cited page: searched 'tutorial' in both [4] pages, no hit. Fix: drop the tutorials clause or mark it with the unverified symbol."
+    },
+    {
+      "id": "C4",
+      "section": "## Summary",
+      "role": 1,
+      "claim": "A reader who wants to run an MCP session today must know both, because servers and clients of both eras are deployed and the spec defines how they interoperate.",
+      "source": "[5]",
+      "verdict": "unsupported",
+      "page_says": "A client that needs to interoperate with both kinds of servers detects the server’s era with transport-specific mechanics, specified in the binding pages:",
+      "note": "The interoperability half is supported by the Backward Compatibility section and its matrix. The 'both eras are deployed' half is not on [5]: searched 'deploy', no hit. The uncited [9] RC note only says the prior version 'may remain in use for an undetermined amount of time', which is weaker. Fix: say the spec defines how legacy and modern implementations interoperate, or cite [9] with its 'may remain in use' wording. Unsure which section it summarizes, so role 1."
+    },
+    {
+      "id": "C5",
+      "section": "### 1.1 Roles",
+      "role": 2,
+      "claim": "Host: the LLM application. It creates and manages client instances, enforces security policy and consent, and coordinates the LLM.",
+      "source": "[6]",
+      "verdict": "entails",
+      "page_says": "Creates and manages multiple client instances ... Enforces security policies and consent requirements ... Coordinates AI/LLM integration",
+      "note": "[6] says 'host application' rather than 'LLM application'; close enough given 'Coordinates AI/LLM integration'."
+    },
+    {
+      "id": "C6",
+      "section": "### 1.1 Roles",
+      "role": 2,
+      "claim": "Client: a connector created by the host. Each client talks to exactly one server (1:1).",
+      "source": "[6]",
+      "verdict": "entails",
+      "page_says": "A host application creates and manages multiple clients, with each client having a 1:1 relationship with a particular server.",
+      "note": ""
+    },
+    {
+      "id": "C7",
+      "section": "### 1.1 Roles",
+      "role": 2,
+      "claim": "In 2026-07-28 the client attaches protocol version and capabilities to every request.",
+      "source": "[6]",
+      "verdict": "entails",
+      "page_says": "Attaches protocol version and capabilities to every request",
+      "note": ""
+    },
+    {
+      "id": "C8",
+      "section": "### 1.1 Roles",
+      "role": 2,
+      "claim": "Server: a process or remote service that exposes resources, tools and prompts, and may ask the client for input.",
+      "source": "[6]",
+      "verdict": "entails",
+      "page_says": "Expose resources, tools and prompts via MCP primitives ... Request client input (e.g. elicitation1) via InputRequiredResult within a reply ... Can be local processes or remote services",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "### 1.1 Roles",
+      "role": 2,
+      "claim": "Design principle: servers should not be able to read the whole conversation or \"see into\" other servers; the host keeps full history and controls cross-server interaction.",
+      "source": "[6]",
+      "verdict": "entails",
+      "page_says": "Servers should not be able to read the whole conversation, nor “see into” other servers ... Full conversation history stays with the host",
+      "note": "The page also says 'Cross-server interactions are controlled by the host'."
+    },
+    {
+      "id": "C10",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "All messages follow JSON-RPC 2.0 and are UTF-8.",
+      "source": "[7][8]",
+      "verdict": "entails",
+      "page_says": "[7] All messages between MCP clients and servers MUST follow the JSON-RPC 2.0 specification. [8] JSON-RPC messages MUST be UTF-8 encoded.",
+      "note": ""
+    },
+    {
+      "id": "C11",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "Request: id is a string or integer, must not be null, must not repeat while another request with that id is unanswered.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "Requests MUST include a string or integer ID. ... The request ID MUST NOT match the ID of any other request the sender has issued",
+      "note": "'the ID MUST NOT be null' and '... and not yet received a response for' are on the page too."
+    },
+    {
+      "id": "C12",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "Response: error.code is an integer; in 2026-07-28 every result must carry resultType (\"complete\" or \"input_required\"); an absent resultType from an older server is treated as \"complete\".",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "Error codes MUST be integers. ... The result MUST include a resultType field ... clients MUST treat an absent resultType as \"complete\".",
+      "note": "The parentheses list the core values only; [7] also lets extensions add ResultType values. Not a stronger claim, since the doc does not say 'only'."
+    },
+    {
+      "id": "C13",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "Notification: method, optional params, no id; the receiver must not reply.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "Notifications are sent from the client to the server or vice versa, as a one-way message. The receiver MUST NOT send a response.",
+      "note": "'Notifications MUST NOT include an ID' is also on the page."
+    },
+    {
+      "id": "C14",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "2026-07-28 error codes reserved by the spec: -32020 HeaderMismatch, -32021 MissingRequiredClientCapability, -32022 UnsupportedProtocolVersion.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "-32020 | HeaderMismatch ... -32021 | MissingRequiredClientCapability ... -32022 | UnsupportedProtocolVersion",
+      "note": ""
+    },
+    {
+      "id": "C15",
+      "section": "### 1.2 Message base: JSON-RPC 2.0",
+      "role": 5,
+      "claim": "Tool and resource schemas default to JSON Schema 2020-12.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "Default dialect: When a schema does not include a $schema field, it defaults to JSON Schema 2020-12",
+      "note": "The page's rule covers every schema in MCP messages; the doc names a subset, which is narrower, not stronger."
+    },
+    {
+      "id": "C16",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "Versions are date strings YYYY-MM-DD marking the last backwards-incompatible change.",
+      "source": "[1]",
+      "verdict": "entails",
+      "page_says": "string-based version identifiers following the format YYYY-MM-DD, to indicate the last date backwards incompatible changes were made.",
+      "note": ""
+    },
+    {
+      "id": "C17",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "The versioning page names 2026-07-28 as current.",
+      "source": "[1]",
+      "verdict": "entails",
+      "page_says": "The current protocol version is 2026-07-28.",
+      "note": ""
+    },
+    {
+      "id": "C18",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "The spec repo's releases page lists 2026-07-28 as \"Latest\" (release candidate 2026-07-28-RC came earlier), then 2025-11-25, 2025-06-18, 2025-03-26, 2024-11-05.",
+      "source": "[9]",
+      "verdict": "entails",
+      "page_says": "2026-07-28  Latest ... localden released this  28 Jul 16:47 ... github-actions released this  29 May 12:51",
+      "note": "The tag list on the page is 2026-07-28, 2026-07-28 RC, 2025-11-25, 2025-11-25-RC, 2025-06-18, 2025-03-26, 2024-11-05-final, 2024-11-05; the doc's list is a faithful subset. The RC was released 29 May, before the 28 Jul final."
+    },
+    {
+      "id": "C19",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "Revision states: Draft, Current, Final.",
+      "source": "[1]",
+      "verdict": "entails",
+      "page_says": "Draft: in-progress specifications, not yet ready for consumption. ... Current: the current protocol version ... Final: past, complete specifications that will not be changed.",
+      "note": ""
+    },
+    {
+      "id": "C20",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "The official TypeScript SDK v2 (npm @modelcontextprotocol/server and /client, version 2.4.0 on 2026-11-21) says it implements the 2026-07-28 spec.",
+      "source": "[10][E5]",
+      "verdict": "entails",
+      "page_says": "v2 of the SDK (@modelcontextprotocol/server, @modelcontextprotocol/client), the stable release line, implementing the 2026-07-28 MCP spec.",
+      "note": "The spec-support statement is on [10]. The version 2.4.0 and the date are not on the cached GitHub page; they rest on E5 (local, not checkable) and the packaged README named in the [10] entry, which has no saved text."
+    },
+    {
+      "id": "C21",
+      "section": "### 1.3 Which spec version is current",
+      "role": 5,
+      "claim": "The v1 package @modelcontextprotocol/sdk (1.32.2) still speaks 2025-11-25.",
+      "source": "[E1]",
+      "verdict": "not_checkable",
+      "page_says": "not checked: cites only the local experiment E1",
+      "note": ""
+    },
+    {
+      "id": "C22",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Three phases.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "Initialization: Capability negotiation and protocol version agreement ... Operation: Normal protocol communication ... Shutdown: Graceful termination of the connection",
+      "note": "The claim is right, but the numbered list under it has five items and never names the Operation phase (a structure issue, outside this part's steps)."
+    },
+    {
+      "id": "C23",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Initialization. The client must send initialize with protocolVersion, capabilities, clientInfo. The server must answer with its own protocolVersion, capabilities, serverInfo (and optional instructions). Then the client must send notifications/initialized.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "The client MUST initiate this phase by sending an initialize request containing: ... The server MUST respond with its own capabilities and information",
+      "note": "'the client MUST send an initialized notification' is on the page; the response example carries protocolVersion, capabilities, serverInfo and \"instructions\": \"Optional instructions for the client\"."
+    },
+    {
+      "id": "C24",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Before the server answers, the client should send nothing but pings; before initialized, the server should send nothing but pings and logging.",
+      "source": "[4]",
+      "verdict": "overstates",
+      "page_says": "The client SHOULD NOT send requests other than pings before the server has responded to the initialize request.",
+      "note": "Wider scope: the page restricts only requests, while 'send nothing but pings' also rules out notifications (for example a cancellation) that the page allows. The server rule has the same widening ('SHOULD NOT send requests other than pings and logging'). Fix: 'the client should send no requests other than pings ...; the server should send no requests other than pings and logging ...' [4]."
+    },
+    {
+      "id": "C25",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Version negotiation. The client sends a version it supports (should be its latest). If the server supports it, it must reply with the same version; otherwise it must reply with another version it supports (should be its latest). If the client cannot use that version it should disconnect.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "If the server supports the requested protocol version, it MUST respond with the same version. Otherwise, the server MUST respond with another protocol version it supports.",
+      "note": "The SHOULD for 'latest' on both sides and the client's SHOULD disconnect are on the page too."
+    },
+    {
+      "id": "C26",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Capability negotiation. Client capabilities: roots, sampling, elicitation, tasks, experimental. Server capabilities: prompts, resources, tools, logging, completions, tasks, experimental. Sub-flags: listChanged, subscribe (resources only). Both sides must use only capabilities that were negotiated.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "subscribe: Support for subscribing to individual items’ changes (resources only) ... Both parties MUST: ... Only use capabilities that were successfully negotiated",
+      "note": "The capability table on the page lists exactly these client and server capabilities."
+    },
+    {
+      "id": "C27",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Shutdown. No shutdown message exists. On stdio the client closes the server's stdin, waits, then sends SIGTERM, then SIGKILL if needed. On HTTP, closing the connection(s) ends it.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "Waiting for the server to exit, or sending SIGTERM if the server does not exit within a reasonable time ... shutdown is indicated by closing the associated HTTP connection(s).",
+      "note": "The page's steps are a SHOULD and SIGTERM is conditional on the server not exiting; the doc's 'waits ... if needed' carries that condition, if loosely."
+    },
+    {
+      "id": "C28",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Timeouts. Implementations should time out every request and then send a cancellation notification; progress may reset the clock but a maximum timeout should always apply.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "the sender SHOULD issue a cancellation notification for that request ... implementations SHOULD always enforce a maximum timeout, regardless of progress notifications",
+      "note": "Modal verbs match: SHOULD, MAY reset, SHOULD enforce a maximum."
+    },
+    {
+      "id": "C29",
+      "section": "### 1.4 Legacy lifecycle (2025-11-25 and earlier): initialize, operate, shutdown",
+      "role": 3,
+      "claim": "Version negotiation (experiment E2): the same server was sent protocolVersion \"1.0.0\" and answered \"2025-11-25\", matching the \"respond with another supported version\" rule.",
+      "source": "[4][E2]",
+      "verdict": "entails",
+      "page_says": "Otherwise, the server MUST respond with another protocol version it supports.",
+      "note": "The rule is on [4]. The observed exchange rests on E2 (local, not checkable)."
+    },
+    {
+      "id": "C30",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "\"There is no negotiation handshake.\" Every request carries its protocol version, and the server accepts or rejects each request on its own.",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "There is no negotiation handshake. Every request carries its protocol version, and the server accepts or rejects each request independently",
+      "note": "The quote is exact."
+    },
+    {
+      "id": "C31",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Every request carries these _meta keys: io.modelcontextprotocol/protocolVersion (required), io.modelcontextprotocol/clientCapabilities (required), io.modelcontextprotocol/clientInfo (optional, but clients should send it).",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "fields marked as required MUST be included on every request. ... Clients SHOULD include io.modelcontextprotocol/clientInfo on every request unless specifically configured not to do so.",
+      "note": "The page's table marks protocolVersion and clientCapabilities 'Yes' and clientInfo 'No'."
+    },
+    {
+      "id": "C32",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "A request missing a required key is rejected with -32602, and with HTTP 400 on HTTP.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "A request missing any required field is malformed; the server MUST reject it with JSON-RPC error code -32602 (Invalid params). On HTTP, the response status MUST be 400 Bad Request.",
+      "note": ""
+    },
+    {
+      "id": "C33",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "A server that does not support the requested version must answer UnsupportedProtocolVersionError (code -32022) listing data.supported; the client should retry with a mutually supported version.",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "it MUST respond with an UnsupportedProtocolVersionError listing the versions it does support ... The client SHOULD select a mutually supported version from the supported list and retry the request",
+      "note": "The example on the page shows \"code\": -32022 and data.supported."
+    },
+    {
+      "id": "C34",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "A server that needs a client capability the request did not declare must return -32021 with data.requiredCapabilities.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "the server MUST return a MissingRequiredClientCapabilityError (-32021) whose data.requiredCapabilities lists the missing capabilities.",
+      "note": ""
+    },
+    {
+      "id": "C35",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Servers must implement server/discover, which returns supportedVersions, capabilities, optional instructions and _meta[\"io.modelcontextprotocol/serverInfo\"]. Clients may call it first, but are not required to.",
+      "source": "[11]",
+      "verdict": "entails",
+      "page_says": "Servers MUST implement it. ... Calling server/discover is optional for clients",
+      "note": "The DiscoverResult list on the page has supportedVersions, capabilities, _meta serverInfo (SHOULD) and optional instructions. On stdio, a dual-era client SHOULD send it first; the doc's general statement still holds."
+    },
+    {
+      "id": "C36",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Servers must not rely on earlier requests on the same connection for context (statelessness). State that spans requests must be an explicit identifier the client passes on each request.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "Servers MUST NOT rely on prior requests over the same connection to establish context ... MUST be referenced by an explicit identifier the client passes on each request.",
+      "note": ""
+    },
+    {
+      "id": "C37",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "An open connection (for example a stdio process) is not a conversation or session.",
+      "source": "[7]",
+      "verdict": "entails",
+      "page_says": "This implies that an open connection, such as a STDIO process, is not a conversation or session",
+      "note": ""
+    },
+    {
+      "id": "C38",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Shutdown on stdio: close the server's stdin, wait, then force-terminate if needed; servers should exit when stdin closes.",
+      "source": "[12]",
+      "verdict": "entails",
+      "page_says": "If the server does not exit within a reasonable time, forcibly terminating the process ... Servers SHOULD exit promptly when their standard input is closed",
+      "note": ""
+    },
+    {
+      "id": "C39",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "On HTTP there is nothing to shut down: each request is its own POST.",
+      "source": "[13]",
+      "verdict": "unsupported",
+      "page_says": "The client sends every JSON-RPC request or notification as its own HTTP POST.",
+      "note": "Searched [13] for 'shut', 'teardown', 'tear down': not found. The page supports one POST per request and no sessions, but never says HTTP needs no shutdown, and it describes a subscriptions/listen response stream 'that stays open'. [15], not cited here, says the client ends one by closing the SSE stream. Fix: 'On HTTP there is no session to end; close any open subscriptions/listen stream, since closing it cancels the subscription' [13][15]."
+    },
+    {
+      "id": "C40",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Extensions (for example Tasks io.modelcontextprotocol/tasks, MCP Apps) are negotiated through an extensions map in capabilities.",
+      "source": "[5]",
+      "verdict": "entails",
+      "page_says": "Extensions are advertised in the extensions field of capabilities, which is a map of extension identifiers to per-extension settings objects.",
+      "note": "The page's examples name the MCP Apps extension (io.modelcontextprotocol/ui) and Tasks (io.modelcontextprotocol/tasks)."
+    },
+    {
+      "id": "C41",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "Same session, modern era (experiment E4, SDK 2.4.0, serveStdio): the wire transcript shown.",
+      "source": "[E4]",
+      "verdict": "not_checkable",
+      "page_says": "not checked: cites only the local experiment E4",
+      "note": ""
+    },
+    {
+      "id": "C42",
+      "section": "### 1.5 Current lifecycle (2026-07-28): no handshake",
+      "role": 3,
+      "claim": "The missing-_meta error and the -32022 shape match the spec.",
+      "source": "[7][5]",
+      "verdict": "entails",
+      "page_says": "[7] the server MUST reject it with JSON-RPC error code -32602 (Invalid params) [5] \"code\": -32022, ... \"supported\": [\"2026-07-28\", \"2025-11-25\"], \"requested\": \"1900-01-01\"",
+      "note": "Compared against the E4 lines as printed in the doc. [5]'s matrix also says the error code for a rejected initialize on stdio is implementation-defined, so returning -32022 there is allowed."
+    },
+    {
+      "id": "C43",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 2, Negotiate, legacy (2025-11-25): initialize request, response, notifications/initialized.",
+      "source": "[4]",
+      "verdict": "entails",
+      "page_says": "After successful initialization, the client MUST send an initialized notification to indicate it is ready to begin normal operations:",
+      "note": ""
+    },
+    {
+      "id": "C44",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 2, Negotiate, current (2026-07-28): optional server/discover; version and capabilities ride in each request's _meta.",
+      "source": "[11][7]",
+      "verdict": "entails",
+      "page_says": "[11] Calling server/discover is optional for clients [7] Every request supplies this metadata in its _meta field.",
+      "note": ""
+    },
+    {
+      "id": "C45",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 3, List tools, legacy (2025-11-25): tools/list.",
+      "source": "[14]",
+      "verdict": "unsupported",
+      "page_says": "To discover available tools, clients send a tools/list request.",
+      "note": "Wrong era: [14] is the 2026-07-28 tools page, and searching it for '2025-11-25', 'legacy' and 'earlier revision' finds nothing, so it does not cover the legacy column. Fix: cite the 2025-11-25 tools page (no saved text in this input) or mark the cell with the unverified symbol."
+    },
+    {
+      "id": "C46",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 3, List tools, current (2026-07-28): tools/list plus _meta; result has ttlMs and cacheScope.",
+      "source": "[14]",
+      "verdict": "entails",
+      "page_says": "This operation supports pagination and caching. ... \"ttlMs\": 300000, \"cacheScope\": \"public\"",
+      "note": "The page also says 'Every request MUST include the required _meta fields'."
+    },
+    {
+      "id": "C47",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 4, Call a tool, current (2026-07-28): tools/call plus _meta; result has resultType.",
+      "source": "[14]",
+      "verdict": "entails",
+      "page_says": "Every request MUST include the required _meta fields ... \"resultType\": \"complete\",",
+      "note": "resultType appears in the tools/call response example."
+    },
+    {
+      "id": "C48",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 5, React to changes, legacy (2025-11-25): notifications/tools/list_changed, delivered on a GET stream or the open connection.",
+      "source": "[4][13]",
+      "verdict": "entails",
+      "page_says": "[4] This can be used to open an SSE stream [13] clients could open a standalone SSE stream with HTTP GET to receive server-initiated messages",
+      "note": "[4] also gives listChanged as tools list-change support and the stdio server writing to stdout. The exact method name appears only in 2026-07-28 text ([13] line on subscriptions/listen); no cached legacy page spells it. Minor cross-era gap, so this passes with a caveat."
+    },
+    {
+      "id": "C49",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 5, React to changes, current (2026-07-28): open subscriptions/listen with toolsListChanged:true; server acks with notifications/subscriptions/acknowledged.",
+      "source": "[14][15]",
+      "verdict": "entails",
+      "page_says": "[15] The server MUST send notifications/subscriptions/acknowledged as the first message carrying the subscription’s ID ... toolsListChanged | boolean | Receive notifications/tools/list_changed when tools change",
+      "note": ""
+    },
+    {
+      "id": "C50",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 6, Shut down, legacy (2025-11-25): stdio: close stdin, SIGTERM, SIGKILL. HTTP: close connection, optionally DELETE with the session id.",
+      "source": "[4][16]",
+      "verdict": "entails",
+      "page_says": "Clients that no longer need a particular session (e.g., because the user is leaving the client application) SHOULD send an HTTP DELETE to the MCP endpoint with the MCP-Session-Id header",
+      "note": "The page says SHOULD when a session exists; 'optionally' fits because the server MAY assign a session at all. [16] resolves to [4]."
+    },
+    {
+      "id": "C51",
+      "section": "### 1.6 End-to-end session in six steps",
+      "role": 3,
+      "claim": "Step 6, Shut down, current (2026-07-28): stdio: close stdin, then force. HTTP: nothing to do.",
+      "source": "[12][13]",
+      "verdict": "unsupported",
+      "page_says": "[12] Closing the input stream to the child process (the server). [13] not found: searched 'shut', 'teardown', 'tear down'",
+      "note": "The stdio half is supported. 'HTTP: nothing to do' has the same gap as C39: [13] never says it and describes long-lived subscriptions/listen streams that stay open. Fix: 'HTTP: close any open subscriptions/listen stream; there is no session to end' [13][15]."
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [],
+  "patch_instructions": []
+}

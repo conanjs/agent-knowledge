@@ -3,7 +3,7 @@ schema: deep-dive/v1
 topic: ai-agents
 status: draft
 applies-to: ["MCP specification 2026-07-28 (current) and 2025-11-25 (legacy)", "@modelcontextprotocol/sdk 1.32.2, @modelcontextprotocol/server 2.4.0", "sources read 2026-11-21"]
-last-updated: 2026-11-21
+last-updated: 2026-11-22
 synthesized-into: []
 tags: [mcp, model-context-protocol, json-rpc, transports, oauth, security]
 ---
@@ -15,10 +15,11 @@ tags: [mcp, model-context-protocol, json-rpc, transports, oauth, security]
 **Use this when:** you build or debug an MCP client or server, pick a transport (stdio or Streamable HTTP), set up OAuth for a remote server, or need to know what changed between the two spec revisions.
 **Depth:** roles and message base, lifecycle in both revisions, the primitives (tools, resources, prompts, elicitation, sampling, roots), transports, authorization, security and trust, what 6 local SDK experiments showed, and the gaps left unverified.
 
-**How this doc was made, and its known errors.** One agent wrote it in a single pass from a plain prompt on 2026-11-21. It is kept as a draft so it can be compared with other ways of researching a topic later. The ✅ marks are that agent's own checks: no second agent or script verified them. A blind check of 15 random statements against the cited pages found 12 correct and 3 errors, not yet fixed in the body:
+**How this doc was made, and its known errors.** One agent wrote it in a single pass from a plain prompt on 2026-11-21. It is kept as a draft so it can be compared with other ways of researching a topic later. The ✅ marks are that agent's own checks: no second agent or script verified them. A blind check of 15 random statements against the cited pages found 13 correct and 2 errors, not yet fixed in the body:
 - Section 3.5, step 9: the 403 `insufficient_scope` response is a SHOULD in the spec, but the doc says MUST.
 - Section 3.5, Scope: "established security best practices" lost the word "security".
-- Sections 1.6 (step 5) and 3.4: `list_changed` is said to arrive on the HTTP GET stream; in 2026-07-28 the GET endpoint was replaced by `subscriptions/listen`, and the cited 2025-11-25 pages do not say it either.
+
+The check first counted a third error: `list_changed` arriving on the HTTP GET stream (section 1.6, step 5, and section 3.4). A recheck on 2026-11-22 found the channel right and the check wrong. Those rows describe the 2025-11-25 era, and its transports page says the server MAY send JSON-RPC requests and notifications on the stream a client opens with HTTP GET ✅[4]. The same recheck found a citation gap in the section 1.6 row: the method name `notifications/tools/list_changed` is on the 2025-11-25 security best-practices page ([4a-sess]), not on the lifecycle or transports pages that the row cites.
 
 Read every claim here as unconfirmed until it is checked against its source.
 
