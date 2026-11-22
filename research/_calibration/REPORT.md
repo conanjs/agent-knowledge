@@ -117,6 +117,22 @@ The probe case showed two gaps in the wording, fixed in v7: check each probe fir
 
 **v7 on the probe case** (`run-j4p7`, round 2, probe-02 fixed; about 120k tokens): the rigged probe-03 is now `invalid_probe`, `CRITICAL_FAIL` ("its only check never looks for `#x` … any error it throws is swallowed by an empty `catch {}`"). probe-02, which prints `false`, is used against planted error P5 (still `contradicted`). P1–P5 keep their severities. C1 is a `WARN`, not the `observed` I expected: its `protected` part rests on probe-01 alone, and the claim states it as a general rule with no version, which the probe rules call an overstatement. The judge applied the rule as written; my answer key was wrong. v7 changed only the probe rules, so it was rerun on the probe case only; the three standard cases ran on v6.
 
+### 3.8 Phase 2b gate: SE-04 with its lab as probes (2026-11-22)
+
+`research/_golden/SE-04/probes-v1/` is the SE-04 baseline with its 14 C lab tests rewritten as probes (one `lib` block, 14 `verify` blocks; 14 of 14 pass; claims unchanged). It was re-judged with v7 on the same 45 claims as `run-w3j7` (same lines and text; only the footnotes changed), in `run-h6t1`:
+
+| | Before (`run-w3j7`, v3, lab cited as `[^exp]`) | After (`run-h6t1`, v7, 14 probes) |
+|---|---|---|
+| `not_checkable` | 10 of 45 | **0 of 45** |
+| `observed` | — | 5 |
+| `entails` | 26 | 29 |
+| Findings (`overstates`, `unsupported`, `contradicted`) | 9 | 11 |
+| Verdict | FAIL 2.75 | FAIL 3.25 |
+
+**The gate is met** (not_checkable 10/45 → 2/45 or fewer). Every probe was judged valid: "each compares its observations with the doc and exits non-zero on a mismatch". The probes moved 10 claims from unknown to judged: 5 `observed`, 3 `entails`, and the rest into findings the rules require, for example a probe-only claim in role 2 (`unsupported`) or a probe-only rule with no version (`WARN`). The doc still fails on what probes cannot fix: Rank 6 sources in mechanism sections, an unarbitrated conflict with epoll(7), and the pass criterion that §5 must state the drain-until-`EAGAIN` rule. Judge versions differ between the two columns (v3 and v7), so only the `not_checkable` row is a like-for-like measure.
+
+**Cost of Phase 2b's judge runs:** v6 calibration 490k (four runs), v7 probe case 111k, SE-04 re-judging 285k: about 886k tokens, against 850k approved (610k, plus 240k for SE-04).
+
 ## 4. Findings for the design
 
 1. **Run folders need neutral names.** One judge noted that the folder name "private-fields-clean" suggested the doc should pass. Inputs now go in `run-<id>/` folders (`RUNS.md` maps them).
