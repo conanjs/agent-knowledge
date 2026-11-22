@@ -1,6 +1,6 @@
 ---
 schema: schema/v1
-last-updated: 2026-10-27
+last-updated: 2026-11-22
 ---
 
 # Schema: Deep Dive (`deep-dive/v1`)
@@ -32,6 +32,7 @@ Analogy: the deep dive is a **lab notebook**; the derived docs are the **textboo
 | `last-verified` | yes if verified | Date of the last source re-check |
 | `synthesized-into` | yes | List of `{ path, on }`: each derived doc and the date it was synthesized; `[]` until synthesized |
 | `tags` | no | Free keywords |
+| `ranked-sources` | no | `true`: every external reference carries a source rank, and the rank rules KB-14 to KB-16 apply (`_system.md` §4.1). `false` or left out: they do not. Existing docs leave it out (no retrofit) |
 
 ## Required structure
 

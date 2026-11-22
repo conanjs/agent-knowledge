@@ -1,6 +1,6 @@
 ---
 schema: schema-system/v1
-last-updated: 2026-11-20
+last-updated: 2026-11-22
 ---
 
 # Knowledge Framework: Schema System
@@ -42,6 +42,13 @@ Example:
 - [Fast properties in V8](https://v8.dev/blog/fast-properties) — V8 team, 2017. Backs: How it works §2.
 ```
 
+In a doc with `ranked-sources: true` (§4.1), every external entry also gives its source rank, between the year and "Backs:", and the entries are ordered by rank, 1 first:
+
+```markdown
+- [RFC 9113: HTTP/2](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Rank 1. Backs: How it works §2. [^1]
+- [Fast properties in V8](https://v8.dev/blog/fast-properties) — V8 team, 2017. Rank 4. Backs: How it works §3. [^2]
+```
+
 ## 3. Claim marking
 
 Inline markers, used in any body section:
@@ -70,6 +77,40 @@ The **Verification status** section (knowledge-doc) counts these.
 | KB-11 | **Title and Summary head.** Every v1 file has a `# Title` line. Knowledge docs and deep dives open with `## Summary` holding `**TL;DR:**` and `**Use this when:**` (a deep dive also has `**Depth:**`, DD-1) | script |
 | KB-12 | **References and Related are real.** `## References` has at least one entry, `## Related` has at least one entry (`- _None yet._` when empty), and every footnote used in the body (`[^n]`) has a References entry carrying it | script |
 | KB-13 | **Revisions do not erase.** When a doc is revised, the old and new versions are compared unit by unit (section, table row, paragraph, claim); every removed unit has a stated reason: wrong, unverifiable, or a true duplicate now linked. A rewrite that drops correct content without a reason fails | llm |
+| KB-14 | **Ranked references.** With `ranked-sources: true`, every external References entry has `Rank <1–6>.`, the entries are ordered by rank (1 first), and a URL that a rule in `tools/classify-source/source-ranks.json` covers carries that rule's rank (§4.1) | script |
+| KB-15 | **Rank quarantine.** With `ranked-sources: true`, a footnote cited in a section points to a rank that section allows (§4.1 map); in a section that allows only Rank 1–5 or stricter, every ✅ carries a footnote; every body section has a rank role. A Rank 6 source in a worked example only warns | script |
+| KB-16 | **No orphan sources.** With `ranked-sources: true`, every References entry that carries a footnote is cited at least once in the body (the reverse of KB-12) | script (warn) |
+| KB-17 | **Conflicts are arbitrated, not hidden.** When sources disagree, the claim from the lower rank number governs the sections that allow Rank 1–5 or stricter. The other claim is kept under the pitfalls section (Edge cases, Trade-offs, Troubleshooting, Lookup notes, or a deep dive's `## 6.`) with its source, its rank and why it is wrong or when it holds. On a tie (two sources of the same rank), a Rank 1 source settles it; with none, both claims go under the pitfalls section as an open conflict marked `⚠️ unverified` | llm (judge) |
+
+### 4.1 Source ranks
+
+A doc opts in with `ranked-sources: true` in its front-matter; KB-14 to KB-16 then apply. Existing docs are not retrofitted (§6).
+
+**Ranks** are about who published a source (provenance), not how well it is written:
+
+| Rank | Class | Examples |
+|---|---|---|
+| 1 | Specs, official docs, the project's own source code, the originator's own publication of a concept | RFCs, `tc39.es`, `man7.org`, `docs.python.org`, a project's own repository |
+| 2 | Peer-reviewed papers, preprints, official datasets and benchmarks | arXiv, ACM, IEEE, USENIX |
+| 3 | Authoritative secondary: textbooks, curated references | MDN Web Docs (`developer.mozilla.org/en-US/docs/`), `javascript.info` |
+| 4 | Vetted engineering literature | Company and project engineering blogs (the V8 blog, Cloudflare), official post-mortems |
+| 5 | Tertiary overviews | Wikipedia |
+| 6 | Community and unvetted | Stack Overflow, Reddit, Medium, personal blogs, GitHub issues, pull requests and discussions |
+
+**Rules.** `tools/classify-source/source-ranks.json` holds the rules, each a host plus a path prefix, and `classify-source.mjs` applies them. The rule with the most path segments wins, so `github.com/microsoft/typescript/` gives the TypeScript source Rank 1, while `github.com/*/*/issues/` gives any issue Rank 6. A URL that no rule covers is tier B: the writer picks its rank (the higher number when two fit), and the judge re-rates it. A rule is added only on V's yes, and only for a host and prefix that one publisher owns (one book, one organization's blog): a host where many people post, such as a mailing-list archive, never gets one, because its paths do not show who wrote a page.
+
+**Tier B rating guide** (decided by V, 2026-11-22): a post by a project's maintainer on that project's official mailing list is Rank 4, but only when the page itself shows the author's role (the project's lead, or a `Signed-off-by:` line of a maintainer); otherwise it is Rank 6.
+
+**Section map** (KB-15): the ranks each `##` section may cite. A `###` heading inherits its section's role. The research agent writes deep dives with the six numbered headings; a ranked deep dive with any other body heading fails KB-15.
+
+| Role | Deep-dive heading | knowledge-doc headings | Allowed ranks |
+|---|---|---|---|
+| Mental model | `## 1. Mental model`, `## 2. Concept architecture` | Summary, Problem, Mental model, Takeaways; reference Scope; how-to Goal & prerequisites; case-study Context, Generalized lesson | 1–5 |
+| Mechanism | `## 3. How it works` | How it works; how-to Steps, Verify, Rollback; case-study Root cause, Fix | 1–4 |
+| Worked examples | `## 4. Worked examples` | Worked example, Case studies; case-study Symptom, Timeline | 1–5 (Rank 6 warns) |
+| Reference | `## 5. Reference & invariants` | reference Catalog | 1–4 |
+| Pitfalls | `## 6. Trade-offs, pitfalls & misconceptions` | Edge cases, Trade-offs, Troubleshooting, Lookup notes | 1–6 |
+| Envelope | `## References`, `## Related` | References, Related, Verification status, Used by | not checked |
 
 ## 5. Registry
 

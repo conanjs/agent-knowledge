@@ -14,14 +14,17 @@
 // deep-dive DD-1, DD-3, DD-4 (warn); topic-index TI-1 … TI-7; shared KB-9 (front-matter values),
 // KB-10 (only keys the schema defines), KB-11 (title and Summary head), KB-12 (References, Related, footnotes);
 // KB-3 with --urls;
-// KB-7 conversation residue (warn, heuristic); KB-8 duplicated fenced blocks across docs / repeated paragraphs (warn).
-// The validator reads only the knowledge folder. A leftover "Used by" section is ignored.
+// KB-7 conversation residue (warn, heuristic); KB-8 duplicated fenced blocks across docs / repeated paragraphs (warn);
+// with `ranked-sources: true`: KB-14 (ranked, ordered References that match ../classify-source/source-ranks.json),
+// KB-15 (rank quarantine per section, footnote on every core ✅), KB-16 orphan References footnotes (warn).
+// The validator reads the knowledge folder and the rank rules only. A leftover "Used by" section is ignored.
 // LLM-only rules (KD-3, KD-5, KD-8, KB-1, KB-2, KB-5, KB-6, KB-7 in full, DD-2) are not checked here; a reviewer
 // checks them (the review-docs procedure of the agent home).
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { classify, loadRules } from '../classify-source/classify-source.mjs';
 
 const args = process.argv.slice(2);
 const checkUrls = args.includes('--urls'); if (checkUrls) args.splice(args.indexOf('--urls'), 1);
@@ -106,10 +109,27 @@ const V1 = ['knowledge-doc/v1', 'deep-dive/v1', 'topic-index/v1'];
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 // Front-matter keys each schema defines (schemas/*.schema.md "Front-matter" tables). Anything else fails KB-10.
 const KEYS = {
-  'knowledge-doc/v1': ['schema', 'type', 'topic', 'status', 'applies-to', 'last-verified', 'last-updated', 'tags', 'derived-from'],
-  'deep-dive/v1': ['schema', 'topic', 'status', 'applies-to', 'last-updated', 'last-verified', 'synthesized-into', 'tags'],
+  'knowledge-doc/v1': ['schema', 'type', 'topic', 'status', 'applies-to', 'last-verified', 'last-updated', 'tags', 'derived-from', 'ranked-sources'],
+  'deep-dive/v1': ['schema', 'topic', 'status', 'applies-to', 'last-updated', 'last-verified', 'synthesized-into', 'tags', 'ranked-sources'],
   'topic-index/v1': ['schema', 'kind', 'topic', 'last-updated'],
 };
+// KB-15: the source ranks each body section may cite (schemas/_system.md §4.1). A "### " heading inherits its "## " section.
+const CORE = { allow: [1, 2, 3, 4, 5], label: '1–5' };
+const MECH = { allow: [1, 2, 3, 4], label: '1–4' };
+const EXAMPLE = { allow: [1, 2, 3, 4, 5], warn: [6], label: '1–5' };
+const ANY = { allow: [1, 2, 3, 4, 5, 6], label: '1–6', pitfalls: true };
+const SECTION_RANKS = {
+  Summary: CORE, Takeaways: CORE,
+  '1. Mental model': CORE, '2. Concept architecture': CORE, '3. How it works': MECH, '4. Worked examples': EXAMPLE,
+  '5. Reference & invariants': MECH, '6. Trade-offs, pitfalls & misconceptions': ANY,
+  Problem: CORE, 'Mental model': CORE, 'How it works': MECH, 'Worked example': EXAMPLE, 'Edge cases': ANY, 'Trade-offs': ANY, 'Case studies': EXAMPLE,
+  'Goal & prerequisites': CORE, Steps: MECH, Verify: MECH, Troubleshooting: ANY, Rollback: MECH,
+  Scope: CORE, Catalog: MECH, 'Lookup notes': ANY,
+  Context: CORE, Symptom: EXAMPLE, 'Root cause': MECH, Fix: MECH, Timeline: EXAMPLE, 'Generalized lesson': CORE,
+};
+const ENVELOPE = ['References', 'Related', 'Used by', 'Verification status'];
+let rankRules = null; // loaded on the first ranked doc
+
 // KB-7 heuristics: text that only makes sense inside the conversation it was drafted in.
 const RESIDUE = [
   [/^\*\*(Yes|No)[,.!:]/m, 'paragraph opens with a bare "Yes"/"No" answer; state the question it answers'],
@@ -140,6 +160,7 @@ function checkCommonFrontMatter(f, fm, kind) {
   if (fm['last-updated'] && !DATE.test(fm['last-updated'])) fail('KB-9', `${rel(f)}: last-updated must be YYYY-MM-DD`);
   const folder = path.relative(kRoot, path.dirname(f)).split(path.sep).join('/');
   if (fm.topic && fm.topic !== folder) fail('KB-9', `${rel(f)}: topic "${fm.topic}" ≠ folder "${folder}"`);
+  if (fm['ranked-sources'] !== undefined && !['true', 'false'].includes(String(fm['ranked-sources']))) fail('KB-9', `${rel(f)}: ranked-sources must be true or false`);
   if (fm.status === 'verified') {
     if (!fm['last-verified'] || !DATE.test(fm['last-verified'])) fail(kind === 'deep-dive' ? 'KB-9' : 'KD-2', `${rel(f)}: status verified needs last-verified (YYYY-MM-DD)`);
   }
@@ -162,7 +183,58 @@ function checkTail(f, t, fm) {
   const used = new Set([...b.replace(refs ?? '', '').matchAll(/\[\^(\w+)\](?!:)/g)].map((m) => m[1]));
   const defined = new Set([...(refs ?? '').matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]));
   for (const n of used) if (!defined.has(n)) fail('KB-12', `${rel(f)}: footnote [^${n}] is used but no References entry carries it`);
+  if (String(fm['ranked-sources']) === 'true') for (const n of defined) if (!used.has(n)) warn('KB-16', `${rel(f)}: References entry [^${n}] is never cited in the body`);
   if (fm.status === 'verified' && /⚠️\s*unverified/.test(b.replace(section(t, 'Verification status') ?? '', ''))) fail('KD-2', `${rel(f)}: status verified but contains "⚠️ unverified" claims`);
+}
+
+// KB-14 and KB-15, for a doc with `ranked-sources: true`.
+function checkRanks(f, t) {
+  rankRules ??= loadRules();
+  const refs = section(t, 'References') ?? '';
+  const entries = [];
+  for (const line of refs.split('\n')) {
+    if (/^[-*] /.test(line)) entries.push(line);
+    else if (/^\s+\S/.test(line) && entries.length) entries[entries.length - 1] += ' ' + line.trim();
+  }
+  const rankOf = new Map(); // footnote label -> rank of its entry (external entries only)
+  let highest = 0;
+  for (const e of entries) {
+    const found = [...e.matchAll(/https?:\/\/[^\s)>\]`|]+/g)].map((m) => m[0].replace(/[.,;]+$/, ''));
+    if (!found.length) continue;
+    const labels = [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]);
+    const name = labels.length ? labels.map((l) => `[^${l}]`).join(' ') : found[0];
+    const m = e.match(/\bRank ([1-6])\./);
+    if (!m) { fail('KB-14', `${rel(f)}: References entry ${name} has no "Rank <1–6>." (${found[0]})`); continue; }
+    const rank = Number(m[1]);
+    if (rank < highest) fail('KB-14', `${rel(f)}: References are not in rank order: ${name} (Rank ${rank}) comes after a Rank ${highest} entry`);
+    highest = Math.max(highest, rank);
+    for (const u of found) {
+      const c = classify(u, rankRules);
+      if (c?.tier === 'A' && c.rank !== rank) fail('KB-14', `${rel(f)}: ${name} is written as Rank ${rank}, but source-ranks.json gives ${u} Rank ${c.rank} (rule ${c.rule})`);
+    }
+    for (const l of labels) rankOf.set(l, rank);
+  }
+  let head = null;
+  for (const line of stripFences(body(t)).split('\n')) {
+    const h = line.match(/^## (.+?)\s*$/);
+    if (h) {
+      head = h[1];
+      if (!ENVELOPE.includes(head) && !SECTION_RANKS[head]) fail('KB-15', `${rel(f)}: "## ${head}" has no rank role; a ranked doc uses the section names in schemas/_system.md §4.1`);
+      continue;
+    }
+    const role = SECTION_RANKS[head];
+    if (!role) continue;
+    for (const c of line.matchAll(/\[\^(\w+)\](?!:)/g)) {
+      const r = rankOf.get(c[1]);
+      if (r === undefined || role.allow.includes(r)) continue;
+      if (role.warn?.includes(r)) warn('KB-15', `${rel(f)}: "## ${head}" cites [^${c[1]}], a Rank ${r} source; worked examples should use Rank ${role.label}`);
+      else fail('KB-15', `${rel(f)}: "## ${head}" cites [^${c[1]}], a Rank ${r} source; this section allows Rank ${role.label}`);
+    }
+    if (role.pitfalls || /✅\s*=/.test(line)) continue;
+    for (const c of line.matchAll(/✅/g)) {
+      if (!/^\s*\[\^\w+\]/.test(line.slice(c.index + 1))) fail('KB-15', `${rel(f)}: "## ${head}" has a ✅ with no footnote: "${line.slice(Math.max(0, c.index - 50), c.index + 1).trim()}"`);
+    }
+  }
 }
 
 // ---- collect files ------------------------------------------------------------------------------
@@ -217,6 +289,7 @@ for (const [f, { fm, text }] of docs) {
     checkSequence(f, heads, [['Summary', 1], ...TYPES[fm.type], ...TAIL]);
     checkSummary(f, text, false);
     checkTail(f, text, fm);
+    if (String(fm['ranked-sources']) === 'true') checkRanks(f, text);
     // KD-6
     if (fm.type === 'concept' && text.split('\n').length > 400) warn('KD-6', `${rel(f)}: ${text.split('\n').length} lines (> ~400); split or move to a deep dive`);
     // KD-9 counts (warn): claim markers outside fenced code blocks, which only quote text
@@ -250,6 +323,7 @@ for (const [f, { fm, text }] of docs) {
     if (heads.slice(-2).join('|') !== 'References|Related') fail('DD-1', `${rel(f)}: last sections must be "## References", "## Related"`);
     checkSummary(f, text, true);
     checkTail(f, text, fm);
+    if (String(fm['ranked-sources']) === 'true') checkRanks(f, text);
     for (const e of fm['synthesized-into'] ?? []) {
       const p = path.join(kRoot, String(e?.path ?? e));
       const d = docs.get(p);

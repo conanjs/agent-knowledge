@@ -1,6 +1,6 @@
 ---
 schema: schema/v1
-last-updated: 2026-11-14
+last-updated: 2026-11-22
 ---
 
 # Schema: Knowledge Doc (`knowledge-doc/v1`)
@@ -33,6 +33,7 @@ The **patterned named sections** every future knowledge file follows. The shape 
 | `last-updated` | yes | Date |
 | `tags` | no | Free keywords for search |
 | `derived-from` | yes if synthesized | Paths (relative to `knowledge/`) of the deep dive(s) or legacy doc(s) this doc was distilled from (`deep-dive.schema.md` §Synthesis) |
+| `ranked-sources` | no | `true`: every external reference carries a source rank, and the rank rules KB-14 to KB-16 apply (`_system.md` §4.1). `false` or left out: they do not. Existing docs leave it out (no retrofit) |
 
 ## Common head
 

@@ -52,7 +52,7 @@ Feature: Knowledge validator
     Then it exits with 1 and prints:
       """
       FAIL (1)
-        KB-10  demo/concept.md: front-matter key "owner" is not defined by knowledge-doc/v1 (allowed: schema, type, topic, status, applies-to, last-verified, last-updated, tags, derived-from)
+        KB-10  demo/concept.md: front-matter key "owner" is not defined by knowledge-doc/v1 (allowed: schema, type, topic, status, applies-to, last-verified, last-updated, tags, derived-from, ranked-sources)
       """
 
   Scenario: KB-9 a missing required front-matter key fails
@@ -677,6 +677,122 @@ Feature: Knowledge validator
     Given the repo's "frameworks/knowledge/tools/validate-knowledge" folder is copied to "validator"
     Then the file "validator/validate-knowledge.mjs" has no line containing "companies"
     And the file "validator/validate-knowledge.mjs" has no line containing "deny"
+
+  # ---- KB-14 … KB-16: source ranks (ranked-sources: true) -------------------------------------
+
+  Scenario: KB-14 a ranked doc whose References carry ranks in order passes
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Rank 1. Backs: How it works. [^2]`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-14 a doc without ranked-sources needs no ranks
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Backs: How it works. [^2]`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-14 an external reference with no rank fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Backs: How it works. [^2]`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-14  demo/concept.md: References entry [^2] has no "Rank <1–6>." (https://www.rfc-editor.org/rfc/rfc9113)
+      """
+
+  Scenario: KB-14 References out of rank order fail
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^2][^3]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [Fast properties](https://v8.dev/blog/fast-properties) — V8 team, 2017. Rank 4. Backs: How it works. [^2]\n- [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Rank 1. Backs: How it works. [^3]`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-14  demo/concept.md: References are not in rank order: [^3] (Rank 1) comes after a Rank 4 entry
+      """
+
+  Scenario: KB-14 a rank that differs from the rank rules fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `None.` becomes `None. [^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [A forum answer](https://stackoverflow.com/q/1) — community, 2020. Rank 1. Backs: one claim. [^2]`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-14  demo/concept.md: [^2] is written as Rank 1, but source-ranks.json gives https://stackoverflow.com/q/1 Rank 6 (rule stackoverflow.com/)
+      """
+
+  Scenario: KB-15 a Rank 6 source cited in How it works fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [A forum answer](https://stackoverflow.com/q/1) — community, 2020. Rank 6. Backs: one claim. [^2]`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-15  demo/concept.md: "## How it works" cites [^2], a Rank 6 source; this section allows Rank 1–4
+      """
+
+  Scenario: KB-15 a Rank 6 source cited in a Worked example only warns
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `read the one new line it prints.` becomes `read the one new line it prints. [^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [A forum answer](https://stackoverflow.com/q/1) — community, 2020. Rank 6. Backs: one claim. [^2]`
+    When the tool runs
+    Then it exits with 0 and prints:
+      """
+        warn  KB-15  demo/concept.md: "## Worked example" cites [^2], a Rank 6 source; worked examples should use Rank 1–5
+      PASS (1 warning(s))
+      """
+
+  Scenario: KB-15 a Rank 6 source cited in Edge cases passes
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `None.` becomes `None. [^2]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [A forum answer](https://stackoverflow.com/q/1) — community, 2020. Rank 6. Backs: one claim. [^2]`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-15 a ✅ with no footnote in a core section fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `A fixture is a photograph of a valid state.` becomes `A fixture is a photograph of a valid state. ✅`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+        warn  KD-9  demo/concept.md: Verification status says 1 ✅ / 0 ⚠️ but body has 2 / 0
+      FAIL (1)
+        KB-15  demo/concept.md: "## Mental model" has a ✅ with no footnote: "A fixture is a photograph of a valid state. ✅"
+      """
+
+  Scenario: KB-15 a ranked deep dive with a section that has no rank role fails
+    Given in "knowledge/demo/deep-dive.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-15  demo/deep-dive.md: "## Body" has no rank role; a ranked doc uses the section names in schemas/_system.md §4.1
+      """
+
+  Scenario: KB-16 a References footnote never cited in the body warns
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113) — IETF, 2022. Rank 1. Backs: nothing yet. [^2]`
+    When the tool runs
+    Then it exits with 0 and prints:
+      """
+        warn  KB-16  demo/concept.md: References entry [^2] is never cited in the body
+      PASS (1 warning(s))
+      """
+
+  Scenario: KB-9 a ranked-sources value other than true or false fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: yes\n`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-9  demo/concept.md: ranked-sources must be true or false
+      """
 
   # ---- traceability (TST-14) -------------------------------------------------------------------
 
