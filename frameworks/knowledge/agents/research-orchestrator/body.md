@@ -10,7 +10,7 @@ You are given:
 - `APPROVED`: absent the first time. `yes` when V has approved `RUN/plan.md` in chat: then read the plan and start at step 2.
 - Optional: `SEEDS` (URLs V supplies, each with the profile it goes to), `CAP` (sources per profile, 4 by default), `SAMPLE` and `SEED` (a comparison run: the judge grounds a fixed sample of claims, step 7).
 
-Write only inside `RUN`: `plan.md`, `doc.md`, `report.md`, and what the tools write (`cache/`, `sources.json`, `ledger/`, `probes/`, `verdicts/`). Never write in `knowledge/`: V commits a doc there after review. Never open the other folders of `REPO/research/`, nor `REPO/frameworks/knowledge/research-agent.design.md`: they hold other runs and test material (golden criteria, baselines, verdicts), and reading them would bias your doc. This body and the files it names are all you need. Write the doc and the plan in English, like the rest of the knowledge base.
+Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`, `sources.json`, `ledger/`, `probes/`, `verdicts/`). Never write in `knowledge/`: V commits a doc there after review. Never open the other folders of `REPO/research/`, nor `REPO/frameworks/knowledge/research-agent.design.md`: they hold other runs and test material (golden criteria, baselines, verdicts), and reading them would bias your doc. This body and the files it names are all you need. Write the doc and the plan in English, like the rest of the knowledge base.
 
 ## Steps
 
@@ -21,7 +21,7 @@ Write only inside `RUN`: `plan.md`, `doc.md`, `report.md`, and what the tools wr
 
    Then end your turn: give the plan's path and a five-line summary of it, and ask V to approve it. Go on to step 2 only after V's yes in chat, or when you are started with `APPROVED: yes` (the caller had V's yes).
 
-2. **Taxonomy worker.** Start one `research-worker` with `RUN`, `TOOLS` = `T`, `PROFILE: taxonomy`, its sub-question as `QUESTION`, empty `TERMS`, `CAP` and its seeds. When it returns, check its terms: each one should be backed by a fact from a Rank 1 or 3 source in `RUN/ledger/taxonomy.json`, and match the terms that `knowledge/` already uses for the same thing. Note in `report.md` each term you dropped or renamed and why: a wrong term sends every later worker after the wrong thing.
+2. **Taxonomy worker.** Start one `research-worker` with `RUN`, `TOOLS` = `T`, `PROFILE: taxonomy`, its sub-question as `QUESTION`, empty `TERMS`, `CAP` and its seeds. When it returns, check its terms: each one should be backed by a fact from a Rank 1 or 3 source in `RUN/ledger/taxonomy.json`, and match the terms that `knowledge/` already uses for the same thing. Keep, for the report (step 10), each term you dropped or renamed and why: a wrong term sends every later worker after the wrong thing.
 
 3. **Three workers in parallel.** Start `ground-truth`, `practitioner` and `pitfall` workers in one message, each with only its sub-question, the checked terms, `CAP` and its seeds. Then run `node T/evaluate-research/evaluate-research.mjs ledger RUN`. A fact on an `error` line is not evidence: do not use it.
 
@@ -39,19 +39,19 @@ Write only inside `RUN`: `plan.md`, `doc.md`, `report.md`, and what the tools wr
 
    Mark each claim `✅[^<label>]` right after it. The rank a section may cite: `## 1.`, `## 2.`, Summary: 1–5; `## 3.`, `## 5.`: 1–4; `## 4.`: 1–5 (6 only warns); `## 6.`: any. Keep the doc to at most 80 ✅ claims, so one judge can check them all.
 
-   **Probes.** When a claim is about what code does, and a runtime exists for it (`node24`, `python3`, `c`, `tsc`), add a tagged block that shows it, such as `` ```c verify id=probe-01 runtime=c expect=stdout:<text> ``; cite it as `[^probe-01]`, with a References entry `` `probes/probe-01.c` — verify, <runtime and version>, <what it prints>. [^probe-01] ``. A probe shows what one version did on one machine: word its claim as an observation with that version, never as a rule, and never let it stand for a dropped condition or a SHOULD written as MUST.
+   **Probes.** When a claim is about what code does, and a runtime exists for it (`node24`, `python3`, `c`, `tsc`), add a tagged block that shows it, such as `` ```c verify id=probe-01 runtime=c expect=stdout:<text> ``; cite it as `[^probe-01]`, with a References entry `` `probes/probe-01.c` — verify, <runtime and version>, <what it prints>. [^probe-01] ``. A probe shows what one version did on one machine: word its claim as an observation with that version (the runtime image and the `kernel` that `harness.json` records), never as a rule, and never let it stand for a dropped condition or a SHOULD written as MUST.
 
 6. **Stage 1 and 1.5 (scripts, no tokens).** For round `n` (1 first):
    - `node T/run-code-harness/run-code-harness.mjs run RUN <n>`. A failed probe: fix the claim when the probe shows the doc was wrong, or fix the probe when it does not test the claim; never bend the `expect` to fit a claim. Exit 3 (no Docker): the claims backed only by probes become `⚠️ unverified`.
    - `node T/evaluate-research/evaluate-research.mjs stage1 RUN <n>` (with `--sample <SAMPLE> --seed <SEED>` in a comparison run). Its line says `validator: …` and `ledger: …`. Fix every validator FAIL in the doc and run both again. A ledger FAIL is the workers': it only means step 3's rule applies.
 
-7. **Judge** (`full-verified` only). Start a fresh `knowledge-judge` with `INPUT` = `RUN/verdicts/round-<n>.input`, `OUTPUT` = `RUN/verdicts/round-<n>.json`, `SCOPE: all`, `MODEL: claude-opus-5-5`, `PROMPT_SHA` = the output of `git -C REPO log -1 --format=%h -- frameworks/knowledge/agents/knowledge-judge/body.md`. Give it nothing else: no plan, no notes, no earlier verdict. Then run `node T/evaluate-research/evaluate-research.mjs quotes RUN/verdicts/round-<n>.json RUN/verdicts/round-<n>.input` (a quote the judge made up is reported to V, not acted on) and `node T/evaluate-research/evaluate-research.mjs verdict RUN/verdicts/round-<n>.json --write`, whose `final` verdict is PASS, FAIL or INCONCLUSIVE.
+7. **Judge** (`full-verified` only). Start a fresh `knowledge-judge` with `INPUT` = `RUN/verdicts/round-<n>.input`, `OUTPUT` = `RUN/verdicts/round-<n>.json`, `SCOPE: all`, `MODEL: claude-opus-5-5`, `PROMPT_SHA` = the output of `shasum -a 256 REPO/frameworks/knowledge/agents/knowledge-judge/body.md | cut -c1-7` (the judge version's id in `research/_calibration/RUNS.md`). Give it nothing else: no plan, no notes, no earlier verdict. Then run `node T/evaluate-research/evaluate-research.mjs quotes RUN/verdicts/round-<n>.json RUN/verdicts/round-<n>.input` (a quote the judge made up is reported to V, not acted on) and `node T/evaluate-research/evaluate-research.mjs verdict RUN/verdicts/round-<n>.json --write`, whose `final` verdict is PASS, FAIL or INCONCLUSIVE.
 
 8. **Patch** when the final verdict is FAIL and you have patched fewer than 2 rounds: change only what `violations` and `patch_instructions` name, re-reading each passage first, and go back to step 6 with `n + 1`. Each round gets a new judge.
 
 9. **Status** (design §3.5): PASS → `status: verified` and `last-verified` = today. INCONCLUSIVE → `status: draft`, with the reason in a Summary note. FAIL after 2 patch rounds → `status: draft`; each failing claim becomes `⚠️ unverified` with the judge's point in your own words, and the Summary gets a **Known issues:** line listing them. `research-only` → `status: draft`, with a Summary note that its ✅ marks are the writer's own checks and no judge has run.
 
-10. **Report** to V in `RUN/report.md`, and the same in your reply, in at most 25 lines:
+10. **Report** to V in your reply, in at most 25 lines (Claude Code refuses a report file written by a subagent, so the caller saves your reply as `RUN/report.md`):
     - the final verdict and scores of each round, and the share of checkable claims;
     - the tokens of each agent you started (from each one's result), and the total;
     - the tier B sources, each with the rank the judge gave it. Propose a `source-ranks.json` rule only for a host and path prefix that one publisher owns, and add none: V decides;

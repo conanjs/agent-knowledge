@@ -7,7 +7,7 @@
 //   extract  writes every tagged block of the doc to <probes-dir>/<id>.<ext> (a block that `uses=` a lib gets the lib's
 //            code first) and <probes-dir>/manifest.json; untagged blocks are illustrations and are skipped
 //   run      extracts <run>/doc.md into <run>/probes/, runs every verify and syntax-only probe, and writes
-//            <run>/verdicts/round-<n>.harness.json. A tsc probe runs on TypeScript 5 (the runtime the doc names) and again on
+//            <run>/verdicts/round-<n>.harness.json, with the Docker engine's version and the kernel its containers run on. A tsc probe runs on TypeScript 5 (the runtime the doc names) and again on
 //            TypeScript 7, and records whether 7 gives the same outcome and diagnostics, and its exit code ("compat")
 //
 // A tag is the fence's info string after the language: verify | syntax-only | lib, then key=value pairs
@@ -22,6 +22,7 @@
 import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 export const RUNTIMES = {
@@ -169,8 +170,10 @@ function run(runDir, n) {
     const id = engine && !hostNode ? spawnSync(docker, ['image', 'inspect', img, '--format', '{{.Id}}'], { encoding: 'utf8' }).stdout.trim() : null;
     return [r, { image: img, id: id || null }];
   }));
+  // The kernel every container shares (Docker's own VM on macOS), so a probe claim can name the kernel it was seen on.
+  const kernel = !engine ? null : hostNode ? `${os.type()} ${os.release()} (host)` : spawnSync(docker, ['info', '--format', '{{.KernelVersion}}'], { encoding: 'utf8' }).stdout?.trim() || null;
   fs.mkdirSync(path.join(runDir, 'verdicts'), { recursive: true });
-  fs.writeFileSync(path.join(runDir, 'verdicts', `round-${n}.harness.json`), JSON.stringify({ round: Number(n), doc: 'doc.md', engine: engine ?? null, runtimes: images, probes: results }, null, 1) + '\n');
+  fs.writeFileSync(path.join(runDir, 'verdicts', `round-${n}.harness.json`), JSON.stringify({ round: Number(n), doc: 'doc.md', engine: engine ?? null, kernel, runtimes: images, probes: results }, null, 1) + '\n');
   const count = (s) => results.filter((r) => r.status === s).length;
   console.log(`probes: ${results.length} | pass ${count('pass')} | fail ${count('fail')} | mixed ${count('mixed')} | not_run ${count('not_run')}${engine ? '' : ' (Docker is not available)'}`);
   process.exit(!engine ? 3 : count('fail') + count('mixed') ? 1 : 0);

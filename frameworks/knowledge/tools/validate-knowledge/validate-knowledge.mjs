@@ -181,8 +181,8 @@ function checkTail(f, t, fm) {
   const rel_ = section(t, 'Related');
   if (rel_ !== null && !/^\s*[-*] /m.test(rel_)) fail('KB-12', `${rel(f)}: Related is empty (use "- _None yet._")`);
   const b = stripFences(body(t));
-  const used = new Set([...b.replace(refs ?? '', '').matchAll(/\[\^(\w+)\](?!:)/g)].map((m) => m[1]));
-  const defined = new Set([...(refs ?? '').matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]));
+  const used = new Set([...b.replace(refs ?? '', '').matchAll(/\[\^([\w-]+)\](?!:)/g)].map((m) => m[1]));
+  const defined = new Set([...(refs ?? '').matchAll(/\[\^([\w-]+)\]/g)].map((m) => m[1]));
   for (const n of used) if (!defined.has(n)) fail('KB-12', `${rel(f)}: footnote [^${n}] is used but no References entry carries it`);
   if (String(fm['ranked-sources']) === 'true') for (const n of defined) if (!used.has(n)) warn('KB-16', `${rel(f)}: References entry [^${n}] is never cited in the body`);
   if (fm.status === 'verified' && /⚠️\s*unverified/.test(b.replace(section(t, 'Verification status') ?? '', ''))) fail('KD-2', `${rel(f)}: status verified but contains "⚠️ unverified" claims`);
@@ -214,7 +214,7 @@ function checkRanks(f, t) {
     }
     const role = SECTION_RANKS[head];
     if (!role) continue;
-    for (const c of line.matchAll(/\[\^(\w+)\](?!:)/g)) {
+    for (const c of line.matchAll(/\[\^([\w-]+)\](?!:)/g)) {
       const r = rankOf.get(c[1]);
       if (r === undefined || role.allow.includes(r)) continue;
       if (role.warn?.includes(r)) warn('KB-15', `${rel(f)}: "## ${head}" cites [^${c[1]}], a Rank ${r} source; worked examples should use Rank ${role.label}`);
@@ -222,7 +222,7 @@ function checkRanks(f, t) {
     }
     if (role.pitfalls || /✅\s*=/.test(line)) continue;
     for (const c of line.matchAll(/✅/g)) {
-      if (!/^\s*\[\^\w+\]/.test(line.slice(c.index + 1))) fail('KB-15', `${rel(f)}: "## ${head}" has a ✅ with no footnote: "${line.slice(Math.max(0, c.index - 50), c.index + 1).trim()}"`);
+      if (!/^\s*\[\^[\w-]+\]/.test(line.slice(c.index + 1))) fail('KB-15', `${rel(f)}: "## ${head}" has a ✅ with no footnote: "${line.slice(Math.max(0, c.index - 50), c.index + 1).trim()}"`);
     }
   }
 }
