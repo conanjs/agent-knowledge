@@ -93,6 +93,25 @@ Given('a local web server that answers:', function (doc) {
   });
 });
 
+// Serves the files under a folder of the scenario's copy, with a content type by extension (tests/fetch-source).
+// A request for a missing file answers 404.
+Given('a local web server that serves the files in {string}', function (dir) {
+  const types = { '.html': 'text/html; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.md': 'text/markdown', '.json': 'application/json', '.pdf': 'application/pdf' };
+  const root = this.at(dir);
+  return new Promise((resolve) => {
+    const srv = http.createServer((req, res) => {
+      const file = path.join(root, decodeURIComponent(req.url.split('?')[0]));
+      if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404, { 'content-type': 'text/plain' }); res.end('not found'); return; }
+      res.writeHead(200, { 'content-type': types[path.extname(file)] ?? 'application/octet-stream' });
+      res.end(fs.readFileSync(file));
+    });
+    srv.listen(0, '127.0.0.1', () => {
+      this.server = { srv, url: `http://127.0.0.1:${srv.address().port}` };
+      resolve();
+    });
+  });
+});
+
 Given('{string} is a git repository with everything committed', function (dir) {
   const git = (...a) => execFileSync('git', ['-C', this.at(dir), '-c', 'user.name=test', '-c', 'user.email=test@example.com', ...a], { stdio: 'pipe', env: cleanEnv() });
   git('init', '-q', '-b', 'main');
@@ -296,6 +315,10 @@ Then('stderr is {string}', function (text) {
 
 Then('the output has the line {string}', function (line) {
   assert.ok(this.result.out.split('\n').includes(line), `no output line "${line}" in:\n${this.result.out}`);
+});
+
+Then('the output has a line containing {string}', function (text) {
+  assert.ok(this.result.out.split('\n').some((l) => l.includes(fill(this, text))), `no output line contains "${text}":\n${this.result.out}`);
 });
 
 Then('the output has no line {string}', function (line) {
