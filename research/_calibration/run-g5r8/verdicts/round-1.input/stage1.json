@@ -1,0 +1,176 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^rfc9113]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/31239d03b783.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9114]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9114.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/6e32398e9dda.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9000]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/46f5fb0985f4.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9001]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9001.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/e4a1204bbad5.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9002]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9002.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/76c666916ee3.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9204]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9204.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/cd95813fed2c.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9218]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9218.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/4181964aef1b.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9308]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9308.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/0c7f13d09b97.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9293]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9293.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/cf23f6ee70bf.txt"
+  },
+  {
+   "labels": [
+    "[^rfc5681]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc5681.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/1e0d82b20332.txt"
+  },
+  {
+   "labels": [
+    "[^rfc8446]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc8446.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/e28608fb71a7.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9112]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9112.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": null,
+   "cache": "cache/8ea310bd7119.txt"
+  },
+  {
+   "labels": [
+    "[^marx]"
+   ],
+   "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+   "tier": "A",
+   "rank": 4,
+   "rule": "calendar.perfplanet.com/",
+   "written_rank": null,
+   "cache": "cache/7144e96a4a52.txt"
+  },
+  {
+   "labels": [
+    "[^h3explained]"
+   ],
+   "url": "https://http3-explained.haxx.se/en/why-quic/why-tcphol",
+   "tier": "A",
+   "rank": 3,
+   "rule": "http3-explained.haxx.se/",
+   "written_rank": null,
+   "cache": "cache/bb442869f5e4.txt"
+  },
+  {
+   "labels": [
+    "[^sander_blog]"
+   ],
+   "url": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/ceef397d803d.txt"
+  }
+ ],
+ "tier_b": [
+  "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/"
+ ]
+}

@@ -32,3 +32,5 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-b8t2 | private-fields-planted, the same input as run-u5n3 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-c5w9 | mcp-known-errors, the same 15-claim sample as run-y9q4 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-d1q4 | the probe case, the same input as run-j4p7 round 2 (probe-02 fixed) | v8 `d4787fb`, `knowledge-judge` agent |
+| run-g5r8 | SE-02 baseline, input rebuilt by `stage1 --sample 45 --seed 20261122` with `criteria.json` (JS sampler; run-q6v2 used the Python one), without the `validator` key | v8 `d4787fb`, `knowledge-judge` agent |
+| run-m2v6 | SE-02 by the research agent (Phase 4, `research/_phase4/se02-e2e`), `status: draft` in the copy, built like run-g5r8, with its probe and round 2's harness result | v8 `d4787fb`, `knowledge-judge` agent |

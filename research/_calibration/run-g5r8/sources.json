@@ -1,0 +1,122 @@
+[
+ {
+  "url": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+  "normalized": "https://blog.apnic.net/2022/11/30/http-3-and-quic-prioritization-and-head-of-line-blocking/",
+  "cache": "cache/ceef397d803d.txt",
+  "fetched": "2026-11-22T04:25:36Z",
+  "status": 200,
+  "chars": 32756
+ },
+ {
+  "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "normalized": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "cache": "cache/7144e96a4a52.txt",
+  "fetched": "2026-11-22T04:25:37Z",
+  "status": 200,
+  "chars": 54176
+ },
+ {
+  "url": "https://http3-explained.haxx.se/en/why-quic/why-tcphol",
+  "normalized": "https://http3-explained.haxx.se/en/why-quic/why-tcphol",
+  "cache": "cache/bb442869f5e4.txt",
+  "fetched": "2026-11-22T04:25:38Z",
+  "status": 200,
+  "chars": 3098
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc5681.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc5681.html",
+  "cache": "cache/1e0d82b20332.txt",
+  "fetched": "2026-11-22T04:25:39Z",
+  "status": 200,
+  "chars": 44303
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc8446.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc8446.html",
+  "cache": "cache/e28608fb71a7.txt",
+  "fetched": "2026-11-22T04:25:39Z",
+  "status": 200,
+  "chars": 336157
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9000.html",
+  "cache": "cache/46f5fb0985f4.txt",
+  "fetched": "2026-11-22T04:25:39Z",
+  "status": 200,
+  "chars": 371222
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9001.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9001.html",
+  "cache": "cache/e4a1204bbad5.txt",
+  "fetched": "2026-11-22T04:25:40Z",
+  "status": 200,
+  "chars": 117855
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9002.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9002.html",
+  "cache": "cache/76c666916ee3.txt",
+  "fetched": "2026-11-22T04:25:40Z",
+  "status": 200,
+  "chars": 82931
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9112.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9112.html",
+  "cache": "cache/8ea310bd7119.txt",
+  "fetched": "2026-11-22T04:25:41Z",
+  "status": 200,
+  "chars": 101800
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9113.html",
+  "cache": "cache/31239d03b783.txt",
+  "fetched": "2026-11-22T04:25:41Z",
+  "status": 200,
+  "chars": 178121
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9114.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9114.html",
+  "cache": "cache/6e32398e9dda.txt",
+  "fetched": "2026-11-22T04:25:42Z",
+  "status": 200,
+  "chars": 138217
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9204.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9204.html",
+  "cache": "cache/cd95813fed2c.txt",
+  "fetched": "2026-11-22T04:25:42Z",
+  "status": 200,
+  "chars": 81424
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9218.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9218.html",
+  "cache": "cache/4181964aef1b.txt",
+  "fetched": "2026-11-22T04:25:43Z",
+  "status": 200,
+  "chars": 50666
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9293.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9293.html",
+  "cache": "cache/cf23f6ee70bf.txt",
+  "fetched": "2026-11-22T04:25:43Z",
+  "status": 200,
+  "chars": 210416
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9308.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9308.html",
+  "cache": "cache/0c7f13d09b97.txt",
+  "fetched": "2026-11-22T04:25:44Z",
+  "status": 200,
+  "chars": 56776
+ }
+]

@@ -1,0 +1,31 @@
+{
+ "round": 2,
+ "doc": "doc.md",
+ "engine": "29.8.2",
+ "kernel": "7.2.12-orbstack-00394-gbecdd6130068",
+ "runtimes": {
+  "node24": {
+   "image": "node:24.22.1-alpine",
+   "id": "sha256:976554ea4b266f797a368b22bb5959ac08d388a11445cf40f7ef55912c7c754b"
+  }
+ },
+ "probes": [
+  {
+   "probe_id": "probe-01",
+   "mode": "verify",
+   "runtime": "node24",
+   "expect": "stdout:ids=1,3,5 sockets=1",
+   "uses": null,
+   "repeat": 1,
+   "line": 129,
+   "file": "probe-01.js",
+   "block_sha": "88710e5834c2",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "ids=1,3,5 sockets=1\n",
+   "stderr": "",
+   "duration_ms": 706,
+   "runs": 1
+  }
+ ]
+}
