@@ -385,7 +385,7 @@ A judge is itself a model that can be wrong. It is trusted only after it is test
 
 - **Use the software topics first:** SE-01 (PostgreSQL VACUUM), SE-02 (HTTP/2 vs HTTP/3 head-of-line blocking), SE-03 (Kafka exactly-once), SE-04 (epoll edge-triggered), LS-02 (OAuth vs OpenID Connect), LS-03 (JWT storage). They fit this company-neutral software knowledge base. The finance, law and statistics topics stay in the set as stress tests, but their outputs are never committed to `knowledge/`.
 - **Outputs live in `research/_golden/<id>/`**, not in `knowledge/`.
-- **Pass criteria name headings, not numbers.** For example, SE-04: `## 5. Reference & invariants` requires the EAGAIN loop, and `## 6.` warns of starvation.
+- **Pass criteria name headings, not numbers**, for example `## 5. Reference & invariants` or `## 6.`. Each topic's criteria live only in `research/_golden/<id>/criteria.json`, never in this design: the orchestrator may not open either, and in the first 3.6 attempt (2026-11-22) it read them here, by grep, before that rule existed.
 - **Fix the spec's inconsistencies first.** DS-02's "ground truth" is a Rank 3 book. The `.md` release gate drops the "no more than 0.1 below baseline" condition the conversation states. SE-03's criteria differ between the `.md` and the `.json`.
 - **Release gate** (golden dataset §3, kept): Stage 1 100%; judge average ≥ 4.5/5 and no more than 0.1 below the previous version; the trap lands in section 6 in ≥ 19/20 (in the 6-topic subset: 6/6). New: **it beats the plain-prompt baseline** on grounding errors per 15 sampled claims, at a token cost V accepts.
 
