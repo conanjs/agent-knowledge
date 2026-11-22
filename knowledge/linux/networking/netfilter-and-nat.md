@@ -5,7 +5,7 @@ topic: linux/networking
 status: verified
 applies-to: ["Linux ≥ 5.x", "iptables ≥ 1.8 (nf_tables backend)", "nftables"]
 last-verified: 2026-11-04
-last-updated: 2026-11-04
+last-updated: 2026-11-22
 tags: [linux, netfilter, iptables, nftables, nat, snat, dnat, masquerade, conntrack, firewall]
 ---
 
@@ -50,7 +50,7 @@ table ip nat {
    (raw -300,               │                                         │
     conntrack -200,         │ not for this host                       │ reply / new
     dstnat -100: DNAT)      ▼                                         ▼
-                          FORWARD (filter 0)                        OUTPUT (conntrack -200, filter 0)
+                          FORWARD (filter 0)                        OUTPUT (conntrack -200, DNAT for local clients, filter 0)
                             │                                         │
                             └──────────────► POSTROUTING ◄────────────┘
                                              (srcnat 100: SNAT / MASQUERADE)
@@ -68,7 +68,7 @@ Hook order per packet type ✅[^1]:
 
 1. **Hook entry:** each registered chain runs in priority order: raw (−300) before conntrack (−200), mangle (−150), dstnat (−100), filter (0), srcnat (100) ✅[^1]. NAT chains must use a priority above −200 so conntrack has already run ✅[^1].
 2. **Conntrack:** the first packet of a flow creates an entry; later packets match it. The entry is confirmed at the very end of input/postrouting (priority `INT_MAX`) ✅[^1].
-3. **DNAT (prerouting, dstnat):** rewrites the destination before routing, so the routing decision sees the new address (that is why it must be in prerouting) ✅[^5].
+3. **DNAT (dstnat):** rewrites the destination. iptables accepts it only in the nat table's PREROUTING and OUTPUT chains (and user-defined chains called only from them) ✅[^6]. PREROUTING alters packets "as soon as they come in" and OUTPUT alters "locally-generated packets before routing", so in both the routing decision sees the new address ✅[^5]. PREROUTING catches packets from other hosts and OUTPUT this host's own packets, which is why a published port needs both rules (see Edge cases).
 4. **Filter (input/forward/output):** accept or drop.
 5. **SNAT / MASQUERADE (postrouting, srcnat):** rewrites the source as the packet leaves; MASQUERADE uses the outgoing interface's current address ✅[^5] ✅[^6].
 6. **Replies:** conntrack recognizes the reply direction and reverses the translation without consulting NAT rules again — SNAT/DNAT apply to "all future packets in this connection" ✅[^6].
@@ -122,7 +122,7 @@ The `MASQUERADE` counter (1 packet, 84 bytes) is the container's single outbound
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 23 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-04
+- Verified: 24 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-04
 
 ## References
 - [Netfilter hooks](https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks) — nftables project wiki, living. Backs: hooks, per-packet order, ingress/egress, priorities (raw, conntrack, mangle, dstnat, filter, srcnat, confirm), NAT priority rule. [^1]

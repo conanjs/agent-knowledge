@@ -5,7 +5,7 @@ topic: linux/networking
 status: verified
 applies-to: ["Linux ≥ 5.x"]
 last-verified: 2026-11-04
-last-updated: 2026-11-04
+last-updated: 2026-11-22
 tags: [linux, networking, napi, softirq, rss, rps, sk-buff, socket-buffer, routing, network-stack]
 ---
 
@@ -65,7 +65,7 @@ NIC ─DMA─► RX ring ─IRQ─► napi_schedule()                           
 
 1. **NIC (hardware):** writes frames into a receive ring and raises an interrupt. With RSS, the NIC hashes header fields to pick one of several receive queues, so different flows land on different CPUs ✅[^2].
 2. **Driver (interrupt → softirq):** the interrupt handler calls `napi_schedule()` and leaves the device interrupt masked until polling finishes ✅[^1].
-3. **NAPI poll (softirq):** processes up to a **budget** of packets per call; if work remains it is polled again, otherwise `napi_complete_done()` re-enables interrupts ✅[^1]. Polling normally runs in softirq context; threaded NAPI moves it to kernel threads ✅[^1]. If the hardware has one queue, RPS can spread protocol processing to other CPUs in software ✅[^2].
+3. **NAPI poll (softirq):** processes up to a **budget** of received packets per call; transmit completions are not limited by it ✅[^1]. If work remains, the poll returns exactly the budget and is polled again ✅[^1]. Otherwise the driver calls `napi_complete_done()`, which releases ownership of the NAPI instance; the driver unmasks the device IRQ only after that call succeeds, and with IRQ deferral NAPI can arm a repoll timer instead of unmasking ✅[^1]. Polling normally runs in softirq context; threaded NAPI moves it to kernel threads ✅[^1]. If the hardware has one queue, RPS can spread protocol processing to other CPUs in software ✅[^2].
 4. **IP layer:** packets pass netfilter's prerouting hook, then a routing decision sends them to `input` (for this host) or `forward` (to another interface) ✅[^3]; nat PREROUTING alters packets "as soon as they come in", before routing ✅[^8].
 5. **Transport layer:** TCP or UDP finds the socket by source and destination address and port, and appends data to its receive buffer. The default TCP receive buffer is 128 KiB (`tcp_rmem` middle value 131072), growing up to a memory-dependent maximum ✅[^4].
 6. **Application:** `recv()` copies data out of the buffer. If the application reads too slowly, the buffer fills and TCP advertises a smaller window, slowing the sender ✅[^6] (lab: with the receiver never reading, its `Recv-Q` reached 112 640 bytes and the sender's `Send-Q` 2.5 MB, then `send` blocked).
@@ -112,7 +112,7 @@ Path of the echo request:
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 29 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-04
+- Verified: 31 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-04
 
 ## References
 - [NAPI](https://docs.kernel.org/networking/napi.html) — Linux kernel documentation, living. Backs: interrupt then poll, masked IRQ, budget, `napi_complete_done`, softirq context, threaded NAPI, busy polling. [^1]
