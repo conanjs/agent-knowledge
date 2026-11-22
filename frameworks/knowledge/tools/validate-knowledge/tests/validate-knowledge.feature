@@ -784,6 +784,22 @@ Feature: Knowledge validator
         KB-12  demo/concept.md: footnote [^probe-01] is used but no References entry carries it
       """
 
+  Scenario: KB-17 a verified ranked doc with an open conflict marked ⚖️ in Edge cases passes, since KD-2 counts only ⚠️
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `None.` becomes `⚖️ open conflict: two Rank 3 sources disagree, and no Rank 1 source settles it.`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-17 an open conflict marked ⚖️ in How it works fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `The validator reads each section in order.` becomes `The validator reads each section in order (⚖️ open conflict).`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-17  demo/concept.md: "## How it works" holds an open conflict (⚖️); open conflicts belong in the pitfalls section
+      """
+
   Scenario: KB-15 a ranked deep dive with a section that has no rank role fails
     Given in "knowledge/demo/deep-dive.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
     When the tool runs

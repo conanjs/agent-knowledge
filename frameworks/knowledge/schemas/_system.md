@@ -57,6 +57,7 @@ Inline markers, used in any body section:
 |---|---|
 | `✅` + footnote or link | Verified against the cited source on `last-verified` |
 | `⚠️ unverified` | General knowledge, not checked. A hypothesis. |
+| `⚖️ open conflict` | Two sources of the same rank disagree and no Rank 1 source settles it (KB-17). Each side keeps its own ✅ and footnote, and the doc takes no side. Only in the pitfalls section. It marks a disagreement, not a claim's state, so KD-2 and the Verification status count leave it out (decided by V, 2026-11-22) |
 
 The **Verification status** section (knowledge-doc) counts these.
 
@@ -80,7 +81,7 @@ The **Verification status** section (knowledge-doc) counts these.
 | KB-14 | **Ranked references.** With `ranked-sources: true`, every external References entry has `Rank <1–6>.`, the entries are ordered by rank (1 first), and a URL that a rule in `tools/classify-source/source-ranks.json` covers carries that rule's rank (§4.1) | script |
 | KB-15 | **Rank quarantine.** With `ranked-sources: true`, a footnote cited in a section points to a rank that section allows (§4.1 map); in a section that allows only Rank 1–5 or stricter, every ✅ carries a footnote; every body section has a rank role. A Rank 6 source in a worked example only warns | script |
 | KB-16 | **No orphan sources.** With `ranked-sources: true`, every References entry that carries a footnote is cited at least once in the body (the reverse of KB-12) | script (warn) |
-| KB-17 | **Conflicts are arbitrated, not hidden.** When sources disagree, the claim from the lower rank number governs the sections that allow Rank 1–5 or stricter. The other claim is kept under the pitfalls section (Edge cases, Trade-offs, Troubleshooting, Lookup notes, or a deep dive's `## 6.`) with its source, its rank and why it is wrong or when it holds. On a tie (two sources of the same rank), a Rank 1 source settles it; with none, both claims go under the pitfalls section as an open conflict marked `⚠️ unverified` | llm (judge) |
+| KB-17 | **Conflicts are arbitrated, not hidden.** When sources disagree, the claim from the lower rank number governs the sections that allow Rank 1–5 or stricter. The other claim is kept under the pitfalls section (Edge cases, Trade-offs, Troubleshooting, Lookup notes, or a deep dive's `## 6.`) with its source, its rank and why it is wrong or when it holds. On a tie (two sources of the same rank), a Rank 1 source settles it; with none, both claims go under the pitfalls section as an open conflict marked `⚖️ open conflict` (§3), each with its own source and rank | script (with `ranked-sources: true`: a `⚖️` outside the pitfalls section fails) + llm (judge) |
 
 ### 4.1 Source ranks
 

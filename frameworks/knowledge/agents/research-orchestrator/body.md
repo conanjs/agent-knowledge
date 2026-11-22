@@ -27,7 +27,7 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
 
 4. **Merge and arbitrate.** List every source across the ledgers (one page is one source, whichever worker saved it), with its rank. For each conflict a ledger records, and each one you notice:
    - the fact from the lower rank number governs the core sections (`## 1.` to `## 5.`); the other goes under `## 6.` with its source, rank, and why it is wrong or when it holds;
-   - on a tie, neither wins: look for a Rank 1 fact that settles it. With none, both go under `## 6.` as an open conflict marked `⚠️ unverified`, and neither appears in the core sections.
+   - on a tie, neither wins: look for a Rank 1 fact that settles it. With none, both go under `## 6.` as an open conflict marked `⚖️ open conflict`, each side with its source, rank and ✅, and neither appears in the core sections.
 
 5. **Read, then write the doc** to `RUN/doc.md`. For every fact you will use, read its passage in the cache file: `Read` with an offset 5 lines above its `loc.lines` and a limit of about 20. Write each claim from the passage, not from the worker's summary. A claim says no more than its passage: keep the modal verb (MUST, SHOULD, may), every condition, the scope, and every number, name and version exactly as the page has them. A claim the passages do not support is left out, or marked `⚠️ unverified` under `## 6.`.
 
