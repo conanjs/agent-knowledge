@@ -101,6 +101,7 @@
     { "host": "usenix.org", "prefix": "/conference/", "rank": 2, "why": "USENIX papers" },
     { "host": "developer.mozilla.org", "prefix": "/en-US/docs/", "rank": 3, "why": "MDN Web Docs; decided by V, 2026-11-22" },
     { "host": "javascript.info", "prefix": "/", "rank": 3, "why": "Textbook; decided by V, 2026-11-22" },
+    { "host": "refactoring.com", "prefix": "/", "rank": 3, "why": "Companion site of Martin Fowler's book Refactoring; decided by V, 2026-11-22" },
     { "host": "http3-explained.haxx.se", "prefix": "/", "rank": 3, "why": "Book by one author (Daniel Stenberg); decided by V, 2026-11-22" },
     { "host": "blog.cloudflare.com", "prefix": "/", "rank": 4, "why": "Cloudflare engineering blog" },
     { "host": "netflixtechblog.com", "prefix": "/", "rank": 4, "why": "Netflix engineering blog" },

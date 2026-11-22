@@ -155,6 +155,10 @@ The list cannot name every library's repository: of the 112 tier B `github.com` 
 
 Rules 1–3 rest only on what the input shows, never on the judge's own memory.
 
+**Provenance pages** (decided by V, 2026-11-22; Phase 3). When a tier B source needs rule 1 (originator) or rule 3 (maintainer), the worker also saves a page that shows the role and links it in the ledger as `provenance_ref` (the cache file of that page): the project's `MAINTAINERS` file, the originator's first publication, or a credit line in a spec or book. The orchestrator copies it into the judge's input. Without it the judge cannot apply the rule: in the v5 re-judging, Robert C. Martin's and Brendan Gregg's pages stayed Rank 6 for exactly that reason.
+
+**Pinned source code** (decided by V, 2026-11-22; Phase 3). A worker that cites a file in a repository uses a release tag or a commit (`/blob/v19.0.0/…`), not a moving branch (`/blob/main/…`), so the cited text stays the same after the repository changes. Fetch the raw file (`raw.githubusercontent.com/<org>/<repo>/<tag>/<path>`): the audit showed that GitHub's HTML view of a long file is cut off.
+
 ### 2.2 Where the rank is written
 
 In the References entry, between the year and "Backs:":
