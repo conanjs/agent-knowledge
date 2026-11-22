@@ -27,3 +27,4 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-u5n3 | private-fields-planted, input by `stage1` | v6 `ef7dc5d`, `knowledge-judge` agent |
 | run-y9q4 | mcp-known-errors, the same 15-claim sample as run-r9k5 | v6 `ef7dc5d`, `knowledge-judge` agent |
 | run-h6t1 | SE-04 with its 14 lab tests as probes (`_golden/SE-04/probes-v1`), the same 45 claims as run-w3j7 (Python sampler, seed 20261122) | v7 `73b3759`, `knowledge-judge` agent |
+| run-k7d2 | SE-04 by the research agent (Phase 3.6, `research/_phase3/se04-e2e`), `status: draft` in the copy, `stage1 --sample 45 --seed 20261122` with `criteria.json`, probes and round 2's harness result | v7 `73b3759`, `knowledge-judge` agent |

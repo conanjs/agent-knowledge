@@ -1,0 +1,652 @@
+{
+ "profile": "practitioner",
+ "question": "How do production event loops on Linux use (or avoid) epoll edge-triggered mode (EPOLLET), and how do they drain, re-arm and stay fair? Find real code or official docs of event loops (for example nginx, Go's netpoller, Rust mio/Tokio, libuv, Redis): which mode each registers with and why; accept, read and write loops under edge-triggered mode; handling EPOLLOUT after a full send buffer; avoiding starvation of other descriptors (user-space ready lists, read budgets); multithreaded epoll_wait with edge-triggered mode.",
+ "terms": [
+  "edge-triggered (ET)",
+  "level-triggered (LT)",
+  "EPOLLET",
+  "EPOLLRDHUP",
+  "EPOLLIN",
+  "EPOLLOUT",
+  "EPOLLHUP",
+  "EPOLL_CTL_ADD",
+  "EAGAIN",
+  "non-blocking"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://nginx.org/en/docs/dev/development_guide.html",
+   "cache": "cache/8534d4bd3e26.txt",
+   "fetched": "2026-11-22T11:13:35Z",
+   "tier": "B",
+   "rank": 1,
+   "rule": null,
+   "rank_basis": "tier B: project's own home (nginx.org official development guide, for facts about nginx)",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S2",
+   "url": "https://docs.rs/mio/1.0.2/mio/struct.Poll.html",
+   "cache": "cache/6a645105aed6.txt",
+   "fetched": "2026-11-22T11:13:35Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.rs/",
+   "rank_basis": "tier A: docs.rs/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S3",
+   "url": "https://github.com/libuv/libuv/blob/v1.49.2/src/unix/stream.c",
+   "cache": "cache/f17e2555df15.txt",
+   "fetched": "2026-11-22T11:13:35Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/libuv/libuv/",
+   "rank_basis": "tier A: github.com/libuv/libuv/ (source at release tag v1.49.2)",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S4",
+   "url": "https://github.com/golang/go/blob/go1.23.4/src/runtime/netpoll_epoll.go",
+   "cache": "cache/5fea415e0f05.txt",
+   "fetched": "2026-11-22T11:14:42Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/golang/",
+   "rank_basis": "tier A: github.com/golang/ (source at release tag go1.23.4)",
+   "seed": false,
+   "provenance_ref": null
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "nginx's per-connection read and write events work in edge-triggered mode: they notify only when the socket's state changes.",
+   "quote": "Each connection obtained by calling the ngx_get_connection() function has two attached events, c->read and c->write, which are used for receiving notification that the socket is ready for reading or writing. All such events operate in Edge-Triggered mode, meaning that they only trigger notifications when the state of the socket changes.",
+   "loc": {
+    "heading": "I/O events",
+    "lines": [
+     1792,
+     1797
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S1",
+   "summary": "After a partial read nginx gives no repeated read notification until more data arrives on the socket.",
+   "quote": "For example, doing a partial read on a socket does not make nginx deliver a repeated read notification until more data arrives on the socket.",
+   "loc": {
+    "heading": "I/O events",
+    "lines": [
+     1798,
+     1799
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S1",
+   "summary": "nginx converts notifications from level-triggered mechanisms such as poll and select into edge-triggered ones.",
+   "quote": "Even when the underlying I/O notification mechanism is essentially Level-Triggered (poll, select etc), nginx converts the notifications to Edge-Triggered.",
+   "loc": {
+    "heading": "I/O events",
+    "lines": [
+     1800,
+     1802
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "source": "S1",
+   "summary": "ngx_handle_read_event and ngx_handle_write_event must be called after handling a notification or any I/O on the socket, normally once at the end of each handler, to keep behaviour the same on every notification system.",
+   "quote": "To make nginx event notifications consistent across all notifications systems on different platforms, the functions ngx_handle_read_event(rev, flags) and ngx_handle_write_event(wev, lowat) must be called after handling an I/O socket notification or calling any I/O functions on that socket. Normally, the functions are called once at the end of each read or write event handler.",
+   "loc": {
+    "heading": "I/O events",
+    "lines": [
+     1803,
+     1809
+    ]
+   }
+  },
+  {
+   "id": "F5",
+   "source": "S1",
+   "summary": "The event's ready flag records that the event has received an I/O notification.",
+   "quote": "ready — Flag indicating that the event has received an I/O notification.",
+   "loc": {
+    "heading": "Event",
+    "lines": [
+     1756,
+     1757
+    ]
+   }
+  },
+  {
+   "id": "F6",
+   "source": "S1",
+   "summary": "The pending_eof flag marks EOF pending on the socket while data may still precede it; on epoll it comes from the EPOLLRDHUP event.",
+   "quote": "pending_eof — Flag indicating that EOF is pending on the socket, even though there may be some data available before it. The flag is delivered via the EPOLLRDHUP epoll event or EV_EOF kqueue flag.",
+   "loc": {
+    "heading": "Event",
+    "lines": [
+     1772,
+     1776
+    ]
+   }
+  },
+  {
+   "id": "F7",
+   "source": "S1",
+   "summary": "The guide's sample read handler loops while rev->ready, calling c->recv until it returns NGX_AGAIN, then calls ngx_handle_read_event(rev, 0).",
+   "quote": "while (rev->ready) { n = c->recv(c, buf, sizeof(buf)); if (n == NGX_AGAIN) { break; } … if (ngx_handle_read_event(rev, 0) != NGX_OK) { /* error */ }",
+   "loc": {
+    "heading": "Posted events",
+    "lines": [
+     1876,
+     1888
+    ]
+   }
+  },
+  {
+   "id": "F8",
+   "source": "S1",
+   "summary": "A posted event's handler runs later in the same loop iteration; the usual ngx_posted_events queue is processed after all I/O and timer events.",
+   "quote": "An event can be posted which means that its handler will be called at some point later within the current event loop iteration. … Normally, events are posted to the ngx_posted_events queue, which is processed late in the event loop — after all I/O and timer events are already handled.",
+   "loc": {
+    "heading": "Posted events",
+    "lines": [
+     1831,
+     1842
+    ]
+   }
+  },
+  {
+   "id": "F9",
+   "source": "S1",
+   "summary": "ngx_event_process_posted() calls handlers until the queue is empty, so a posted handler can post more events into the same iteration.",
+   "quote": "The function ngx_event_process_posted() is called to process an event queue. It calls event handlers until the queue is empty. This means that a posted event handler can post more events to be processed within the current event loop iteration.",
+   "loc": {
+    "heading": "Posted events",
+    "lines": [
+     1843,
+     1847
+    ]
+   }
+  },
+  {
+   "id": "F10",
+   "source": "S1",
+   "summary": "In the event loop, an I/O event sets the ready flag and calls the handler; on Linux the handler is normally ngx_epoll_process_events(), which calls epoll_wait().",
+   "quote": "When a read or write event occurs, the ready flag is set and the event's handler is called. For Linux, the ngx_epoll_process_events() handler is normally used, which calls epoll_wait() to wait for I/O events.",
+   "loc": {
+    "heading": "Event loop",
+    "lines": [
+     1912,
+     1916
+    ]
+   }
+  },
+  {
+   "id": "F11",
+   "source": "S1",
+   "summary": "Every nginx process except the master does I/O and has its own event loop.",
+   "quote": "Except for the nginx master process, all nginx processes do I/O and so have an event loop.",
+   "loc": {
+    "heading": "Event loop",
+    "lines": [
+     1893,
+     1895
+    ]
+   }
+  },
+  {
+   "id": "F12",
+   "source": "S1",
+   "summary": "ngx_event_accept() accepts a client TCP connection and is called on a read notification for a listen socket.",
+   "quote": "ngx_event_accept() accepts a client TCP connection. This handler is called in response to a read notification on a listen socket.",
+   "loc": {
+    "heading": "Connection",
+    "lines": [
+     2674,
+     2675
+    ]
+   }
+  },
+  {
+   "id": "F13",
+   "source": "S1",
+   "summary": "The guide recommends avoiding threads in nginx modules because most nginx functions are not thread-safe.",
+   "quote": "It is recommended to avoid using threads in nginx because it will definitely break things: most nginx functions are not thread-safe.",
+   "loc": {
+    "heading": "Threads",
+    "lines": [
+     5585,
+     5586
+    ]
+   }
+  },
+  {
+   "id": "F14",
+   "source": "S2",
+   "summary": "Mio's Poll::poll may report readiness for a source that is not actually ready, so a readiness event does not guarantee the operation succeeds.",
+   "quote": "Poll::poll may return readiness events even if the associated event source is not actually ready. … It is important to never assume that, just because a readiness event was received, that the associated operation will succeed as well.",
+   "loc": {
+    "heading": "§Spurious events",
+    "lines": [
+     248,
+     252
+    ]
+   }
+  },
+  {
+   "id": "F15",
+   "source": "S2",
+   "summary": "A WouldBlock result is not an error; the caller should wait for another readiness event.",
+   "quote": "If operation fails with WouldBlock, then the caller should not treat this as an error, but instead should wait until another readiness event is received.",
+   "loc": {
+    "heading": "§Spurious events",
+    "lines": [
+     254,
+     256
+    ]
+   }
+  },
+  {
+   "id": "F16",
+   "source": "S2",
+   "summary": "After a readiness event the operation must be repeated until it returns WouldBlock; otherwise mio does not guarantee another event, even if more data arrives.",
+   "quote": "Once a readiness event is received, the corresponding operation must be performed repeatedly until it returns WouldBlock. Unless this is done, there is no guarantee that another readiness event will be delivered, even if further data is received for the event source.",
+   "loc": {
+    "heading": "§Draining readiness",
+    "lines": [
+     260,
+     263
+    ]
+   }
+  },
+  {
+   "id": "F17",
+   "source": "S2",
+   "summary": "Only readable and writable readiness are guaranteed on all platforms; other readiness kinds can have false negatives and are hints.",
+   "quote": "The only readiness operations that are guaranteed to be present on all supported platforms are readable and writable. All other readiness operations may have false negatives and as such should be considered hints.",
+   "loc": {
+    "heading": "§Readiness operations",
+    "lines": [
+     267,
+     270
+    ]
+   }
+  },
+  {
+   "id": "F18",
+   "source": "S2",
+   "summary": "Checking read_closed, write_closed or error readiness should only be an optimization; the program must still handle errors or close when it performs the read.",
+   "quote": "portable programs that explicitly check for read_closed, write_closed, or error readiness should be doing so as an optimization and always be able to handle an error or close situation when performing the actual read operation.",
+   "loc": {
+    "heading": "§Readiness operations",
+    "lines": [
+     278,
+     281
+    ]
+   }
+  },
+  {
+   "id": "F19",
+   "source": "S2",
+   "summary": "Doing I/O on the raw fd outside mio is unspecified and can stop further events even after the operation returned WouldBlock.",
+   "quote": "Specifically performing I/O operations outside of Mio on these types (via the raw fd) has unspecified behaviour. It could cause no more events to be generated for the type even though it returned WouldBlock (in an operation directly accessing the fd).",
+   "loc": {
+    "heading": "§Accessing raw fd/socket/handle",
+    "lines": [
+     325,
+     329
+    ]
+   }
+  },
+  {
+   "id": "F20",
+   "source": "S2",
+   "summary": "On Linux mio's Poll is backed by epoll, and outside Windows a Poll::poll call is mostly a direct call to the system selector.",
+   "quote": "Linux | epoll | … On all platforms except windows, a call to Poll::poll is mostly just a direct call to the system selector.",
+   "loc": {
+    "heading": "§Implementation notes",
+    "lines": [
+     373,
+     390
+    ]
+   }
+  },
+  {
+   "id": "F21",
+   "source": "S2",
+   "summary": "The docs' example waits for readiness in a loop because wakeups can be spurious.",
+   "quote": "Wait for the socket to become ready. This has to happens in a loop to handle spurious wakeups.",
+   "loc": {
+    "heading": "§Examples",
+    "lines": [
+     227,
+     229
+    ]
+   }
+  },
+  {
+   "id": "F22",
+   "source": "S2",
+   "summary": "Poll::poll takes &mut self, while registry() takes &self and returns a separate Registry used to register sources.",
+   "quote": "pub fn registry(&self) -> &Registry Create a separate Registry which can be used to register event::Sources. … pub fn poll( &mut self, events: &mut Events, timeout: Option<Duration>, ) -> Result<()>",
+   "loc": {
+    "heading": "impl Poll",
+    "lines": [
+     441,
+     451
+    ]
+   }
+  },
+  {
+   "id": "F23",
+   "source": "S2",
+   "summary": "One poll call returns at most events.capacity() events; further pending events come back on the next call.",
+   "quote": "The supplied events will be cleared and newly received readiness events will be pushed onto the end. At most events.capacity() events will be returned. If there are further pending readiness events, they will be returned on the next call to poll.",
+   "loc": {
+    "heading": "Wait for readiness events",
+    "lines": [
+     461,
+     464
+    ]
+   }
+  },
+  {
+   "id": "F24",
+   "source": "S3",
+   "summary": "libuv's uv__read caps one call at 32 reads to prevent loop starvation, and a comment notes the fd would need re-arming if libuv switched to edge-triggered I/O.",
+   "quote": "Prevent loop starvation when the data comes in as fast as (or faster than) we can read it. XXX Need to rearm fd if we switch to edge-triggered I/O. … count = 32;",
+   "loc": {
+    "heading": "static void uv__read(uv_stream_t* stream) {",
+    "lines": [
+     1040,
+     1043
+    ]
+   }
+  },
+  {
+   "id": "F25",
+   "source": "S3",
+   "summary": "The read loop runs only while a read callback is set, the handle is reading, and the 32-read count is not used up.",
+   "quote": "while (stream->read_cb && (stream->flags & UV_HANDLE_READING) && (count-- > 0)) {",
+   "loc": {
+    "heading": "static void uv__read(uv_stream_t* stream) {",
+    "lines": [
+     1050,
+     1052
+    ]
+   }
+  },
+  {
+   "id": "F26",
+   "source": "S3",
+   "summary": "Each read asks the alloc callback for a 64 KiB (64 * 1024) buffer suggestion.",
+   "quote": "stream->alloc_cb((uv_handle_t*)stream, 64 * 1024, &buf);",
+   "loc": {
+    "heading": "static void uv__read(uv_stream_t* stream) {",
+    "lines": [
+     1056,
+     1056
+    ]
+   }
+  },
+  {
+   "id": "F27",
+   "source": "S3",
+   "summary": "On EAGAIN or EWOULDBLOCK the read path starts (keeps) the POLLIN watcher and waits for the next notification.",
+   "quote": "if (errno == EAGAIN || errno == EWOULDBLOCK) { /* Wait for the next one. */ if (stream->flags & UV_HANDLE_READING) { uv__io_start(stream->loop, &stream->io_watcher, POLLIN);",
+   "loc": {
+    "heading": "static void uv__read(uv_stream_t* stream) {",
+    "lines": [
+     1090,
+     1093
+    ]
+   }
+  },
+  {
+   "id": "F28",
+   "source": "S3",
+   "summary": "uv__read returns after a read that did not fill the buffer, treating it as no more data, and marks the handle UV_HANDLE_READ_PARTIAL.",
+   "quote": "/* Return if we didn't fill the buffer, there is no more data to read. */ if (nread < buflen) { stream->flags |= UV_HANDLE_READ_PARTIAL; return;",
+   "loc": {
+    "heading": "static void uv__read(uv_stream_t* stream) {",
+    "lines": [
+     1154,
+     1157
+    ]
+   }
+  },
+  {
+   "id": "F29",
+   "source": "S3",
+   "summary": "uv__write also caps a call at 32 completed write requests to prevent starvation, and its comment says this count need not change under edge-triggered I/O.",
+   "quote": "Prevent loop starvation when the consumer of this stream read as fast as (or faster than) we can write it. This `count` mechanism does not need to change even if we switch to edge-triggered I/O. … count = 32;",
+   "loc": {
+    "heading": "static void uv__write(uv_stream_t* stream) {",
+    "lines": [
+     852,
+     856
+    ]
+   }
+  },
+  {
+   "id": "F30",
+   "source": "S3",
+   "summary": "When a write returns EAGAIN or is partial on a non-blocking stream, uv__write starts the POLLOUT watcher and returns.",
+   "quote": "} else if (n != UV_EAGAIN) goto error; … /* We're not done. */ uv__io_start(stream->loop, &stream->io_watcher, POLLOUT);",
+   "loc": {
+    "heading": "static void uv__write(uv_stream_t* stream) {",
+    "lines": [
+     881,
+     889
+    ]
+   }
+  },
+  {
+   "id": "F31",
+   "source": "S3",
+   "summary": "uv_write2 writes at once when the write queue was empty; otherwise it starts the write watcher and waits for the fd to become writable.",
+   "quote": "If the queue was empty when this function began, we should attempt to do the write immediately. Otherwise start the write_watcher and wait for the fd to become writable.",
+   "loc": {
+    "heading": "int uv_write2(uv_write_t* req,",
+    "lines": [
+     1381,
+     1384
+    ]
+   }
+  },
+  {
+   "id": "F32",
+   "source": "S3",
+   "summary": "When the write queue is drained, uv__drain stops the POLLOUT watcher (unless the handle is closing).",
+   "quote": "assert(uv__queue_empty(&stream->write_queue)); if (!(stream->flags & UV_HANDLE_CLOSING)) { uv__io_stop(stream->loop, &stream->io_watcher, POLLOUT);",
+   "loc": {
+    "heading": "static void uv__drain(uv_stream_t* stream) {",
+    "lines": [
+     634,
+     636
+    ]
+   }
+  },
+  {
+   "id": "F33",
+   "source": "S3",
+   "summary": "The server I/O callback accepts one connection per call and stops the POLLIN watcher while the user has not yet called uv_accept().",
+   "quote": "err = uv__accept(fd); … if (stream->accepted_fd != -1) /* The user hasn't yet accepted called uv_accept() */ uv__io_stop(loop, &stream->io_watcher, POLLIN);",
+   "loc": {
+    "heading": "void uv__server_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {",
+    "lines": [
+     523,
+     536
+    ]
+   }
+  },
+  {
+   "id": "F34",
+   "source": "S3",
+   "summary": "uv_accept restarts the listen socket's POLLIN watcher after a successful accept with no queued fds left.",
+   "quote": "server->accepted_fd = -1; if (err == 0) uv__io_start(server->loop, &server->io_watcher, POLLIN);",
+   "loc": {
+    "heading": "int uv_accept(uv_stream_t* server, uv_stream_t* client) {",
+    "lines": [
+     597,
+     599
+    ]
+   }
+  },
+  {
+   "id": "F35",
+   "source": "S3",
+   "summary": "On EMFILE, libuv closes a spare fd, accepts and closes pending connections to signal overload; the comment says this is not reliable with multiple threads.",
+   "quote": "We have a spare file descriptor stashed away that we close to get below the EMFILE limit. Next, we accept all pending connections and close them immediately to signal the clients that we're overloaded … There is one caveat: it's not reliable in a multi-threaded environment.",
+   "loc": {
+    "heading": "Implements a best effort approach to mitigating accept() EMFILE errors.",
+    "lines": [
+     477,
+     483
+    ]
+   }
+  },
+  {
+   "id": "F36",
+   "source": "S3",
+   "summary": "The stream I/O callback does not treat POLLHUP as end of data; it still reads because data may remain.",
+   "quote": "/* Ignore POLLHUP here. Even if it's set, there may still be data to read. */ if (events & (POLLIN | POLLERR | POLLHUP)) uv__read(stream);",
+   "loc": {
+    "heading": "static void uv__stream_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {",
+    "lines": [
+     1210,
+     1212
+    ]
+   }
+  },
+  {
+   "id": "F37",
+   "source": "S4",
+   "summary": "Go's netpollopen registers each fd once with EPOLL_CTL_ADD for EPOLLIN, EPOLLOUT, EPOLLRDHUP and EPOLLET together.",
+   "quote": "ev.Events = syscall.EPOLLIN | syscall.EPOLLOUT | syscall.EPOLLRDHUP | syscall.EPOLLET … return syscall.EpollCtl(epfd, syscall.EPOLL_CTL_ADD, int32(fd), &ev)",
+   "loc": {
+    "heading": "func netpollopen(fd uintptr, pd *pollDesc) uintptr {",
+    "lines": [
+     55,
+     58
+    ]
+   }
+  },
+  {
+   "id": "F38",
+   "source": "S4",
+   "summary": "On Linux netpollarm is not used: calling it throws.",
+   "quote": "func netpollarm(pd *pollDesc, mode int) { throw(\"runtime: unused\")",
+   "loc": {
+    "heading": "func netpollarm(pd *pollDesc, mode int) {",
+    "lines": [
+     66,
+     67
+    ]
+   }
+  },
+  {
+   "id": "F39",
+   "source": "S4",
+   "summary": "netpoll passes a 128-entry event array to each epoll_wait call, so one call returns at most 128 events.",
+   "quote": "var events [128]syscall.EpollEvent retry: n, errno := syscall.EpollWait(epfd, events[:], int32(len(events)), waitms)",
+   "loc": {
+    "heading": "func netpoll(delay int64) (gList, int32) {",
+    "lines": [
+     118,
+     120
+    ]
+   }
+  },
+  {
+   "id": "F40",
+   "source": "S4",
+   "summary": "netpoll's documented delay modes: negative blocks indefinitely, zero does not block, positive blocks up to that many nanoseconds.",
+   "quote": "netpoll checks for ready network connections. Returns list of goroutines that become runnable. delay < 0: blocks indefinitely delay == 0: does not block, just polls delay > 0: block for up to that many nanoseconds",
+   "loc": {
+    "heading": "netpoll checks for ready network connections.",
+    "lines": [
+     95,
+     99
+    ]
+   }
+  },
+  {
+   "id": "F41",
+   "source": "S4",
+   "summary": "EPOLLIN, EPOLLRDHUP, EPOLLHUP or EPOLLERR make a descriptor read-ready; EPOLLOUT, EPOLLHUP or EPOLLERR make it write-ready.",
+   "quote": "if ev.Events&(syscall.EPOLLIN|syscall.EPOLLRDHUP|syscall.EPOLLHUP|syscall.EPOLLERR) != 0 { mode += 'r' } if ev.Events&(syscall.EPOLLOUT|syscall.EPOLLHUP|syscall.EPOLLERR) != 0 { mode += 'w' }",
+   "loc": {
+    "heading": "func netpoll(delay int64) (gList, int32) {",
+    "lines": [
+     160,
+     165
+    ]
+   }
+  },
+  {
+   "id": "F42",
+   "source": "S4",
+   "summary": "The event data holds a tagged pointer to the pollDesc with its fdseq; netpoll wakes goroutines only when the tag still matches the pollDesc's current fdseq.",
+   "quote": "tp := *(*taggedPointer)(unsafe.Pointer(&ev.Data)) pd := (*pollDesc)(tp.pointer()) tag := tp.tag() if pd.fdseq.Load() == tag { pd.setEventErr(ev.Events == syscall.EPOLLERR, tag) delta += netpollready(&toRun, pd, mode)",
+   "loc": {
+    "heading": "func netpoll(delay int64) (gList, int32) {",
+    "lines": [
+     167,
+     172
+    ]
+   }
+  },
+  {
+   "id": "F43",
+   "source": "S4",
+   "summary": "netpollinit creates a non-blocking eventfd and registers it with EPOLLIN only (no EPOLLET) to interrupt epoll_wait.",
+   "quote": "efd, errno := syscall.Eventfd(0, syscall.EFD_CLOEXEC|syscall.EFD_NONBLOCK) … ev := syscall.EpollEvent{ Events: syscall.EPOLLIN, }",
+   "loc": {
+    "heading": "func netpollinit() {",
+    "lines": [
+     32,
+     39
+    ]
+   }
+  },
+  {
+   "id": "F44",
+   "source": "S4",
+   "summary": "netpollBreak uses a compare-and-swap so only one wakeup write to the eventfd is in flight at a time.",
+   "quote": "Failing to cas indicates there is an in-flight wakeup, so we're done here. if !netpollWakeSig.CompareAndSwap(0, 1) { return",
+   "loc": {
+    "heading": "func netpollBreak() {",
+    "lines": [
+     72,
+     74
+    ]
+   }
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "X1",
+   "topic": "may a reader stop before the read returns EAGAIN / WouldBlock?",
+   "facts": [
+    "F16",
+    "F24",
+    "F28"
+   ],
+   "note": "mio requires repeating until WouldBlock or no further event is guaranteed; libuv stops after a short read or 32 reads, and its own comment ties this to not using edge-triggered I/O"
+  }
+ ]
+}

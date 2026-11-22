@@ -1,0 +1,79 @@
+[
+ {
+  "probe_id": "probe-01",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:ET second wait: 0, LT second wait: 1",
+  "uses": "env",
+  "repeat": 1,
+  "line": 128,
+  "file": "probe-01.c",
+  "block_sha": "4e7a96a240b5"
+ },
+ {
+  "probe_id": "probe-02",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:first: 1, no new write: 0, write into non-empty pipe: 1",
+  "uses": "env",
+  "repeat": 1,
+  "line": 160,
+  "file": "probe-02.c",
+  "block_sha": "b353060156ac"
+ },
+ {
+  "probe_id": "probe-03",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:before MOD: 0, after MOD: 1",
+  "uses": "env",
+  "repeat": 1,
+  "line": 190,
+  "file": "probe-03.c",
+  "block_sha": "7a0c86bc0774"
+ },
+ {
+  "probe_id": "probe-04",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:first: 1, new data while disarmed: 0, after re-arm: 1",
+  "uses": "env",
+  "repeat": 1,
+  "line": 218,
+  "file": "probe-04.c",
+  "block_sha": "5ccefc88fdd8"
+ },
+ {
+  "probe_id": "probe-07",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:threads that got the event: ET 1, LT 2",
+  "uses": "env",
+  "repeat": 3,
+  "line": 248,
+  "file": "probe-07.c",
+  "block_sha": "6faa5b58c7f0"
+ },
+ {
+  "probe_id": "probe-05",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:events: 1 for closed fd 3 (data.fd=3); DEL closed fd: -1 Bad file descriptor; DEL dup: -1 No such file or directory",
+  "uses": "env",
+  "repeat": 1,
+  "line": 338,
+  "file": "probe-05.c",
+  "block_sha": "e693a4c8531f"
+ },
+ {
+  "probe_id": "probe-06",
+  "mode": "verify",
+  "runtime": "c",
+  "expect": "stdout:first: 1, idle: 0, second connection into non-empty queue: 1",
+  "uses": "env",
+  "repeat": 1,
+  "line": 409,
+  "file": "probe-06.c",
+  "block_sha": "d5b9a3d9237c"
+ }
+]

@@ -1,0 +1,160 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^epoll7]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": 1,
+   "cache": "cache/c225d5946a26.txt"
+  },
+  {
+   "labels": [
+    "[^epollctl]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": 1,
+   "cache": "cache/d4cb145dde9c.txt"
+  },
+  {
+   "labels": [
+    "[^epollwait]"
+   ],
+   "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/plain/man/man2/epoll_wait.2?h=man-pages-6.19",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/05cdcc243187.txt"
+  },
+  {
+   "labels": [
+    "[^eventpoll]"
+   ],
+   "url": "https://github.com/torvalds/linux/blob/v6.12/fs/eventpoll.c",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/torvalds/linux/",
+   "written_rank": 1,
+   "cache": "cache/787c21f1de96.txt"
+  },
+  {
+   "labels": [
+    "[^posix]"
+   ],
+   "url": "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/b7a5318a6fd7.txt"
+  },
+  {
+   "labels": [
+    "[^nginx]"
+   ],
+   "url": "https://nginx.org/en/docs/dev/development_guide.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/8534d4bd3e26.txt"
+  },
+  {
+   "labels": [
+    "[^mio]"
+   ],
+   "url": "https://docs.rs/mio/1.0.2/mio/struct.Poll.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.rs/",
+   "written_rank": 1,
+   "cache": "cache/6a645105aed6.txt"
+  },
+  {
+   "labels": [
+    "[^libuv]"
+   ],
+   "url": "https://github.com/libuv/libuv/blob/v1.49.2/src/unix/stream.c",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/libuv/libuv/",
+   "written_rank": 1,
+   "cache": "cache/f17e2555df15.txt"
+  },
+  {
+   "labels": [
+    "[^gonetpoll]"
+   ],
+   "url": "https://github.com/golang/go/blob/go1.23.4/src/runtime/netpoll_epoll.go",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/golang/",
+   "written_rank": 1,
+   "cache": "cache/5fea415e0f05.txt"
+  },
+  {
+   "labels": [
+    "[^lwn]"
+   ],
+   "url": "https://lwn.net/Articles/864947/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/f565b7589cd5.txt"
+  },
+  {
+   "labels": [
+    "[^popcount1]"
+   ],
+   "url": "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 6,
+   "cache": "cache/4d5f5e9bddf3.txt"
+  },
+  {
+   "labels": [
+    "[^popcount2]"
+   ],
+   "url": "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 6,
+   "cache": "cache/54ee8f879da8.txt"
+  },
+  {
+   "labels": [
+    "[^lkml2003]"
+   ],
+   "url": "https://lore.kernel.org/all/20030712231147.GI15643@srv.foo21.com/T/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 6,
+   "cache": "cache/8550958264e8.txt"
+  }
+ ],
+ "tier_b": [
+  "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/plain/man/man2/epoll_wait.2?h=man-pages-6.19",
+  "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html",
+  "https://nginx.org/en/docs/dev/development_guide.html",
+  "https://lwn.net/Articles/864947/",
+  "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+  "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22",
+  "https://lore.kernel.org/all/20030712231147.GI15643@srv.foo21.com/T/"
+ ]
+}
