@@ -1,0 +1,16 @@
+SOURCE: https://www.rfc-editor.org/rfc/rfc9113
+FETCHED: 2026-11-22T09:00:00Z (fetch-source.mjs)
+SHA256: a0d9cc2e2e73caba9761c21050a757a07193cdf9c79d35b5126731613df45606
+
+HTTP/2 (test page)
+5. Streams
+A stream is a sequence of frames that both peers send on one connection.
+5.1. Stream States
+open:
+Both peers may send any frame on an open stream.
+Either peer may set the END_STREAM flag on a frame, and the stream then moves
+to one of the two half-closed states.
+closed:
+Closed is the last state of a stream.
+6.4. RST_STREAM
+A peer sends RST_STREAM to end a stream at once.

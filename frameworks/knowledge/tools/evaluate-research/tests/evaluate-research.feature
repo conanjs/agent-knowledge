@@ -2,7 +2,8 @@
 # The design is frameworks/knowledge/research-agent.design.md §3.2 (Stage 1). Output text is part of the requirement.
 
 Feature: Research verifier, Stage 1 helpers
-  `ranks` lists the rank of every References URL; `quotes` checks the judge's quotes against the saved pages.
+  `ranks` lists the rank of every References URL; `quotes` checks the judge's quotes against the saved pages;
+  `ledger` checks a research worker's ledger (ledger.schema.md) against the pages it saved.
 
   Background:
     Given the base fixture tree of "evaluate-research"
@@ -127,9 +128,70 @@ Feature: Research verifier, Stage 1 helpers
       final verdict: FAIL (judge FAIL; 1 of 4 claims checkable, 25%; threshold 70%)
       """
 
+  Scenario: ledger passes a worker's ledger whose quotes are at their place in pages saved by fetch-source.mjs
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      """
+    Then it exits with 0 and prints:
+      """
+      ledger ground-truth: 3 sources (2 counted, cap 4), 4 facts (4 at their place), 1 conflict: 0 errors, 0 warnings
+      """
+
+  Scenario: ledger reports a planted wrong quote, a quote at the wrong lines, a wrong rank, dangling ids and drafted doc text
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      pitfall
+      """
+    Then it exits with 1 and prints:
+      """
+      error | pitfall | draft | unknown key "draft": a ledger holds sources, facts and conflicts, no doc text
+      error | pitfall | S1 | tier A Rank 3, but the rule rfc-editor.org/rfc/ gives tier A Rank 1
+      warn | pitfall | S2 | tier B Rank 1 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home
+      error | pitfall | F1 | quote not in cache/19b1c63f6292.txt: "either peer may set the end_stream flag on any frame and the stream closes at on"
+      error | pitfall | F2 | quote is at line 16 of cache/19b1c63f6292.txt, not at line 7
+      error | pitfall | F3 | source S9 is not in this ledger
+      error | pitfall | X1 | fact F7 is not in this ledger
+      ledger pitfall: 2 sources (2 counted, cap 4), 3 facts (0 at their place), 1 conflict: 6 errors, 1 warning
+      """
+
+  Scenario: ledger reports a saved page edited after it was fetched
+    Given in "ledger-run/cache/f136dcfa5ee3.txt", `and does not wait for` becomes `and waits for`
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      """
+    Then it exits with 1 and prints:
+      """
+      error | ground-truth | S2 | cache/f136dcfa5ee3.txt changed after it was fetched: its text no longer matches the SHA-256 it was saved with
+      error | ground-truth | F3 | quote not in cache/f136dcfa5ee3.txt: "a server that wants to stop early sends rst_stream and does not wait for the cli"
+      ledger ground-truth: 3 sources (2 counted, cap 4), 4 facts (3 at their place), 1 conflict: 2 errors, 0 warnings
+      """
+
+  Scenario: ledger holds a profile to its cap of sources, not counting seed sources
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      --cap
+      1
+      """
+    Then it exits with 1 and prints:
+      """
+      error | ground-truth | sources | 2 sources count against the cap of 1 (1 seed source not counted)
+      ledger ground-truth: 3 sources (2 counted, cap 1), 4 facts (4 at their place), 1 conflict: 1 error, 0 warnings
+      """
+
   Scenario: No command prints the usage and exits with 2
     When the tool runs
     Then it exits with 2 and prints:
       """
-      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]]
+      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]
       """

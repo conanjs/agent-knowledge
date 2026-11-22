@@ -1,0 +1,9 @@
+SOURCE: https://example.dev/blog/h2
+FETCHED: 2026-11-22T09:00:00Z (fetch-source.mjs)
+SHA256: 489fe47912190132f0c6567e0ef5592202b8ca218c110290ebb76e7836a325df
+
+How HTTP/2 streams end (test blog)
+By Ann Example
+Closing a stream
+In practice a client half-closes its side as soon as the request body is sent.
+A server that wants to stop early sends RST_STREAM and does not wait for the client.

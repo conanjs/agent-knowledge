@@ -1,0 +1,46 @@
+[
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9113",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9113",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc9113",
+  "cache": "cache/19b1c63f6292.txt",
+  "fetched": "2026-11-22T09:00:00Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 404,
+  "sha256": "a0d9cc2e2e73caba9761c21050a757a07193cdf9c79d35b5126731613df45606"
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9110",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9110",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc9110",
+  "cache": "cache/e593c606c957.txt",
+  "fetched": "2026-11-22T09:00:00Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 134,
+  "sha256": "0a9ee409fe702f8c6fecfe5c0a963593d85f543152fc12b2e129490217e6529a"
+ },
+ {
+  "url": "https://example.dev/blog/h2",
+  "normalized": "https://example.dev/blog/h2",
+  "fetched_from": "https://example.dev/blog/h2",
+  "cache": "cache/f136dcfa5ee3.txt",
+  "fetched": "2026-11-22T09:00:00Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 231,
+  "sha256": "489fe47912190132f0c6567e0ef5592202b8ca218c110290ebb76e7836a325df"
+ },
+ {
+  "url": "https://example.dev/about",
+  "normalized": "https://example.dev/about",
+  "fetched_from": "https://example.dev/about",
+  "cache": "cache/d65484d3f74a.txt",
+  "fetched": "2026-11-22T09:00:00Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 83,
+  "sha256": "3d76f34e12e93767ee57704ce06e2df776c013b8ab970e9bae575d381b700271"
+ }
+]

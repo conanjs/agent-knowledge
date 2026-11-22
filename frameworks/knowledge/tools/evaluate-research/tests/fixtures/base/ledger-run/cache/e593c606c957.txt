@@ -1,0 +1,8 @@
+SOURCE: https://www.rfc-editor.org/rfc/rfc9110
+FETCHED: 2026-11-22T09:00:00Z (fetch-source.mjs)
+SHA256: 0a9ee409fe702f8c6fecfe5c0a963593d85f543152fc12b2e129490217e6529a
+
+HTTP Semantics (test page)
+9. Methods
+9.2.1. Safe Methods
+A method is safe when the client does not ask for any change on the server.

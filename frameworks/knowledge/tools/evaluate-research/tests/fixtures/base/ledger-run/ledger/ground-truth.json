@@ -1,0 +1,112 @@
+{
+ "profile": "ground-truth",
+ "question": "How does an HTTP/2 stream end?",
+ "terms": [
+  "END_STREAM",
+  "half-closed",
+  "RST_STREAM"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://www.rfc-editor.org/rfc/rfc9113",
+   "cache": "cache/19b1c63f6292.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "rank_basis": "tier A: rfc-editor.org/rfc/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S2",
+   "url": "https://example.dev/blog/h2",
+   "cache": "cache/f136dcfa5ee3.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "B",
+   "rank": 1,
+   "rule": null,
+   "rank_basis": "originator: the about page shows she edited the spec section",
+   "seed": false,
+   "provenance_ref": "cache/d65484d3f74a.txt"
+  },
+  {
+   "id": "S3",
+   "url": "https://www.rfc-editor.org/rfc/rfc9110",
+   "cache": "cache/e593c606c957.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "rank_basis": "tier A: rfc-editor.org/rfc/",
+   "seed": true,
+   "provenance_ref": null
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "Setting END_STREAM moves an open stream to a half-closed state.",
+   "quote": "Either peer may set the END_STREAM flag on a frame, and the stream then moves to one of the two half-closed states",
+   "loc": {
+    "heading": "5.1. Stream States",
+    "lines": [
+     11,
+     12
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S1",
+   "summary": "RST_STREAM ends a stream at once.",
+   "quote": "A peer sends RST_STREAM to end a stream at once",
+   "loc": {
+    "heading": "6.4. RST_STREAM",
+    "lines": [
+     16,
+     16
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S2",
+   "summary": "A server stopping early resets the stream without waiting.",
+   "quote": "A server that wants to stop early sends RST_STREAM and does not wait for the client",
+   "loc": {
+    "heading": "Closing a stream",
+    "lines": [
+     9,
+     9
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "source": "S3",
+   "summary": "A safe method asks for no change on the server.",
+   "quote": "A method is safe when the client does not ask for any change on the server",
+   "loc": {
+    "heading": "9.2.1. Safe Methods",
+    "lines": [
+     8,
+     8
+    ]
+   }
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "X1",
+   "topic": "who ends a stream early",
+   "facts": [
+    "F2",
+    "F3"
+   ],
+   "note": "the spec says either peer; the blog speaks of servers only"
+  }
+ ]
+}

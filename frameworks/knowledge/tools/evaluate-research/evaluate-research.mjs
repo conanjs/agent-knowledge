@@ -24,15 +24,22 @@
 //           claims.json: k of the doc's ✅ claims, each `## ` heading getting its share by its claim count (at least 1),
 //           picked with a seeded generator (mulberry32) so the same seed gives the same sample; --include forces, for each
 //           regex up to the next --option, the first claim matching it into the sample
-// Exit codes: 0 done, 1 a quote was not found, 2 usage error or unreadable input.
+//   ledger  checks a research worker's ledger/<profile>.json files (all of them, or the profiles named) against
+//           ledger.schema.md: each source is in sources.json with the same cache file and fetch time, its saved page still
+//           has the SHA-256 it was saved with, and its tier, rank and rule agree with the rules; at most --cap sources
+//           (default 4) besides seed sources; each fact's quote is in its source's page at loc.lines (give or take 2
+//           lines), after the same normalizing as quotes; conflicts name facts of the ledger; a key the schema does not
+//           define (a drafted section, say) is an error, since a worker writes no doc text
+// Exit codes: 0 done, 1 a quote was not found or a ledger has an error, 2 usage error or unreadable input.
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { classify, loadRules, referenceEntries } from '../classify-source/classify-source.mjs';
 
 const out = (s) => console.log(s);
 const die = (msg) => { out(msg); process.exit(2); };
-const USAGE = 'usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]]';
+const USAGE = 'usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]';
 
 function referencesOf(text) {
   const clean = text.replace(/\r\n/g, '\n').replace(/^(`{3,})[^\n]*\n[\s\S]*?^\1\s*$/gm, '');
@@ -264,8 +271,153 @@ function stage1(args) {
   out(line);
 }
 
+// ---- ledger: a research worker's sources and facts (ledger.schema.md) -----------------------------------------
+
+const PROFILES = ['taxonomy', 'ground-truth', 'practitioner', 'pitfall'];
+const LEDGER_KEYS = {
+  ledger: ['profile', 'question', 'terms', 'sources', 'facts', 'conflicts'],
+  source: ['id', 'url', 'cache', 'fetched', 'tier', 'rank', 'rule', 'rank_basis', 'seed', 'provenance_ref'],
+  fact: ['id', 'source', 'summary', 'quote', 'loc'],
+  conflict: ['id', 'topic', 'facts', 'note'],
+};
+const SPAN = 20; // a fact's loc.lines covers at most this many lines
+const SLACK = 2; // a quote may start or end this many lines away from loc.lines
+const lineSpan = ([i, j]) => (i === j ? `line ${i}` : `lines ${i}–${j}`);
+
+function checkLedger(run, file, { cap, index, rules }) {
+  const profile = file.replace(/\.json$/, '');
+  let errors = 0; let warnings = 0;
+  const err = (id, msg) => { errors++; out(`error | ${profile} | ${id} | ${msg}`); };
+  const warn = (id, msg) => { warnings++; out(`warn | ${profile} | ${id} | ${msg}`); };
+  let L;
+  try { L = JSON.parse(fs.readFileSync(path.join(run, 'ledger', file), 'utf8')); } catch (e) {
+    err('json', `cannot read ledger/${file}: ${e.message}`);
+    return true;
+  }
+  const extra = (obj, kind, id) => {
+    for (const k of Object.keys(obj ?? {})) if (!LEDGER_KEYS[kind].includes(k)) err(id ?? k, `unknown key "${k}": a ledger holds sources, facts and conflicts, no doc text`);
+  };
+  const pages = new Map(); // cache file -> { raw, lines }, or null when the run lacks it
+  const page = (rel) => {
+    if (!pages.has(rel)) {
+      const p = path.join(run, String(rel));
+      const raw = fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null;
+      pages.set(rel, raw === null ? null : { raw, lines: raw.replace(/\r\n/g, '\n').split('\n') });
+    }
+    return pages.get(rel);
+  };
+  const checked = new Set();
+  const savedPage = (id, rel, what) => { // a page saved by fetch-source.mjs, listed in sources.json, unchanged since
+    const pg = page(rel);
+    if (!pg) { err(id, `${what} ${rel} is not in the run`); return; }
+    if (checked.has(rel)) return;
+    checked.add(rel);
+    const entry = index.find((e) => e.cache === rel);
+    if (!entry) err(id, `${what} ${rel} is not in sources.json: save every page with fetch-source.mjs`);
+    const head = pg.raw.match(/^SHA256: ([0-9a-f]{64})$/m); const cut = pg.raw.indexOf('\n\n');
+    if (!head || cut < 0) { warn(id, `${rel} has no SHA-256 header: a page not saved by fetch-source.mjs`); return; }
+    const digest = crypto.createHash('sha256').update(pg.raw.slice(cut + 2)).digest('hex');
+    if (digest !== head[1] || (entry?.sha256 && entry.sha256 !== head[1])) err(id, `${rel} changed after it was fetched: its text no longer matches the SHA-256 it was saved with`);
+  };
+
+  extra(L, 'ledger');
+  if (!PROFILES.includes(L.profile)) err('profile', `"${L.profile}" is not one of ${PROFILES.join(', ')}`);
+  else if (L.profile !== profile) err('profile', `"${L.profile}" in a file named ${file}`);
+
+  const sources = new Map();
+  for (const s of L.sources ?? []) {
+    extra(s, 'source', s.id);
+    if (!s.id || sources.has(s.id)) { err(s.id ?? 'sources', `source id "${s.id}" is missing or used twice`); continue; }
+    sources.set(s.id, s);
+    const url = String(s.url ?? '').split('#')[0].replace(/[.,;:]+$/, '');
+    const entry = index.find((e) => String(e.normalized ?? e.url) === url);
+    if (!entry) err(s.id, `${url} is not in sources.json: save every page with fetch-source.mjs`);
+    else {
+      if (entry.status !== 200) err(s.id, `sources.json has status ${entry.status} for ${url}`);
+      if (entry.cache !== s.cache) err(s.id, `cache ${s.cache}, but sources.json has ${entry.cache}`);
+      if (entry.fetched !== s.fetched) err(s.id, `fetched ${s.fetched}, but sources.json has ${entry.fetched}`);
+    }
+    savedPage(s.id, s.cache, 'cache');
+    const c = classify(url, rules);
+    if (c?.tier === 'A') {
+      if (s.tier !== 'A' || s.rank !== c.rank || s.rule !== c.rule) err(s.id, `tier ${s.tier} Rank ${s.rank}, but the rule ${c.rule} gives tier A Rank ${c.rank}`);
+    } else {
+      if (s.tier !== 'B' || (s.rule ?? null) !== null) err(s.id, `tier ${s.tier} with rule ${s.rule}, but no rule fits: tier B, rule null`);
+      if (!Number.isInteger(s.rank) || s.rank < 1 || s.rank > 6) err(s.id, 'a tier B source needs the worker\'s rank, 1 to 6');
+      else if ([1, 4].includes(s.rank) && !s.provenance_ref) warn(s.id, `tier B Rank ${s.rank} with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home`);
+    }
+    if (s.provenance_ref) savedPage(s.id, s.provenance_ref, 'provenance_ref');
+  }
+  const seeds = [...sources.values()].filter((s) => s.seed === true).length;
+  const counted = sources.size - seeds;
+  if (counted > cap) err('sources', `${counted} sources count against the cap of ${cap}${seeds ? ` (${seeds} seed source${seeds > 1 ? 's' : ''} not counted)` : ''}`);
+
+  const facts = new Set(); let placed = 0;
+  for (const x of L.facts ?? []) {
+    extra(x, 'fact', x.id);
+    if (!x.id || facts.has(x.id)) { err(x.id ?? 'facts', `fact id "${x.id}" is missing or used twice`); continue; }
+    facts.add(x.id);
+    const s = sources.get(x.source);
+    if (!s) { err(x.id, `source ${x.source} is not in this ledger`); continue; }
+    if (!String(x.summary ?? '').trim()) err(x.id, 'no summary');
+    else if (x.summary.length > 300) warn(x.id, `a summary of ${x.summary.length} characters: one or two sentences, since the orchestrator writes the doc`);
+    const segs = String(x.quote ?? '').split(/\s*(?:…|\.\.\.)\s*/).map(norm).filter((t) => t.length >= 12);
+    if (!segs.length) { err(x.id, 'a quote shorter than 12 characters: quote the sentence that says it'); continue; }
+    const [a, b] = x.loc?.lines ?? [];
+    if (!Number.isInteger(a) || !Number.isInteger(b) || a < 1 || b < a) { err(x.id, 'loc.lines must be [first, last], counted from 1'); continue; }
+    if (b - a + 1 > SPAN) { err(x.id, `loc.lines covers ${b - a + 1} lines, at most ${SPAN}`); continue; }
+    const pg = page(s.cache);
+    if (!pg) continue; // reported with the source
+    const ls = pg.lines;
+    const at = (i, j) => norm(ls.slice(i - 1, j).join('\n'));
+    const win = at(Math.max(1, a - SLACK), Math.min(ls.length, b + SLACK));
+    const off = segs.find((t) => !win.includes(t));
+    if (!off) {
+      placed++;
+      const h = norm(String(x.loc.heading ?? ''));
+      if (!h) warn(x.id, 'no loc.heading');
+      else if (!ls.slice(0, a).some((l) => norm(l).includes(h))) warn(x.id, `heading "${x.loc.heading}" is not above ${lineSpan([a, a])} of ${s.cache}`);
+      continue;
+    }
+    if (!at(1, ls.length).includes(off)) { err(x.id, `quote not in ${s.cache}: "${off.slice(0, 80)}"`); continue; }
+    let where = null;
+    for (let j = 1; j <= ls.length && !where; j++) {
+      if (!at(Math.max(1, j - SPAN + 1), j).includes(off)) continue;
+      for (let i = j; i >= Math.max(1, j - SPAN + 1); i--) if (at(i, j).includes(off)) { where = [i, j]; break; }
+    }
+    err(x.id, `quote is at ${where ? lineSpan(where) : 'more than 20 lines'} of ${s.cache}, not at ${lineSpan([a, b])}`);
+  }
+
+  for (const c of L.conflicts ?? []) {
+    extra(c, 'conflict', c.id);
+    const named = Array.isArray(c.facts) ? c.facts : [];
+    if (named.length < 2) err(c.id ?? 'conflicts', 'a conflict names at least 2 facts');
+    for (const f of named) if (!facts.has(f)) err(c.id ?? 'conflicts', `fact ${f} is not in this ledger`);
+  }
+  const n = (k, word) => `${k} ${word}${k === 1 ? '' : 's'}`;
+  out(`ledger ${profile}: ${n(sources.size, 'source')} (${counted} counted, cap ${cap}), ${n(facts.size, 'fact')} (${placed} at their place), ${n((L.conflicts ?? []).length, 'conflict')}: ${n(errors, 'error')}, ${n(warnings, 'warning')}`);
+  return errors > 0;
+}
+
+function ledger(args) {
+  const capAt = args.indexOf('--cap');
+  const cap = capAt >= 0 ? Number(args[capAt + 1]) : 4;
+  const [run, ...profiles] = args.filter((_, i) => capAt < 0 || (i !== capAt && i !== capAt + 1));
+  if (!run || !Number.isInteger(cap) || cap < 1) die(USAGE);
+  const dir = path.join(run, 'ledger');
+  if (!fs.existsSync(dir)) die(`no ledger folder at ${dir}`);
+  const files = profiles.length ? profiles.map((p) => `${p}.json`) : fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
+  let index = [];
+  try { index = JSON.parse(fs.readFileSync(path.join(run, 'sources.json'), 'utf8')); } catch { /* none: every source fails */ }
+  const rules = loadRules();
+  let failed = false;
+  for (const f of files) failed = checkLedger(run, f, { cap, index, rules }) || failed;
+  process.exit(failed ? 1 : 0);
+}
+
 const [cmd, ...rest] = process.argv.slice(2);
-if (cmd === 'ranks') ranks(rest[0]);
+if (cmd === 'ledger') ledger(rest);
+else if (cmd === 'ranks') ranks(rest[0]);
 else if (cmd === 'quotes') quotes(rest[0], rest[1]);
 else if (cmd === 'stage1') stage1(rest);
 else if (cmd === 'verdict') finalVerdict(rest[0], rest.includes('--write'));
