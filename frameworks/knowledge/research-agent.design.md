@@ -294,31 +294,48 @@ A **probe** is a tagged code block in the doc that a script runs in a sandbox (a
 **Fence contract.** Only tagged blocks run; an untagged block is an illustration and is skipped. Renderers use only the first word of a fence's info string as the language (CommonMark 0.31.2, §4.5), so the tags do not change how the doc looks:
 
 ````markdown
-```js verify id=probe-01 runtime=node24 expect=stdout:{}
-console.log(JSON.stringify(structuredClone(new (class { #x = 1 })())));
+```js verify id=probe-01 runtime=node24 expect=stdout:false
+class A { #x = 1; static has(o) { return #x in o; } }
+console.log(A.has(structuredClone(new A())));
 ```
-
-Run on 2026-11-22 with Node 24.22.1, this prints `{}`: the private field is not copied. A first draft of this example expected `throws:TypeError`, and running it showed that was wrong.
 ````
+
+Run on 2026-11-22 with Node 24.22.1, this prints `false` (`A.has(new A())` prints `true`): the clone has no private field. Two earlier drafts of this example were wrong. The first expected `throws:TypeError`; running it showed that `structuredClone()` does not throw. The second printed `JSON.stringify` of the clone, `{}`, which cannot tell "not copied" from "copied", because `JSON.stringify` never shows `#` fields; the v6 judge caught that in calibration.
 
 | Tag | Meaning |
 |---|---|
 | `verify` | Run the block and compare with `expect` |
 | `syntax-only` | Parse or type-check only: `node --check`, `tsc --noEmit`, `python -m py_compile` |
+| `lib` | Shared code that is not run itself; a probe with `uses=<lib id>` gets it first (for example the helpers of a C lab) |
+| `repeat=<n>` | Run n times: pass when every run passes, fail when every run fails, `mixed` otherwise |
 | `id=probe-<nn>` | Stable id. The harness extracts blocks by id and hashes each one on every run, so no hand-kept manifest drifts after a patch round |
-| `runtime=<name>` | One of the v1 runtimes below. The validator checks that the doc's `applies-to` names it |
+| `runtime=<name>` | One of the v1 runtimes below. The validator checks the name (DD-6); whether the doc's `applies-to` covers that version is the judge's call |
 | `expect=` | `exit:<n>`, `throws:<ErrorName>` or `stdout:<text>` |
 
-**v1 runtimes**, each a Docker image pinned by digest in the harness's own table: `node24`; `python3`; `tsc`, the TypeScript type checker (TypeScript access modifiers are erased at runtime, so a claim about them needs `tsc`, not `node`); `c`, gcc on Linux, for kernel interfaces such as epoll. Browser probes, such as the LS-03 cookie lab, are out of scope for v1.
+**v1 runtimes**, each a Docker image in the harness's own table, whose image id `harness.json` records: `node24` (`node:24.22.1-alpine`); `python3` and `c` (`linlab:1`, the local lab image: Python 3.12.13, gcc 13.2.1); `tsc`, the TypeScript type checker (TypeScript access modifiers are erased at runtime, so a claim about them needs `tsc`, not `node`); `c`, gcc on Linux, for kernel interfaces such as epoll. Browser probes, such as the LS-03 cookie lab, are out of scope for v1.
+
+**TypeScript 5 and 7** (decided by V, 2026-11-22). `runtime=tsc` is TypeScript 5.9.3, the line the knowledge base's docs describe (image `kb-probe-tsc5:5.9.3`). The harness runs every `tsc` probe again on TypeScript 7.0.2, the native rewrite in Go (image `kb-probe-tsc7:7.0.2`), and records in `harness.json` whether 7 gives the same outcome and the same diagnostics. Checked on 2026-11-22, `tsc --noEmit --strict --target es2022`:
+
+| Behaviour | TypeScript 5.9.3 | TypeScript 7.0.2 |
+|---|---|---|
+| Bracket access to a `private` member type-checks | yes | same |
+| Dot access to a `private` member: `TS2341` | yes | same diagnostic |
+| Bracket access to a `protected` member type-checks | yes | same |
+| A `#` name as a parameter property: `TS18009` | yes | same diagnostic |
+| `readonly #x` is allowed | yes | same |
+| `obj.#x` outside its class: `TS18013` | yes | same diagnostic |
+| Exit code when the check finds errors | 2 | **1** |
+
+So a probe should expect a diagnostic (`expect=stdout:TS2341`), not an exit code, when it tests a type error: the diagnostics agree across the two versions, the exit codes do not.
 
 **Sandbox.** `docker run --rm --network none --read-only --tmpfs /tmp --cpus 1 --memory 512m --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges --user 65534:65534 -v <probes>:/probes:ro`, with a hard timeout of 10 s per probe. (Every flag is listed by `docker run --help` in Docker 29.8.2.)
 - With no Docker on the machine, probe-backed claims become `⚠️ unverified`: the harness fails closed, never PASS.
 - A probe that depends on timing (wake-ups, races) runs 3 times and fails only if all 3 fail; a mixed result is a `SOFT_WARN`.
 
 **Citations.**
-- A probe is a local source, cited with a normal footnote `[^probe-01]` whose References entry reads, for example, `` `probes/probe-01.js` — verify, Node 24.22.1, prints {}. [^probe-01] ``. KB-12 and KB-16 then cover it unchanged.
+- A probe is a local source, cited with a normal footnote `[^probe-01]` whose References entry reads, for example, `` `probes/probe-01.js` — verify, Node 24.22.1, prints false. [^probe-01] ``. KB-12 and KB-16 then cover it unchanged.
 - It has no rank. It may back claims in roles 3, 4 and 6 next to a ranked source, and never backs a role 5 claim alone.
-- A claim backed by a probe alone is worded as an observation with its version ("In Node 24.22, `structuredClone()` of an object whose only field is private returns `{}`"), not as a rule.
+- A claim backed by a probe alone is worded as an observation with its version ("In Node 24.22.1, a `structuredClone()` copy of a class instance has no `#` field"), not as a rule.
 - A web footnote covers only what its saved page says. The part only the probe shows cites the probe.
 
 **Judge.** It gets `probes/` and `round-<n>.harness.json` in its input folder and reads the probe code, because the orchestrator writes the probes.

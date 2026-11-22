@@ -1,0 +1,221 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^epoll7]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/c225d5946a26.txt"
+  },
+  {
+   "labels": [
+    "[^ctl]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/d4cb145dde9c.txt"
+  },
+  {
+   "labels": [
+    "[^wait]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man2/epoll_wait.2.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/ff4afcb11fec.txt"
+  },
+  {
+   "labels": [
+    "[^pipe7]"
+   ],
+   "url": "https://man7.org/linux/man-pages/man7/pipe.7.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "man7.org/linux/man-pages/",
+   "written_rank": null,
+   "cache": "cache/07e67c2cc480.txt"
+  },
+  {
+   "labels": [
+    "[^src]"
+   ],
+   "url": "https://raw.githubusercontent.com/torvalds/linux/master/fs/eventpoll.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/5f09b0ce2b7f.txt"
+  },
+  {
+   "labels": [
+    "[^pipesrc]"
+   ],
+   "url": "https://raw.githubusercontent.com/torvalds/linux/master/fs/pipe.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/c8307c5c7722.txt"
+  },
+  {
+   "labels": [
+    "[^unixsrc]"
+   ],
+   "url": "https://raw.githubusercontent.com/torvalds/linux/master/net/unix/af_unix.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/ec62ffb1c62f.txt"
+  },
+  {
+   "labels": [
+    "[^kerrisk]"
+   ],
+   "url": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04363.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/54e094a41d0f.txt"
+  },
+  {
+   "labels": [
+    "[^linus2020]"
+   ],
+   "url": "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04469.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/54f3778f3684.txt"
+  },
+  {
+   "labels": [
+    "[^c3a34]"
+   ],
+   "url": "https://android-kvm.googlesource.com/linux/+/3a34b13a88caeb2800ab44a4918f230041b37dd9",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/24ef74951934.txt"
+  },
+  {
+   "labels": [
+    "[^c3b84]"
+   ],
+   "url": "https://lkml.iu.edu/2108.3/00913.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/23ad1e00f491.txt"
+  },
+  {
+   "labels": [
+    "[^go]"
+   ],
+   "url": "https://raw.githubusercontent.com/golang/go/master/src/runtime/netpoll_epoll.go",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/8510ba299836.txt"
+  },
+  {
+   "labels": [
+    "[^mio]"
+   ],
+   "url": "https://raw.githubusercontent.com/tokio-rs/mio/master/src/sys/unix/selector/epoll.rs",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/4be4c0505d22.txt"
+  },
+  {
+   "labels": [
+    "[^miodocs]"
+   ],
+   "url": "https://docs.rs/mio/latest/mio/struct.Poll.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.rs/",
+   "written_rank": null,
+   "cache": "cache/2eded5b23bb5.txt"
+  },
+  {
+   "labels": [
+    "[^nginx]"
+   ],
+   "url": "https://raw.githubusercontent.com/nginx/nginx/master/src/event/modules/ngx_epoll_module.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/af1caee8515a.txt"
+  },
+  {
+   "labels": [
+    "[^majek1]"
+   ],
+   "url": "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/4d5f5e9bddf3.txt"
+  },
+  {
+   "labels": [
+    "[^majek2]"
+   ],
+   "url": "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/fd7757896fb2.txt"
+  },
+  {
+   "labels": [
+    "[^kqueue]"
+   ],
+   "url": "https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/be2e8fe9e521.txt"
+  }
+ ],
+ "tier_b": [
+  "https://raw.githubusercontent.com/torvalds/linux/master/fs/eventpoll.c",
+  "https://raw.githubusercontent.com/torvalds/linux/master/fs/pipe.c",
+  "https://raw.githubusercontent.com/torvalds/linux/master/net/unix/af_unix.c",
+  "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04363.html",
+  "https://lkml.iu.edu/hypermail/linux/kernel/2010.1/04469.html",
+  "https://android-kvm.googlesource.com/linux/+/3a34b13a88caeb2800ab44a4918f230041b37dd9",
+  "https://lkml.iu.edu/2108.3/00913.html",
+  "https://raw.githubusercontent.com/golang/go/master/src/runtime/netpoll_epoll.go",
+  "https://raw.githubusercontent.com/tokio-rs/mio/master/src/sys/unix/selector/epoll.rs",
+  "https://raw.githubusercontent.com/nginx/nginx/master/src/event/modules/ngx_epoll_module.c",
+  "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+  "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22/",
+  "https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2"
+ ]
+}

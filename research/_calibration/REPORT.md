@@ -11,6 +11,8 @@ Date: 2026-11-22. Design: `frameworks/knowledge/research-agent.design.md` §4.2 
 | v3 | `f166f98` | V's severity split (2026-11-22): `CRITICAL_FAIL` only for `contradicted`, `unsupported`, a wrong number, version, date or name, and a modal raised to MUST level in the claim's own words; every other `overstates` is a new `WARN`, which lowers `factual_grounding` but does not fail the doc. `factual_grounding` 4 allows at most 3 `WARN`s, or 1 per 10 checked claims. A `claims.json` sample mode. **Neutral examples**: v1 and v2 used calibration answers as examples (finding 6) |
 | v4 | `d8dcf5d` | Takes tier A ranks from `stage1.json` (built by `evaluate-research.mjs stage1`) as given and rates only tier B sources, with the tier B rating guide (a maintainer's mailing-list post is Rank 4 only when the page shows the role) |
 | v5 | `2b066f6` | Tier B rules in order (V, 2026-11-22): the originator of a concept (shown by a page in the input) is Rank 1 for that concept; a project's own home is Rank 1 for that project; then the maintainer's post; then the class, with the higher number on a tie. A `rank_scope` per source. A note that a script may turn PASS into `INCONCLUSIVE`. First version run as the linked `knowledge-judge` agent |
+| v6 | `ef7dc5d` | Reads code probes (`probes/`, `harness.json`): verdicts `observed` and `invalid_probe` (`CRITICAL_FAIL`); a probe backs roles 3, 4 and 6 only; a probe-only claim is worded as an observation with its version |
+| v7 | `73b3759` | "Check every cited probe first, by reading its code": a probe that cannot fail or does not test the claim makes the claim `invalid_probe` whatever its role; a claim that needs a probe is `observed`, not `entails` |
 
 ## 2. Calibration docs
 
@@ -101,6 +103,19 @@ Run as the linked `knowledge-judge` agent (`~/.claude/agents/knowledge-judge.md`
 | MCP sample of 15 (`run-m3v6`, the same sample as `run-r9k5`) | K1 critical, K2 `WARN` | **K1 `CRITICAL_FAIL`, K2 `WARN`**; the §1.6 citation gap `CRITICAL_FAIL` again | 153k |
 
 Quotes: 26 of 26 found on the cited pages. v5 passes calibration.
+
+### 3.7 v6: the first judge that reads code probes (2026-11-22)
+
+| Test | v6 result | Tokens |
+|---|---|---|
+| Unchanged private-fields doc (`run-e2s8`) | PASS 4.50, the same 2 `WARN` | 110k |
+| 5 planted errors (`run-u5n3`) | 5/5, right severity | 109k |
+| MCP sample (`run-y9q4`) | K1 `CRITICAL_FAIL`, K2 `WARN`. The §1.6 row is now `entails`: `stage1.json` maps the doc's `[4]` entry, which lists the security page too, to all its pages, so the earlier "citation gap" depended on how `[4]` was read | 152k |
+| Probe case (`run-j4p7`, `planted.md` in the folder): the planted copy plus 3 probes, one rigged | **Detected, mislabelled.** It used probe-01 to clear the `protected` claim (C1 `entails`, where `observed` was expected). It said the rigged probe-03 "cannot fail: the empty catch swallows every error", but gave the claim `not_checkable`, not `invalid_probe`. It also found a flaw in my own probe-02: `JSON.stringify` never shows `#` fields, so `{}` cannot show whether `structuredClone()` copied one | 119k |
+
+The probe case showed two gaps in the wording, fixed in v7: check each probe first, and `observed` replaces `entails` when the claim needs the probe. probe-02 now tests `#x in clone`, which prints `false` on Node 24.22.1 (the original prints `true`).
+
+**v7 on the probe case** (`run-j4p7`, round 2, probe-02 fixed; about 120k tokens): the rigged probe-03 is now `invalid_probe`, `CRITICAL_FAIL` ("its only check never looks for `#x` … any error it throws is swallowed by an empty `catch {}`"). probe-02, which prints `false`, is used against planted error P5 (still `contradicted`). P1–P5 keep their severities. C1 is a `WARN`, not the `observed` I expected: its `protected` part rests on probe-01 alone, and the claim states it as a general rule with no version, which the probe rules call an overstatement. The judge applied the rule as written; my answer key was wrong. v7 changed only the probe rules, so it was rerun on the probe case only; the three standard cases ran on v6.
 
 ## 4. Findings for the design
 

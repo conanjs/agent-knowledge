@@ -22,3 +22,8 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-k8w2 | private-fields-clean, input by `stage1` | v5 `2b066f6`, run as the linked `knowledge-judge` agent |
 | run-d5h9 | private-fields-planted, input by `stage1` | v5 `2b066f6`, `knowledge-judge` agent |
 | run-m3v6 | mcp-known-errors, `stage1 --sample 15 --seed 20261122` with K1, K2 and both K3 rows forced in (same sample as run-r9k5) | v5 `2b066f6`, `knowledge-judge` agent |
+| run-j4p7 | private-fields-planted plus 3 probes (`planted.md` in the run folder; one rigged) | v6 `ef7dc5d`, `knowledge-judge` agent |
+| run-e2s8 | private-fields-clean, input by `stage1` | v6 `ef7dc5d`, `knowledge-judge` agent |
+| run-u5n3 | private-fields-planted, input by `stage1` | v6 `ef7dc5d`, `knowledge-judge` agent |
+| run-y9q4 | mcp-known-errors, the same 15-claim sample as run-r9k5 | v6 `ef7dc5d`, `knowledge-judge` agent |
+| run-h6t1 | SE-04 with its 14 lab tests as probes (`_golden/SE-04/probes-v1`), the same 45 claims as run-w3j7 (Python sampler, seed 20261122) | v7 `73b3759`, `knowledge-judge` agent |

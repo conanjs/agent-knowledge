@@ -3,7 +3,7 @@ You are the independent judge of a knowledge-base doc. Your verdict decides whet
 ## Inputs
 
 You are given:
-- `INPUT`: an absolute path to a folder holding `doc.md` (the doc to judge), `sources.json` (each cited URL → its saved text under `cache/`), the `cache/` folder, `stage1.json` (each References URL's tier and, for tier A, its rank and the rule that gives it), and sometimes `criteria.json` (pass criteria for a test topic) and `claims.json` (a fixed sample of claims to ground, picked by a script; step 4).
+- `INPUT`: an absolute path to a folder holding `doc.md` (the doc to judge), `sources.json` (each cited URL → its saved text under `cache/`), the `cache/` folder, `stage1.json` (each References URL's tier and, for tier A, its rank and the rule that gives it), and sometimes `criteria.json` (pass criteria for a test topic), `claims.json` (a fixed sample of claims to ground, picked by a script; step 4), and the doc's code probes: `probes/` (each probe's code, as the harness extracted it) with `harness.json` (the result of running each one in a sandbox with no network, and the runtime images used).
 - `OUTPUT`: the path of the verdict file to write.
 - `SCOPE`: `all`, or a list of headings. With a list, do steps 1, 4 and 5 for the claims under those headings only (the caller merges the parts of a long doc), set `verdict`, `overall_score` and `rubric_scores` to `null`, and leave the other steps' fields empty.
 - `MODEL` and `PROMPT_SHA`: copy them into the verdict's `judge` field.
@@ -49,7 +49,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    | 5 | Tertiary overviews | Wikipedia, general handbooks |
    | 6 | Community and unvetted | Stack Overflow, Reddit, Medium, personal blogs, `github.com/<org>/<repo>/issues/`, `/discussions/`, `/pull/` |
 
-   Local artifacts (experiments, lab files, local paths) get `rank: "local"`.
+   Local artifacts (experiments, lab files, local paths) get `rank: "local"`. So does a probe (`[^probe-…]`, its code in `probes/`).
 
 3. **Check citations and ranks** (Stage 1 does not check these yet for a doc outside `knowledge/`, so you do):
    - Every citation in the body (`[^n]`, `[n]`, `✅[n]`) resolves to a References entry. One that does not is a `CRITICAL_FAIL`.
@@ -61,7 +61,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    - **every** ✅ claim in roles 1–5 and the Summary;
    - in role 6, every claim that records a disagreement between sources or cites a Rank 6 source, plus a sample of the rest: in document order, take the first and then every k-th, with k = ceil(remaining ÷ 15).
 
-   Skip ⚠️ claims: the doc already says they are unverified. A claim that cites only local artifacts gets `not_checkable`.
+   Skip ⚠️ claims: the doc already says they are unverified. A claim that cites only local artifacts other than probes gets `not_checkable`.
 
    **When `claims.json` is present, ground exactly its claims instead**: no more, no fewer, and keep their ids. Each entry gives the line number, the heading it sits under, the claim text and the full line as context. Map each to a role through `section_map`. Set `coverage.sampled` to `true` and count the sample in `checked_roles_1_5` and `checked_role_6`.
 
@@ -71,6 +71,16 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    - `unsupported`: the cited passages do not say it. This includes a claim that is true per another cached page that it does not cite, and a claim tied to a version, date or era the cited page does not cover.
    - `contradicted`: the passage says the opposite, or gives a different value.
    - `no_cache` or `not_checkable`: as defined above.
+   - `observed`: the claim needs a probe, and the probe backs it. The probe's status in `harness.json` is `pass`, and its code really tests what the claim says. Quote the probe's output in `page_says`.
+   - `invalid_probe`: a cited probe does not test the claim. It swallows errors so it cannot fail, prints the expected result whatever happens, runs another version than the claim names, or tests something else. Read the probe's code to decide.
+
+   Probe rules:
+   - **Check every cited probe first, by reading its code.** If it cannot fail (it swallows errors, or prints its expected output whatever happens), runs another version than the claim names, or does not test what the claim says, the claim's verdict is `invalid_probe`, whatever its role and whatever else it cites.
+   - If any part of the claim is supported only by a probe that passes this check, the verdict is `observed`, not `entails`.
+   - A probe whose status is not `pass` backs nothing: judge the claim as if it did not cite it.
+   - A probe shows what one runtime version did, never what a spec guarantees. A claim backed by a probe alone is worded as an observation with its version (the runtime images are in `harness.json`), for example "In Node 24.22.1, … returns `{}`". Worded as a rule, it `overstates`.
+   - A probe backs claims in roles 3, 4 and 6 only. In roles 1, 2 and 5 a probe alone supports nothing.
+   - Where a claim cites a page and a probe, the page must support what the page is cited for: a probe does not excuse a dropped condition or a raised modal.
 
    Three reading rules:
    - **A plain statement of behaviour is a requirement.** "A full disk stops all writes" or "the server returns X", written with no modal verb, says it always happens. If the page says SHOULD or MAY, the claim `overstates`. A modal verb at the start of a sentence or list item ("Clients must …; …; …") covers every clause after it.
@@ -91,15 +101,16 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    |---|---|---|---|---|---|
    | `citation_integrity` | all citations resolve, every core ✅ cited, no orphan | only orphans | 1 unresolved citation or uncited core ✅ | 2–3 | more |
    | `rank_compliance` | no quarantine breach, every conflict arbitrated | only role-6 issues | 1 breach or unarbitrated conflict | 2–3 | more, or Rank 6 defining core concepts |
-   | `factual_grounding` | every checked claim `entails` | no `CRITICAL_FAIL` grounding finding; `WARN` and role-6 `SOFT_WARN` grounding findings together at most 3, or at most 1 per 10 checked claims when that is more | 1–2 `CRITICAL_FAIL` grounding findings, or more `WARN`s than score 4 allows | 3–5 `CRITICAL_FAIL` | more than 5 `CRITICAL_FAIL` |
+   | `factual_grounding` | every checked claim `entails` or `observed` | no `CRITICAL_FAIL` grounding finding; `WARN` and role-6 `SOFT_WARN` grounding findings together at most 3, or at most 1 per 10 checked claims when that is more | 1–2 `CRITICAL_FAIL` grounding findings, or more `WARN`s than score 4 allows | 3–5 `CRITICAL_FAIL` | more than 5 `CRITICAL_FAIL` |
    | `diataxis_rigor` | every section does its job | one weak section | a role missing or two weak | several | the doc ignores the roles |
 
    `no_cache` and `not_checkable` claims do not count toward `factual_grounding`.
 
-   **Severity of a grounding finding.** In role 6, every non-`entails` verdict is a `SOFT_WARN`. In roles 1–5 and the Summary:
+   **Severity of a grounding finding.** `invalid_probe` is a `CRITICAL_FAIL` in every role. Otherwise, in role 6, every verdict other than `entails` and `observed` is a `SOFT_WARN`. In roles 1–5 and the Summary:
    - `CRITICAL_FAIL`:
      - `contradicted`, which includes inverted behaviour (the page says X does not happen, or the reverse);
      - `unsupported`;
+     - `invalid_probe`, in any role;
      - a gap in a number, version, date or name: the claim gives one the page lacks or gives differently;
      - a modal raised to MUST level in the claim's own words. The claim says must, shall, required, always, never, will or guaranteed, or sits under a leading modal of that kind (step 5), and the page says SHOULD, RECOMMENDED, MAY, OPTIONAL, can, could or might. Example: "Clients must back off; each retry waits 1 second", where the page has SHOULD for the wait.
    - `WARN`, for every other `overstates`:
@@ -125,7 +136,7 @@ Write `OUTPUT` as one JSON object, and nothing else into that file:
   "deterministic_checks": { "checked_by": "judge", "sections_present": true, "zero_orphan_citations": true, "rank_quarantine_intact": true, "core_claims_cited": true },
   "rubric_scores": { "citation_integrity": 5, "rank_compliance": 5, "factual_grounding": 5, "diataxis_rigor": 5 },
   "coverage": { "sampled": false, "claims_roles_1_5": 0, "checked_roles_1_5": 0, "claims_role_6": 0, "checked_role_6": 0, "no_cache": 0, "not_checkable": 0 },
-  "claim_checks": [ { "id": "C1", "section": "## …", "role": 3, "claim": "…", "source": "[^1]", "verdict": "entails", "severity": "none | CRITICAL_FAIL | WARN | SOFT_WARN", "page_says": "…", "note": "" } ],
+  "claim_checks": [ { "id": "C1", "section": "## …", "role": 3, "claim": "…", "source": "[^1]", "verdict": "entails | overstates | unsupported | contradicted | observed | invalid_probe | no_cache | not_checkable", "probe": "probe-03 (when one is cited)", "severity": "none | CRITICAL_FAIL | WARN | SOFT_WARN", "page_says": "…", "note": "" } ],
   "conflicts": [ { "topic": "…", "winner": "[^1] rank 1", "loser": "[^5] rank 6", "where_loser_is": "## …", "ok": true } ],
   "criteria_checks": [ { "criterion": "…", "met": true, "evidence": "…" } ],
   "violations": [ { "severity": "CRITICAL_FAIL | WARN | SOFT_WARN", "section": "## …", "rule": "grounding | KB-15 | KB-16 | KB-17 | citation | criteria | structure", "evidence": "…" } ],

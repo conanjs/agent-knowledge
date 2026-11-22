@@ -17,7 +17,8 @@
 //           when at least 70% of the judged claims are checkable (a verdict other than not_checkable and no_cache), and
 //           becomes INCONCLUSIVE otherwise. --write adds it to the verdict file as "final"
 //   stage1  builds the judge's input folder (default <run>/verdicts/round-<n>.input/) from <run>/doc.md, <run>/sources.json and
-//           <run>/cache/: the doc, the saved pages it cites, sources.json, criteria.json if present, and stage1.json, which
+//           <run>/cache/: the doc, the saved pages it cites, sources.json, criteria.json if present, probes/ and this
+//           round's harness result as harness.json if present (Stage 1.5), and stage1.json, which
 //           gives every References URL its tier and, for tier A, the rank and rule the judge takes as given. --sample adds
 //           claims.json: k of the doc's ✅ claims, each `## ` heading getting its share by its claim count (at least 1),
 //           picked with a seeded generator (mulberry32) so the same seed gives the same sample; --include forces, for each
@@ -87,7 +88,7 @@ function quotes(verdictPath, inputDir) {
   for (const s of v.sources ?? []) addCache(s.ref, s.cache);
   let found = 0; let missing = 0; let claims = 0;
   for (const c of v.claim_checks ?? []) {
-    if (['entails', 'not_checkable', 'no_cache'].includes(c.verdict)) continue;
+    if (['entails', 'observed', 'not_checkable', 'no_cache'].includes(c.verdict)) continue;
     const q = String(c.page_says ?? '').split(/\bnot found\b/i)[0]; // a note such as "Not found for x: searched …" ends the quotes
     if (!q.trim()) continue;
     claims++;
@@ -225,6 +226,10 @@ function stage1(args) {
   }
   fs.writeFileSync(path.join(dst, 'sources.json'), JSON.stringify(kept, null, 1) + '\n');
   if (fs.existsSync(path.join(run, 'criteria.json'))) fs.copyFileSync(path.join(run, 'criteria.json'), path.join(dst, 'criteria.json'));
+  // Stage 1.5's evidence (design §3.6): the probes and this round's harness result, so the judge can read the probe code.
+  if (fs.existsSync(path.join(run, 'probes'))) fs.cpSync(path.join(run, 'probes'), path.join(dst, 'probes'), { recursive: true });
+  const harness = path.join(run, 'verdicts', `round-${n}.harness.json`);
+  if (fs.existsSync(harness)) fs.copyFileSync(harness, path.join(dst, 'harness.json'));
   const rules = loadRules(); const sources = [];
   for (const e of referenceEntries(referencesOf(text))) {
     for (const url of e.urls) {

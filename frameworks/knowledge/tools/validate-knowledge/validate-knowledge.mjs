@@ -11,7 +11,7 @@
 // Every code printed is a rule id in ../../schemas/ (a test checks this: tests/ next to this file).
 // Checks: knowledge-doc KD-1 (sections/order), KD-2 (verified ⇒ no ⚠️ + last-verified), KD-6 (concept ≤ 400 lines, warn), KD-7 (derived-from ↔ synthesized-into),
 // KD-9 (exact Verification status line, singular/plural, date = last-verified; counts warn);
-// deep-dive DD-1, DD-3, DD-4 (warn); topic-index TI-1 … TI-7; shared KB-9 (front-matter values),
+// deep-dive DD-1, DD-3, DD-4 (warn), DD-6 (code-probe tags, ../run-code-harness); topic-index TI-1 … TI-7; shared KB-9 (front-matter values),
 // KB-10 (only keys the schema defines), KB-11 (title and Summary head), KB-12 (References, Related, footnotes);
 // KB-3 with --urls;
 // KB-7 conversation residue (warn, heuristic); KB-8 duplicated fenced blocks across docs / repeated paragraphs (warn);
@@ -25,6 +25,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { classify, loadRules, referenceEntries } from '../classify-source/classify-source.mjs';
+import { blocksOf } from '../run-code-harness/run-code-harness.mjs';
 
 const args = process.argv.slice(2);
 const checkUrls = args.includes('--urls'); if (checkUrls) args.splice(args.indexOf('--urls'), 1);
@@ -312,6 +313,7 @@ for (const [f, { fm, text }] of docs) {
     if (heads.slice(-2).join('|') !== 'References|Related') fail('DD-1', `${rel(f)}: last sections must be "## References", "## Related"`);
     checkSummary(f, text, true);
     checkTail(f, text, fm);
+    for (const p of blocksOf(text).problems) fail('DD-6', `${rel(f)}: ${p}`);
     if (String(fm['ranked-sources']) === 'true') checkRanks(f, text);
     for (const e of fm['synthesized-into'] ?? []) {
       const p = path.join(kRoot, String(e?.path ?? e));

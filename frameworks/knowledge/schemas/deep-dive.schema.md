@@ -73,6 +73,7 @@ These come from the global "deep dive" instruction. They make a dive easier to s
 | DD-3 | Every `synthesized-into` path exists and has `derived-from` pointing back here | both sides agree | script |
 | DD-4 | If `last-updated` is later than a `synthesized-into` entry's `on`, that derived doc is flagged for re-synthesis | — | script (warn) |
 | DD-5 | KB-1 … KB-6 (`_system.md` §4) apply. In particular, company-specific facts are anonymized here or moved to store C | — | llm / script |
+| DD-6 | **Probe tags are valid.** A fenced block whose info string is `<lang> verify`, `<lang> syntax-only` or `<lang> lib` (a code probe, research-agent design §3.6) has an `id` (`probe-<nn>` unless `lib`), unique in the doc; a `runtime` the harness knows (`node24`, `python3`, `c`, `tsc`, `tsc7`); for `verify`, an `expect` of `exit:<n>`, `throws:<Name>` or `stdout:<text>`; and every `uses=` names a `lib` block of the same runtime. Untagged blocks are not checked | the harness can run every tagged block | script |
 
 ## Synthesis
 

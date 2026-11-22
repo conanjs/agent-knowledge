@@ -794,6 +794,23 @@ Feature: Knowledge validator
         KB-9  demo/concept.md: ranked-sources must be true or false
       """
 
+  # ---- DD-6: code-probe tags ---------------------------------------------------------------------
+
+  Scenario: DD-6 a deep dive with valid probe tags passes
+    Given in "knowledge/demo/deep-dive.md", `Free-form text.` becomes `Free-form text.\n\n```js verify id=probe-01 runtime=node24 expect=stdout:ok\nconsole.log('ok');\n```\n\n```js\nan untagged illustration\n````
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: DD-6 a probe tag with an unknown runtime, or a verify block without expect, fails
+    Given in "knowledge/demo/deep-dive.md", `Free-form text.` becomes `Free-form text.\n\n```js verify id=probe-01 runtime=deno\nconsole.log('ok');\n```\n\n```js verify id=probe-02 runtime=node24\nconsole.log('ok');\n````
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (2)
+        DD-6  demo/deep-dive.md: line 24: runtime "deno" is not one of node24, python3, c, tsc, tsc7
+        DD-6  demo/deep-dive.md: line 28: expect "" is not exit:<n>, throws:<Name> or stdout:<text>
+      """
+
   # ---- traceability (TST-14) -------------------------------------------------------------------
 
   Scenario: Every rule code the validator prints has a scenario

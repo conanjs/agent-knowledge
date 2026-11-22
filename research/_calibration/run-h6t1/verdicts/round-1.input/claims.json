@@ -1,0 +1,376 @@
+{
+ "doc_claims": 185,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## 1. Context: why edge-triggered mode exists": [
+   8,
+   2
+  ],
+  "## 2. Words first": [
+   12,
+   3
+  ],
+  "## 3. The actors and their data structures": [
+   7,
+   2
+  ],
+  "## 4. Every flag and parameter": [
+   22,
+   5
+  ],
+  "## 5. The mechanism, step by step": [
+   20,
+   5
+  ],
+  "## 6. What exactly counts as an edge": [
+   37,
+   9
+  ],
+  "## 7. Worked example: a correct ET loop, one full pass": [
+   7,
+   1
+  ],
+  "## 8. Cross-actor interactions": [
+   17,
+   4
+  ],
+  "## 9. Multiple threads and multiple epoll instances": [
+   13,
+   3
+  ],
+  "## 10. Choosing a mode": [
+   8,
+   2
+  ],
+  "## 11. How real event loops use `EPOLLET`": [
+   8,
+   2
+  ],
+  "## 12. Edge-case and failure matrix": [
+   24,
+   6
+  ],
+  "## 14. Verification": [
+   2,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 28,
+   "heading": "## 1. Context: why edge-triggered mode exists",
+   "claim": "- **Edge-triggered (ET), with `EPOLLET`** ✅[^ctl]",
+   "context": "- **Edge-triggered (ET), with `EPOLLET`** ✅[^ctl]: a descriptor is reported when something changes on it, and then not again until the next change ✅[^epoll7]."
+  },
+  {
+   "id": "S2",
+   "line": 30,
+   "heading": "## 1. Context: why edge-triggered mode exists",
+   "claim": "Several widely used event loops register with ET: the Go runtime ✅[^go]",
+   "context": "Why anyone wants ET: an LT loop that is not ready to consume a descriptor, for example a socket that is writable while there is nothing to send, gets it back on every call. ET reports it once and stays quiet. The cost is a stricter contract: the application must consume everything that is available, because the kernel will not remind it. Several widely used event loops register with ET: the Go runtime ✅[^go], mio (the I/O layer under the Tokio async runtime for Rust) ✅[^mio], and nginx for client connections ✅[^nginx]."
+  },
+  {
+   "id": "S3",
+   "line": 47,
+   "heading": "## 2. Words first",
+   "claim": "The function epoll hooks onto each watched file's wait queue ✅[^src]",
+   "context": "| Wakeup callback | The function epoll hooks onto each watched file's wait queue ✅[^src] | A forwarding rule on that list that buzzes your pager | `ep_poll_callback` |"
+  },
+  {
+   "id": "S4",
+   "line": 50,
+   "heading": "## 2. Words first",
+   "claim": "`read(4096) = -1 (Resource temporarily unavailable)` ✅[^probe-01]",
+   "context": "| `EAGAIN` | The error number (\"try again\") meaning \"no data or space right now\" | The \"come back later\" sign | `read(4096) = -1 (Resource temporarily unavailable)` ✅[^probe-01] |"
+  },
+  {
+   "id": "S5",
+   "line": 51,
+   "heading": "## 2. Words first",
+   "claim": "4 of 4 threads woken by one write in LT mode ✅[^probe-10]",
+   "context": "| Thundering herd | Many sleepers woken for one event, all but one find nothing to do | Everyone in a waiting room standing up when one name is called | 4 of 4 threads woken by one write in LT mode ✅[^probe-10] |"
+  },
+  {
+   "id": "S6",
+   "line": 61,
+   "heading": "## 3. The actors and their data structures",
+   "claim": "- **epoll instance** (`struct eventpoll`): its job: store registrations, via a red-black tree of epitems, and queue ready ones, via the ready list ✅[^src]",
+   "context": "- **epoll instance** (`struct eventpoll`): its job: store registrations, via a red-black tree of epitems, and queue ready ones, via the ready list ✅[^src]."
+  },
+  {
+   "id": "S7",
+   "line": 86,
+   "heading": "## 3. The actors and their data structures",
+   "claim": "Each registration costs roughly 160 bytes on a 64-bit kernel, and `/proc/sys/fs/epoll/max_user_watches` caps the total per user ✅[^epoll7]",
+   "context": "The key of a registration is the fd number *together with* the open file description ✅[^epoll7]. Each registration costs roughly 160 bytes on a 64-bit kernel, and `/proc/sys/fs/epoll/max_user_watches` caps the total per user ✅[^epoll7]."
+  },
+  {
+   "id": "S8",
+   "line": 94,
+   "heading": "## 4. Every flag and parameter",
+   "claim": "That direction is ignored: wakeups whose bits do not overlap the mask are dropped by the callback ✅[^src]",
+   "context": "| `EPOLLIN` / `EPOLLOUT` | 2.5.44 | Interest in \"readable\" / \"writable\" | That direction is ignored: wakeups whose bits do not overlap the mask are dropped by the callback ✅[^src] | ET applies to each requested direction |"
+  },
+  {
+   "id": "S9",
+   "line": 97,
+   "heading": "## 4. Every flag and parameter",
+   "claim": "2.6.17 ✅[^ctl]",
+   "context": "| `EPOLLRDHUP` | 2.6.17 ✅[^ctl] | Reports that a stream socket's peer closed or shut down writing ✅[^ctl] | End of file seen only as `read() == 0` | The man page calls it especially useful with ET ✅[^ctl]; reported once in ET mode ✅[^probe-09] |"
+  },
+  {
+   "id": "S10",
+   "line": 99,
+   "heading": "## 4. Every flag and parameter",
+   "claim": "All instances are woken ✅[^ctl]",
+   "context": "| `EPOLLEXCLUSIVE` | 4.5 ✅[^ctl] | When several epoll instances watch one file, wake \"one or more\" of them instead of all ✅[^ctl] | All instances are woken ✅[^ctl] ✅[^probe-11] | Allowed together with `EPOLLET`; only with `EPOLL_CTL_ADD`; `EPOLL_CTL_MOD` fails with `EINVAL` ✅[^ctl] |"
+  },
+  {
+   "id": "S11",
+   "line": 99,
+   "heading": "## 4. Every flag and parameter",
+   "claim": "✅[^probe-11]",
+   "context": "| `EPOLLEXCLUSIVE` | 4.5 ✅[^ctl] | When several epoll instances watch one file, wake \"one or more\" of them instead of all ✅[^ctl] | All instances are woken ✅[^ctl] ✅[^probe-11] | Allowed together with `EPOLLET`; only with `EPOLL_CTL_ADD`; `EPOLL_CTL_MOD` fails with `EINVAL` ✅[^ctl] |"
+  },
+  {
+   "id": "S12",
+   "line": 103,
+   "heading": "## 4. Every flag and parameter",
+   "claim": "Opaque value returned with each event, from the latest ADD or MOD ✅[^wait]",
+   "context": "| `data` field | 2.5.44 | Opaque value returned with each event, from the latest ADD or MOD ✅[^wait] | — | — |"
+  },
+  {
+   "id": "S13",
+   "line": 150,
+   "heading": "## 5. The mechanism, step by step",
+   "claim": "- If a harvest is running, puts the epitem on the overflow list; otherwise links it on the ready list **only if it is not already linked** ✅[^src]",
+   "context": "- If a harvest is running, puts the epitem on the overflow list; otherwise links it on the ready list **only if it is not already linked** ✅[^src]. That is why several writes before one `epoll_wait` produce one event ✅[^epoll7] ✅[^probe-03] (T3)."
+  },
+  {
+   "id": "S14",
+   "line": 150,
+   "heading": "## 5. The mechanism, step by step",
+   "claim": "✅[^probe-03]",
+   "context": "- If a harvest is running, puts the epitem on the overflow list; otherwise links it on the ready list **only if it is not already linked** ✅[^src]. That is why several writes before one `epoll_wait` produce one event ✅[^epoll7] ✅[^probe-03] (T3)."
+  },
+  {
+   "id": "S15",
+   "line": 152,
+   "heading": "## 5. The mechanism, step by step",
+   "claim": "**App → kernel (`epoll_wait`, system call):** if the ready list is empty, the thread adds itself to the instance's wait queue as an exclusive waiter and sleeps ✅[^src]",
+   "context": "5. **App → kernel (`epoll_wait`, system call):** if the ready list is empty, the thread adds itself to the instance's wait queue as an exclusive waiter and sleeps ✅[^src]."
+  },
+  {
+   "id": "S16",
+   "line": 156,
+   "heading": "## 5. The mechanism, step by step",
+   "claim": "- `EPOLLONESHOT`: reduces the mask to its private bits, so later callbacks see no requested event and ignore the item until `EPOLL_CTL_MOD` ✅[^src]",
+   "context": "- `EPOLLONESHOT`: reduces the mask to its private bits, so later callbacks see no requested event and ignore the item until `EPOLL_CTL_MOD` ✅[^src]."
+  },
+  {
+   "id": "S17",
+   "line": 162,
+   "heading": "## 5. The mechanism, step by step",
+   "claim": "Everything else that makes ET \"feel\" different follows from that branch, plus one side channel: the mask, including the `EPOLLET` bit, travels to the driver as the poll key (step 2), and the pipe driver reads it (§6.3) ✅[^pipesrc]",
+   "context": "**The one-line difference.** In mainline `fs/eventpoll.c`, `EPOLLET` appears in two bit-mask macros and in exactly one branch, the re-queue test in step 6 ✅[^src]. Everything else that makes ET \"feel\" different follows from that branch, plus one side channel: the mask, including the `EPOLLET` bit, travels to the driver as the poll key (step 2), and the pipe driver reads it (§6.3) ✅[^pipesrc]."
+  },
+  {
+   "id": "S18",
+   "line": 195,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "; the man page's pipe example ✅[^epoll7]",
+   "context": "| 2048 bytes arrive; the app reads 1024 and waits again | **No event**; 1024 bytes stranded | No new wakeup, and an ET item is not re-queued | T1 ✅[^probe-01]; the man page's pipe example ✅[^epoll7] |"
+  },
+  {
+   "id": "S19",
+   "line": 199,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "T4 ✅[^probe-04]",
+   "context": "| New data while old data is still unread | **New event** on a pipe, an `AF_UNIX` stream socket and TCP over loopback (Linux 7.2.12) | Each write woke the reader's wait queue | T4 ✅[^probe-04] |"
+  },
+  {
+   "id": "S20",
+   "line": 202,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "✅[^ctl]",
+   "context": "| `EPOLLET \\| EPOLLONESHOT`, second write before re-arm | No event until `EPOLL_CTL_MOD` | The mask is disabled after delivery | T7 ✅[^probe-07] ✅[^ctl] |"
+  },
+  {
+   "id": "S21",
+   "line": 203,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "T8 ✅[^probe-08]",
+   "context": "| Pipe filled to `EAGAIN` (65536 bytes), reader takes 1 byte | No `EPOLLOUT` | A pipe is \"full\" by page-sized slots; the reader wakes writers only when a full pipe stops being full ✅[^pipesrc] | T8 ✅[^probe-08]; 65536 = 16 pages of 4096 ✅[^pipe7] |"
+  },
+  {
+   "id": "S22",
+   "line": 214,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "**2019-12-07, Linus Torvalds, commit `1b6b26ae7053`** \"pipe: fix and clarify pipe write wakeup logic\": a pipe write now wakes readers only if the pipe was empty before ✅[^kerrisk]",
+   "context": "1. **2019-12-07, Linus Torvalds, commit `1b6b26ae7053`** \"pipe: fix and clarify pipe write wakeup logic\": a pipe write now wakes readers only if the pipe was empty before ✅[^kerrisk] ✅[^linus2020]. It ships in Linux 5.5 ✅[^kerrisk]."
+  },
+  {
+   "id": "S23",
+   "line": 214,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "It ships in Linux 5.5 ✅[^kerrisk]",
+   "context": "1. **2019-12-07, Linus Torvalds, commit `1b6b26ae7053`** \"pipe: fix and clarify pipe write wakeup logic\": a pipe write now wakes readers only if the pipe was empty before ✅[^kerrisk] ✅[^linus2020]. It ships in Linux 5.5 ✅[^kerrisk]."
+  },
+  {
+   "id": "S24",
+   "line": 217,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "realm-core expected an ET event on every write, using a pipe it does not drain until it fills ✅[^c3a34]",
+   "context": "4. **Before the fix:** Android moves to Linux 5.10 and apps using the realm-core library stop working. realm-core expected an ET event on every write, using a pipe it does not drain until it fills ✅[^c3a34]."
+  },
+  {
+   "id": "S25",
+   "line": 220,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "io_uring multishot polls set `EPOLLET` and get the same behaviour ✅[^pipesrc]",
+   "context": "7. **Mainline, read 2026-11-22:** the flag is named `pseudo_edgetrigger` and is set only when a read-side poll carries `EPOLLET` in its key. io_uring multishot polls set `EPOLLET` and get the same behaviour ✅[^pipesrc]."
+  },
+  {
+   "id": "S26",
+   "line": 224,
+   "heading": "## 6. What exactly counts as an edge",
+   "claim": "Drain until `EAGAIN`, and a missing \"per-write\" event cannot hurt you ✅[^epoll7]",
+   "context": "- Code must not rely on extra edges. Drain until `EAGAIN`, and a missing \"per-write\" event cannot hurt you ✅[^epoll7]."
+  },
+  {
+   "id": "S27",
+   "line": 268,
+   "heading": "## 7. Worked example: a correct ET loop, one full pass",
+   "claim": "- **Budget plus an application-level ready list:** draining a very busy fd can starve the others; the man page suggests keeping your own ready list ✅[^epoll7]",
+   "context": "- **Budget plus an application-level ready list:** draining a very busy fd can starve the others; the man page suggests keeping your own ready list ✅[^epoll7]."
+  },
+  {
+   "id": "S28",
+   "line": 294,
+   "heading": "## 8. Cross-actor interactions",
+   "claim": "✅[^src]",
+   "context": "| A second thread blocks in `epoll_wait` on the same instance | Added as an exclusive waiter ✅[^src] | ET: one thread wakes per trigger. LT: the re-queued item makes the scan end with a non-empty list, which wakes the next thread, and so on (4 of 4 woke) ✅[^probe-10] ✅[^src] |"
+  },
+  {
+   "id": "S29",
+   "line": 295,
+   "heading": "## 8. Cross-actor interactions",
+   "claim": "All instances wake (4 of 4), unless all used `EPOLLEXCLUSIVE` (1 of 4 woke) ✅[^probe-11]",
+   "context": "| Another epoll instance watches the same file | Each instance hooks its own callback on the file's wait queue ✅[^src] | All instances wake (4 of 4), unless all used `EPOLLEXCLUSIVE` (1 of 4 woke) ✅[^probe-11] |"
+  },
+  {
+   "id": "S30",
+   "line": 299,
+   "heading": "## 8. Cross-actor interactions",
+   "claim": "Marek Majkowski describes the general problem, and recommends `EPOLL_CTL_DEL` before every `close` ✅[^majek2]",
+   "context": "The `ENOENT` case is not a dead end: `dup2(B, A)` recreates fd number A on the same description, and `EPOLL_CTL_DEL` on A then succeeds ✅[^probe-13] (T13). Marek Majkowski describes the general problem, and recommends `EPOLL_CTL_DEL` before every `close` ✅[^majek2]."
+  },
+  {
+   "id": "S31",
+   "line": 299,
+   "heading": "## 8. Cross-actor interactions",
+   "claim": "The `ENOENT` case is not a dead end: `dup2(B, A)` recreates fd number A on the same description, and `EPOLL_CTL_DEL` on A then succeeds ✅[^probe-13]",
+   "context": "The `ENOENT` case is not a dead end: `dup2(B, A)` recreates fd number A on the same description, and `EPOLL_CTL_DEL` on A then succeeds ✅[^probe-13] (T13). Marek Majkowski describes the general problem, and recommends `EPOLL_CTL_DEL` before every `close` ✅[^majek2]."
+  },
+  {
+   "id": "S32",
+   "line": 308,
+   "heading": "## 9. Multiple threads and multiple epoll instances",
+   "claim": "EPOLLONESHOT`; the handling thread re-arms with `EPOLL_CTL_MOD` when done ✅[^majek1]",
+   "context": "| N threads in `epoll_wait` on **one** instance | One thread wakes per trigger ✅[^epoll7] ✅[^probe-10] | Two consecutive triggers on the same socket can go to two different threads, which then read it at the same time and can reorder the data ✅[^majek1] | `EPOLLET \\| EPOLLONESHOT`; the handling thread re-arms with `EPOLL_CTL_MOD` when done ✅[^majek1] ✅[^epoll7] |"
+  },
+  {
+   "id": "S33",
+   "line": 309,
+   "heading": "## 9. Multiple threads and multiple epoll instances",
+   "claim": "`EPOLLEXCLUSIVE` (Linux 4.5+) ✅[^ctl]",
+   "context": "| N instances (often one per worker process) watching one listening socket | Every instance wakes (shown with a pipe in T11) ✅[^probe-11] | Thundering herd on `accept` | `EPOLLEXCLUSIVE` (Linux 4.5+) ✅[^ctl] ✅[^probe-11], or one listening socket per worker with `SO_REUSEPORT`, a socket option that lets several sockets listen on one port ✅[^majek1] |"
+  },
+  {
+   "id": "S34",
+   "line": 310,
+   "heading": "## 9. Multiple threads and multiple epoll instances",
+   "claim": "That thread may keep draining the accept queue while the others idle, so the load is not spread ✅[^majek1]",
+   "context": "| N threads accepting from one shared listening socket with ET | One thread wakes | That thread may keep draining the accept queue while the others idle, so the load is not spread ✅[^majek1] | One epoll instance per thread, level-triggered with `EPOLLEXCLUSIVE`, which Majkowski calls the only scalable option for this case ✅[^majek1] |"
+  },
+  {
+   "id": "S35",
+   "line": 322,
+   "heading": "## 10. Choosing a mode",
+   "claim": "One owner per event ✅[^majek1]",
+   "context": "| `EPOLLET \\| EPOLLONESHOT` | Once, then disabled | Yes | One owner per event ✅[^majek1] | One `EPOLL_CTL_MOD` per event ✅[^majek1] | Thread pools sharing one instance |"
+  },
+  {
+   "id": "S36",
+   "line": 327,
+   "heading": "## 10. Choosing a mode",
+   "claim": "**Portability:** the closest BSD analogue is kqueue's `EV_CLEAR`, which resets an event's state after it is retrieved, and `EV_DISPATCH` disables the event source after delivery, much like `EPOLLONESHOT` ✅[^kqueue]",
+   "context": "**Portability:** the closest BSD analogue is kqueue's `EV_CLEAR`, which resets an event's state after it is retrieved, and `EV_DISPATCH` disables the event source after delivery, much like `EPOLLONESHOT` ✅[^kqueue]. The mapping is this doc's comparison, not a documented equivalence."
+  },
+  {
+   "id": "S37",
+   "line": 336,
+   "heading": "## 11. How real event loops use `EPOLLET`",
+   "claim": "Its docs require repeating the operation until `WouldBlock` (Rust's name for `EAGAIN`) and warn of spurious events ✅[^miodocs]",
+   "context": "| mio, under Tokio (`src/sys/unix/selector/epoll.rs`) | Every mask starts as `EPOLLET`; `EPOLLIN \\| EPOLLRDHUP`, `EPOLLOUT` and `EPOLLPRI` are added for the interests the caller registers ✅[^mio] | Its docs require repeating the operation until `WouldBlock` (Rust's name for `EAGAIN`) and warn of spurious events ✅[^miodocs] |"
+  },
+  {
+   "id": "S38",
+   "line": 338,
+   "heading": "## 11. How real event loops use `EPOLLET`",
+   "claim": "ET semantics reach beyond epoll: pipes treat it the same way ✅[^pipesrc]",
+   "context": "| io_uring multishot poll | Sets `EPOLLET` on its internal poll ✅[^pipesrc] | ET semantics reach beyond epoll: pipes treat it the same way ✅[^pipesrc] |"
+  },
+  {
+   "id": "S39",
+   "line": 348,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "; ✅[^epoll7]",
+   "context": "| Connection hangs with bytes in its receive buffer | One `read` per event in ET mode | Read until `EAGAIN` (or a short read on a stream fd) | T1 ✅[^probe-01]; ✅[^epoll7] |"
+  },
+  {
+   "id": "S40",
+   "line": 350,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "✅[^epoll7]",
+   "context": "| One busy client starves the others | Draining one fd without limit | A per-fd budget plus an application ready list | ✅[^epoll7] |"
+  },
+  {
+   "id": "S41",
+   "line": 352,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "T8 ✅[^probe-08]",
+   "context": "| `EPOLLOUT` arrives late, long after the reader started consuming | The driver wakes writers only past a threshold (a freed pipe page; a quarter of the socket send buffer) | Expected; size the output buffer for it | T8 ✅[^probe-08]; ✅[^pipesrc] ✅[^unixsrc] |"
+  },
+  {
+   "id": "S42",
+   "line": 352,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "✅[^unixsrc]",
+   "context": "| `EPOLLOUT` arrives late, long after the reader started consuming | The driver wakes writers only past a threshold (a freed pipe page; a quarter of the socket send buffer) | Expected; size the output buffer for it | T8 ✅[^probe-08]; ✅[^pipesrc] ✅[^unixsrc] |"
+  },
+  {
+   "id": "S43",
+   "line": 354,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "; ✅[^epoll7]",
+   "context": "| Events arrive for an fd the app already closed | A `dup` or `fork` keeps the open file description alive | `EPOLL_CTL_DEL` before `close`; to recover, `dup2` the duplicate onto the old number, then delete | T13 ✅[^probe-13]; ✅[^epoll7] ✅[^majek2] |"
+  },
+  {
+   "id": "S44",
+   "line": 359,
+   "heading": "## 12. Edge-case and failure matrix",
+   "claim": "; ✅[^wait]",
+   "context": "| More ready fds than `maxevents` | Normal | Nothing is lost: undelivered items stay queued and later calls round-robin | T12 ✅[^probe-12]; ✅[^wait] |"
+  },
+  {
+   "id": "S45",
+   "line": 399,
+   "heading": "## 14. Verification",
+   "claim": "✅[^probe-10]",
+   "context": "- **Refines** `linux/networking/io-multiplexing-epoll-io-uring.md`: its edge-case row \"several threads woken for one event\" holds for level-triggered registrations; with `EPOLLET`, one thread wakes per trigger (T10) ✅[^epoll7] ✅[^probe-10]."
+  }
+ ]
+}
