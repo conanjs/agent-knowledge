@@ -22,7 +22,20 @@ status: proposal (not built, not committed)
 | Test set for output quality | **No** | The 112 Cucumber scenarios test the *tools*, not the docs agents write |
 | Doc lifecycle (draft → verified → stale) | **Yes, better than the specs** | `status`, `last-verified`, `applies-to`, KB-13 (revisions do not erase) |
 
-**Why the last attempt was reverted, and what this design changes.** The reverted workflow (`36d4ce2`) had cheap researcher agents (Claude Haiku) that wrote atomic claims to YAML files, and the writer had to build the doc from those claims. It had 15 run rules and 10 steps. In a review it did *worse than a plain prompt*, so V reverted it. The written record does not say which part hurt. Likely causes, still **unconfirmed**: the narrative was built from pieces, the cheap models missed nuance, and the bookkeeping cost more than it bought. This design changes three things:
+**Why the last attempt was reverted, and what this design changes.** The reverted workflow (`36d4ce2`) had cheap researcher agents (Claude Haiku) that wrote atomic claims to YAML files, and the writer had to build the doc from those claims. It had 15 run rules and 10 steps. In a review it did *worse than a plain prompt*, so V reverted it.
+
+**Why it lost** (confirmed by V, 2026-11-22):
+- Cheap models (Claude Haiku) cut the knowledge into separate YAML claims, so the writer lost the whole picture and the narrative came out in broken pieces.
+- The process (10 steps, 15 run rules) cost more coordination than it gave back.
+
+Three more causes, from the reverted commit itself:
+- **Checked in two hops.** Its verifier checked each claim against the page, then each ✅ sentence against its claim (step 8, `entailment.yaml`). A sentence was never compared with the page itself, so a worker's misreading passed both hops. This design's judge compares each sentence with the saved page text (§3.1).
+- **Never run before it was judged.** Its own status section said "Next: one real run on a small topic with a known answer" and "No measurement exists yet". The first real run (the MCP topic) was the review, with no plain-prompt baseline beside it.
+- **The orchestrator had to be a skill**, because it assumed a subagent cannot start subagents. That assumption no longer holds (§1.1).
+
+**Core rule for Phase 3** (decided by V, 2026-11-22): a worker only finds sources, ranks them, saves them and sums up the key points with citations; the orchestrator reads the relevant passages of the sources itself and writes the narrative.
+
+This design changes three things:
 
 1. **The writer reads the sources and writes the narrative.** Workers find, rank and save sources and flag conflicts. They do not dictate the doc sentence by sentence.
 2. **The plain prompt is the baseline to beat.** Nothing is adopted until it beats a plain prompt on the same topics, scored by the same judge (§6, Phase 4).
@@ -402,6 +415,20 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 | 6 | The patch loop (at most 2 rounds) and status mapping (§3.5), written for the orchestrator's body (Phase 3) | — |
 | 7 | Offline audit of 10 verified docs: about 110k tokens each (the clean Phase 0 doc's cost), so about 1.1M | **Done**: 6 FAIL, 4 PASS; 1,177k tokens (`research/_audit/REPORT.md`) |
 
+**Phase 3 work order** (approved by V, 2026-11-22). V's core rule (§0) shapes every step: workers find, rank, save and sum up with citations; the orchestrator reads the cited passages and writes the doc.
+
+| # | Piece | Done when | Tokens |
+|---|---|---|---|
+| 3.0 | **Two spikes**, before any code: (a) an agent started as a subagent starts a nested subagent, in this app, and the nested one cannot start a third; (b) whether `WebSearch` takes allowed and blocked domain lists here (§7, unconfirmed) | Both answered and recorded in `knowledge/ai-agents/claude-code-usage-reference.md` | about 50k |
+| 3.1 | `tools/fetch-source/fetch-source.mjs`, which replaces the Phase 0 `fetch_pages.py`. It fetches with the system's CA store (Node's `--use-system-ca`, else curl), saves `cache/<sha256(url)[:12]>.txt` atomically, skips a page already saved, and records in `sources.json` the fetch date and the SHA-256 of the saved text (§1.5). A GitHub file is fetched raw, and a moving branch draws a warning (pin a tag or commit, §2.1). A PDF is refused with a note to use the HTML version, since PDFs are out of scope for v1. Scenarios run against a local web server | Scenarios pass; re-fetching the 18 SE-04 pages gives the same text | 0 |
+| 3.2 | The **ledger**: `schemas/ledger.schema.md` and `ledger/<profile>.json`, holding the sources (rank, tier, fetch date, `provenance_ref`), the facts (each one a short summary in the worker's own words, an exact quote, and its place in the cache: heading and line range) and the conflicts. `evaluate-research.mjs ledger` checks that every quote is at its place in its page, with the same normalizer as `quotes` | Scenarios pass, one of which plants a wrong quote | 0 |
+| 3.3 | **Stage 1 for a doc outside `knowledge/`**: `stage1` runs the validator's rules (DD-1, DD-6, KB-12, KB-14 to KB-16) on the run's doc and records the result in `stage1.json` | Scenarios pass | 0 |
+| 3.4 | The **`research-worker` agent**: one body, 4 profiles (`taxonomy`, `ground-truth`, `practitioner`, `pitfall`; §1.4) given as `PROFILE`. It searches, ranks each URL with `classify-source.mjs`, keeps at most 4 sources per profile (`seed_sources` exempt), saves pages with `fetch-source.mjs`, and writes only its own ledger file. It writes no doc text. Claude header first, on the same model tier as the orchestrator; Codex and Copilot headers later | One `ground-truth` run on SE-04 gives a ledger that passes 3.2's check | about 150k |
+| 3.5 | The **`research-orchestrator` agent**, with `tools: Agent(research-worker, knowledge-judge)` plus Bash, Read, Write and Edit. It runs steps 1–8 of §1.3: `plan.md` for V's approval; the taxonomy worker and its term check; 3 workers in parallel; merging the ledgers with the conflict rule (KB-17); writing the doc itself from the cited passages; Stage 1, Stage 1.5 and the judge; at most 2 patch rounds; then the report to V with the tier B list (§1.5). Both modes. An optional thin `research-knowledge` skill only starts it | The 3.6 run completes without manual steps | — |
+| 3.6 | **End-to-end run on SE-04** (gate): research → judge v7 → patch rounds → result, scored on the same 45-claim sample method as the baseline, with every agent's tokens added up | It reaches `verified` or an honest draft (§3.5); the report compares it with the plain-prompt baseline (FAIL 2.75 at v3, 3.25 at v7) | about 1.5–2M |
+
+Total estimate: about 1.7–2.2M tokens, most of it in 3.6. After 3.6, Phase 4 compares the agent with the plain prompt on the 6 software topics.
+
 **Where each piece lives** (artifact-types pattern):
 
 | Piece | Type | Path |
@@ -425,7 +452,7 @@ Each phase ends with a check V can see, and the next starts only on V's yes. Pha
 | Docker on every machine that runs Stage 1.5 | Without it, probe-backed claims stay `⚠️ unverified`, so a Windows or CI machine without Docker cannot verify them | Phase 2b: measure; consider a non-Docker runner only if it is needed |
 | PDFs (arXiv papers, specs) | The specs use layout-aware parsers (Docling, Marker). v1 prefers arXiv's HTML version and leaves PDFs out | Phase 3 |
 | The cost of a full run | Unknown until measured; the reverted design had no measurement either | Phase 4 |
-| Why the reverted workflow lost | Repeating its cause would waste Phases 3–4 | **Ask V before Phase 3** |
+| Why the reverted workflow lost | Repeating its cause would waste Phases 3–4 | **Answered by V, 2026-11-22** (§0): fragmented claims from cheap models, too much process; plus two-hop checking and no run before review |
 
 ## References
 
