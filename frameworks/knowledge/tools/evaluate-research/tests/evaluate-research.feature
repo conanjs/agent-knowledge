@@ -68,13 +68,43 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      {root}/run/verdicts/round-1.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc
+      {root}/run/verdicts/round-1.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | validator: skipped (no v1 schema)
       """
     And "run/verdicts/round-1.input/doc.md" exists
     And "run/verdicts/round-1.input/cache/aaa.txt" exists
     And "run/verdicts/round-1.input/criteria.json" exists
     And the file "run/verdicts/round-1.input/stage1.json" has a line containing '"rule": "rfc-editor.org/rfc/"'
     And the file "run/verdicts/round-1.input/sources.json" has a line containing '"status": "not fetched"'
+
+  Scenario: stage1 records the validator's result for a doc outside knowledge/, leaving out the rules that need other docs, and the ledger check
+    When the tool runs with arguments:
+      """
+      stage1
+      {root}/ledger-run
+      1
+      """
+    Then it exits with 0 and prints:
+      """
+      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: FAIL (KB-15) | ledger: FAIL (2 files)
+      """
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'cites [^b], a Rank 6 source; this section allows Rank 1–5'
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'error | pitfall | F1 | quote not in cache/19b1c63f6292.txt'
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has no line containing 'TI-7'
+
+  Scenario: stage1 counts the validator's warnings for a doc that passes
+    Given in "ledger-run/doc.md", `stream. ✅[^a] A server that stops early resets the stream. ✅[^b]` becomes `stream. ✅[^a]`
+    Given the folder "ledger-run/ledger" is removed
+    When the tool runs with arguments:
+      """
+      stage1
+      {root}/ledger-run
+      1
+      """
+    Then it exits with 0 and prints:
+      """
+      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: PASS (1 warning)
+      """
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'References entry [^b] is never cited in the body'
 
   Scenario: stage1 --sample picks claims per heading with a seed, forces an --include, and skips the marking legend
     When the tool runs with arguments:
@@ -91,7 +121,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      {root}/run/verdicts/round-2.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | sample: 3 of 5 claims, seed 7
+      {root}/run/verdicts/round-2.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | validator: skipped (no v1 schema) | sample: 3 of 5 claims, seed 7
       """
     And the file "run/verdicts/round-2.input/claims.json" has a line containing '"claim": "Cell claim ✅[^a]"'
 
@@ -193,5 +223,5 @@ Feature: Research verifier, Stage 1 helpers
     When the tool runs
     Then it exits with 2 and prints:
       """
-      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]
+      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--cap <n>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]
       """

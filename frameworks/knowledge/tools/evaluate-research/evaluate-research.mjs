@@ -4,7 +4,7 @@
 // Usage: node evaluate-research.mjs ranks <doc.md>
 //        node evaluate-research.mjs quotes <verdict.json> <input-dir>
 //        node evaluate-research.mjs verdict <verdict.json> [--write]
-//        node evaluate-research.mjs stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]]
+//        node evaluate-research.mjs stage1 <run> <n> [--out <dir>] [--cap <n>] [--sample <k> --seed <s> [--include <regex>...]]
 //   ranks   one line per URL in the doc's References: its footnotes, the rank the rules give (tier A) or "no rank" (tier B,
 //           which the judge re-rates), and the rank the doc wrote, if any; "differs" marks a written rank the rules contradict
 //   quotes  checks every quote behind a verdict other than entails (its page_says) against the saved text of the pages that
@@ -23,7 +23,9 @@
 //           gives every References URL its tier and, for tier A, the rank and rule the judge takes as given. --sample adds
 //           claims.json: k of the doc's ✅ claims, each `## ` heading getting its share by its claim count (at least 1),
 //           picked with a seeded generator (mulberry32) so the same seed gives the same sample; --include forces, for each
-//           regex up to the next --option, the first claim matching it into the sample
+//           regex up to the next --option, the first claim matching it into the sample. stage1.json also records the
+//           validator's result for the doc (validate-knowledge.mjs run on a copy placed at its topic folder; the rules that
+//           compare it with other docs of knowledge/ are left out) and, when <run>/ledger/ exists, the ledger check (--cap)
 //   ledger  checks a research worker's ledger/<profile>.json files (all of them, or the profiles named) against
 //           ledger.schema.md: each source is in sources.json with the same cache file and fetch time, its saved page still
 //           has the SHA-256 it was saved with, and its tier, rank and rule agree with the rules; at most --cap sources
@@ -32,14 +34,17 @@
 //           define (a drafted section, say) is an error, since a worker writes no doc text
 // Exit codes: 0 done, 1 a quote was not found or a ledger has an error, 2 usage error or unreadable input.
 
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { classify, loadRules, referenceEntries } from '../classify-source/classify-source.mjs';
 
 const out = (s) => console.log(s);
 const die = (msg) => { out(msg); process.exit(2); };
-const USAGE = 'usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]';
+const USAGE = 'usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--cap <n>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]';
 
 function referencesOf(text) {
   const clean = text.replace(/\r\n/g, '\n').replace(/^(`{3,})[^\n]*\n[\s\S]*?^\1\s*$/gm, '');
@@ -215,6 +220,35 @@ function sample(claims, k, seed, include) {
   };
 }
 
+const VALIDATOR = fileURLToPath(new URL('../validate-knowledge/validate-knowledge.mjs', import.meta.url));
+// Rules that compare a doc with other docs of knowledge/ (topic indexes, derived-from, synthesized-into). A run's doc sits
+// outside knowledge/, so they wait for the commit that moves it in.
+const CROSS_DOC = /^(TI-\d+|KD-7|DD-3|DD-4)$/;
+
+/** The validator's result for a run's doc: it runs on a copy at <tmp>/<topic>/<run name>.md, so KB-9's topic check holds. */
+function validateRunDoc(run, text) {
+  const fm = text.replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? '';
+  const field = (k) => fm.match(new RegExp(`^${k}:[ \\t]*(.+)$`, 'm'))?.[1].trim().replace(/^["']|["']$/g, '');
+  const schema = field('schema');
+  if (!['knowledge-doc/v1', 'deep-dive/v1'].includes(schema)) return { result: 'SKIPPED', note: `schema "${schema ?? 'none'}": the validator checks knowledge-doc/v1 and deep-dive/v1 docs only` };
+  const t = field('topic') ?? '';
+  const topic = /^[\w-]+(\/[\w-]+)*$/.test(t) ? t : ''; // no "..", no absolute path: an odd topic fails KB-9 at the root
+  const relDoc = [topic, `${path.basename(path.resolve(run))}.md`].filter(Boolean).join('/');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-stage1-'));
+  try {
+    fs.mkdirSync(path.join(tmp, topic), { recursive: true });
+    fs.writeFileSync(path.join(tmp, relDoc), text);
+    const r = spawnSync(process.execPath, [VALIDATOR, tmp], { encoding: 'utf8' });
+    if (r.status !== 0 && r.status !== 1) return { result: 'ERROR', note: String(r.stderr || r.stdout).trim().slice(0, 500) };
+    const fails = []; const warns = [];
+    for (const l of r.stdout.split('\n')) {
+      const m = l.match(/^ {2}(?:(warn) {2})?([A-Z]{2}-\d+) {2}(.*)$/);
+      if (m && !CROSS_DOC.test(m[2])) (m[1] ? warns : fails).push({ code: m[2], message: m[3].split(relDoc).join('doc.md') });
+    }
+    return { result: fails.length ? 'FAIL' : 'PASS', fails, warns, not_checked: 'TI-*, KD-7, DD-3, DD-4: they compare the doc with other docs of knowledge/' };
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+}
+
 function stage1(args) {
   const [run, n] = args;
   if (!run || !/^\d+$/.test(n ?? '')) die(USAGE);
@@ -255,12 +289,25 @@ function stage1(args) {
     }
   }
   const tierB = sources.filter((s) => s.tier === 'B').map((s) => s.url);
+  const validator = validateRunDoc(run, text);
+  const cap = Number(opt('--cap') ?? 4);
+  if (!Number.isInteger(cap) || cap < 1) die(USAGE);
+  let ledgerCheck;
+  if (fs.existsSync(path.join(run, 'ledger'))) {
+    const lines = []; let failed = false; const files = ledgerFiles(run, []);
+    for (const f of files) failed = checkLedger(run, f, { cap, index, rules, emit: (s) => lines.push(s) }) || failed;
+    ledgerCheck = { result: failed ? 'FAIL' : 'PASS', files: files.length, cap, lines };
+  }
   fs.writeFileSync(path.join(dst, 'stage1.json'), JSON.stringify({
     stage: 1, doc: 'doc.md', rules: 'frameworks/knowledge/tools/classify-source/source-ranks.json',
     note: 'Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.',
-    sources, tier_b: tierB,
+    sources, tier_b: tierB, validator, ...(ledgerCheck ? { ledger: ledgerCheck } : {}),
   }, null, 1) + '\n');
-  let line = `${dst} | ${sources.length} References URLs: ${sources.length - tierB.length} tier A, ${tierB.length} tier B | pages saved: ${cached} of ${docUrls.size} URLs in the doc`;
+  const codes = [...new Set((validator.fails ?? []).map((f) => f.code))];
+  const warned = (validator.warns ?? []).length;
+  const vText = { PASS: `PASS${warned ? ` (${warned} warning${warned > 1 ? 's' : ''})` : ''}`, FAIL: `FAIL (${codes.join(', ')})`, SKIPPED: 'skipped (no v1 schema)', ERROR: 'error (see stage1.json)' }[validator.result];
+  let line = `${dst} | ${sources.length} References URLs: ${sources.length - tierB.length} tier A, ${tierB.length} tier B | pages saved: ${cached} of ${docUrls.size} URLs in the doc | validator: ${vText}`;
+  if (ledgerCheck) line += ` | ledger: ${ledgerCheck.result} (${ledgerCheck.files} file${ledgerCheck.files > 1 ? 's' : ''})`;
   if (opt('--sample')) {
     const seed = Number(opt('--seed') ?? NaN);
     if (!Number.isInteger(seed)) die('--sample needs --seed <integer>');
@@ -284,11 +331,11 @@ const SPAN = 20; // a fact's loc.lines covers at most this many lines
 const SLACK = 2; // a quote may start or end this many lines away from loc.lines
 const lineSpan = ([i, j]) => (i === j ? `line ${i}` : `lines ${i}–${j}`);
 
-function checkLedger(run, file, { cap, index, rules }) {
+function checkLedger(run, file, { cap, index, rules, emit = out }) {
   const profile = file.replace(/\.json$/, '');
   let errors = 0; let warnings = 0;
-  const err = (id, msg) => { errors++; out(`error | ${profile} | ${id} | ${msg}`); };
-  const warn = (id, msg) => { warnings++; out(`warn | ${profile} | ${id} | ${msg}`); };
+  const err = (id, msg) => { errors++; emit(`error | ${profile} | ${id} | ${msg}`); };
+  const warn = (id, msg) => { warnings++; emit(`warn | ${profile} | ${id} | ${msg}`); };
   let L;
   try { L = JSON.parse(fs.readFileSync(path.join(run, 'ledger', file), 'utf8')); } catch (e) {
     err('json', `cannot read ledger/${file}: ${e.message}`);
@@ -395,9 +442,12 @@ function checkLedger(run, file, { cap, index, rules }) {
     for (const f of named) if (!facts.has(f)) err(c.id ?? 'conflicts', `fact ${f} is not in this ledger`);
   }
   const n = (k, word) => `${k} ${word}${k === 1 ? '' : 's'}`;
-  out(`ledger ${profile}: ${n(sources.size, 'source')} (${counted} counted, cap ${cap}), ${n(facts.size, 'fact')} (${placed} at their place), ${n((L.conflicts ?? []).length, 'conflict')}: ${n(errors, 'error')}, ${n(warnings, 'warning')}`);
+  emit(`ledger ${profile}: ${n(sources.size, 'source')} (${counted} counted, cap ${cap}), ${n(facts.size, 'fact')} (${placed} at their place), ${n((L.conflicts ?? []).length, 'conflict')}: ${n(errors, 'error')}, ${n(warnings, 'warning')}`);
   return errors > 0;
 }
+
+const ledgerFiles = (run, profiles) => (profiles.length ? profiles.map((p) => `${p}.json`)
+  : fs.readdirSync(path.join(run, 'ledger')).filter((f) => f.endsWith('.json')).sort());
 
 function ledger(args) {
   const capAt = args.indexOf('--cap');
@@ -406,7 +456,7 @@ function ledger(args) {
   if (!run || !Number.isInteger(cap) || cap < 1) die(USAGE);
   const dir = path.join(run, 'ledger');
   if (!fs.existsSync(dir)) die(`no ledger folder at ${dir}`);
-  const files = profiles.length ? profiles.map((p) => `${p}.json`) : fs.readdirSync(dir).filter((f) => f.endsWith('.json')).sort();
+  const files = ledgerFiles(run, profiles);
   let index = [];
   try { index = JSON.parse(fs.readFileSync(path.join(run, 'sources.json'), 'utf8')); } catch { /* none: every source fails */ }
   const rules = loadRules();
