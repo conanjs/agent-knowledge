@@ -374,7 +374,7 @@ On Linux 7.2.12 the probe printed, after its kernel line, `events: 1 for closed 
   - Android libraries such as Realm, which relied on an edge-triggered wakeup even when data was already waiting in the pipe, broke when the 5.10 kernel went into the Android 12 beta ✅[^lwn].
   - The fix was merged for 5.14-rc4 and included in the 5.10.56 and 5.13.8 stable updates, and does not quite restore the old behaviour, doing only one wakeup per write; the regression had shipped with 5.5 (January 2020), lasted about a year and a half and reached the 5.10 long-term-stable release ✅[^lwn].
   - `probe-02` (§4.2) shows Linux 7.2.12 reporting a write into a non-empty pipe.
-- **The dispute, and other file types.** A reader comment by mkerrisk (a comment, not the article) calls the article's reading "questionable" and quotes epoll(7)'s `EPOLLONESHOT` passage against it, and says every other mechanism he tested (Internet domain stream sockets, POSIX message queues, terminals, hierarchical epoll) behaves the same as `EPOLLET` historically behaved ✅[^lwn].
+- **The dispute, and other file types.** A reader comment by mkerrisk (a comment, not the article) calls the article's reading "questionable" and quotes epoll(7)'s `EPOLLONESHOT` passage against it, and says every other mechanism he tested (Internet domain stream sockets, POSIX message queues, terminals, hierarchical epoll) behaves the same as `EPOLLET` historically behaved ✅[^lwn-comments].
 
 ### 6.4 Misconception: "a short read means the fd is drained"
 
@@ -385,7 +385,7 @@ On Linux 7.2.12 the probe printed, after its kernel line, `events: 1 for closed 
 
 ### 6.5 Misconception: "re-arming `EPOLLONESHOT` after the read loses events"
 
-- A reader comment on the LWN article (NYKevin) says that with `EPOLLONESHOT` you have to re-arm before calling `read` or `write` to avoid a race, which leaves another race in which duplicate notifications can still arrive ✅[^lwn].
+- A reader comment on the LWN article (NYKevin) says that with `EPOLLONESHOT` you have to re-arm before calling `read` or `write` to avoid a race, which leaves another race in which duplicate notifications can still arrive ✅[^lwn-comments].
 - **What governs.** `EPOLL_CTL_MOD` re-polls the file and queues the item if it is ready (§3.4, epoll(7): "Modify will reread available I/O"), so data that arrived while the fd was disarmed is reported after the re-arm. `probe-04` (§4.3) shows it on Linux 7.2.12.
 
 ### 6.6 Threads, `accept` and the thundering herd
@@ -405,7 +405,7 @@ These claims come from the 2017 post "Epoll is fundamentally broken 1/2" (Rank 6
 - *Read until `EAGAIN` versus stop at a short read:* §6.4.
 
 **Open (neither appears in §1 to §5):**
-- *Does a listening socket under ET report a connection that arrives while earlier ones are still queued?* ⚖️ open conflict. The 2017 post (Rank 6) says no: the socket "was 'readable', still is 'readable'", so no event is emitted ✅[^popcount1]. A reader comment on the LWN article says `EPOLLET` "will re-arm when there is a new write (unless it was done on a pipe on v5-v15)" ✅[^lwn], but it is about data, not connections. No Rank 1 page settles it. On Linux 7.2.12, `probe-06` saw a second connection into a non-empty accept queue reported ✅[^harness][^probe-06]; that is one kernel version, not a rule.
+- *Does a listening socket under ET report a connection that arrives while earlier ones are still queued?* ⚖️ open conflict. The 2017 post (Rank 6) says no: the socket "was 'readable', still is 'readable'", so no event is emitted ✅[^popcount1]. A reader comment on the LWN article says `EPOLLET` "will re-arm when there is a new write (unless it was done on a pipe on v5-v15)" ✅[^lwn-comments], but it is about data, not connections. No Rank 1 page settles it. On Linux 7.2.12, `probe-06` saw a second connection into a non-empty accept queue reported ✅[^harness][^probe-06]; that is one kernel version, not a rule.
 
 ```c verify id=probe-06 runtime=c uses=env expect="stdout:first: 1, idle: 0, second connection into non-empty queue: 1"
 #include <stdio.h>
@@ -463,11 +463,12 @@ In 2003 Eric Varsanyi reported that under edge-triggered epoll, a client that wr
 - [mio::Poll (mio 1.0.2)](https://docs.rs/mio/1.0.2/mio/struct.Poll.html) — mio project, 2024. Rank 1. Backs: drain until `WouldBlock`, epoll on Linux. [^mio]
 - [src/unix/stream.c at libuv v1.49.2](https://github.com/libuv/libuv/blob/v1.49.2/src/unix/stream.c) — libuv project, 2024. Rank 1. Backs: 32-read cap and its edge-triggered comment, stop at a short read, `POLLOUT` after a partial write. [^libuv]
 - [src/runtime/netpoll_epoll.go at go1.23.4](https://github.com/golang/go/blob/go1.23.4/src/runtime/netpoll_epoll.go) — The Go Authors, 2024. Rank 1. Backs: the `EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET` registration. [^gonetpoll]
-- [The edge-triggered misunderstanding](https://lwn.net/Articles/864947/) — LWN.net (Jonathan Corbet), 2021. Rank 4. Backs: the 2019 pipe wakeup change, the regression from 5.5 and its 2021 fix, Torvalds's definition; reader comments (unvetted, cited as such in §6 only). [^lwn]
+- [The edge-triggered misunderstanding](https://lwn.net/Articles/864947/) — LWN.net (Jonathan Corbet), 2021. Rank 4. Backs: the 2019 pipe wakeup change, the regression from 5.5 and its 2021 fix, Torvalds's definition. [^lwn]
 - [Epoll is fundamentally broken 1/2](https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/) — Marek Majkowski (personal blog), 2017. Rank 6. Backs: §6.6 and the open listening-socket conflict. [^popcount1]
 - [Epoll is fundamentally broken 2/2](https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22) — Marek Majkowski (personal blog), 2017. Rank 6. Backs: §6.2. [^popcount2]
 - [[Patch][RFC] epoll and half closed TCP connections](https://lore.kernel.org/all/20030712231147.GI15643@srv.foo21.com/T/) — linux-kernel mailing list thread, 2003. Rank 6. Backs: §6.4 and §6.8. [^lkml2003]
-- `verdicts/round-<n>.harness.json` — the Stage 1.5 result of each round: every probe's exit code and stdout, run in the harness container on Linux 7.2.12. [^harness]
+- [Reader comments on The edge-triggered misunderstanding](https://lwn.net/Articles/864947/#comments) — LWN readers, 2021. Rank 6. Backs: mkerrisk's and NYKevin's comments (§6.3, §6.5) and the re-arm comment in the open listening-socket conflict (§6.7). [^lwn-comments]
+- `research/_phase3/se04-e2e/verdicts/round-<n>.harness.json` — the Stage 1.5 result of each round: every probe's exit code and stdout, run in the harness container on Linux 7.2.12. [^harness]
 - The `probe-01` block (`probes/probe-01.c` once `run-code-harness.mjs` extracts it) — verify, C (gcc 13.2.1, image linlab:1) on Linux 7.2.12, prints its kernel line, then `ET second wait: 0, LT second wait: 1`. [^probe-01]
 - The `probe-02` block (`probes/probe-02.c` once `run-code-harness.mjs` extracts it) — verify, C (gcc 13.2.1, image linlab:1) on Linux 7.2.12, prints its kernel line, then `first: 1, no new write: 0, write into non-empty pipe: 1`. [^probe-02]
 - The `probe-03` block (`probes/probe-03.c` once `run-code-harness.mjs` extracts it) — verify, C (gcc 13.2.1, image linlab:1) on Linux 7.2.12, prints its kernel line, then `before MOD: 0, after MOD: 1`. [^probe-03]
