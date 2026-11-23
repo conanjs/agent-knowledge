@@ -91,3 +91,38 @@ Feature: Source fetcher
     Then it exits with 0
     And the output has a line containing "retry | 429 | waiting 0 s |"
     And the output has a line containing "saved | 200 |"
+
+  Scenario: text puts a boundary line before a page's reader comments
+    When the tool runs with arguments:
+      """
+      text
+      {root}/site/blog.html
+      """
+    Then it exits with 0 and prints:
+      """
+      A post
+
+      A post
+
+      The article states one thing.
+
+      === READER COMMENTS BELOW (Rank 6: unvetted) ===
+
+      2 Comments
+
+      A reader states another thing.
+
+      A second reader agrees.
+      """
+
+  Scenario: fetch records where a page's reader comments start, as a line of the saved file
+    Given a local web server that serves the files in "site"
+    When the tool runs with arguments:
+      """
+      fetch
+      {root}/run
+      {server}/blog.html
+      """
+    Then it exits with 0
+    And the output has a line containing "| comments from line 11"
+    And the file "run/sources.json" has a line containing '"comments_from_line": 11'

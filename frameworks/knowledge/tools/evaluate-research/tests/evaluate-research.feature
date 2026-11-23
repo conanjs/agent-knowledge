@@ -85,7 +85,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: FAIL (KB-15) | ledger: FAIL (2 files)
+      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: FAIL (KB-15) | ledger: FAIL (3 files)
       """
     And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'cites [^b], a Rank 6 source; this section allows Rank 1–5'
     And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'error | pitfall | F1 | quote not in cache/19b1c63f6292.txt'
@@ -202,6 +202,21 @@ Feature: Research verifier, Stage 1 helpers
       error | ground-truth | S2 | cache/f136dcfa5ee3.txt changed after it was fetched: its text no longer matches the SHA-256 it was saved with
       error | ground-truth | F3 | quote not in cache/f136dcfa5ee3.txt: "a server that wants to stop early sends rst_stream and does not wait for the cli"
       ledger ground-truth: 3 sources (2 counted, cap 4), 4 facts (3 at their place), 1 conflict: 2 errors, 0 warnings
+      """
+
+  Scenario: ledger holds a page's reader comments to Rank 6, as a source of their own
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      practitioner
+      """
+    Then it exits with 1 and prints:
+      """
+      warn | practitioner | S1 | tier B Rank 4 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home
+      error | practitioner | F3 | quote is in the page's reader comments (from line 9 of cache/1ba187945fcf.txt): cite a source with "part": "comments" at Rank 6
+      error | practitioner | F4 | quote is above the page's reader comments (line 9 of cache/1ba187945fcf.txt): cite the article's source
+      ledger practitioner: 2 sources (1 counted, cap 4), 4 facts (4 at their place), 0 conflicts: 2 errors, 1 warning
       """
 
   Scenario: ledger holds a profile to its cap of sources, not counting seed sources

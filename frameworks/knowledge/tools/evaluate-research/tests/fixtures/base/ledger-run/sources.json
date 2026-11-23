@@ -42,5 +42,17 @@
   "content_type": "text/html",
   "chars": 83,
   "sha256": "3d76f34e12e93767ee57704ce06e2df776c013b8ab970e9bae575d381b700271"
+ },
+ {
+  "url": "https://example.dev/blog/rotating-logs",
+  "normalized": "https://example.dev/blog/rotating-logs",
+  "fetched_from": "https://example.dev/blog/rotating-logs",
+  "cache": "cache/1ba187945fcf.txt",
+  "fetched": "2026-11-22T09:00:00Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 250,
+  "sha256": "d5ef32c29cb46587215283f03f2ecb4b8155e5054d2c9618b6dffb449f1f70db",
+  "comments_from_line": 9
  }
 ]

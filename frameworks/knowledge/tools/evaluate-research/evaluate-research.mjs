@@ -32,7 +32,8 @@
 //           has the SHA-256 it was saved with, and its tier, rank and rule agree with the rules; at most --cap sources
 //           (default 4) besides seed sources; each fact's quote is in its source's page at loc.lines (give or take 2
 //           lines), after the same normalizing as quotes; conflicts name facts of the ledger; a key the schema does not
-//           define (a drafted section, say) is an error, since a worker writes no doc text
+//           define (a drafted section, say) is an error, since a worker writes no doc text; a quote below a page's
+//           comments_from_line (sources.json) must cite a source with "part": "comments" at Rank 6, and only such a quote
 // Exit codes: 0 done, 1 a quote was not found or a ledger has an error, 2 usage error or unreadable input.
 
 import { spawnSync } from 'node:child_process';
@@ -332,7 +333,7 @@ function stage1(args) {
 const PROFILES = ['taxonomy', 'ground-truth', 'practitioner', 'pitfall'];
 const LEDGER_KEYS = {
   ledger: ['profile', 'question', 'terms', 'sources', 'facts', 'conflicts'],
-  source: ['id', 'url', 'cache', 'fetched', 'tier', 'rank', 'rule', 'rank_basis', 'seed', 'provenance_ref'],
+  source: ['id', 'url', 'cache', 'fetched', 'tier', 'rank', 'rule', 'rank_basis', 'seed', 'provenance_ref', 'part'],
   fact: ['id', 'source', 'summary', 'quote', 'loc'],
   conflict: ['id', 'topic', 'facts', 'note'],
 };
@@ -394,6 +395,13 @@ function checkLedger(run, file, { cap, index, rules, emit = out }) {
       if (entry.fetched !== s.fetched) err(s.id, `fetched ${s.fetched}, but sources.json has ${entry.fetched}`);
     }
     savedPage(s.id, s.cache, 'cache');
+    if (s.part !== undefined) { // a page's reader comments: Rank 6 whatever the page's rule gives the article
+      if (s.part !== 'comments') err(s.id, `part "${s.part}": the only part is "comments"`);
+      else if (!entry?.comments_from_line) err(s.id, `part "comments", but sources.json marks no reader comments in ${s.cache}`);
+      if (s.rank !== 6) err(s.id, `a page's reader comments are Rank 6, not ${s.rank}`);
+      if (s.provenance_ref) savedPage(s.id, s.provenance_ref, 'provenance_ref');
+      continue;
+    }
     const c = classify(url, rules);
     if (c?.tier === 'A') {
       if (s.tier !== 'A' || s.rank !== c.rank || s.rule !== c.rule) err(s.id, `tier ${s.tier} Rank ${s.rank}, but the rule ${c.rule} gives tier A Rank ${c.rank}`);
@@ -405,7 +413,8 @@ function checkLedger(run, file, { cap, index, rules, emit = out }) {
     if (s.provenance_ref) savedPage(s.id, s.provenance_ref, 'provenance_ref');
   }
   const seeds = [...sources.values()].filter((s) => s.seed === true).length;
-  const counted = sources.size - seeds;
+  const parts = [...sources.values()].filter((s) => s.seed !== true && s.part === 'comments').length; // the same page again
+  const counted = sources.size - seeds - parts;
   if (counted > cap) err('sources', `${counted} sources count against the cap of ${cap}${seeds ? ` (${seeds} seed source${seeds > 1 ? 's' : ''} not counted)` : ''}`);
 
   const facts = new Set(); let placed = 0;
@@ -430,6 +439,9 @@ function checkLedger(run, file, { cap, index, rules, emit = out }) {
     const off = segs.find((t) => !win.includes(t));
     if (!off) {
       placed++;
+      const from = index.find((e) => e.cache === s.cache)?.comments_from_line;
+      if (from && a >= from && s.part !== 'comments') err(x.id, `quote is in the page's reader comments (from line ${from} of ${s.cache}): cite a source with "part": "comments" at Rank 6`);
+      if (s.part === 'comments' && from && b < from) err(x.id, `quote is above the page's reader comments (line ${from} of ${s.cache}): cite the article's source`);
       const h = norm(String(x.loc.heading ?? ''));
       if (!h) warn(x.id, 'no loc.heading');
       else if (!ls.slice(0, a).some((l) => norm(l).includes(h))) warn(x.id, `heading "${x.loc.heading}" is not above ${lineSpan([a, a])} of ${s.cache}`);

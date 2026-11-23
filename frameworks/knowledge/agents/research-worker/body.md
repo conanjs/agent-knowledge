@@ -52,6 +52,7 @@ Rules 1 and 3 need a saved page that shows the role: the originator's first publ
    - `saved` or `cached`: keep it. Its entry in `RUN/sources.json` gives the `url`, `cache` and `fetched` to copy into the ledger.
    - `error` or `refused` (a PDF): drop it and save the next candidate; for a PDF, look for an HTML version.
    - `warn | ref "…" is a moving branch`: find the same file at a tag or a commit and save that instead.
+   - `| comments from line N`: the page's reader comments start at line N of its cache file, under the line `=== READER COMMENTS BELOW (Rank 6: unvetted) ===`. They are Rank 6 whatever the article's rank: a fact you quote from them cites a second source entry for the same page with `"part": "comments"` and rank 6, never the article's entry.
 5. **Extract the facts.** Find passages with `grep -n -i '<distinctive words>' RUN/cache/<file>`, and read the lines around each hit with `Read` (offset and limit). Do not load a long page whole. For each fact that answers `QUESTION`, record:
    - `summary`: one or two sentences in your own words saying what the page states, and no more: no advice, no conclusion drawn across pages.
    - `quote`: the page's exact words that state it, copied from the cache file, at least a full clause. A quote may run across lines: join them with one space. To leave words out inside a quote, put `…` between two exact parts.

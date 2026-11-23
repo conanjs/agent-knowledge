@@ -29,7 +29,7 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
    - the fact from the lower rank number governs the core sections (`## 1.` to `## 5.`); the other goes under `## 6.` with its source, rank, and why it is wrong or when it holds;
    - on a tie, neither wins: look for a Rank 1 fact that settles it. With none, both go under `## 6.` as an open conflict marked `⚖️ open conflict`, each side with its source, rank and ✅, and neither appears in the core sections.
 
-5. **Read, then write the doc** to `RUN/doc.md`. For every fact you will use, read its passage in the cache file: `Read` with an offset 5 lines above its `loc.lines` and a limit of about 20. Write each claim from the passage, not from the worker's summary. A claim says no more than its passage: keep the modal verb (MUST, SHOULD, may), every condition, the scope, and every number, name and version exactly as the page has them. A claim the passages do not support is left out, or marked `⚠️ unverified` under `## 6.`.
+5. **Read, then write the doc** to `RUN/doc.md`. For every fact you will use, read its passage in the cache file: `Read` with an offset 5 lines above its `loc.lines` and a limit of about 20. Write each claim from the passage, not from the worker's summary. A claim says no more than its passage: keep the modal verb (MUST, SHOULD, may), every condition, the scope, and every number, name and version exactly as the page has them. A claim the passages do not support is left out of the doc. In `full-verified` mode, list it in the report (step 10) as a point without a source, so it is not lost and the doc can reach `verified` (a verified doc may hold no `⚠️`). In `research-only` mode it may stay under `## 6.` marked `⚠️ unverified`.
 
    The doc's shape (read `REPO/frameworks/knowledge/schemas/deep-dive.schema.md` and §4.1 of `REPO/frameworks/knowledge/schemas/_system.md` once):
    - front matter: `schema: deep-dive/v1`, `topic`, `status: draft`, `applies-to` (the versions the sources describe), `last-updated`, `synthesized-into: []`, `tags`, `ranked-sources: true`;
@@ -40,8 +40,10 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
      - `## 3. How it works`: the mechanism, step by step;
      - `## 4. Worked examples`: concrete runs with real inputs and outputs;
      - `## 5. Reference & invariants`: exact values, options and limits, and every rule a user must follow, with the source's modal verb (MUST, SHOULD, may). A rule belongs here even when `## 3.` explains why it holds;
-     - `## 6. Trade-offs, pitfalls & misconceptions`: edge cases, trade-offs, what goes wrong and why, and the losing side of each conflict. Each misconception the `pitfall` ledger records gets its own entry that states the false belief and refutes it in so many words (what is wrong, what holds instead, the source), never only by implication;
+     - `## 6. Trade-offs, pitfalls & misconceptions`: edge cases, trade-offs, what goes wrong and why, and the losing side of each conflict. Each misconception the `pitfall` ledger records gets its own entry that states the false belief and refutes it in so many words (what is wrong, what holds instead, the source), never only by implication, and says the harm of acting on it (what breaks, for whom, how badly, as the source states it). When the belief is a practice, the entry also says what to do instead;
    - `## References`, one entry per source, ordered by rank, 1 first: `- [<page title>](<url>) — <publisher>, <year>. Rank <n>. Backs: <what>. [^<label>]`; then `## Related`, with the `knowledge/` docs from step 1.
+
+   A fact whose ledger source has `"part": "comments"` comes from a page's reader comments: it is Rank 6, so it may back only `## 6.`, and its References entry names the comments ("reader comments on …") with `Rank 6.`.
 
    Mark each claim `✅[^<label>]` right after it. The rank a section may cite: `## 1.`, `## 2.`, Summary: 1–5; `## 3.`, `## 5.`: 1–4; `## 4.`: 1–5 (6 only warns); `## 6.`: any. Keep the doc to at most 80 ✅ claims, so one judge can check them all.
 
@@ -61,6 +63,6 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
     - the final verdict and scores of each round, and the share of checkable claims;
     - the tokens of each agent you started (from each one's result), and the total;
     - the tier B sources, each with the rank the judge gave it. Propose a `source-ranks.json` rule only for a host and path prefix that one publisher owns, and add none: V decides;
-    - the terms you dropped or renamed in step 2, the open conflicts, quotes the `quotes` check did not find, and what the doc does not cover.
+    - the terms you dropped or renamed in step 2, the open conflicts, quotes the `quotes` check did not find, the points you left out for want of a source (step 5), and what the doc does not cover.
 
     V decides whether the doc goes into `knowledge/`.

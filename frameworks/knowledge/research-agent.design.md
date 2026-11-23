@@ -440,6 +440,13 @@ Total estimate: about 1.7–2.2M tokens, most of it in 3.6. After 3.6, Phase 4 c
 
 Against the release gate (§5): Stage 1 passes on all three; the agent's judge average is 4.75 (≥ 4.5); it beats the baseline on grounding findings on all three; the trap lands in section 6 explicitly on SE-04 and SE-02, only by implication on LS-03; the token cost, about 4–5× the plain prompt, is V's call. **SE-01** (V's yes for about 1.9M, 2026-11-23; 2.02M spent, baseline included) tested the two orchestrator fixes made from batch 1's criteria: the `## 5.` rule placement held (§5 met; the baseline's §5 failed); the explicit refutation in `## 6.` half held (an entry refutes VACUUM FULL, without the table lock the criterion names). Across the four topics the trap is refuted explicitly in section 6 on 2 (SE-04, SE-02) and in part on 2 (LS-03, SE-01).
 
+**Decision: ADOPT** (V, 2026-11-23). The research agent is the way docs are researched for this knowledge base. On all four topics it beat the plain prompt on grounding (0–0.33 findings per 15 claims against 2.0–3.67) and on `CRITICAL_FAIL`s (0–1 against 0–9), at about 4–5× the plain prompt's tokens (V accepts it). Known limits, stated with the decision: only LS-03 passed on the baseline's method; the release gate's "trap lands in section 6" holds explicitly on 2 of 4 topics; the remaining failures are criteria about completeness, which the agent does not see by design (E7, E8 in `research/_notes/agent-message-errors.md`). SE-03 and LS-02 are not run.
+
+Changes made at the decision, **not yet tested by a run** (the next real run is their test):
+- the orchestrator's `## 6.` rule: each refuted misconception also states the harm of acting on it, and what to do instead when it is a practice (no example from a golden topic, so a later regression run is not taught its answer);
+- E25: in `full-verified` mode a point without a source leaves the doc for the report, so a passing doc can be `verified`;
+- reader comments: `fetch-source.mjs` marks a page's server-rendered comments (wpDiscuz, WordPress markup) and records `comments_from_line`; the ledger check holds a fact quoted below it to a `"part": "comments"` source at Rank 6; the worker and orchestrator bodies say so. www.percona.com/blog/ and lwn.net/Articles/ stay tier B until the judge learns the boundary (v9, with E8's rule for multi-section criteria, under one recalibration). Until then a References entry for comments on a page a rule covers would fail KB-14, so no such rule is added.
+
 **Where each piece lives** (artifact-types pattern):
 
 | Piece | Type | Path |
