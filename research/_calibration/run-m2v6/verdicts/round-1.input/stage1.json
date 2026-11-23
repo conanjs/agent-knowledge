@@ -1,0 +1,134 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^rfc9000]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": 1,
+   "cache": "cache/46f5fb0985f4.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9113]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": 1,
+   "cache": "cache/31239d03b783.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9114]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/html/rfc9114",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "written_rank": 1,
+   "cache": "cache/61e9d4a5d782.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9204]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/html/rfc9204",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "written_rank": 1,
+   "cache": "cache/d75ddd928b21.txt"
+  },
+  {
+   "labels": [
+    "[^h2o]"
+   ],
+   "url": "https://h2o.examp1e.net/configure/http2_directives.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/44649c73a64b.txt"
+  },
+  {
+   "labels": [
+    "[^quiche]"
+   ],
+   "url": "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/1b6d3acbd283.txt"
+  },
+  {
+   "labels": [
+    "[^zhang]"
+   ],
+   "url": "https://arxiv.org/html/2310.09423v2",
+   "tier": "A",
+   "rank": 2,
+   "rule": "arxiv.org/",
+   "written_rank": 2,
+   "cache": "cache/f63d7b022073.txt"
+  },
+  {
+   "labels": [
+    "[^edeline]"
+   ],
+   "url": "https://arxiv.org/html/1612.07816v1",
+   "tier": "A",
+   "rank": 2,
+   "rule": "arxiv.org/",
+   "written_rank": 2,
+   "cache": "cache/95f8a1074fc4.txt"
+  },
+  {
+   "labels": [
+    "[^marx]"
+   ],
+   "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+   "tier": "A",
+   "rank": 4,
+   "rule": "calendar.perfplanet.com/",
+   "written_rank": 4,
+   "cache": "cache/7144e96a4a52.txt"
+  },
+  {
+   "labels": [
+    "[^fastly]"
+   ],
+   "url": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/5830c4e1e1ac.txt"
+  },
+  {
+   "labels": [
+    "[^cfupload]"
+   ],
+   "url": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+   "tier": "A",
+   "rank": 4,
+   "rule": "blog.cloudflare.com/",
+   "written_rank": 4,
+   "cache": "cache/48f50a086bd4.txt"
+  }
+ ],
+ "tier_b": [
+  "https://h2o.examp1e.net/configure/http2_directives.html",
+  "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+  "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections"
+ ]
+}

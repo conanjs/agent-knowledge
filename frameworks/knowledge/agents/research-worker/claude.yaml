@@ -1,0 +1,7 @@
+# Research worker (frameworks/knowledge/research-agent.design.md §1.4): one profile per run; writes only its ledger, never doc text.
+# Same model tier as the orchestrator (design §1.4: the reverted design started cheap and lost). No WebFetch: every page it cites
+# is saved through fetch-source.mjs, so the ledger check and the judge read the same text. No Agent: it starts no subagents.
+name: research-worker
+description: "Finds, ranks and saves sources for one research profile and writes its ledger: facts with exact quotes and their lines in the saved pages, never doc text. Give it RUN, TOOLS, PROFILE, QUESTION, TERMS, CAP and SEEDS."
+model: claude-opus-5-5
+tools: WebSearch, Bash, Read, Grep, Glob, Write, Edit

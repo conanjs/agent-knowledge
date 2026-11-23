@@ -27,3 +27,14 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-u5n3 | private-fields-planted, input by `stage1` | v6 `ef7dc5d`, `knowledge-judge` agent |
 | run-y9q4 | mcp-known-errors, the same 15-claim sample as run-r9k5 | v6 `ef7dc5d`, `knowledge-judge` agent |
 | run-h6t1 | SE-04 with its 14 lab tests as probes (`_golden/SE-04/probes-v1`), the same 45 claims as run-w3j7 (Python sampler, seed 20261122) | v7 `73b3759`, `knowledge-judge` agent |
+| run-k7d2 | SE-04 by the research agent (Phase 3.6, `research/_phase3/se04-e2e`), `status: draft` in the copy, `stage1 --sample 45 --seed 20261122` with `criteria.json`, probes and round 2's harness result | v7 `73b3759`, `knowledge-judge` agent |
+| run-a3m6 | private-fields-clean, the same input as run-e2s8 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-b8t2 | private-fields-planted, the same input as run-u5n3 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-c5w9 | mcp-known-errors, the same 15-claim sample as run-y9q4 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-d1q4 | the probe case, the same input as run-j4p7 round 2 (probe-02 fixed) | v8 `d4787fb`, `knowledge-judge` agent |
+| run-g5r8 | SE-02 baseline, input rebuilt by `stage1 --sample 45 --seed 20261122` with `criteria.json` (JS sampler; run-q6v2 used the Python one), without the `validator` key | v8 `d4787fb`, `knowledge-judge` agent |
+| run-m2v6 | SE-02 by the research agent (Phase 4, `research/_phase4/se02-e2e`), `status: draft` in the copy, built like run-g5r8, with its probe and round 2's harness result | v8 `d4787fb`, `knowledge-judge` agent |
+| run-t4h7 | LS-03 baseline, built like run-g5r8 (LS-03's `criteria.json`) | v8 `d4787fb`, `knowledge-judge` agent |
+| run-w9c3 | LS-03 by the research agent (Phase 4, `research/_phase4/ls03-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-p8x3 | SE-01 baseline (written 2026-11-23 by the Phase 0 rerun prompt; pages saved after by `fetch-source.mjs`), built like run-g5r8 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-r6k1 | SE-01 by the research agent (Phase 4, `research/_phase4/se01-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |

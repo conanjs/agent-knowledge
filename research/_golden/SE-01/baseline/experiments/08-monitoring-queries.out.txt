@@ -1,0 +1,49 @@
+Pager usage is off.
+  datname  | xid_age | mxid_age | pct_of_wrap 
+-----------+---------+----------+-------------
+ postgres  |       8 |        0 |         0.0
+ template1 |       8 |        0 |         0.0
+ template0 |       8 |        0 |         0.0
+(3 rows)
+
+    table_name    | age 
+------------------+-----
+ pg_type          |   8
+ pg_foreign_table |   8
+ pg_statistic     |   8
+(3 rows)
+
+ gid | prepared | age 
+-----+----------+-----
+(0 rows)
+
+ pid | datname  | state  |          xact_start           | xid_age | xmin_age 
+-----+----------+--------+-------------------------------+---------+----------
+  95 | postgres | active | 2026-11-22 17:43:46.101851+00 |         |        0
+(1 row)
+
+ slot_name | slot_type | active | xmin_age | catalog_xmin_age 
+-----------+-----------+--------+----------+------------------
+(0 rows)
+
+ pid | relid | phase | heap_blks_scanned | heap_blks_total | index_vacuum_count 
+-----+-------+-------+-------------------+-----------------+--------------------
+(0 rows)
+
+BEGIN
+              now              | next_xid_approx 
+-------------------------------+-----------------
+ 2026-11-22 17:43:46.103142+00 |             753
+(1 row)
+
+ xid_taken_by_this_transaction 
+-------------------------------
+                              
+(1 row)
+
+COMMIT
+ next_xid_approx_again 
+-----------------------
+                   753
+(1 row)
+

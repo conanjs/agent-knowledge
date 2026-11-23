@@ -1,0 +1,12 @@
+SOURCE: https://example.dev/blog/rotating-logs
+FETCHED: 2026-11-22T09:00:00Z (fetch-source.mjs)
+SHA256: d5ef32c29cb46587215283f03f2ecb4b8155e5054d2c9618b6dffb449f1f70db
+
+Rotating logs at scale (test blog)
+By Ann Example
+Lessons
+Rotate logs before the disk fills.
+=== READER COMMENTS BELOW (Rank 6: unvetted) ===
+2 Comments
+A reader writes that deleting logs by hand is faster.
+Another reader disagrees with that advice.

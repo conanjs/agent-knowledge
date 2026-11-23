@@ -1,0 +1,8 @@
+{
+ "id": "LS-03",
+ "prompt": "Security architecture for storing and revoking JWTs in web applications.",
+ "ground_truth_claim": "localStorage is highly vulnerable to XSS. Stateless JWTs cannot be instantly revoked backend-side without a deny-list.",
+ "conflict_trap_claim": "Store JWTs securely in localStorage and simply delete them on the client-side to log the user out safely.",
+ "pass_criteria": "Section 5 must enforce HttpOnly; Secure cookies. Section 6 must explain the stateless revocation trade-off.",
+ "source": "golden_dataset_automation_payload.json (spec set, 2026-11-22)"
+}

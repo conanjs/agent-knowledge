@@ -16,7 +16,8 @@
 // KB-3 with --urls;
 // KB-7 conversation residue (warn, heuristic); KB-8 duplicated fenced blocks across docs / repeated paragraphs (warn);
 // with `ranked-sources: true`: KB-14 (ranked, ordered References that match ../classify-source/source-ranks.json),
-// KB-15 (rank quarantine per section, footnote on every core ✅), KB-16 orphan References footnotes (warn).
+// KB-15 (rank quarantine per section, footnote on every core ✅), KB-16 orphan References footnotes (warn), KB-17's script part
+// (a `⚖️ open conflict` only in the pitfalls section).
 // The validator reads the knowledge folder and the rank rules only. A leftover "Used by" section is ignored.
 // LLM-only rules (KD-3, KD-5, KD-8, KB-1, KB-2, KB-5, KB-6, KB-7 in full, DD-2) are not checked here; a reviewer
 // checks them (the review-docs procedure of the agent home).
@@ -181,8 +182,8 @@ function checkTail(f, t, fm) {
   const rel_ = section(t, 'Related');
   if (rel_ !== null && !/^\s*[-*] /m.test(rel_)) fail('KB-12', `${rel(f)}: Related is empty (use "- _None yet._")`);
   const b = stripFences(body(t));
-  const used = new Set([...b.replace(refs ?? '', '').matchAll(/\[\^(\w+)\](?!:)/g)].map((m) => m[1]));
-  const defined = new Set([...(refs ?? '').matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]));
+  const used = new Set([...b.replace(refs ?? '', '').matchAll(/\[\^([\w-]+)\](?!:)/g)].map((m) => m[1]));
+  const defined = new Set([...(refs ?? '').matchAll(/\[\^([\w-]+)\]/g)].map((m) => m[1]));
   for (const n of used) if (!defined.has(n)) fail('KB-12', `${rel(f)}: footnote [^${n}] is used but no References entry carries it`);
   if (String(fm['ranked-sources']) === 'true') for (const n of defined) if (!used.has(n)) warn('KB-16', `${rel(f)}: References entry [^${n}] is never cited in the body`);
   if (fm.status === 'verified' && /⚠️\s*unverified/.test(b.replace(section(t, 'Verification status') ?? '', ''))) fail('KD-2', `${rel(f)}: status verified but contains "⚠️ unverified" claims`);
@@ -214,7 +215,8 @@ function checkRanks(f, t) {
     }
     const role = SECTION_RANKS[head];
     if (!role) continue;
-    for (const c of line.matchAll(/\[\^(\w+)\](?!:)/g)) {
+    if (line.includes('⚖') && !role.pitfalls) fail('KB-17', `${rel(f)}: "## ${head}" holds an open conflict (⚖️); open conflicts belong in the pitfalls section`);
+    for (const c of line.matchAll(/\[\^([\w-]+)\](?!:)/g)) {
       const r = rankOf.get(c[1]);
       if (r === undefined || role.allow.includes(r)) continue;
       if (role.warn?.includes(r)) warn('KB-15', `${rel(f)}: "## ${head}" cites [^${c[1]}], a Rank ${r} source; worked examples should use Rank ${role.label}`);
@@ -222,7 +224,7 @@ function checkRanks(f, t) {
     }
     if (role.pitfalls || /✅\s*=/.test(line)) continue;
     for (const c of line.matchAll(/✅/g)) {
-      if (!/^\s*\[\^\w+\]/.test(line.slice(c.index + 1))) fail('KB-15', `${rel(f)}: "## ${head}" has a ✅ with no footnote: "${line.slice(Math.max(0, c.index - 50), c.index + 1).trim()}"`);
+      if (!/^\s*\[\^[\w-]+\]/.test(line.slice(c.index + 1))) fail('KB-15', `${rel(f)}: "## ${head}" has a ✅ with no footnote: "${line.slice(Math.max(0, c.index - 50), c.index + 1).trim()}"`);
     }
   }
 }

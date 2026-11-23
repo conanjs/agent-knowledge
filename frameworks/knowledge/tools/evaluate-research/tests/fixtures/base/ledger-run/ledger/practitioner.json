@@ -1,0 +1,89 @@
+{
+ "profile": "practitioner",
+ "question": "How do teams keep logs from filling a disk?",
+ "terms": [
+  "log rotation"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://example.dev/blog/rotating-logs",
+   "cache": "cache/1ba187945fcf.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "B",
+   "rule": null,
+   "seed": false,
+   "provenance_ref": null,
+   "rank": 4,
+   "rank_basis": "class: a company engineering blog"
+  },
+  {
+   "id": "S2",
+   "url": "https://example.dev/blog/rotating-logs",
+   "cache": "cache/1ba187945fcf.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "B",
+   "rule": null,
+   "seed": false,
+   "provenance_ref": null,
+   "rank": 6,
+   "rank_basis": "the reader comments of S1",
+   "part": "comments"
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "Rotate before the disk fills.",
+   "quote": "Rotate logs before the disk fills",
+   "loc": {
+    "heading": "Lessons",
+    "lines": [
+     8,
+     8
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S2",
+   "summary": "A reader prefers deleting by hand.",
+   "quote": "A reader writes that deleting logs by hand is faster",
+   "loc": {
+    "heading": "2 Comments",
+    "lines": [
+     11,
+     11
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S1",
+   "summary": "A reader disagrees.",
+   "quote": "Another reader disagrees with that advice",
+   "loc": {
+    "heading": "2 Comments",
+    "lines": [
+     12,
+     12
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "source": "S2",
+   "summary": "Rotate before the disk fills.",
+   "quote": "Rotate logs before the disk fills",
+   "loc": {
+    "heading": "Lessons",
+    "lines": [
+     8,
+     8
+    ]
+   }
+  }
+ ],
+ "conflicts": []
+}

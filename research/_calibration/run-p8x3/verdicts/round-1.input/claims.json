@@ -1,0 +1,372 @@
+{
+ "doc_claims": 323,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## Summary": [
+   1,
+   1
+  ],
+  "## 1. Context": [
+   13,
+   1
+  ],
+  "## 2. The actors": [
+   22,
+   3
+  ],
+  "## 3. How MVCC works": [
+   68,
+   9
+  ],
+  "## 4. Wraparound and freezing": [
+   50,
+   7
+  ],
+  "## 5. Settings catalog": [
+   53,
+   7
+  ],
+  "## 6. Cross-actor interactions": [
+   17,
+   2
+  ],
+  "## 7. Worked example: a forgotten replication slot stops all writes": [
+   6,
+   2
+  ],
+  "## 8. Preventing wraparound: the playbook": [
+   41,
+   5
+  ],
+  "## 9. Failure and edge-case matrix": [
+   21,
+   3
+  ],
+  "## 10. Misconceptions and version differences": [
+   28,
+   4
+  ],
+  "## 11. Verification notes": [
+   3,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 17,
+   "heading": "## Summary",
+   "claim": "**Depth:** tuple header fields and flag bits read from a real page; XID assignment, snapshots and isolation levels; the visibility rule and hint bits; HOT updates and pruning; VACUUM and the xmin horizon; multixacts; freezing, `relfrozenxid` / `datfrozenxid` and the full threshold ladder from `vacuum_freeze_min_age` to the stop limit, for PostgreSQL 18 and 19; every freezing-related setting with its default, clamp and \"unset\" behaviour; cross-actor interactions; a lab cluster driven past the stop limit by a forgotten replication slot and recovered; a prevention playbook, an emergency runbook, a failure matrix and misconceptions; verified (✅",
+   "context": "**Depth:** tuple header fields and flag bits read from a real page; XID assignment, snapshots and isolation levels; the visibility rule and hint bits; HOT updates and pruning; VACUUM and the xmin horizon; multixacts; freezing, `relfrozenxid` / `datfrozenxid` and the full threshold ladder from `vacuum_freeze_min_age` to the stop limit, for PostgreSQL 18 and 19; every freezing-related setting with its default, clamp and \"unset\" behaviour; cross-actor interactions; a lab cluster driven past the stop limit by a forgotten replication slot and recovered; a prevention playbook, an emergency runbook, a failure matrix and misconceptions; verified (✅) and unverified (⚠️) marks."
+  },
+  {
+   "id": "S2",
+   "line": 47,
+   "heading": "## 1. Context",
+   "claim": "Outage: 05:35 UTC on 4 Feb to 22:09 UTC on 5 Feb, that is 24 h + 16 h 34 min = 40 h 34 min ✅[^28]",
+   "context": "| 2019 | A transactional e-mail service | A skewed hash sent more writes to one shard, whose database reached the XID limit. The first logged error was buried among unrelated alerts ✅[^28] | A vacuum in standalone mode was estimated at days to weeks (worst case 40 days). Truncating two terabyte-scale tables let it finish about an hour later. Outage: 05:35 UTC on 4 Feb to 22:09 UTC on 5 Feb, that is 24 h + 16 h 34 min = 40 h 34 min ✅[^28] |"
+  },
+  {
+   "id": "S3",
+   "line": 69,
+   "heading": "## 2. The actors",
+   "claim": "Normal XIDs start at 3; 0 = invalid, 1 = bootstrap, 2 = frozen ✅[^17]",
+   "context": "| XID counter | Normal XIDs start at 3; 0 = invalid, 1 = bootstrap, 2 = frozen ✅[^17] | — (always present); the 64-bit form adds an epoch that grows at each wrap ✅[^6] |"
+  },
+  {
+   "id": "S4",
+   "line": 72,
+   "heading": "## 2. The actors",
+   "claim": "Status of very old XIDs is discarded; `pg_xact_status()` then returns NULL ✅[^7]",
+   "context": "| Commit log | Status \"in progress\" until commit or abort ✅[^7] | Status of very old XIDs is discarded; `pg_xact_status()` then returns NULL ✅[^7] |"
+  },
+  {
+   "id": "S5",
+   "line": 73,
+   "heading": "## 2. The actors",
+   "claim": "Plain `VACUUM`: no exclusive lock, space kept for reuse in the same table ✅[^18]",
+   "context": "| VACUUM | Plain `VACUUM`: no exclusive lock, space kept for reuse in the same table ✅[^18] | Dead versions accumulate (bloat) and nothing advances `relfrozenxid` ✅[^1] |"
+  },
+  {
+   "id": "S6",
+   "line": 83,
+   "heading": "## 3. How MVCC works",
+   "claim": ", the value the `ctid` system column shows, such as `(0,3)` ✅[^30]",
+   "context": "Every table is an array of fixed-size pages, usually 8 kB ✅[^5]. A page holds a 24-byte header, then 4-byte item identifiers (\"line pointers\"), then the row versions (\"tuples\") ✅[^5]. A tuple is addressed by its TID (tuple identifier) `(page, item)` ✅[^5], the value the `ctid` system column shows, such as `(0,3)` ✅[^30]."
+  },
+  {
+   "id": "S7",
+   "line": 89,
+   "heading": "## 3. How MVCC works",
+   "claim": "Meaning ✅[^5]",
+   "context": "| Field | Size | Meaning ✅[^5] |"
+  },
+  {
+   "id": "S8",
+   "line": 130,
+   "heading": "## 3. How MVCC works",
+   "claim": "Subtransactions (`SAVEPOINT`) that write get their own XID, a \"subxid\", and force their parents to take XIDs too; a parent's XID is always lower than its children's ✅[^26]",
+   "context": "Subtransactions (`SAVEPOINT`) that write get their own XID, a \"subxid\", and force their parents to take XIDs too; a parent's XID is always lower than its children's ✅[^26]. Lab: one transaction that wrote inside 5 savepoints consumed 6 XIDs (its rows carry `xmin` 5783 to 5788), while the same 6 inserts without savepoints consumed 1 ✅[^30]. Beyond 64 open subxids per backend, lookups move to the `pg_subtrans` directory and get much slower ✅[^26]."
+  },
+  {
+   "id": "S9",
+   "line": 189,
+   "heading": "## 3. How MVCC works",
+   "claim": "Middle versions of a HOT chain can be removed during normal operation, including `SELECT`s ✅[^8]",
+   "context": "- **HOT (heap-only tuple) updates.** When an `UPDATE` changes no indexed column (other than summarizing indexes such as BRIN) and the new version fits on the same page, no new index entry is made ✅[^8]. Indexes keep pointing at the original line pointer; once the old data is removed, that line pointer becomes a redirect to the oldest version some transaction may still see ✅[^8]. Middle versions of a HOT chain can be removed during normal operation, including `SELECT`s ✅[^8]. Lowering a table's `fillfactor` leaves room on pages for HOT updates, and `pg_stat_all_tables` counts HOT and non-HOT updates ✅[^8]; the lab's update showed `n_tup_hot_upd = 1` ✅[^30]. **Analogy:** a forwarding note on the same floor of the building, so the building directory (the index) never changes."
+  },
+  {
+   "id": "S10",
+   "line": 190,
+   "heading": "## 3. How MVCC works",
+   "claim": "`VACUUM` cannot run inside a transaction block ✅[^18]",
+   "context": "- **VACUUM.** Plain `VACUUM` removes dead versions, makes the space reusable inside the table and runs alongside normal reads and writes without an exclusive lock; it returns space to the operating system only for empty pages at the end of the table ✅[^18] ✅[^1]. `VACUUM FULL` rewrites the table, needs an `ACCESS EXCLUSIVE` lock and extra disk space ✅[^18]; in PostgreSQL 19 it is deprecated in favour of the new `REPACK` command, which can also run `CONCURRENTLY` ✅[^18] ✅[^11]. `VACUUM` cannot run inside a transaction block ✅[^18], and manual `VACUUM` is not throttled by default (`vacuum_cost_delay = 0` in the 18.3 lab) ✅[^30]."
+  },
+  {
+   "id": "S11",
+   "line": 223,
+   "heading": "## 3. How MVCC works",
+   "claim": "Ended by `idle_in_transaction_session_timeout` (lab: a 2 s timeout ended the session with `terminating connection due to idle-in-transaction timeout`) ✅[^22]",
+   "context": "| Open transaction, often \"idle in transaction\" | `pg_stat_activity.backend_xid`, `backend_xmin` | Ended by `idle_in_transaction_session_timeout` (lab: a 2 s timeout ended the session with `terminating connection due to idle-in-transaction timeout`) ✅[^22] ✅[^30] |"
+  },
+  {
+   "id": "S12",
+   "line": 230,
+   "heading": "## 3. How MVCC works",
+   "claim": "MXIDs wrap like XIDs, and their member storage must be managed too ✅[^1]",
+   "context": "When more than one transaction locks the same row, `xmax` holds a MultiXact ID (MXID), a separate 32-bit counter, and the list of members lives in `pg_multixact` ✅[^1]. MXIDs wrap like XIDs, and their member storage must be managed too ✅[^1]. Typical sources are many `UPDATE`s with foreign-key checks, concurrent `SELECT … FOR SHARE` and heavy use of savepoints ✅[^1]."
+  },
+  {
+   "id": "S13",
+   "line": 234,
+   "heading": "## 3. How MVCC works",
+   "claim": "✅[^13]",
+   "context": "Lab: two sessions ran `SELECT … FOR SHARE` on row 3; its `xmax` became `1` with `infomask 0x11d2` (`0x1000` is-multi, `0x0080` lock-only, `0x0050` shared lock, `0x0100` inserter committed, `0x0002`), and `pg_get_multixact_members('1')` returned XIDs 762 and 763 in mode `sh` ✅[^30] ✅[^13]."
+  },
+  {
+   "id": "S14",
+   "line": 234,
+   "heading": "## 3. How MVCC works",
+   "claim": "Lab: two sessions ran `SELECT … FOR SHARE` on row 3; its `xmax` became `1` with `infomask 0x11d2` (`0x1000` is-multi, `0x0080` lock-only, `0x0050` shared lock, `0x0100` inserter committed, `0x0002`), and `pg_get_multixact_members('1')` returned XIDs 762 and 763 in mode `sh` ✅[^30]",
+   "context": "Lab: two sessions ran `SELECT … FOR SHARE` on row 3; its `xmax` became `1` with `infomask 0x11d2` (`0x1000` is-multi, `0x0080` lock-only, `0x0050` shared lock, `0x0100` inserter committed, `0x0002`), and `pg_get_multixact_members('1')` returned XIDs 762 and 763 in mode `sh` ✅[^30] ✅[^13]."
+  },
+  {
+   "id": "S15",
+   "line": 303,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "50,000,000 ✅[^10]",
+   "context": "| 50 million | `vacuum_freeze_min_age` | 50,000,000 ✅[^10] | Each row's XID | A VACUUM that visits the page freezes it ✅[^1] |"
+  },
+  {
+   "id": "S16",
+   "line": 304,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "✅[^19]",
+   "context": "| 150 million | `vacuum_freeze_table_age` | 150,000,000 ✅[^10] | Table's `relfrozenxid` | The next VACUUM is aggressive: it scans every page not marked all-frozen ✅[^10] ✅[^19] |"
+  },
+  {
+   "id": "S17",
+   "line": 307,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "100 M or 40 M before wrap ✅[^1]",
+   "context": "| 2,047,483,647 (19) or 2,107,483,647 (18) | Warning limit | 100 M or 40 M before wrap ✅[^1] ✅[^2] | Oldest `datfrozenxid` | Each XID assignment warns `database \"…\" must be vacuumed within N transactions` ✅[^12] |"
+  },
+  {
+   "id": "S18",
+   "line": 308,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "3 M before wrap ✅[^12]",
+   "context": "| 2,144,483,647 | Stop limit | 3 M before wrap ✅[^12] | Oldest `datfrozenxid` | New XIDs refused; running transactions may continue, read-only transactions can start, `VACUUM` still works ✅[^1] |"
+  },
+  {
+   "id": "S19",
+   "line": 308,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "New XIDs refused; running transactions may continue, read-only transactions can start, `VACUUM` still works ✅[^1]",
+   "context": "| 2,144,483,647 | Stop limit | 3 M before wrap ✅[^12] | Oldest `datfrozenxid` | New XIDs refused; running transactions may continue, read-only transactions can start, `VACUUM` still works ✅[^1] |"
+  },
+  {
+   "id": "S20",
+   "line": 339,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "**X + a little:** once the table has received 1,000 + 20 % of its unfrozen size in new rows, autovacuum's insert threshold fires ✅[^1]",
+   "context": "2. **X + a little:** once the table has received 1,000 + 20 % of its unfrozen size in new rows, autovacuum's insert threshold fires ✅[^1] ✅[^10]. The row is younger than 50 million, so it is not frozen, but the page becomes all-visible."
+  },
+  {
+   "id": "S21",
+   "line": 342,
+   "heading": "## 4. Wraparound and freezing",
+   "claim": "**X + 200 million:** if no VACUUM ran at all, autovacuum forces one ✅[^1]",
+   "context": "5. **X + 200 million:** if no VACUUM ran at all, autovacuum forces one ✅[^1]."
+  },
+  {
+   "id": "S22",
+   "line": 353,
+   "heading": "## 5. Settings catalog",
+   "claim": "✅[^1]",
+   "context": "| `autovacuum_freeze_max_age` | 200,000,000 | Up to 2 billion; server start only; can be lowered per table ✅[^10] ✅[^1] | — | Table age that forces autovacuum. Storage: 200 M ≈ 50 MB of `pg_xact` and ≈ 2 GB of `pg_commit_ts`; 2 B ≈ 0.5 GB and ≈ 20 GB ✅[^1] |"
+  },
+  {
+   "id": "S23",
+   "line": 355,
+   "heading": "## 5. Settings catalog",
+   "claim": "MXIDs older than this are replaced (by zero, one XID or a newer MXID) ✅[^1]",
+   "context": "| `vacuum_multixact_freeze_min_age` | 5,000,000 | 0 to 1 billion; at most half of `autovacuum_multixact_freeze_max_age` ✅[^10] | — | MXIDs older than this are replaced (by zero, one XID or a newer MXID) ✅[^1] |"
+  },
+  {
+   "id": "S24",
+   "line": 356,
+   "heading": "## 5. Settings catalog",
+   "claim": "Table MXID age (`relminmxid`) that makes VACUUM aggressive ✅[^1]",
+   "context": "| `vacuum_multixact_freeze_table_age` | 150,000,000 | 0 to 2 billion; at most 95 % of the max age ✅[^10] | — | Table MXID age (`relminmxid`) that makes VACUUM aggressive ✅[^1] |"
+  },
+  {
+   "id": "S25",
+   "line": 357,
+   "heading": "## 5. Settings catalog",
+   "claim": "Server start only; per table lower ✅[^10]",
+   "context": "| `autovacuum_multixact_freeze_max_age` | 400,000,000 | Server start only; per table lower ✅[^10] | — | Forces autovacuum, even if autovacuum is nominally off ✅[^1] |"
+  },
+  {
+   "id": "S26",
+   "line": 363,
+   "heading": "## 5. Settings catalog",
+   "claim": "max −1: no cap ✅[^10]",
+   "context": "| `autovacuum_vacuum_threshold`, `_scale_factor`, `_max_threshold` | 50, 0.2, 100,000,000 | Vacuum when dead tuples > min(max, 50 + 0.2 × rows) ✅[^1] ✅[^10] | max −1: no cap ✅[^10] | Dead-tuple trigger |"
+  },
+  {
+   "id": "S27",
+   "line": 364,
+   "heading": "## 5. Settings catalog",
+   "claim": "−1 disables ✅[^10]",
+   "context": "| `autovacuum_vacuum_insert_threshold`, `_insert_scale_factor` | 1000, 0.2 | Inserts > 1000 + 0.2 × rows × unfrozen fraction ✅[^1] | −1 disables ✅[^10] | Insert trigger; keeps insert-only tables frozen |"
+  },
+  {
+   "id": "S28",
+   "line": 368,
+   "heading": "## 5. Settings catalog",
+   "claim": "10 min (lab: 600000 ms) ✅[^30]",
+   "context": "| `log_autovacuum_min_duration` | 10 min (lab: 600000 ms) ✅[^30] | In 19 it covers only vacuums; `log_autoanalyze_min_duration` is new ✅[^11] | 0: log every run (the lab's setting in experiment 05) ✅[^30] | Logs slow autovacuums |"
+  },
+  {
+   "id": "S29",
+   "line": 386,
+   "heading": "## 6. Cross-actor interactions",
+   "claim": "✅[^10]",
+   "context": "| Raising `autovacuum_freeze_max_age` | Fewer forced vacuums; larger `pg_xact` and `pg_commit_ts`; less margin before the warnings; raises the caps of `vacuum_freeze_min_age` (½) and `vacuum_freeze_table_age` (95 %) and the failsafe floor (105 %) | ✅[^1] ✅[^10] |"
+  },
+  {
+   "id": "S30",
+   "line": 390,
+   "heading": "## 6. Cross-actor interactions",
+   "claim": "Only the owning session can vacuum them; autovacuum cannot ✅[^1]",
+   "context": "| Temporary tables | Only the owning session can vacuum them; autovacuum cannot ✅[^1] | A long-lived session with an old temporary table keeps that table's `relfrozenxid` old |"
+  },
+  {
+   "id": "S31",
+   "line": 398,
+   "heading": "## 7. Worked example: a forgotten replication slot stops all writes",
+   "claim": "Experiment 05 (PostgreSQL 18.3, a throwaway Docker volume, `wal_level=logical`, `autovacuum_naptime=2s`) ✅[^30]",
+   "context": "Experiment 05 (PostgreSQL 18.3, a throwaway Docker volume, `wal_level=logical`, `autovacuum_naptime=2s`) ✅[^30]. Reaching 2 billion XIDs honestly would take days, so the counter was moved with `pg_resetwal -x`, a repair tool the docs reserve for last-resort recovery of a damaged cluster ✅[^20]: never run it on real data. Each target value is a multiple of 1,048,576 (one `pg_xact` segment), as its docs recommend for a safe next XID ✅[^20]. In the lab, `pg_resetwal -x` changed only the next XID and left `oldestXID` at 745 in `pg_control` ✅[^30]."
+  },
+  {
+   "id": "S32",
+   "line": 398,
+   "heading": "## 7. Worked example: a forgotten replication slot stops all writes",
+   "claim": "Reaching 2 billion XIDs honestly would take days, so the counter was moved with `pg_resetwal -x`, a repair tool the docs reserve for last-resort recovery of a damaged cluster ✅[^20]",
+   "context": "Experiment 05 (PostgreSQL 18.3, a throwaway Docker volume, `wal_level=logical`, `autovacuum_naptime=2s`) ✅[^30]. Reaching 2 billion XIDs honestly would take days, so the counter was moved with `pg_resetwal -x`, a repair tool the docs reserve for last-resort recovery of a damaged cluster ✅[^20]: never run it on real data. Each target value is a multiple of 1,048,576 (one `pg_xact` segment), as its docs recommend for a safe next XID ✅[^20]. In the lab, `pg_resetwal -x` changed only the next XID and left `oldestXID` at 745 in `pg_control` ✅[^30]."
+  },
+  {
+   "id": "S33",
+   "line": 470,
+   "heading": "## 8. Preventing wraparound: the playbook",
+   "claim": "The docs advise against setting `transaction_timeout` or `statement_timeout` in `postgresql.conf`, because that affects all sessions ✅[^22]",
+   "context": "- Set `idle_in_transaction_session_timeout` for application roles; the docs give it exactly this purpose, since an open transaction stops VACUUM removing dead rows ✅[^22]. It is a user-level setting (lab context `user`) ✅[^30], so `ALTER ROLE … SET` works. The docs advise against setting `transaction_timeout` or `statement_timeout` in `postgresql.conf`, because that affects all sessions ✅[^22]."
+  },
+  {
+   "id": "S34",
+   "line": 472,
+   "heading": "## 8. Preventing wraparound: the playbook",
+   "claim": "Consider `idle_replication_slot_timeout` for slots that reserve WAL ✅[^24]",
+   "context": "- Drop replication slots nobody consumes; dropping one used by a live replica may force rebuilding that replica ✅[^1]. Consider `idle_replication_slot_timeout` for slots that reserve WAL ✅[^24]. Logical slots left behind by change-data-capture tools are a common source ⚠️ unverified."
+  },
+  {
+   "id": "S35",
+   "line": 473,
+   "heading": "## 8. Preventing wraparound: the playbook",
+   "claim": "- With `hot_standby_feedback = on`, long standby queries hold the primary's horizon; weigh that against query cancels on the standby ✅[^24]",
+   "context": "- With `hot_standby_feedback = on`, long standby queries hold the primary's horizon; weigh that against query cancels on the standby ✅[^24]."
+  },
+  {
+   "id": "S36",
+   "line": 479,
+   "heading": "## 8. Preventing wraparound: the playbook",
+   "claim": "✅[^30]",
+   "context": "- Run a manual `VACUUM` in quiet hours before tables reach `autovacuum_freeze_max_age`; the 95 % clamp on `vacuum_freeze_table_age` exists so such a periodic vacuum runs aggressively first ✅[^10]. `VACUUM (FREEZE)` on a cold table after a bulk load makes later aggressive vacuums skip it via all-frozen pages ✅[^9] ✅[^30]."
+  },
+  {
+   "id": "S37",
+   "line": 484,
+   "heading": "## 8. Preventing wraparound: the playbook",
+   "claim": "- Reads do not consume XIDs; only writes do ✅[^6]",
+   "context": "- Reads do not consume XIDs; only writes do ✅[^6] ✅[^30]."
+  },
+  {
+   "id": "S38",
+   "line": 505,
+   "heading": "## 9. Failure and edge-case matrix",
+   "claim": "✅[^30]",
+   "context": "| Inactive logical slot | `datfrozenxid` stuck in all databases; catalogs at the slot's `catalog_xmin` | Slot `catalog_xmin` | Drop the slot | ✅[^30] |"
+  },
+  {
+   "id": "S39",
+   "line": 506,
+   "heading": "## 9. Failure and edge-case matrix",
+   "claim": "✅[^23]",
+   "context": "| Physical slot or standby feedback | Bloat and old ages on the primary | Slot or feedback `xmin` | Fix or drop the slot; reconsider feedback | ✅[^23] ✅[^24] ✅[^1] |"
+  },
+  {
+   "id": "S40",
+   "line": 516,
+   "heading": "## 9. Failure and edge-case matrix",
+   "claim": "✅[^30]",
+   "context": "| VACUUM right after many empty write transactions | Pages not set all-visible yet | Unflushed asynchronous commits delay hint bits | Harmless; the next VACUUM sets them | ✅[^30] ⚠️ unverified (mechanism, §3.5) |"
+  },
+  {
+   "id": "S41",
+   "line": 525,
+   "heading": "## 10. Misconceptions and version differences",
+   "claim": "✅[^6]",
+   "context": "| \"Long reports are harmless because they only read\" | They consume no XID, but their snapshot holds the horizon | ✅[^6] ✅[^30] |"
+  },
+  {
+   "id": "S42",
+   "line": 533,
+   "heading": "## 10. Misconceptions and version differences",
+   "claim": "Order of the `pg_class` listing ✅[^1]",
+   "context": "| Autovacuum order | Order of the `pg_class` listing ✅[^1] | Scores; `pg_stat_autovacuum_scores`; `autovacuum_*_score_weight` ✅[^11] ✅[^1] |"
+  },
+  {
+   "id": "S43",
+   "line": 534,
+   "heading": "## 10. Misconceptions and version differences",
+   "claim": "`(to prevent wraparound)` in `pg_stat_activity` ✅[^2]",
+   "context": "| Spotting wraparound vacuums | `(to prevent wraparound)` in `pg_stat_activity` ✅[^2] | Also `started_by` and `mode` in `pg_stat_progress_vacuum` ✅[^19] |"
+  },
+  {
+   "id": "S44",
+   "line": 539,
+   "heading": "## 10. Misconceptions and version differences",
+   "claim": ", while the 19 release notes say query scans can now set all-visible ✅[^11]",
+   "context": "One discrepancy in the 19 documentation: the visibility map page still says its bits are only set by vacuum ✅[^9], while the 19 release notes say query scans can now set all-visible ✅[^11] (and `COPY … FREEZE` could before). The release notes describe the newer behaviour."
+  },
+  {
+   "id": "S45",
+   "line": 545,
+   "heading": "## 11. Verification notes",
+   "claim": "- Counts in this doc (claim markers in the body: ✅",
+   "context": "- Counts in this doc (claim markers in the body: ✅ with a footnote, and ⚠️ marks): ✅ 319, ⚠️ 8. A claim backed by two sources carries two ✅ markers."
+  }
+ ]
+}

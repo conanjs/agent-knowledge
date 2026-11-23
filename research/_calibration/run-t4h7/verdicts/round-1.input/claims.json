@@ -1,0 +1,368 @@
+{
+ "doc_claims": 218,
+ "sample_size": 45,
+ "seed": 20261122,
+ "strata": {
+  "## 1. Context: one problem with two halves": [
+   9,
+   2
+  ],
+  "## 2. Actors, tokens and settings": [
+   35,
+   7
+  ],
+  "## 3. Threat model: what injected JavaScript can do": [
+   7,
+   1
+  ],
+  "## 4. Where the browser can keep a token": [
+   15,
+   3
+  ],
+  "## 5. Architectures": [
+   29,
+   6
+  ],
+  "## 6. Revocation mechanisms": [
+   62,
+   13
+  ],
+  "## 7. Cross-side interactions": [
+   17,
+   3
+  ],
+  "## 8. Worked example: one full pass through a BFF": [
+   4,
+   2
+  ],
+  "## 9. Edge-case and failure matrix": [
+   28,
+   5
+  ],
+  "## 10. Recommended baseline": [
+   11,
+   2
+  ],
+  "## 11. Lab notes": [
+   1,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 50,
+   "heading": "## 1. Context: one problem with two halves",
+   "claim": "- Every registered claim is optional in RFC 7519 itself ✅[^1]",
+   "context": "- Every registered claim is optional in RFC 7519 itself ✅[^1]; the JWT access-token profile, RFC 9068, makes `iss`, `exp`, `aud`, `sub`, `client_id`, `iat` and `jti` required and asks for `typ: at+jwt`, which resource servers must check ✅[^21]."
+  },
+  {
+   "id": "S2",
+   "line": 53,
+   "heading": "## 1. Context: one problem with two halves",
+   "claim": "The lab reproduces it: a token copied before logout was still accepted 60 seconds after the logout, and rejected only after its `exp` ✅[^24]",
+   "context": "Nothing in that list involves the issuer at verification time. That is the point of a JWT, and the cause of the revocation problem. The lab reproduces it: a token copied before logout was still accepted 60 seconds after the logout, and rejected only after its `exp` ✅[^24]."
+  },
+  {
+   "id": "S3",
+   "line": 108,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^2]",
+   "context": "| BFF session cookie | Browser holds; BFF receives | Should match the refresh token's maximum lifetime; when the refresh token dies, the BFF should end the session | — | ✅[^2] |"
+  },
+  {
+   "id": "S4",
+   "line": 110,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^11]",
+   "context": "| DPoP proof | Client creates per request; AS or RS receives | Short; bound to method (`htm`), URL (`htu`), time (`iat`), access-token hash (`ath`) and optional server nonce | Without it, the token is a plain bearer token | ✅[^11] |"
+  },
+  {
+   "id": "S5",
+   "line": 118,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "optional in RFC 7519 ✅[^1]",
+   "context": "| `exp` | Expiry instant | Nothing in the token ever ends it; the verifier's policy must then require `exp` | optional in RFC 7519 ✅[^1]; required in RFC 9068 ✅[^21] |"
+  },
+  {
+   "id": "S6",
+   "line": 121,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "used by back-channel logout ✅[^9]",
+   "context": "| `sid` | Login-session id | No way to end one device's session without ending all of them | used by back-channel logout ✅[^9] |"
+  },
+  {
+   "id": "S7",
+   "line": 124,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^8]",
+   "context": "| `status` | `{ \"status_list\": { \"idx\": 6, \"uri\": \"https://…\" } }`: where to look up this token's status | No issuer-side status lookup | ✅[^8] ✅[^4] |"
+  },
+  {
+   "id": "S8",
+   "line": 134,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^12]",
+   "context": "| `SameSite` | `Strict`: same-site requests only. `Lax`: also cross-site top-level `GET` navigations. `None`: always, needs `Secure` | Some browsers treat it as `Lax` | ✅[^12] |"
+  },
+  {
+   "id": "S9",
+   "line": 138,
+   "heading": "## 2. Actors, tokens and settings",
+   "claim": "✅[^12]",
+   "context": "| `__Host-` name prefix | Browser stores it only with `Secure`, no `Domain`, `Path=/` | — | ✅[^12]; lab: a `__Host-` cookie with `Domain=` and one without `Secure` were both dropped ✅[^25] |"
+  },
+  {
+   "id": "S10",
+   "line": 165,
+   "heading": "## 3. Threat model: what injected JavaScript can do",
+   "claim": "The central consequence: the attacker's code is indistinguishable from the app's code, so it can always ask for fresh tokens the way the app does; storage choices only decide whether it can take tokens that already exist ✅[^2]",
+   "context": "The central consequence: the attacker's code is indistinguishable from the app's code, so it can always ask for fresh tokens the way the app does; storage choices only decide whether it can take tokens that already exist ✅[^2]."
+  },
+  {
+   "id": "S11",
+   "line": 174,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "; lab ✅[^25]",
+   "context": "| `HttpOnly` cookie set by a backend | No | Yes, also on `fetch` from injected script | Yes / yes | The BFF's mechanism (§6.1.3.2) | ✅[^2] ✅[^12]; lab ✅[^25] |"
+  },
+  {
+   "id": "S12",
+   "line": 175,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "✅[^13]",
+   "context": "| `localStorage` | Yes | No | Yes / yes, whole origin | One of the persistent stores; none stops exfiltration (§8.5) | ✅[^2] ✅[^13]; lab ✅[^25] |"
+  },
+  {
+   "id": "S13",
+   "line": 179,
+   "heading": "## 4. Where the browser can keep a token",
+   "claim": "✅[^2]",
+   "context": "| Web Worker or Service Worker memory | Not directly; the page must ask the worker | No | Worker-dependent | Isolated, but the attacker can still run its own flow; a service worker must not keep tokens in storage shared with the page (§8.2, §8.3) | ✅[^2] |"
+  },
+  {
+   "id": "S14",
+   "line": 212,
+   "heading": "## 5. Architectures",
+   "claim": "Cross-site request forgery (CSRF), where another site makes the browser send a request that carries the cookie, needs a defence ✅[^2]",
+   "context": "Cross-site request forgery (CSRF), where another site makes the browser send a request that carries the cookie, needs a defence ✅[^2]:"
+  },
+  {
+   "id": "S15",
+   "line": 218,
+   "heading": "## 5. Architectures",
+   "claim": "What the BFF does and does not stop ✅[^2]",
+   "context": "What the BFF does and does not stop ✅[^2]:"
+  },
+  {
+   "id": "S16",
+   "line": 231,
+   "heading": "## 5. Architectures",
+   "claim": "Storage follows section 4; no option prevents exfiltration once a script runs on the page ✅[^2]",
+   "context": "The SPA is a public OAuth client and runs the whole authorization-code flow with PKCE (Proof Key for Code Exchange) itself; all four attack scenarios apply ✅[^2]. Its refresh tokens must be rotated or sender-constrained ✅[^3]. Storage follows section 4; no option prevents exfiltration once a script runs on the page ✅[^2]."
+  },
+  {
+   "id": "S17",
+   "line": 246,
+   "heading": "## 5. Architectures",
+   "claim": "RFC 10017 §7.1 covers the same case, a frontend and backend on one domain with no need for OAuth, and points to a cookie-based session with the cookie rules of §6.1.3.2 ✅[^2]",
+   "context": "When one backend both issues and accepts the JWT, ask first whether a JWT is needed: a stateless JWT session needs a denylist to end, which removes the statelessness, and a plain server session may be simpler ✅[^4]. RFC 10017 §7.1 covers the same case, a frontend and backend on one domain with no need for OAuth, and points to a cookie-based session with the cookie rules of §6.1.3.2 ✅[^2]."
+  },
+  {
+   "id": "S18",
+   "line": 254,
+   "heading": "## 5. Architectures",
+   "claim": "mitigated ✅[^2]",
+   "context": "| New-token acquisition | mitigated ✅[^2] | mitigated ✅[^2] | exposed ✅[^2] | depends on whether the AS session allows a silent flow ⚠️ unverified |"
+  },
+  {
+   "id": "S19",
+   "line": 255,
+   "heading": "## 5. Architectures",
+   "claim": "exposed ✅[^25]",
+   "context": "| Proxying through the browser | exposed ✅[^2] | exposed ✅[^2] | exposed ✅[^2] | exposed ✅[^25] |"
+  },
+  {
+   "id": "S20",
+   "line": 269,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "✅[^9]",
+   "context": "| 6.5 | Session check (`sid` or a BFF session) | One login session | Same as 6.2 | One lookup | It is a session store under another name | ✅[^2] ✅[^9] |"
+  },
+  {
+   "id": "S21",
+   "line": 277,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "✅[^19]",
+   "context": "| 6.13 | Device-bound session cookies (DBSC) | Makes stolen cookies expire fast | Cookie lifetime (short) | Periodic refresh | Needs browser and site support | ✅[^19] |"
+  },
+  {
+   "id": "S22",
+   "line": 281,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Short access tokens limit how long a revoked grant can still be used ✅[^6]",
+   "context": "Short access tokens limit how long a revoked grant can still be used ✅[^6], which is why most designs keep them to minutes and accept that window ⚠️ unverified. Worked number: with a 15-minute lifetime, a token issued at 09:30:00 and a logout at 09:40:00 leave a 5-minute window (until 09:45:00); a token issued at 09:39:59 leaves almost the full 15 minutes."
+  },
+  {
+   "id": "S23",
+   "line": 291,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "; an `EXPIREAT` time already in the past deletes the key at once ✅[^16]",
+   "context": "- `EXAT` sets an absolute Unix expiry in seconds ✅[^17]; an `EXPIREAT` time already in the past deletes the key at once ✅[^16], so revoking an already-expired token stores nothing."
+  },
+  {
+   "id": "S24",
+   "line": 291,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "- `EXAT` sets an absolute Unix expiry in seconds ✅[^17]",
+   "context": "- `EXAT` sets an absolute Unix expiry in seconds ✅[^17]; an `EXPIREAT` time already in the past deletes the key at once ✅[^16], so revoking an already-expired token stores nothing."
+  },
+  {
+   "id": "S25",
+   "line": 309,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "- **ECDSA signatures.** If (r, s) is a valid ECDSA signature, so is (r, n − s), where n is the curve order; no private key is needed; EdDSA (the Edwards-curve signature family) is not affected ✅[^5]",
+   "context": "- **ECDSA signatures.** If (r, s) is a valid ECDSA signature, so is (r, n − s), where n is the curve order; no private key is needed; EdDSA (the Edwards-curve signature family) is not affected ✅[^5]. The lab turned a real ES256 signature into its (r, n − s) twin, and Node.js 24 with OpenSSL 3.5.9 accepted both ✅[^24]."
+  },
+  {
+   "id": "S26",
+   "line": 318,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The author of the malleability write-up reports, among others, that PyJWT 2.13.0 accepted all three non-canonical forms and java-jwt 4.5.2 accepted padding and trailing bits; those library results were not re-tested here ✅[^5]",
+   "context": "The author of the malleability write-up reports, among others, that PyJWT 2.13.0 accepted all three non-canonical forms and java-jwt 4.5.2 accepted padding and trailing bits; those library results were not re-tested here ✅[^5]. The OWASP cheat sheet itself used to hash the token for its denylist and switched to `jti`-based keys in June 2026 ✅[^5] ✅[^23]."
+  },
+  {
+   "id": "S27",
+   "line": 322,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The lab ✅[^24]",
+   "context": "\"Reject every token of this user with `iat` before T\" looks like a cheap \"log out everywhere\". But `iat` is usually a whole number of seconds ⚠️ unverified (the lab's issuer rounds down, as many libraries do), and a login can happen in the same second as the logout. The lab ✅[^24]:"
+  },
+  {
+   "id": "S28",
+   "line": 352,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Many tokens share one list (\"herd privacy\"), so the issuer cannot tell which token is being checked; per-token lists would defeat that ✅[^8]",
+   "context": "Analogy: a printed seating chart at the stadium door with one tick box per seat; the usher looks up seat 6 without telling the ticket office who asked. The issuer publishes a signed, compressed bit array (DEFLATE, the zlib compression format); each token carries an index into it (`status.status_list.idx`) and its URL; 1, 2, 4 or 8 bits per token give values such as 0 VALID, 1 INVALID and 2 SUSPENDED; relying parties validate the token first, then check the list, cached for the list's `ttl` or `exp` ✅[^8]. Many tokens share one list (\"herd privacy\"), so the issuer cannot tell which token is being checked; per-token lists would defeat that ✅[^8]. The OWASP cheat sheet recommends it for issuer-side revocation ✅[^4]. Status on 2026-11-22: Internet-Draft 21, approved and in the RFC Editor's queue, not yet an RFC ✅[^8]."
+  },
+  {
+   "id": "S29",
+   "line": 352,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The OWASP cheat sheet recommends it for issuer-side revocation ✅[^4]",
+   "context": "Analogy: a printed seating chart at the stadium door with one tick box per seat; the usher looks up seat 6 without telling the ticket office who asked. The issuer publishes a signed, compressed bit array (DEFLATE, the zlib compression format); each token carries an index into it (`status.status_list.idx`) and its URL; 1, 2, 4 or 8 bits per token give values such as 0 VALID, 1 INVALID and 2 SUSPENDED; relying parties validate the token first, then check the list, cached for the list's `ttl` or `exp` ✅[^8]. Many tokens share one list (\"herd privacy\"), so the issuer cannot tell which token is being checked; per-token lists would defeat that ✅[^8]. The OWASP cheat sheet recommends it for issuer-side revocation ✅[^4]. Status on 2026-11-22: Internet-Draft 21, approved and in the RFC Editor's queue, not yet an RFC ✅[^8]."
+  },
+  {
+   "id": "S30",
+   "line": 368,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The lab ran five cases ✅[^24]",
+   "context": "The lab ran five cases ✅[^24]. In its output, RT1, RT2 … are the successive refresh tokens of one login, and RT2' is the one the thief received:"
+  },
+  {
+   "id": "S31",
+   "line": 406,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "Limits ✅[^11]",
+   "context": "Limits ✅[^11]:"
+  },
+  {
+   "id": "S32",
+   "line": 416,
+   "heading": "## 6. Revocation mechanisms",
+   "claim": "The OP should not resend except after a suspected recoverable failure ✅[^9]",
+   "context": "- **OIDC back-channel logout:** analogy: the hotel's front desk phoning every restaurant where the guest ran a tab, server to server, instead of relying on the guest to walk past each one. The OP posts `logout_token=<JWT>` to each client's registered `backchannel_logout_uri`; the client validates it (signature, `iss`, `aud`, `iat`, `exp`, `events` containing `http://schemas.openid.net/event/backchannel-logout`, `sub` or `sid`, no `nonce`), ends the matching sessions, and answers `200` (or `204`); refresh tokens without `offline_access` should be revoked, those with it normally kept ✅[^9]. The OP should not resend except after a suspected recoverable failure ✅[^9], so a client that is down misses the logout. A decoded logout-token payload, with illustrative values:"
+  },
+  {
+   "id": "S33",
+   "line": 441,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^6]",
+   "context": "| Shorter access-token lifetime | More frequent refreshes | More refresh calls | More token-endpoint load | Revocation matters less | Stolen access tokens die sooner | ✅[^2] ✅[^6] |"
+  },
+  {
+   "id": "S34",
+   "line": 442,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^24]",
+   "context": "| Turn on rotation | Tabs that share a refresh token race (D4) | Needs single-flight refresh or a leeway | Must store token families | — | Old copies trigger detection; the newest copy still works if never contested (D3) | ✅[^24] ✅[^3] |"
+  },
+  {
+   "id": "S35",
+   "line": 444,
+   "heading": "## 7. Cross-side interactions",
+   "claim": "✅[^4]",
+   "context": "| Add a denylist or version check at the RS | — | — | — | One lookup per request; must decide what to do if the store is down | Revoked tokens die within cache time | ✅[^4]; outage policy ⚠️ unverified |"
+  },
+  {
+   "id": "S36",
+   "line": 509,
+   "heading": "## 8. Worked example: one full pass through a BFF",
+   "claim": "Revoked at the AS (RFC 7009) ✅[^6]",
+   "context": "| RT2 | 09:40:00 | Revoked at the AS (RFC 7009) ✅[^6] |"
+  },
+  {
+   "id": "S37",
+   "line": 514,
+   "heading": "## 8. Worked example: one full pass through a BFF",
+   "claim": "Swap in a browser-only SPA with tokens in `localStorage` and step 9 changes: an injected script could have copied RT2 earlier and, if the app never presents RT2 again, refreshed with it later (lab case D3 ✅[^24]",
+   "context": "Swap in a browser-only SPA with tokens in `localStorage` and step 9 changes: an injected script could have copied RT2 earlier and, if the app never presents RT2 again, refreshed with it later (lab case D3 ✅[^24]); only the AS-side revocation in step 8 ends it."
+  },
+  {
+   "id": "S38",
+   "line": 523,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^11]",
+   "context": "| 4 | XSS calls APIs through the BFF | Works while the page is open | Fix the XSS; CSP (Content Security Policy) as a second layer | ✅[^2] ✅[^11] |"
+  },
+  {
+   "id": "S39",
+   "line": 525,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^4]",
+   "context": "| 6 | Denylist keyed on SHA-256 of the token | Malleated copy passes | Key on (`iss`, `jti`); strict base64url; low-s ECDSA | ✅[^4] ✅[^5] ✅[^24] |"
+  },
+  {
+   "id": "S40",
+   "line": 526,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^17]",
+   "context": "| 7 | Denylist entry expires before the token | Revoked token becomes valid again | Set the entry's expiry to the token's `exp` (`EXAT`) | ✅[^17]; consequence ⚠️ unverified |"
+  },
+  {
+   "id": "S41",
+   "line": 534,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^11]",
+   "context": "| 15 | DPoP without server nonce | Pre-signed proofs with future `iat` work later | Require `DPoP-Nonce`; short access tokens | ✅[^11] |"
+  },
+  {
+   "id": "S42",
+   "line": 536,
+   "heading": "## 9. Edge-case and failure matrix",
+   "claim": "✅[^12]",
+   "context": "| 17 | `__Host-` or `__Host-Http-` cookie set with a wrong attribute | Browser silently drops it; user never gets a session | Test cookie settings in each target browser | ✅[^12] ✅[^25] |"
+  },
+  {
+   "id": "S43",
+   "line": 545,
+   "heading": "## 10. Recommended baseline",
+   "claim": "**If tokens must reach the browser,** keep access tokens in memory, keep refresh tokens out of page-readable storage (a worker at best), and make refresh tokens rotating or DPoP-bound ✅[^2]",
+   "context": "2. **If tokens must reach the browser,** keep access tokens in memory, keep refresh tokens out of page-readable storage (a worker at best), and make refresh tokens rotating or DPoP-bound ✅[^2] ✅[^3]."
+  },
+  {
+   "id": "S44",
+   "line": 546,
+   "heading": "## 10. Recommended baseline",
+   "claim": "**Short access tokens** plus a revocation check where \"log out\" must be immediate: a per-user version counter for \"everywhere\", (`iss`, `jti`) or `sid` for one token or session, with entries expiring at the token's `exp` ✅[^4]",
+   "context": "3. **Short access tokens** plus a revocation check where \"log out\" must be immediate: a per-user version counter for \"everywhere\", (`iss`, `jti`) or `sid` for one token or session, with entries expiring at the token's `exp` ✅[^4] ✅[^24]."
+  },
+  {
+   "id": "S45",
+   "line": 559,
+   "heading": "## 11. Lab notes",
+   "claim": "In headless Chrome the IndexedDB step never completed, so that one result comes from Chromium 152 only ✅[^25]",
+   "context": "To rerun: `node experiments/jwt-revocation-lab.mjs`; `node experiments/cookie-visibility-server.mjs 8787`, then open `http://localhost:8787/` and, afterwards, `http://localhost:8787/clear` to remove the lab's cookies, storage and database. In headless Chrome the IndexedDB step never completed, so that one result comes from Chromium 152 only ✅[^25]."
+  }
+ ]
+}

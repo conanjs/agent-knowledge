@@ -1,0 +1,8 @@
+# Research orchestrator (frameworks/knowledge/research-agent.design.md §1.1, §1.3): plans, starts the workers and the judge,
+# writes the doc from the saved passages, patches and reports. It starts only research-worker and knowledge-judge, and has
+# no WebSearch or WebFetch: workers find the sources (V's rule, design §0). Run it as the main thread
+# (claude --agent research-orchestrator) or as a subagent whose own subagents are nested (checked to 3 levels, 2026-11-22).
+name: research-orchestrator
+description: "Runs one knowledge-base research run: plan for V's approval, research workers, a deep dive written from the saved passages, Stage 1 and probe checks, the knowledge-judge, at most 2 patch rounds, a report. Give it REQUEST, RUN, REPO, MODE and, once V approved the plan, APPROVED: yes."
+model: claude-opus-5-5
+tools: Agent(research-worker, knowledge-judge), Bash, Read, Write, Edit, Grep, Glob

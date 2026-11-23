@@ -1,0 +1,197 @@
+Pager usage is off.
+CREATE EXTENSION IF NOT EXISTS pg_visibility;
+CREATE EXTENSION
+SHOW vacuum_freeze_min_age;
+ vacuum_freeze_min_age 
+-----------------------
+ 50000000
+(1 row)
+
+SHOW vacuum_freeze_table_age;
+ vacuum_freeze_table_age 
+-------------------------
+ 150000000
+(1 row)
+
+SHOW autovacuum_freeze_max_age;
+ autovacuum_freeze_max_age 
+---------------------------
+ 200000000
+(1 row)
+
+SHOW vacuum_failsafe_age;
+ vacuum_failsafe_age 
+---------------------
+ 1600000000
+(1 row)
+
+DROP TABLE IF EXISTS frz;
+psql:/exp/04-freezing.sql:11: NOTICE:  table "frz" does not exist, skipping
+DROP TABLE
+CREATE TABLE frz (id int, pad text) WITH (autovacuum_enabled = off);
+CREATE TABLE
+INSERT INTO frz SELECT g, repeat('x', 100) FROM generate_series(1, 2000) g;
+INSERT 0 2000
+SELECT relpages, relfrozenxid, age(relfrozenxid) FROM pg_class WHERE relname = 'frz';
+ relpages | relfrozenxid | age 
+----------+--------------+-----
+        0 |          777 |   2
+(1 row)
+
+--- burn 5000 XIDs (each loop iteration is its own committed transaction)
+DO $$ BEGIN
+  FOR i IN 1..5000 LOOP PERFORM pg_current_xact_id(); COMMIT; END LOOP;
+END $$;
+DO
+SELECT relfrozenxid, age(relfrozenxid) FROM pg_class WHERE relname = 'frz';
+ relfrozenxid | age  
+--------------+------
+          777 | 5002
+(1 row)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+--- plain VACUUM: rows are younger than vacuum_freeze_min_age (50M), so few or none are frozen
+VACUUM (VERBOSE) frz;
+psql:/exp/04-freezing.sql:26: INFO:  vacuuming "lab.public.frz"
+psql:/exp/04-freezing.sql:26: INFO:  finished vacuuming "lab.public.frz": index scans: 0
+pages: 0 removed, 35 remain, 35 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 2000 remain, 0 are dead but not yet removable
+removable cutoff: 5779, which was 0 XIDs old when operation ended
+new relfrozenxid: 778, which is 1 XIDs ahead of previous value
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 35 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 18.572 MB/s
+buffer usage: 85 hits, 0 reads, 3 dirtied
+WAL usage: 38 records, 3 full page images, 27051 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/04-freezing.sql:26: INFO:  vacuuming "lab.pg_toast.pg_toast_16506"
+psql:/exp/04-freezing.sql:26: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16506": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 5779, which was 0 XIDs old when operation ended
+new relfrozenxid: 5779, which is 5002 XIDs ahead of previous value
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 23.182 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 27 hits, 1 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 258 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+SELECT relfrozenxid, age(relfrozenxid), relallvisible, relallfrozen FROM pg_class WHERE relname = 'frz';
+ relfrozenxid | age  | relallvisible | relallfrozen 
+--------------+------+---------------+--------------
+          778 | 5001 |            35 |            0
+(1 row)
+
+SELECT sum(all_visible::int) AS pages_all_visible, sum(all_frozen::int) AS pages_all_frozen
+FROM pg_visibility_map('frz');
+ pages_all_visible | pages_all_frozen 
+-------------------+------------------
+                35 |                0
+(1 row)
+
+SELECT lp, t_xmin, to_hex(t_infomask) AS infomask,
+       (t_infomask & x'0300'::int) = x'0300'::int AS xmin_frozen
+FROM heap_page_items(get_raw_page('frz', 0)) LIMIT 2;
+ lp | t_xmin | infomask | xmin_frozen 
+----+--------+----------+-------------
+  1 |    778 | 902      | f
+  2 |    778 | 902      | f
+(2 rows)
+
+--- VACUUM (FREEZE): same as vacuum_freeze_min_age = 0 and vacuum_freeze_table_age = 0
+VACUUM (FREEZE, VERBOSE) frz;
+psql:/exp/04-freezing.sql:35: INFO:  aggressively vacuuming "lab.public.frz"
+psql:/exp/04-freezing.sql:35: INFO:  finished vacuuming "lab.public.frz": index scans: 0
+pages: 0 removed, 35 remain, 35 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 2000 remain, 0 are dead but not yet removable
+removable cutoff: 5779, which was 0 XIDs old when operation ended
+new relfrozenxid: 5779, which is 5001 XIDs ahead of previous value
+frozen: 35 pages from table (100.00% of total) had 2000 tuples frozen
+visibility map: 0 pages set all-visible, 35 pages set all-frozen (35 were all-visible)
+index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 86 hits, 0 reads, 0 dirtied
+WAL usage: 71 records, 0 full page images, 8752 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/04-freezing.sql:35: INFO:  aggressively vacuuming "lab.pg_toast.pg_toast_16506"
+psql:/exp/04-freezing.sql:35: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16506": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 5779, which was 0 XIDs old when operation ended
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 6 hits, 0 reads, 0 dirtied
+WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+VACUUM
+SELECT relfrozenxid, age(relfrozenxid), relallvisible, relallfrozen FROM pg_class WHERE relname = 'frz';
+ relfrozenxid | age | relallvisible | relallfrozen 
+--------------+-----+---------------+--------------
+         5779 |   0 |            35 |           35
+(1 row)
+
+SELECT sum(all_visible::int) AS pages_all_visible, sum(all_frozen::int) AS pages_all_frozen
+FROM pg_visibility_map('frz');
+ pages_all_visible | pages_all_frozen 
+-------------------+------------------
+                35 |               35
+(1 row)
+
+--- the original xmin is kept; only the infomask bits say "frozen"
+SELECT lp, t_xmin, to_hex(t_infomask) AS infomask,
+       (t_infomask & x'0300'::int) = x'0300'::int AS xmin_frozen
+FROM heap_page_items(get_raw_page('frz', 0)) LIMIT 2;
+ lp | t_xmin | infomask | xmin_frozen 
+----+--------+----------+-------------
+  1 |    778 | b02      | t
+  2 |    778 | b02      | t
+(2 rows)
+
+SELECT xmin, age(xmin) AS age_of_raw_xmin FROM frz LIMIT 1;
+ xmin | age_of_raw_xmin 
+------+-----------------
+  778 |            5001
+(1 row)
+
+--- an UPDATE clears the all-frozen bit of the page it touches
+UPDATE frz SET pad = 'y' WHERE id = 1;
+UPDATE 1
+SELECT blkno, all_visible, all_frozen FROM pg_visibility_map('frz') WHERE blkno = 0;
+ blkno | all_visible | all_frozen 
+-------+-------------+------------
+     0 | f           | f
+(1 row)
+
+--- the monitoring queries from the docs
+SELECT c.oid::regclass AS table_name,
+       greatest(age(c.relfrozenxid), age(t.relfrozenxid)) AS age
+FROM pg_class c LEFT JOIN pg_class t ON c.reltoastrelid = t.oid
+WHERE c.relkind IN ('r', 'm') ORDER BY 2 DESC LIMIT 5;
+      table_name       | age  
+-----------------------+------
+ pg_authid             | 5035
+ pg_type               | 5035
+ pg_statistic          | 5035
+ pg_foreign_table      | 5035
+ pg_statistic_ext_data | 5035
+(5 rows)
+
+SELECT datname, datfrozenxid, age(datfrozenxid), datminmxid, mxid_age(datminmxid) FROM pg_database ORDER BY 3 DESC;
+  datname  | datfrozenxid | age  | datminmxid | mxid_age 
+-----------+--------------+------+------------+----------
+ postgres  |          745 | 5035 |          1 |        1
+ lab       |          745 | 5035 |          1 |        1
+ template1 |          745 | 5035 |          1 |        1
+ template0 |          745 | 5035 |          1 |        1
+(4 rows)
+

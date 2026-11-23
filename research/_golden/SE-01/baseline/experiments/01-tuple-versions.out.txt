@@ -1,0 +1,236 @@
+Pager usage is off.
+SELECT version();
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.3 (Debian 18.3-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+CREATE EXTENSION IF NOT EXISTS pageinspect;
+CREATE EXTENSION
+CREATE EXTENSION IF NOT EXISTS dblink;
+CREATE EXTENSION
+DROP TABLE IF EXISTS acct;
+psql:/exp/01-tuple-versions.sql:10: NOTICE:  table "acct" does not exist, skipping
+DROP TABLE
+CREATE TABLE acct (id int PRIMARY KEY, owner text, balance int)
+  WITH (autovacuum_enabled = off);
+CREATE TABLE
+--- 1. INSERT in transaction T1
+BEGIN;
+BEGIN
+INSERT INTO acct VALUES (1, 'ann', 100), (2, 'bob', 50);
+INSERT 0 2
+SELECT pg_current_xact_id() AS t1_xid;
+ t1_xid 
+--------
+    757
+(1 row)
+
+COMMIT;
+COMMIT
+SELECT ctid, xmin, xmax, * FROM acct ORDER BY id;
+ ctid  | xmin | xmax | id | owner | balance 
+-------+------+------+----+-------+---------
+ (0,1) |  757 |    0 |  1 | ann   |     100
+ (0,2) |  757 |    0 |  2 | bob   |      50
+(2 rows)
+
+--- 2. UPDATE id=1 in transaction T2 (balance is not indexed -> HOT update)
+BEGIN;
+BEGIN
+UPDATE acct SET balance = 90 WHERE id = 1;
+UPDATE 1
+SELECT pg_current_xact_id() AS t2_xid;
+ t2_xid 
+--------
+    758
+(1 row)
+
+COMMIT;
+COMMIT
+SELECT ctid, xmin, xmax, * FROM acct ORDER BY id;
+ ctid  | xmin | xmax | id | owner | balance 
+-------+------+------+----+-------+---------
+ (0,3) |  758 |    0 |  1 | ann   |      90
+ (0,2) |  757 |    0 |  2 | bob   |      50
+(2 rows)
+
+--- 3. DELETE id=2 in transaction T3
+BEGIN;
+BEGIN
+DELETE FROM acct WHERE id = 2;
+DELETE 1
+SELECT pg_current_xact_id() AS t3_xid;
+ t3_xid 
+--------
+    759
+(1 row)
+
+COMMIT;
+COMMIT
+SELECT ctid, xmin, xmax, * FROM acct ORDER BY id;
+ ctid  | xmin | xmax | id | owner | balance 
+-------+------+------+----+-------+---------
+ (0,3) |  758 |    0 |  1 | ann   |      90
+(1 row)
+
+--- 4. Raw page 0: every tuple still physically there (pageinspect)
+SELECT lp, lp_flags, t_xmin, t_xmax, t_ctid,
+       to_hex(t_infomask)  AS infomask,
+       to_hex(t_infomask2) AS infomask2,
+       (t_infomask & x'0100'::int) <> 0 AS xmin_committed_hint,
+       (t_infomask & x'0800'::int) <> 0 AS xmax_invalid_hint,
+       (t_infomask2 & x'4000'::int) <> 0 AS hot_updated,
+       (t_infomask2 & x'8000'::int) <> 0 AS heap_only
+FROM heap_page_items(get_raw_page('acct', 0));
+ lp | lp_flags | t_xmin | t_xmax | t_ctid | infomask | infomask2 | xmin_committed_hint | xmax_invalid_hint | hot_updated | heap_only 
+----+----------+--------+--------+--------+----------+-----------+---------------------+-------------------+-------------+-----------
+  1 |        1 |    757 |    758 | (0,3)  | 502      | 4003      | t                   | f                 | t           | f
+  2 |        1 |    757 |    759 | (0,2)  | 502      | 2003      | t                   | f                 | f           | f
+  3 |        1 |    758 |      0 | (0,3)  | 2902     | 8003      | t                   | t                 | f           | t
+(3 rows)
+
+--- 5. Statistics view counts dead tuples (may lag: stats are flushed asynchronously)
+SELECT pg_sleep(1.5);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT n_live_tup, n_dead_tup, n_tup_upd, n_tup_hot_upd FROM pg_stat_user_tables WHERE relname = 'acct';
+ n_live_tup | n_dead_tup | n_tup_upd | n_tup_hot_upd 
+------------+------------+-----------+---------------
+          1 |          2 |         1 |             1
+(1 row)
+
+--- 6. ROLLBACK leaves an aborted version behind
+BEGIN;
+BEGIN
+UPDATE acct SET balance = 0 WHERE id = 1;
+UPDATE 1
+SELECT pg_current_xact_id() AS t4_xid_rolled_back 
+ROLLBACK;
+ROLLBACK
+SELECT ctid, xmin, xmax, * FROM acct ORDER BY id;
+ ctid  | xmin | xmax | id | owner | balance 
+-------+------+------+----+-------+---------
+ (0,3) |  758 |  760 |  1 | ann   |      90
+(1 row)
+
+T4 xid was 760
+SELECT pg_xact_status('760'::xid8) AS status_of_t4;
+ status_of_t4 
+--------------
+ aborted
+(1 row)
+
+SELECT lp, lp_flags, t_xmin, t_xmax, t_ctid, to_hex(t_infomask) AS infomask
+FROM heap_page_items(get_raw_page('acct', 0));
+ lp | lp_flags | t_xmin | t_xmax | t_ctid | infomask 
+----+----------+--------+--------+--------+----------
+  1 |        1 |    757 |    758 | (0,3)  | 502
+  2 |        1 |    757 |    759 | (0,2)  | 502
+  3 |        1 |    758 |    760 | (0,4)  | 2902
+  4 |        1 |    760 |      0 | (0,4)  | 2802
+(4 rows)
+
+--- 7. VACUUM (VERBOSE): dead versions removed, line pointers reusable
+VACUUM (VERBOSE) acct;
+psql:/exp/01-tuple-versions.sql:62: INFO:  vacuuming "lab.public.acct"
+psql:/exp/01-tuple-versions.sql:62: INFO:  finished vacuuming "lab.public.acct": index scans: 1
+pages: 0 removed, 1 remain, 1 scanned (100.00% of total), 0 eagerly scanned
+tuples: 3 removed, 1 remain, 0 are dead but not yet removable
+removable cutoff: 761, which was 0 XIDs old when operation ended
+new relfrozenxid: 758, which is 2 XIDs ahead of previous value
+frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+visibility map: 1 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan needed: 1 pages from table (100.00% of total) had 1 dead item identifiers removed
+index "acct_pkey": pages: 2 in total, 0 newly deleted, 0 currently deleted, 0 reusable
+avg read rate: 0.000 MB/s, avg write rate: 50.485 MB/s
+buffer usage: 27 hits, 0 reads, 4 dirtied
+WAL usage: 9 records, 4 full page images, 33714 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+psql:/exp/01-tuple-versions.sql:62: INFO:  vacuuming "lab.pg_toast.pg_toast_16477"
+psql:/exp/01-tuple-versions.sql:VACUUM
+SELECT lp, lp_flags, t_xmin, t_xmax, t_ctid, to_hex(t_infomask) AS infomask
+FROM heap_page_items(get_raw_page('acct', 0));
+62: INFO:  finished vacuuming "lab.pg_toast.pg_toast_16477": index scans: 0
+pages: 0 removed, 0 remain, 0 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 0 remain, 0 are dead but not yet removable
+removable cutoff: 761, which was 0 XIDs old when operation ended
+new relfrozenxid: 761, which is 5 XIDs ahead of previous value
+frozen: 0 pages from table (100.00% of total) had 0 tuples frozen
+visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+index scan not needed: 0 pages from table (100.00% of total) had 0 dead item identifiers removed
+avg read rate: 40.064 MB/s, avg write rate: 0.000 MB/s
+buffer usage: 27 hits, 1 reads, 0 dirtied
+WAL usage: 1 records, 0 full page images, 258 bytes, 0 buffers full
+system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+ lp | lp_flags | t_xmin | t_xmax | t_ctid | infomask 
+----+----------+--------+--------+--------+----------
+  1 |        2 |        |        |        | 
+  2 |        0 |        |        |        | 
+  3 |        1 |    758 |    760 | (0,4)  | 2902
+(3 rows)
+
+--- 8. Two sessions lock the same row FOR SHARE -> xmax becomes a MultiXactId
+INSERT INTO acct VALUES (3, 'cat', 10);
+INSERT 0 1
+SELECT dblink_connect('s2', 'dbname=lab');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+BEGIN;
+BEGIN
+SELECT id FROM acct WHERE id = 3 FOR SHARE;
+ id 
+----
+  3
+(1 row)
+
+SELECT dblink_exec('s2', 'BEGIN');
+ dblink_exec 
+-------------
+ BEGIN
+(1 row)
+
+SELECT * FROM dblink('s2', 'SELECT id FROM acct WHERE id = 3 FOR SHARE') AS t(id int);
+ id 
+----
+  3
+(1 row)
+
+SELECT xmax, ctid, (ctid::text::point)[1]::int AS lpno FROM acct WHERE id = 3 
+row id=3: xmax = 1 , ctid = (0,2)
+SELECT lp, t_xmin, t_xmax, to_hex(t_infomask) AS infomask,
+       (t_infomask & x'1000'::int) <> 0 AS xmax_is_multi,
+       (t_infomask & x'0080'::int) <> 0 AS xmax_lock_only
+FROM heap_page_items(get_raw_page('acct', 0)) WHERE lp = 2;
+ lp | t_xmin | t_xmax | infomask | xmax_is_multi | xmax_lock_only 
+----+--------+--------+----------+---------------+----------------
+  2 |    761 |      1 | 11d2     | t             | t
+(1 row)
+
+SELECT * FROM pg_get_multixact_members('1');
+ xid | mode 
+-----+------
+ 762 | sh
+ 763 | sh
+(2 rows)
+
+COMMIT;
+COMMIT
+SELECT dblink_exec('s2', 'COMMIT');
+ dblink_exec 
+-------------
+ COMMIT
+(1 row)
+
+SELECT dblink_disconnect('s2');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+

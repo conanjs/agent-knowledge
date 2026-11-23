@@ -61,7 +61,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    - **every** ✅ claim in roles 1–5 and the Summary;
    - in role 6, every claim that records a disagreement between sources or cites a Rank 6 source, plus a sample of the rest: in document order, take the first and then every k-th, with k = ceil(remaining ÷ 15).
 
-   Skip ⚠️ claims: the doc already says they are unverified. A claim that cites only local artifacts other than probes gets `not_checkable`.
+   Skip ⚠️ claims: the doc already says they are unverified. Do not skip a `⚖️ open conflict`: check each side against its own source. A claim that cites only local artifacts other than probes gets `not_checkable`.
 
    **When `claims.json` is present, ground exactly its claims instead**: no more, no fewer, and keep their ids. Each entry gives the line number, the heading it sits under, the claim text and the full line as context. Map each to a role through `section_map`. Set `coverage.sampled` to `true` and count the sample in `checked_roles_1_5` and `checked_role_6`.
 
@@ -89,7 +89,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
 
    With several citations, judge against all of them together. A claim that makes several statements gets the worst verdict, and the worst severity (step 9), of its parts. For every claim, quote what the page says (`page_says`, at most 30 words, copied from the saved text) or write "not found" with the words you searched for. Give every non-`entails` claim its severity from step 9.
 
-6. **Audit conflicts** (rule KB-17). Look for places where cited sources disagree, or where the doc states as fact something a higher-ranked cached source contradicts. The claim from the lower rank number must govern roles 1–5. The other claim belongs in role 6 with its source, its rank and why it is wrong or when it holds. Two sources of the same rank that disagree must be settled by a Rank 1 source or left in role 6 as an open conflict marked ⚠️. An unarbitrated conflict in roles 1–5 is a `CRITICAL_FAIL`.
+6. **Audit conflicts** (rule KB-17). Look for places where cited sources disagree, or where the doc states as fact something a higher-ranked cached source contradicts. The claim from the lower rank number must govern roles 1–5. The other claim belongs in role 6 with its source, its rank and why it is wrong or when it holds. Two sources of the same rank that disagree must be settled by a Rank 1 source or left in role 6 as an open conflict marked `⚖️ open conflict`, each side with its own source and rank. An unarbitrated conflict in roles 1–5 is a `CRITICAL_FAIL`.
 
 7. **Check structure** (Diátaxis): each section does its role's job. Role 4 holds real runs with inputs and outputs, not restated definitions. Role 6 holds concrete trade-offs or failure modes, ideally as a decision table. Role 2 holds no mechanism text. Filler or repetition lowers the score.
 

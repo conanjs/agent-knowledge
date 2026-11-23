@@ -1,0 +1,943 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 4.25,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope",
+      "note": "Summary; its claims are judged at the strictest role of the sections it summarizes (role 3)"
+    },
+    {
+      "heading": "## 1. Mental model",
+      "role": 1
+    },
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How it works",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 Which row versions a snapshot sees",
+      "role": 3
+    },
+    {
+      "heading": "### 3.2 Why the horizon is about two billion",
+      "role": 3
+    },
+    {
+      "heading": "### 3.3 How freezing advances `relfrozenxid`",
+      "role": 3
+    },
+    {
+      "heading": "### 3.4 Escalation as the oldest XID ages",
+      "role": 3
+    },
+    {
+      "heading": "### 3.5 What holds the oldest XID back",
+      "role": 3
+    },
+    {
+      "heading": "### 3.6 MultiXacts, a second 32-bit counter",
+      "role": 3
+    },
+    {
+      "heading": "## 4. Worked examples",
+      "role": 4
+    },
+    {
+      "heading": "### 4.1 A snapshot decision, step by step",
+      "role": 4
+    },
+    {
+      "heading": "### 4.2 The server's limit arithmetic, run",
+      "role": 4
+    },
+    {
+      "heading": "### 4.3 The circle, run",
+      "role": 4
+    },
+    {
+      "heading": "### 4.4 Monitoring queries with output",
+      "role": 4
+    },
+    {
+      "heading": "### 4.5 Alert thresholds in use",
+      "role": 4
+    },
+    {
+      "heading": "### 4.6 Incident: Sentry, July 2015 (XID exhaustion)",
+      "role": 4
+    },
+    {
+      "heading": "### 4.7 Incident: Metronome, May 2025 (MultiXact members, Aurora PostgreSQL 13.18)",
+      "role": 4
+    },
+    {
+      "heading": "## 5. Reference & invariants",
+      "role": 5
+    },
+    {
+      "heading": "### 5.1 Freezing settings (PostgreSQL 19)",
+      "role": 5
+    },
+    {
+      "heading": "### 5.2 Messages (`REL_19_0`)",
+      "role": 5
+    },
+    {
+      "heading": "### 5.3 Rules",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "### 6.1 Trade-offs",
+      "role": 6
+    },
+    {
+      "heading": "### 6.2 Pitfalls",
+      "role": 6
+    },
+    {
+      "heading": "### 6.3 Misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "### 6.4 Conflicts between sources",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^pg-vac]",
+      "url": "https://www.postgresql.org/docs/19/routine-vacuuming.html",
+      "cache": "cache/a1c63f6fd4b0.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^pg-gloss]",
+      "url": "https://www.postgresql.org/docs/19/glossary.html",
+      "cache": "cache/27c43bfdc65d.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^pg-conf]",
+      "url": "https://www.postgresql.org/docs/19/runtime-config-vacuum.html",
+      "cache": "cache/5c27223996ca.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: postgresql.org/docs/"
+    },
+    {
+      "ref": "[^src-snap]",
+      "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/include/utils/snapshot.h",
+      "cache": "cache/ee30efaea37d.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/postgres/"
+    },
+    {
+      "ref": "[^src-vac]",
+      "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/heap/vacuumlazy.c",
+      "cache": "cache/d4c2d1a71354.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/postgres/"
+    },
+    {
+      "ref": "[^src-xid]",
+      "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/transam/varsup.c",
+      "cache": "cache/62bd535f9413.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/postgres/"
+    },
+    {
+      "ref": "[^aws-rds]",
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Autovacuum.NeedVacuuming.html",
+      "cache": "cache/1a86813f6c34.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: docs.aws.amazon.com/"
+    },
+    {
+      "ref": "[^sentry]",
+      "url": "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+      "cache": "cache/b988e77d1505.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "rule 4 (class): a company's engineering blog post-mortem of its own outage (byline David Cramer, July 23, 2015). Rule 1 does not fit (not the originator of the concept); rule 2 does not fit (a blog post, not a project's repository, docs or release notes, and the claims are about PostgreSQL or Sentry's incident); rule 3 does not fit (not a mailing list)."
+    },
+    {
+      "ref": "[^crunchy]",
+      "url": "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+      "cache": "cache/f113cf83d84a.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "rule 4 (class): Crunchy Data's company blog (byline Keith Fiske, Jan 31, 2019); vetted engineering literature. Rules 1-3 do not fit: no originator evidence, not PostgreSQL's own home, not a mailing-list post."
+    },
+    {
+      "ref": "[^pganalyze]",
+      "url": "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+      "cache": "cache/dc191bb5de10.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "pganalyze's own product: its check frequency, default thresholds and the queries it documents",
+      "rank_basis": "rule 2: the page is pganalyze's own product documentation, so Rank 1 for claims about pganalyze itself (S24). For claims about PostgreSQL behaviour (S15, the rollback part of S22) rule 2 does not apply and rule 4 (class) gives Rank 4: a vendor's technical documentation, comparable to a company's engineering literature."
+    },
+    {
+      "ref": "[^metronome]",
+      "url": "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+      "cache": "cache/8e4fad8d2a37.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "rule 4 (class): a company's official post-mortem of its own incident on its engineering blog. It quotes PostgreSQL developer Thomas Munro, but the saved page is Metronome's, not a maintainer's mailing-list post, so rule 3 does not apply."
+    },
+    {
+      "ref": "[^aws-mxact]",
+      "url": "https://aws.amazon.com/blogs/database/multixacts-in-postgresql-usage-side-effects-and-monitoring",
+      "cache": "cache/4706e813af01.txt",
+      "tier": "A",
+      "rank": 4,
+      "rank_basis": "tier A: aws.amazon.com/blogs/"
+    },
+    {
+      "ref": "[^percona]",
+      "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+      "cache": "cache/a205f446fd68.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "rule 4 (class): Percona's company blog (byline Robert Bernier, April 13, 2022), Rank 4. The page's reader comments (commenter 'Eddie') are community, unvetted content: Rank 6 for claims resting on them (S44). Cited in role 6 only, so neither rank can breach quarantine."
+    },
+    {
+      "ref": "[^probe-01]",
+      "url": "probes/probe-01.c",
+      "cache": "probes/probe-01.c (harness.json status pass)",
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "probe run in the harness sandbox (c runtime, image linlab:1)"
+    },
+    {
+      "ref": "[^probe-02]",
+      "url": "probes/probe-02.c",
+      "cache": "probes/probe-02.c (harness.json status pass)",
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "probe run in the harness sandbox (c runtime, image linlab:1)"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 4,
+    "factual_grounding": 4,
+    "diataxis_rigor": 4
+  },
+  "rubric_notes": {
+    "citation_integrity": "All 15 footnote labels resolve to References entries and each is cited in the body; every ✅ in roles 1-5 and the Summary carries a citation.",
+    "rank_compliance": "No quarantine breach: Rank 4 sources ([^pganalyze] for PostgreSQL behaviour, [^aws-mxact], [^metronome]) appear in role 3, which allows 1-4. Every conflict is settled or kept in role 6. One role-6 issue: the TOAST exchange misses the Rank 1 glossary evidence.",
+    "factual_grounding": "45 sampled claims: 43 entail, 1 is observed, 1 overstates (WARN, S4). No CRITICAL_FAIL grounding finding.",
+    "diataxis_rigor": "Each section does its role's job. §4.5 is reference-like rather than a run. §6 has no decision table, and misconception 8 leaves out the main trade-off of VACUUM FULL (table locking)."
+  },
+  "coverage": {
+    "sampled": true,
+    "claims_roles_1_5": 53,
+    "checked_roles_1_5": 30,
+    "claims_role_6": 27,
+    "checked_role_6": 15,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "S1",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "**TL;DR:** PostgreSQL implements multi-version concurrency control (MVCC) by creating copies (versions) of tuples as they are modified and removing the old versions once the transactions that can see them have ended ✅[^pg-gloss]",
+      "source": "[^pg-gloss]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "MVCC is implemented by creating copies (versions) of tuples as they are modified; after transactions that can see the old versions terminate, those old versions need to be removed.",
+      "note": "Summary claim, judged at role 3 strictness. Glossary entry 'Multi-version concurrency control (MVCC)'."
+    },
+    {
+      "id": "S2",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "**The thesis.** Visibility depends on comparing XIDs, and since XIDs have only 32 bits, a cluster that runs for more than 4 billion transactions would suffer transaction ID wraparound: transactions in the past suddenly appear to be in the future and their output becomes invisible, which the manual calls catastrophic data loss even though the data is still there ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a cluster that runs for a long time (more than 4 billion transactions) would suffer transaction ID wraparound … which means their output become invisible. In short, catastrophic data loss.",
+      "note": "Section 24.1.5 opening paragraph; it also says the data is still there and that MVCC semantics depend on comparing XIDs."
+    },
+    {
+      "id": "S3",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "Freezing is the cure: VACUUM marks rows as frozen once their inserting transaction committed far enough in the past that its effects are certain to be visible to all current and future transactions ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "VACUUM will mark rows as frozen, indicating that they were inserted by a transaction that committed sufficiently far in the past that the effects of the inserting transaction are certain",
+      "note": "Continues 'to be visible to all current and future transactions'."
+    },
+    {
+      "id": "S4",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "`xmin` is the row's insertion XID, visible as a system column; `xmax` is a field of the tuple header, where a multixact ID is stored when several transactions lock the row ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "whenever there is more than one transaction concurrently locking a row … only the multixact ID appears in the xmax field in the tuple header",
+      "note": "The xmin part is supported (the Note on pre-9.4 freezing calls xmin the row's insertion XID, a system column). The xmax part drops the page's qualifier 'concurrently': a multixact is used only while more than one transaction locks the row at the same time, not whenever several transactions have locked it. Dropped qualifier in role 2, so WARN. The doc's own MultiXact row (line 43) keeps 'at once'."
+    },
+    {
+      "id": "S5",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "The unique, sequentially assigned number a transaction receives when it first causes a database modification, only 32 bits wide on disk; a 32-bit epoch extends it, and in some contexts epoch and XID are considered together as a single 64-bit value ✅[^pg-gloss]",
+      "source": "[^pg-gloss]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "identifier that each transaction receives when it first causes a database modification … xids are only 32-bits wide … epochs are used, also 32 bits wide",
+      "note": "The same glossary entry says epoch and xid are considered together as a single 64-bit value in some contexts."
+    },
+    {
+      "id": "S6",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Two bits per page: all-visible (all tuples on the page are visible to all transactions) and all-frozen (all tuples on the page are marked frozen) ✅[^pg-gloss]",
+      "source": "[^pg-gloss]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The visibility map entry for each page stores two bits: the first one (all-visible) indicates that all tuples in the page are visible to all transactions.",
+      "note": "The next sentence defines the second bit, all-frozen, as all tuples in the page marked frozen."
+    },
+    {
+      "id": "S7",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Under an MVCC snapshot a tuple is visible if and only if it is valid for that snapshot: the effects of all transactions committed as of the snapshot and of previous commands of the own transaction count, while transactions shown as in progress by the snapshot, transactions started after it was taken and changes made by the current command do not ✅[^src-snap]",
+      "source": "[^src-snap]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A tuple is visible iff the tuple is valid for the given MVCC snapshot. … Does _not_ include: - transactions shown as in-progress by the snapshot",
+      "note": "SNAPSHOT_MVCC comment lists all three included and excluded effects as the claim states."
+    },
+    {
+      "id": "S8",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "The snapshot can never see the effects of XIDs at or above its `xmax` and can see all older XIDs except those listed in the snapshot: `xip` holds the in-progress XIDs (empty for a snapshot taken during recovery) and `subxip` the in-progress subtransaction IDs (and, for a snapshot taken during recovery, the other in-progress transactions); its `xmin` is stored as an optimization, so that most tuples need no search of the XID arrays ✅[^src-snap]",
+      "source": "[^src-snap]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "An MVCC snapshot can never see the effects of XIDs >= xmax. It can see the effects of all older XIDs except those listed in the snapshot.",
+      "note": "The xip comment (empty when taken during recovery), the subxip comment (other in-progress transactions during recovery) and the xmin optimization comment match the claim."
+    },
+    {
+      "id": "S9",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "A non-vacuumable snapshot (`SNAPSHOT_NON_VACUUMABLE`) asks a different question: a tuple is visible if it might be visible to some transaction, and vacuumable if it is surely dead to everyone, judged against an xmin horizon ✅[^src-snap]",
+      "source": "[^src-snap]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A tuple is visible iff the tuple might be visible to some transaction; false if it's surely dead to everyone, i.e., vacuumable.",
+      "note": "The comment adds that snapshot->min must be set up with the xmin horizon to use."
+    },
+    {
+      "id": "S10",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Normal XIDs are compared using modulo-2^32 arithmetic, so every normal XID has two billion older and two billion newer XIDs, and a row version created with a normal XID appears to be in the past for the next two billion transactions but suddenly appears to be in the future if it still exists after more than two billion ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Normal XIDs are compared using modulo-232 arithmetic. … If the row version still exists after more than two billion transactions, it will suddenly appear to be in the future.",
+      "note": "Same paragraph gives two billion older and two billion newer XIDs for every normal XID ('modulo-232' is the saved text's rendering of 2^32)."
+    },
+    {
+      "id": "S11",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "VACUUM uses the visibility map to choose pages and normally skips pages without dead row versions even if they hold old XIDs, so normal VACUUMs won't always freeze every old row version; a normal vacuum may also eagerly scan some all-visible but not all-frozen pages to freeze them, which reduces the pages the next aggressive vacuum must scan ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Normally, it will skip pages that don't have any dead row versions even if those pages might still have row versions with old XID values.",
+      "note": "The eager-scanning part matches 'it may also eagerly scan some all-visible but not all-frozen pages in an attempt to freeze them' and 'Doing so decreases the number of pages the next aggressive vacuum must scan.'"
+    },
+    {
+      "id": "S12",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "An aggressive vacuum freezes all eligible unfrozen XID and MXID values, and `relfrozenxid` advances only when every page that might contain unfrozen XIDs is scanned: when `relfrozenxid` is more than `vacuum_freeze_table_age` old, when VACUUM's FREEZE option is used, or when all pages not already all-frozen happen to need vacuuming ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the relfrozenxid will only be advanced when every page of the table that might contain unfrozen XIDs is scanned. This happens when relfrozenxid is more than vacuum_freeze_table_age transactions old",
+      "note": "The page continues with the FREEZE option and the case where all pages not already all-frozen require vacuuming; aggressive vacuum 'will freeze all eligible unfrozen XID and MXID values'."
+    },
+    {
+      "id": "S13",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "A table can go unvacuumed for at most two billion transactions minus the `vacuum_freeze_min_age` of its last aggressive vacuum, so autovacuum is invoked on any table that might contain unfrozen XIDs older than `autovacuum_freeze_max_age`, even if autovacuum is disabled; unlike a normal autovacuum, this one is not automatically interrupted by a conflicting lock request, and it shows `(to prevent wraparound)` at the end of its query in `pg_stat_activity`, or `autovacuum_wraparound` in the `started_by` column of `pg_stat_progress_vacuum` ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The maximum time that a table can go unvacuumed is two billion transactions minus the vacuum_freeze_min_age value at the time of the last aggressive vacuum.",
+      "note": "The same page says autovacuum is invoked past autovacuum_freeze_max_age 'even if autovacuum is disabled', and in 24.1.6 that an autovacuum to prevent wraparound, shown by '(to prevent wraparound)' or started_by autovacuum_wraparound, 'is not automatically interrupted'."
+    },
+    {
+      "id": "S14",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "**Forced autovacuum, warning, stop.** Past `xidVacLimit` (`oldest_datfrozenxid + autovacuum_freeze_max_age`) the backend signals the postmaster to start the autovacuum launcher, once every 65,536 XIDs; past `xidWarnLimit` (`xidWrapLimit - 100000000`, a limit the source says it will not make configurable) it logs a WARNING; past `xidStopLimit` (`xidWrapLimit - 3000000`) it raises an ERROR, but only under the postmaster, which leaves single-user mode as an escape hatch for the database administrator (DBA) ✅[^src-xid]",
+      "source": "[^src-xid]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If we're past xidStopLimit, refuse to execute transactions, unless we are running in single-user mode (which gives an escape hatch to the DBA who somehow got past the earlier defenses).",
+      "note": "Code: autovac signal when IsUnderPostmaster && (xid % 65536) == 0; ERROR only when IsUnderPostmaster past xidStopLimit; WARNING past xidWarnLimit; xidStopLimit = xidWrapLimit - 3000000; xidWarnLimit = xidWrapLimit - 100000000 with 'No, we're not gonna make this configurable'."
+    },
+    {
+      "id": "S15",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "pganalyze adds that with `hot_standby_feedback` on, queries on a standby hold back the xmin horizon as if they ran on the primary and a lagging or stale replica's physical slot can leave it stuck, that a logical-replication subscriber stopped by a schema mismatch holds back the publisher's system-catalog xmin until replication resumes, and that a long transaction in one database does not stop the cleanup of tables in another ✅[^pganalyze]",
+      "source": "[^pganalyze]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When hot_standby_feedback is on with physical streaming replication, queries on standbys will hold back the xmin horizon just as if they were running on the primary.",
+      "note": "Rank 4 for these PostgreSQL-behaviour claims (rank_scope does not cover them); Rank 4 is allowed in role 3. The page also covers lagging or stale physical slots, the logical subscriber schema mismatch holding back the publisher's catalog xmin, and cleanup continuing in an unrelated database."
+    },
+    {
+      "id": "S16",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "The members of a multixact are stored separately in `pg_multixact`, with only the multixact ID in the tuple's `xmax`; multixact IDs are a 32-bit counter like XIDs, and MXIDs have the same margins, a warning one hundred million from the wraparound point and a refusal below three million, but MXID exhaustion blocks only writes whose row locks need an MXID, while XID exhaustion blocks all writes ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "XID exhaustion will block all write transactions, but MXID exhaustion will only block a subset of write transactions, specifically those that involve row locks that require an MXID.",
+      "note": "24.1.5.1 also states pg_multixact storage, the xmax field, the 32-bit counter and the 100 million / 3 million margins."
+    },
+    {
+      "id": "S17",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Inserting a child row takes `SELECT … FOR KEY SHARE` on the referenced parent row, so concurrent inserts lock parent rows and those locks become MultiXacts; savepoints do the same when different sub-transactions lock or modify the same row, and every PL/pgSQL EXCEPTION clause creates a savepoint ✅[^aws-mxact]",
+      "source": "[^aws-mxact]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "PostgreSQL uses a SELECT…FOR KEY SHARE on the table referenced by the foreign key. … under concurrent usage those locks are converted to MultiXacts.",
+      "note": "Rank 4 in role 3 is allowed. The savepoint and PL/pgSQL EXCEPTION parts match the next two bullets of the post; the Rank 1 manual (24.1.5.1) is consistent ('UPDATE statements with foreign key checks … frequent use of savepoints')."
+    },
+    {
+      "id": "S18",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "Whenever VACUUM scans part of a table it replaces multixact IDs older than `vacuum_multixact_freeze_min_age`; a `relminmxid` older than `vacuum_multixact_freeze_table_age` forces an aggressive vacuum, a multixact age above `autovacuum_multixact_freeze_max_age` forces one even if autovacuum is nominally disabled, and once member entries exceed approximately 2 billion (roughly 10GB in `pg_multixact/members`) aggressive scans occur more often for all tables, oldest first ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if the number of multixact member entries created exceeds approximately 2 billion entries (occupying roughly 10GB in the pg_multixact/members directory), aggressive vacuum scans will occur more often for all tables",
+      "note": "Continues 'starting with those that have the oldest multixact-age'; the replacement rule, the relminmxid rule and 'even if autovacuum is nominally disabled' are on the same page."
+    },
+    {
+      "id": "S19",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "On one run (gcc in the harness's `linlab:1` image, kernel 7.2.12-orbstack), the `varsup.c` formulas with `MaxTransactionId` taken as 4,294,967,295 printed `warn_age=2047483647 stop_age=2144483647`, a hard stop at an XID age of about 2.14 billion, and, for 99,985,967 XIDs left, `pct=4.66%`, the figure in the DETAIL line of the manual's sample warning ✅[^probe-01][^pg-vac]",
+      "source": "[^probe-01][^pg-vac]",
+      "verdict": "observed",
+      "probe": "probe-01",
+      "severity": "none",
+      "page_says": "probe-01 stdout: warn_age=2047483647 stop_age=2144483647 wrap_age=2147483647 left=99985967 pct=4.66%; manual: DETAIL: Approximately 4.66% of transaction ID space remains before wraparound.",
+      "note": "Probe check: harness status pass; the code computes the values (no hard-coded output, no error swallowing). Its formulas match varsup.c (xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1), the -3000000 and -100000000 offsets, and the errdetail formula (double)(xidWrapLimit - xid) / (MaxTransactionId / 2) * 100). The claim is worded as one run in the linlab:1 image and states the MaxTransactionId assumption. The manual's sample shows 99985967 and 4.66%."
+    },
+    {
+      "id": "S20",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The manual's two queries report the age of each table, taking the older of the table and its TOAST table (linked through `reltoastrelid`), and of each database; the age is the number of transactions from the cutoff XID to the current transaction's XID ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "LEFT JOIN pg_class t ON c.reltoastrelid = t.oid … The age column measures the number of transactions from the cutoff XID to the current transaction's XID.",
+      "note": "The table query takes greatest(age(c.relfrozenxid), age(t.relfrozenxid)); the database query reads age(datfrozenxid)."
+    },
+    {
+      "id": "S21",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The PostgreSQL 19 manual shows `pg_get_multixact_stats()` reporting multixact usage, with a sample of 311,740,299 multixact IDs and 2,785,241,176 member entries in 13 GB ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This output shows a system with significant multixact activity: about 312 million multixact IDs and about 2.8 billion member entries consuming 13 GB of storage space.",
+      "note": "Sample row: 311740299 | 2785241176 | 13926205880 | 2 | 13 GB."
+    },
+    {
+      "id": "S22",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "pganalyze finds the holders of §3.5 with `pg_stat_activity` ordered by `greatest(age(backend_xmin), age(backend_xid))`, `pg_stat_replication` ordered by `age(backend_xmin)` for standbys and `pg_prepared_xacts` ordered by `age(transaction)`, and ends them with `pg_cancel_backend` (active query) or `pg_terminate_backend` (idle in transaction), both of which roll the transaction back, or with `COMMIT PREPARED` / `ROLLBACK PREPARED` ✅[^pganalyze]",
+      "source": "[^pganalyze]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "or pg_terminate_backend if the connection state is \"idle in transaction\". … Note this will roll back the transaction, and discard all data written to the database earlier within that transaction.",
+      "note": "The note follows the sentence that offers both functions to 'cancel it'. The pg_stat_activity, pg_stat_replication and pg_prepared_xacts queries and COMMIT PREPARED / ROLLBACK PREPARED are on the page as stated."
+    },
+    {
+      "id": "S23",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "Crunchy Data alerts on `percent_towards_wraparound` (age against 2 billion), whose 100% should be acted upon immediately, and on `percent_towards_emergency_autovac`, which watches for a table reaching `autovacuum_freeze_max_age` ✅[^crunchy]",
+      "source": "[^crunchy]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This query has a little bit of a buffer in it since the upper boundary it checks (2 billion exactly) … this alert hitting 100% should be acted upon immediately.",
+      "note": "The page also says percent_towards_emergency_autovac 'watches for the database's highest TXID value reaching autovacuum_freeze_max_age', which is the oldest table's age, so 'a table reaching' it is the same event."
+    },
+    {
+      "id": "S24",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "pganalyze checks every 30 minutes and by default raises a warning when the server's xmin horizon was assigned more than 24 hours ago, even if no VACUUM is blocked yet ✅[^pganalyze]",
+      "source": "[^pganalyze]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Every 30 minutes … Detects when the xmin horizon on the server was assigned more than 24 hours ago and creates an issue with severity \"warning\".",
+      "note": "Rank 1 within rank_scope (pganalyze's own check). The page adds 'The issue will be created even if no VACUUM is currently blocked by this'."
+    },
+    {
+      "id": "S25",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "Metronome had four outages between May 10 and May 17, 2025, each lasting over an hour, that severely impacted write operations on an AWS Aurora PostgreSQL 13.18 cluster exceeding 30TB: crossing a global limit on MultiXact members triggered emergency vacuums and PostgreSQL's defensive lockout of write operations until they completed, a recovery that takes several hours for their larger tables ✅[^metronome]",
+      "source": "[^metronome]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Between May 10, 2025 and May 17, 2025, Metronome experienced four distinct outage events, each lasting over an hour, that severely impacted our ability to process write operations",
+      "note": "The root-cause paragraph names the global MultiXact member limit, emergency vacuums, the 'defensive lockout of write operations' and 'several hours for our larger tables'; the cluster is 'an AWS Aurora PostgreSQL cluster exceeding 30TB in size running version 13.18'."
+    },
+    {
+      "id": "S26",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "**XID settings.** `vacuum_freeze_min_age` is the cutoff age for freezing pages with an older XID (default 50 million, settable from zero to one billion, silently limited to half of `autovacuum_freeze_max_age`); `vacuum_freeze_table_age` is the `relfrozenxid` age at which VACUUM scans aggressively (default 150 million, zero to two billion, silently limited to 95% of `autovacuum_freeze_max_age`); `autovacuum_freeze_max_age` forces a VACUUM to prevent wraparound even when autovacuum is otherwise disabled (default 200 million, can only be set at server start, can be reduced per table through storage parameters); `vacuum_failsafe_age` defaults to 1.6 billion, accepts zero to 2.1 billion and is silently adjusted to no less than 105% of `autovacuum_freeze_max_age` ✅[^pg-conf]",
+      "source": "[^pg-conf]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Although users can set this value anywhere from zero to one billion, VACUUM will silently limit the effective value to half the value of autovacuum_freeze_max_age",
+      "note": "All four XID settings match on defaults (50 million, 150 million, 200 million, 1.6 billion), ranges, caps (half, 95%, 105%), 'only be set at server start' and per-table reduction."
+    },
+    {
+      "id": "S27",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "**MultiXact settings.** `autovacuum_multixact_freeze_max_age` defaults to 400 million multixacts and can only be set at server start; `vacuum_multixact_freeze_table_age` defaults to 150 million (zero to two billion, limited to 95% of `autovacuum_multixact_freeze_max_age`); `vacuum_multixact_freeze_min_age` defaults to 5 million (zero to one billion, limited to half of it); `vacuum_multixact_failsafe_age` defaults to 1.6 billion (zero to 2.1 billion, no less than 105% of it), and when that failsafe triggers, cost-based delay stops and non-essential tasks are bypassed ✅[^pg-conf]",
+      "source": "[^pg-conf]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The default is 1.6 billion multixacts. Although users can set this value anywhere from zero to 2.1 billion, VACUUM will silently adjust the effective value to no less than 105%",
+      "note": "The 400 million, 150 million and 5 million defaults, ranges and caps match; the multixact failsafe text lists cost-based delay stopping and non-essential tasks bypassed."
+    },
+    {
+      "id": "S28",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "**Eager freezing.** `vacuum_max_eager_freeze_failure_rate` is the fraction of pages VACUUM may scan and fail to set all-frozen before it disables eager scanning: 0 disables eager scanning, the default is 0.03 (3%), and successful eager freezes are capped internally at 20% of the all-visible but not all-frozen pages ✅[^pg-conf]",
+      "source": "[^pg-conf]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A value of 0 disables eager scanning altogether. The default is 0.03 (3%). … Successful page freezes are capped internally at 20% of the all-visible but not all-frozen pages",
+      "note": "vacuum_max_eager_freeze_failure_rate entry."
+    },
+    {
+      "id": "S29",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "**Recovery, step 4 onward.** Execute VACUUM in the target database, database-wide (simplest) or on the tables with the oldest XIDs, and the VACUUM should be performed by a superuser, else it fails to process system catalogs and cannot advance `datfrozenxid`; do not use VACUUM FULL, which requires an XID and will therefore fail, except in what the manual calls super-user mode, where it consumes an XID and increases the risk of wraparound; do not use VACUUM FREEZE either, because it does more than the minimum work; once normal operation is restored, ensure that autovacuum is properly configured in the target database ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Do not use VACUUM FULL in this scenario, because it requires an XID and will therefore fail, except in super-user mode, where it will instead consume an XID",
+      "note": "The same recovery step gives database-wide VACUUM as simplest and VACUUM FREEZE as doing more than the minimum; the superuser 'should' and the final 'ensure that autovacuum is properly configured' step are on the page."
+    },
+    {
+      "id": "S30",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "**No single-user mode by default.** Stopping the postmaster or entering single-user mode is not necessary or desirable to restore normal operation: in typical scenarios it should be avoided whenever possible, since it takes the system down and disables the wraparound safeguards, and its only use here is to TRUNCATE or DROP unneeded tables, which the three-million-transaction margin exists for ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The only reason to use single-user mode in this scenario is if you wish to TRUNCATE or DROP unneeded tables to avoid needing to VACUUM them.",
+      "note": "Same Note: 'should be avoided whenever possible, since it involves taking the system down' and 'disables transaction ID wraparound safeguards'; main text: 'not necessary or desirable to stop the postmaster or enter single user-mode'."
+    },
+    {
+      "id": "S31",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**Cancelling an anti-wraparound autovacuum.** Crunchy Data's author calls it perfectly safe to cancel the emergency vacuum when it causes lock contention, but it keeps restarting until that vacuum completes or a manual vacuum is run ✅[^crunchy]",
+      "source": "[^crunchy]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "it's perfectly safe to cancel it to allow your other transactions to finish. Just be aware that it will keep restarting until either that wraparound vacuum",
+      "note": "Continues 'is able to be completed successfully or a manual vacuum is run'."
+    },
+    {
+      "id": "S32",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**A second MultiXact limit.** Metronome, on Aurora PostgreSQL 13.18, describes a hard limit of approximately 4 billion members across all MultiXacts and says PostgreSQL exposes no metric for member space consumption ✅[^metronome]",
+      "source": "[^metronome]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This space has a hard limit of approximately 4 billion total members across all MultiXacts. … PostgreSQL does not expose metrics for member space consumption",
+      "note": "The doc ties it to Aurora PostgreSQL 13.18, the version the page names."
+    },
+    {
+      "id": "S33",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"At wraparound PostgreSQL shuts down.\"** Percona's 2022 post says the service is forced to shut down and quotes a hint reading \"To avoid a database shutdown\", and Crunchy Data's 2019 post says the database will be forced to shut down ✅[^percona][^crunchy]",
+      "source": "[^percona][^crunchy]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Percona: the PostgreSQL service is forced to shut down; HINT: To avoid a database shutdown … Crunchy: If exhaustion is ever reached, the database will be forced to shut down",
+      "note": "Percona dated April 13, 2022; Crunchy dated Jan 31, 2019."
+    },
+    {
+      "id": "S34",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "That is wrong for PostgreSQL 19: the server refuses to assign new XIDs, while read-only transactions can still start and VACUUM can still be run (§3.4), and the `REL_19_0` hint reads \"To avoid transaction ID assignment failures\" ✅[^pg-vac][^src-xid]",
+      "source": "[^pg-vac][^src-xid]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "any transactions already in progress can continue, but only read-only transactions can be started. … The VACUUM command can still be run normally. src-xid: To avoid transaction ID assignment failures",
+      "note": "The manual says the system 'will refuse to assign new XIDs'; varsup.c's WARNING hint reads 'To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.'"
+    },
+    {
+      "id": "S35",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "The PostgreSQL 19 manual says this was sometimes recommended in earlier releases and is not necessary or desirable now, since in the stopped state the VACUUM command can still be run normally (§5.3, rule 3) ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "contrary to what was sometimes recommended in earlier releases, it is not necessary or desirable to stop the postmaster or enter single user-mode in order to restore normal operation.",
+      "note": "It directly follows 'The VACUUM command can still be run normally.'"
+    },
+    {
+      "id": "S36",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"Turning autovacuum off, or running it only at quiet times, is a safe way to save load.\"** Sentry calls such advice awful, and Percona lists autovacuum turned off among the causes of wraparound ✅[^sentry][^percona]",
+      "source": "[^sentry][^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Sentry: The internet is full of awful advice from users suggesting you should turn off autovacuum, or run it manually at low traffic times; Percona: Autovacuum is turned off.",
+      "note": "Percona lists it first among the circumstances that can cause wraparound."
+    },
+    {
+      "id": "S37",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"MultiXact IDs well under their threshold mean MultiXacts are safe.\"** Metronome's metrics showed MultiXact ID use below 50% of the threshold, and emergency vacuums began at around 200 million MultiXact IDs although `autovacuum_multixact_freeze_max_age` was 400 million, because the separate member space limit was hit first ✅[^metronome]",
+      "source": "[^metronome]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "explaining why emergency vacuums triggered at around 200M MultiXact IDs despite our threshold being set at 400M. … (less than 50% utilization)",
+      "note": "The page also says monitoring was 'configured with autovacuum_multixact_freeze_max_age at 400 million'."
+    },
+    {
+      "id": "S38",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"A plain VACUUM cleans up finished MultiXacts.\"** In the AWS Database Blog demo a standard VACUUM left the MultiXact in the row's `xmax`, because it only releases MultiXact IDs older than `vacuum_multixact_freeze_min_age`, and only VACUUM FREEZE cleared it ✅[^aws-mxact]",
+      "source": "[^aws-mxact]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A normal VACUUM won’t release anything in this example because these transactions aren’t old enough to breach vacuum_multixact_freeze_min_age. Issuing a VACUUM FREEZE is required to clean up the completed MultiXact",
+      "note": "The demo output shows xmax 670526 unchanged after VACUUM and 0 after VACUUM FREEZE."
+    },
+    {
+      "id": "S39",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"Only transactions that write hold vacuum back.\"** Read-only transactions do too: vacuum must retain the information they may need until they close, for both XIDs and MultiXacts ✅[^aws-mxact]",
+      "source": "[^aws-mxact]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "For read-only transactions: Vacuum must retain its information until the transaction is closed. This retention requirement applies to both standard transaction IDs and MultiXacts.",
+      "note": ""
+    },
+    {
+      "id": "S40",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**Where the counter restarts.** The wraparound paragraph of the manual says the XID counter \"wraps around to zero\" ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the XID counter wraps around to zero, and all of a sudden transactions that were in the past appear to be in the future",
+      "note": ""
+    },
+    {
+      "id": "S41",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**What a row's XID is compared with.** The manual motivates XID comparison with a row whose insertion XID is greater than the current transaction's XID being \"in the future\" ✅[^pg-vac]",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a row version with an insertion XID greater than the current transaction's XID is “in the future” and should not be visible to the current transaction",
+      "note": ""
+    },
+    {
+      "id": "S42",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**\"Read-only at 2 billion.\"** The AWS RDS user guide says that when a database's age reaches 2 billion transaction IDs, wraparound occurs and the database becomes read-only ✅[^aws-rds]",
+      "source": "[^aws-rds]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When the age of a database reaches 2 billion transaction IDs, transaction ID (XID) wraparound occurs and the database becomes read-only.",
+      "note": ""
+    },
+    {
+      "id": "S43",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**What triggers aggressive MultiXact vacuums.** The AWS Database Blog says aggressive VACUUMs are invoked when the storage occupied by MultiXacts exceeds 10 GB ✅[^aws-mxact]",
+      "source": "[^aws-mxact]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Aggressive VACUUMs are invoked when the storage occupied by MultiXacts exceeds 10 GB.",
+      "note": ""
+    },
+    {
+      "id": "S44",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "A reader on the same page answers that autovacuum processes TOAST tables independently, that a manual VACUUM on the TOAST table worked, and that its `relfrozenxid` appears to be maintained separately (a reader comment, Rank 6) ✅[^percona]",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Autovacuum does process TOAST tables independently as seen in pg_stat_activity and pg_stat_progress_vacuum and I can run a manual vacuum on the TOAST table as mentioned earlier.",
+      "note": "Reader comment (Rank 6). The same reply adds that the main table's and the TOAST table's relfrozenxid 'appear to be maintained separately'."
+    },
+    {
+      "id": "S45",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "**Can VACUUM process a TOAST table on its own?** Percona's author, replying in the post's comments, says vacuum cannot operate on TOAST tables alone, so the owning table must be vacuumed (Rank 4) ✅[^percona]",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Because vacuum cannot operate on TOAST tables alone, as they are not relations, one has no choice but to vacuum the table itself that the toast is related.",
+      "note": "Author's reply in the comments (Rank 4). See the conflict audit: the Rank 1 glossary contradicts the 'not relations' premise."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Where the XID counter restarts after the maximum (zero vs 3)",
+      "winner": "[^pg-gloss] rank 1, with [^src-xid] rank 1 (special XIDs make the loop smaller)",
+      "loser": "[^pg-vac] rank 1 ('wraps around to zero')",
+      "where_loser_is": "### 6.4 Conflicts between sources",
+      "ok": true
+    },
+    {
+      "topic": "What a row's XID is compared with (current XID vs snapshot xmin/xmax/xip)",
+      "winner": "[^src-snap] rank 1",
+      "loser": "[^pg-vac] rank 1 (motivating sentence)",
+      "where_loser_is": "### 6.4 Conflicts between sources",
+      "ok": true
+    },
+    {
+      "topic": "'Read-only at 2 billion'",
+      "winner": "[^src-xid] rank 1 (stop at xidWrapLimit - 3000000, halfway round from the oldest datfrozenxid)",
+      "loser": "[^aws-rds] rank 1",
+      "where_loser_is": "### 6.4 Conflicts between sources",
+      "ok": true
+    },
+    {
+      "topic": "What triggers more frequent aggressive MultiXact vacuums",
+      "winner": "[^pg-vac] rank 1 (member entries above about 2 billion, roughly 10GB)",
+      "loser": "[^aws-mxact] rank 4 (storage above 10 GB)",
+      "where_loser_is": "### 6.4 Conflicts between sources",
+      "ok": true
+    },
+    {
+      "topic": "Whether VACUUM can process a TOAST table on its own",
+      "winner": "[^percona] author reply rank 4 over the reader comment (no Rank 1 page settles VACUUM's acceptance of a TOAST table)",
+      "loser": "[^percona] reader comment rank 6",
+      "where_loser_is": "### 6.4 Conflicts between sources",
+      "ok": true,
+      "note": "Neither side is stated in roles 1-5, so no breach. But the author's stated reason ('as they are not relations') is contradicted by [^pg-gloss] rank 1: the TOAST table is 'a secondary table', tables are listed among relations, and pg_class 'holds an entry for each PostgreSQL relation' (the manual's query reads the TOAST table's own pg_class row). The doc does not record this; SOFT_WARN."
+    },
+    {
+      "topic": "Whether PostgreSQL shuts down at wraparound",
+      "winner": "[^pg-vac] rank 1 and [^src-xid] rank 1",
+      "loser": "[^percona] rank 4, [^crunchy] rank 4",
+      "where_loser_is": "### 6.3 Misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Warning and stop margins (10 million / 1 million vs 100 million / 3 million)",
+      "winner": "[^src-xid] rank 1",
+      "loser": "[^percona] rank 4, [^sentry] rank 4",
+      "where_loser_is": "### 6.3 Misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "Recovering in single-user mode",
+      "winner": "[^pg-vac] rank 1",
+      "loser": "[^percona] rank 4, [^sentry] rank 4",
+      "where_loser_is": "### 6.3 Misconceptions",
+      "ok": true
+    },
+    {
+      "topic": "A hard MultiXact member limit (about 4 billion) vs a members storage that cannot wrap around",
+      "winner": "[^pg-vac] rank 1 for PostgreSQL 19",
+      "loser": "[^metronome] rank 4 (Aurora PostgreSQL 13.18)",
+      "where_loser_is": "### 6.2 Pitfalls",
+      "ok": true,
+      "note": "Kept in role 6 with the version named and a ⚠️ unverified mark for PostgreSQL 19."
+    }
+  ],
+  "criteria_checks": [
+    {
+      "criterion": "Section 3 must mandate standard VACUUM",
+      "met": true,
+      "evidence": "§3.3.3: a table 'can go unvacuumed for at most two billion transactions minus the vacuum_freeze_min_age', so anti-wraparound autovacuum is invoked 'even if autovacuum is disabled'; §3.3.1-3.3.2 make normal and aggressive VACUUM the freezing mechanism; §3.4.4: in the stopped state 'the VACUUM command can still be run normally'. Met as a system-enforced requirement; §3 never names 'standard' VACUUM against VACUUM FULL."
+    },
+    {
+      "criterion": "Section 5 must mandate standard VACUUM",
+      "met": true,
+      "evidence": "§5.3 rule 2: 'Execute VACUUM in the target database … do not use VACUUM FULL … do not use VACUUM FREEZE either'; §5.1: autovacuum_freeze_max_age 'forces a VACUUM to prevent wraparound even when autovacuum is otherwise disabled'."
+    },
+    {
+      "criterion": "Section 6 must isolate VACUUM FULL as a severe table-locking anti-pattern",
+      "met": false,
+      "evidence": "§6.3 misconception 8 isolates VACUUM FULL as a misconception, but its reasons are the rewrite, the time, the extra disk space and the XID failure in the stopped state. It never says VACUUM FULL locks the table: its only lock mention concerns standard VACUUM's end-of-table truncation. The cited manual has it: 'VACUUM FULL requires an ACCESS EXCLUSIVE lock on the table it is working on, and therefore cannot be done in parallel with other use of the table.'"
+    },
+    {
+      "criterion": "conflict_trap_claim ('Schedule VACUUM FULL periodically via cron to prevent wraparound') not stated as true in roles 1-5",
+      "met": true,
+      "evidence": "No role 1-5 text recommends VACUUM FULL; §5.3 rule 2 forbids it in the recovery scenario."
+    },
+    {
+      "criterion": "conflict_trap_claim should be refuted in role 6",
+      "met": false,
+      "evidence": "Only partly refuted. Misconception 8 rejects VACUUM FULL as 'the strong fix', but no role 6 text addresses scheduling it routinely for wraparound prevention. The cached manual has the refutation ('The usual goal of routine vacuuming is to do standard VACUUMs often enough to avoid needing VACUUM FULL'; autovacuum 'will never issue VACUUM FULL'), but the doc does not use it. Recorded as a SOFT_WARN because the rule says 'should'."
+    }
+  ],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "### 6.3 Misconceptions",
+      "rule": "criteria",
+      "evidence": "Pass criterion 'Section 6 must isolate VACUUM FULL as a severe table-locking anti-pattern' is unmet: misconception 8 omits the ACCESS EXCLUSIVE lock that [^pg-vac] 24.1.2 states ('VACUUM FULL requires an ACCESS EXCLUSIVE lock on the table it is working on, and therefore cannot be done in parallel with other use of the table')."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 2. Concept architecture",
+      "rule": "grounding",
+      "evidence": "S4: 'a multixact ID is stored when several transactions lock the row' drops the page's qualifier 'concurrently' ('whenever there is more than one transaction concurrently locking a row')."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "### 6.3 Misconceptions",
+      "rule": "criteria",
+      "evidence": "The conflict trap (scheduling VACUUM FULL periodically to prevent wraparound) is not refuted directly in role 6, though [^pg-vac] 24.1.2 has the passages that would refute it."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "### 6.4 Conflicts between sources",
+      "rule": "KB-17",
+      "evidence": "Item 5 ranks the Percona author (Rank 4) over the reader (Rank 6) without noting that [^pg-gloss] (Rank 1) contradicts the author's premise that TOAST tables 'are not relations': the glossary calls the TOAST table 'a secondary table' and says 'Tables … are all relations'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "### 4.5 Alert thresholds in use",
+      "rule": "structure",
+      "evidence": "Lists the threshold settings of AWS, Crunchy Data and pganalyze without a run, input or output, so it reads as role-5 reference material rather than a worked example."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Summary",
+      "rule": "structure",
+      "evidence": "The status note says the knowledge-judge passed this doc in round 2 with all 80 claims checked. This verdict (round-1 input, 45 sampled claims) is FAIL, so the note states a result the doc cannot back."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "### 6.3 Misconceptions",
+      "action": "In misconception 8 ('VACUUM FULL is the strong fix'), add: 'VACUUM FULL requires an ACCESS EXCLUSIVE lock on the table it is working on, and therefore cannot be done in parallel with other use of the table; administrators should strive to use standard VACUUM and avoid VACUUM FULL' ✅[^pg-vac] (24.1.2). State it as the main reason the pattern is severe, before the disk-space and stopped-state points. [^aws-mxact] agrees ('FULL (re-writes the table and needs an exclusive lock)')."
+    },
+    {
+      "section": "## 2. Concept architecture",
+      "action": "In the `xmin`, `xmax` row, change 'where a multixact ID is stored when several transactions lock the row' to 'where a multixact ID is stored when more than one transaction concurrently locks the row' ✅[^pg-vac] (24.1.5.1)."
+    },
+    {
+      "section": "### 6.3 Misconceptions",
+      "action": "Add a misconception '\"Schedule VACUUM FULL periodically (for example from cron) to prevent wraparound\"' and refute it from [^pg-vac] 24.1.2: 'The usual goal of routine vacuuming is to do standard VACUUMs often enough to avoid needing VACUUM FULL'; the autovacuum daemon 'will never issue VACUUM FULL'; and 'moderately-frequent standard VACUUM runs are a better approach than infrequent use of such operations'. Point to §3.3 for how standard and aggressive VACUUM, and anti-wraparound autovacuum, do the freezing."
+    },
+    {
+      "section": "### 6.4 Conflicts between sources",
+      "action": "In item 5, add that the author's reason ('as they are not relations') is contradicted by [^pg-gloss] (Rank 1). The glossary defines the TOAST table as 'a secondary table', says 'Tables … are all relations' and says pg_class 'holds an entry for each PostgreSQL relation'. The manual's monitoring query (§4.4) also reads the TOAST table's own relfrozenxid. Leave whether VACUUM accepts a TOAST table by name unsettled, since no saved Rank 1 page states it."
+    },
+    {
+      "section": "### 4.5 Alert thresholds in use",
+      "action": "Either turn it into a run: apply the AWS and Crunchy thresholds to the per-database output already shown in §4.4 (for example, postgres at 170,604,895 is 85% of autovacuum_freeze_max_age 200000000 and about 9% of Crunchy's 2 billion) ✅[^crunchy][^aws-rds]. Or move the threshold list to §5 as reference."
+    },
+    {
+      "section": "## Summary",
+      "action": "Replace the status note's claim of a round-2 judge pass with the current state: this verdict is FAIL until misconception 8 states VACUUM FULL's ACCESS EXCLUSIVE lock. Or remove the judge result from the doc body."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 45,
+    "claims": 45,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

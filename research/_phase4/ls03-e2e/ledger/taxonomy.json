@@ -1,0 +1,835 @@
+{
+ "profile": "taxonomy",
+ "question": "Define the terms the other workers will search with, as the standards name them: JWT, JWS and JWE; the registered claims that matter for revocation (exp, nbf, iat, jti, aud); access token, refresh token, bearer token; self-contained (by-value) versus reference (by-handle) tokens; token revocation (RFC 7009) and token introspection (RFC 7662); denylist / blocklist; refresh token rotation and reuse detection; sender-constrained tokens (DPoP, RFC 9449; mutual-TLS-bound tokens, RFC 8705); browser-based app architectures: Backend-for-Frontend (BFF), token-mediating backend, browser-only client; cookie attributes HttpOnly, Secure, SameSite and the __Host- prefix.",
+ "terms": [
+  "JSON Web Token (JWT)",
+  "JSON Web Signature (JWS)",
+  "JSON Web Encryption (JWE)",
+  "Nested JWT",
+  "Unsecured JWT",
+  "NumericDate",
+  "registered claim names",
+  "\"aud\" (Audience) claim",
+  "\"exp\" (Expiration Time) claim",
+  "\"nbf\" (Not Before) claim",
+  "\"iat\" (Issued At) claim",
+  "\"jti\" (JWT ID) claim",
+  "access token",
+  "refresh token",
+  "bearer token",
+  "structured access token",
+  "JWT Profile for OAuth 2.0 Access Tokens (RFC 9068)",
+  "refresh token rotation",
+  "refresh token replay",
+  "refresh token reuse",
+  "sender-constrained access token",
+  "sender-constrained refresh token",
+  "Mutual-TLS Certificate-Bound Access Tokens (RFC 8705)",
+  "Demonstrating Proof of Possession (DPoP)",
+  "audience-restricted access token",
+  "browser-based application",
+  "Backend for Frontend (BFF)",
+  "token-mediating backend",
+  "browser-based OAuth client",
+  "browser-only OAuth client",
+  "cookie-based session",
+  "Secure",
+  "HttpOnly",
+  "SameSite=Strict",
+  "__Host-Http- prefix"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+   "cache": "cache/91cdcec2ae16.txt",
+   "fetched": "2026-11-22T15:38:20Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "rank_basis": "tier A: rfc-editor.org/rfc/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S2",
+   "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+   "cache": "cache/a0f7f2c88ab3.txt",
+   "fetched": "2026-11-22T15:38:20Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "rank_basis": "tier A: rfc-editor.org/rfc/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S3",
+   "url": "https://datatracker.ietf.org/doc/html/rfc9700",
+   "cache": "cache/3663f2ef567b.txt",
+   "fetched": "2026-11-22T15:38:21Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S4",
+   "url": "https://datatracker.ietf.org/doc/html/rfc6749",
+   "cache": "cache/a1a8e2928216.txt",
+   "fetched": "2026-11-22T15:38:21Z",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc",
+   "seed": false,
+   "provenance_ref": null
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "RFC 10017 takes \"access token\" and \"refresh token\" from OAuth 2.0 (RFC 6749) and \"bearer token\" from RFC 6750 rather than defining them itself.",
+   "quote": "This specification uses the terms \"access token\", \"authorization endpoint\" … \"refresh token\", \"resource server\", and \"token endpoint\" as defined by OAuth 2.0 [RFC6749]. It uses \"bearer token\" as defined by [RFC6750].",
+   "loc": {
+    "heading": "3. Terminology",
+    "lines": [
+     243,
+     243
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S1",
+   "summary": "RFC 10017 defines a browser-based application as one downloaded and run in a web browser, usually JavaScript, and lists \"single-page application\" (SPA) as another name for it.",
+   "quote": "An application that is dynamically downloaded and executed in a web browser, usually written in JavaScript. Also sometimes referred to as a \"single-page application\" or \"SPA\".",
+   "loc": {
+    "heading": "3. Terminology",
+    "lines": [
+     252,
+     255
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S1",
+   "summary": "RFC 10017 expands DPoP as Demonstrating Proof of Possession (RFC 9449), a mechanism that limits access tokens to the client they were issued to.",
+   "quote": "Demonstrating Proof of Possession [RFC9449]. An OAuth 2.0 mechanism that restricts access tokens for use only by the client they were issued to.",
+   "loc": {
+    "heading": "3. Terminology",
+    "lines": [
+     264,
+     266
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "source": "S1",
+   "summary": "RFC 10017 names three architecture patterns; the first, \"Backend for Frontend\" (BFF), has a backend handle OAuth and forward all requests.",
+   "quote": "A browser-based application that relies on a backend component for handling OAuth responsibilities and forwards all requests through the backend component (\"Backend for Frontend\" or \"BFF\")",
+   "loc": {
+    "heading": "6. Application Architecture Patterns",
+    "lines": [
+     425,
+     427
+    ]
+   }
+  },
+  {
+   "id": "F5",
+   "source": "S1",
+   "summary": "The second pattern, the token-mediating backend, has a backend handle OAuth while the browser app calls resource servers directly with the access token.",
+   "quote": "A browser-based application that relies on a backend component for handling OAuth responsibilities but calls resource servers directly using the access token (token-mediating backend)",
+   "loc": {
+    "heading": "6. Application Architecture Patterns",
+    "lines": [
+     429,
+     429
+    ]
+   }
+  },
+  {
+   "id": "F6",
+   "source": "S1",
+   "summary": "The third pattern, the browser-based OAuth client, has the browser app act as the OAuth client and handle all OAuth work itself; the patterns are listed from most to least secure.",
+   "quote": "A browser-based application acting as the client, handling all OAuth responsibilities in the browser (browser-based OAuth client) … The patterns in this section are presented in decreasing order of security.",
+   "loc": {
+    "heading": "6. Application Architecture Patterns",
+    "lines": [
+     431,
+     433
+    ]
+   }
+  },
+  {
+   "id": "F7",
+   "source": "S1",
+   "summary": "A BFF is a confidential OAuth client that keeps access and refresh tokens in a cookie-based session so no token reaches the browser app, and it forwards requests to the resource server with the access token.",
+   "quote": "The BFF interacts with the authorization server as a confidential OAuth client (as defined in Section 2.1 of [RFC6749]). … The BFF manages OAuth access and refresh tokens in the context of a cookie-based session, avoiding the direct exposure of any tokens to the browser-based application.",
+   "loc": {
+    "heading": "6.1. Backend for Frontend (BFF)",
+    "lines": [
+     439,
+     443
+    ]
+   }
+  },
+  {
+   "id": "F8",
+   "source": "S1",
+   "summary": "The token-mediating backend is lighter than a BFF because it does not proxy requests, and RFC 10017 rates it less secure than a BFF but more secure than an OAuth client running in the browser.",
+   "quote": "The token-mediating backend pattern is more lightweight than the BFF pattern (see Section 6.1), since it does not require the proxying of all requests and responses between the application and the resource server. From a security perspective, the token-mediating backend is less secure than a BFF but still offers significant advantages over an OAuth client application running directly in the browser.",
+   "loc": {
+    "heading": "6.2. Token-Mediating Backend",
+    "lines": [
+     651,
+     651
+    ]
+   }
+  },
+  {
+   "id": "F9",
+   "source": "S1",
+   "summary": "For BFF cookies, Secure and HttpOnly are MUST, SameSite=Strict and Path=/ are SHOULD, and the Domain attribute SHOULD NOT be set.",
+   "quote": "The BFF MUST enable the Secure flag for its cookies. … The BFF MUST enable the HttpOnly flag for its cookies. … The BFF SHOULD enable the SameSite=Strict flag for its cookies. … The BFF SHOULD set its cookie path to /. … The BFF SHOULD NOT set the Domain attribute for cookies.",
+   "loc": {
+    "heading": "6.1.3.2. Cookie Security",
+    "lines": [
+     521,
+     529
+    ]
+   }
+  },
+  {
+   "id": "F10",
+   "source": "S1",
+   "summary": "RFC 10017 names the cookie-name prefix it recommends \"__Host-Http-\" (a SHOULD), taken from the [COOKIES] draft, and says it stops the cookie being shared with subdomains.",
+   "quote": "The BFF SHOULD start the name of its cookie with a prefix indicating the cookie was set via HTTP, for example, by using the __Host-Http- prefix defined in [COOKIES]. … The __Host-Http- prefix prevents the cookie from being shared with subdomains, thereby countering subdomain-based session hijacking or session-fixation attacks.",
+   "loc": {
+    "heading": "6.1.3.2. Cookie Security",
+    "lines": [
+     531,
+     535
+    ]
+   }
+  },
+  {
+   "id": "F11",
+   "source": "S1",
+   "summary": "The [COOKIES] reference that defines the prefix is the IETF httpbis draft draft-ietf-httpbis-layered-cookies-02, a work in progress dated 21 May 2026.",
+   "quote": "van Kesteren, A. and J. Hofmann, \"Cookies: HTTP State Management Mechanism\", Work in Progress, Internet-Draft, draft-ietf-httpbis-layered-cookies-02, 21 May 2026",
+   "loc": {
+    "heading": "11.2. Informative References",
+    "lines": [
+     1387,
+     1389
+    ]
+   }
+  },
+  {
+   "id": "F12",
+   "source": "S1",
+   "summary": "The BFF MUST defend against CSRF; SameSite=Strict keeps its cookies off cross-site requests, but that defense falls short when other apps share the same site (eTLD+1).",
+   "quote": "Configuring the cookies with the SameSite=Strict attribute (see Section 6.1.3.2) ensures that the BFF's cookies are only included on same-site requests and not on potentially malicious cross-site requests. … However, it falls short when the BFF is hosted alongside other applications within the same site, defined as the eTLD+1",
+   "loc": {
+    "heading": "6.1.3.3.1. SameSite Cookie Attribute",
+    "lines": [
+     549,
+     551
+    ]
+   }
+  },
+  {
+   "id": "F13",
+   "source": "S1",
+   "summary": "For refresh tokens issued to browser-based clients, the authorization server MUST rotate them on each use or sender-constrain them, and MUST NOT let a rotated token outlive the initial token's preset lifetime.",
+   "quote": "MUST either rotate refresh tokens on each use OR use sender-constrained refresh tokens as described in Section 4.14.2 of [RFC9700] … MUST NOT, upon issuing a rotated refresh token, extend the lifetime of the new refresh token beyond the lifetime of the initial refresh token if the refresh token has a preestablished expiration time",
+   "loc": {
+    "heading": "6.3.2.3. Refresh Tokens",
+    "lines": [
+     866,
+     872
+    ]
+   }
+  },
+  {
+   "id": "F14",
+   "source": "S1",
+   "summary": "In a browser-based client the refresh token is usually a bearer token unless the app uses DPoP.",
+   "quote": "For browser-based clients, the refresh token is typically a bearer token unless the application explicitly uses DPoP [RFC9449].",
+   "loc": {
+    "heading": "6.3.2.3. Refresh Tokens",
+    "lines": [
+     855,
+     855
+    ]
+   }
+  },
+  {
+   "id": "F15",
+   "source": "S1",
+   "summary": "RFC 10017 says refresh token rotation does not stop persistent token theft: the attacker can keep the app from using the latest refresh token, so no reuse is detected.",
+   "quote": "Refresh token rotation is not sufficient to prevent abuse of a refresh token. … Since the application will not use the latest refresh token, there will be no detectable refresh token reuse, giving the attacker full control over the stolen refresh token.",
+   "loc": {
+    "heading": "5.1.2. Persistent Token Theft",
+    "lines": [
+     359,
+     359
+    ]
+   }
+  },
+  {
+   "id": "F16",
+   "source": "S1",
+   "summary": "RFC 10017 calls the third pattern \"browser-only OAuth client\" in its security section, and says sender-constrained tokens do not remove its limits; DPoP is the method it names for browsers.",
+   "quote": "the use of sender-constrained tokens does not solve the security limitations of browser-only OAuth clients. … One method of implementing sender-constrained tokens in a way that is usable from browser-based applications is DPoP [RFC9449].",
+   "loc": {
+    "heading": "9.2. Sender-Constrained Tokens",
+    "lines": [
+     1309,
+     1309
+    ]
+   }
+  },
+  {
+   "id": "F17",
+   "source": "S1",
+   "summary": "A sender-constrained token needs proof of a private key; with a non-exportable key, RFC 10017 says an XSS attacker cannot extract the key and so cannot use a stolen token.",
+   "quote": "When using sender-constrained tokens, the OAuth client has to prove possession of a private key in order to use the token, such that the token isn't usable by itself. … With an unencrypted token in the browser storage protected by a non-exportable private key, an XSS attack would not be able to extract the key, so the token would not be usable by the attacker.",
+   "loc": {
+    "heading": "9.2. Sender-Constrained Tokens",
+    "lines": [
+     1311,
+     1311
+    ]
+   }
+  },
+  {
+   "id": "F18",
+   "source": "S1",
+   "summary": "RFC 10017 names localStorage, sessionStorage and IndexedDB as the browsers' persistent storage APIs, and says none of them fully stops token exfiltration by malicious code in the app.",
+   "quote": "The persistent storage APIs currently available in browsers as of this writing are localStorage [WebStorage], sessionStorage [WebStorage], and IndexedDB [W3C.IndexedDB]. … none of these options can fully mitigate token exfiltration when the attacker can execute malicious code in the application's execution environment.",
+   "loc": {
+    "heading": "8.5. Persistent Token Storage",
+    "lines": [
+     1275,
+     1283
+    ]
+   }
+  },
+  {
+   "id": "F19",
+   "source": "S1",
+   "summary": "With a client-side session in a BFF, revoking the access and/or refresh token is enough to stop access, without invalidating the cookie session.",
+   "quote": "It suffices to revoke the user's access token and/or refresh token to prevent ongoing access to protected resources, without the need to explicitly invalidate the cookie-based session.",
+   "loc": {
+    "heading": "6.1.2.3. Cookie-Based Session State",
+    "lines": [
+     493,
+     493
+    ]
+   }
+  },
+  {
+   "id": "F20",
+   "source": "S2",
+   "summary": "RFC 7519 defines a JWT as a string carrying a set of claims as a JSON object, encoded in a JWS or a JWE so the claims can be signed or MACed and/or encrypted.",
+   "quote": "A string representing a set of claims as a JSON object that is encoded in a JWS or JWE, enabling the claims to be digitally signed or MACed and/or encrypted.",
+   "loc": {
+    "heading": "2. Terminology",
+    "lines": [
+     169,
+     172
+    ]
+   }
+  },
+  {
+   "id": "F21",
+   "source": "S2",
+   "summary": "The claims are the payload of a JSON Web Signature (JWS) or the plaintext of a JSON Web Encryption (JWE), and a JWT always uses the JWS or JWE Compact Serialization.",
+   "quote": "JWTs encode claims to be transmitted as a JSON [RFC7159] object that is used as the payload of a JSON Web Signature (JWS) [JWS] structure or as the plaintext of a JSON Web Encryption (JWE) [JWE] structure … JWTs are always represented using the JWS Compact Serialization or the JWE Compact Serialization.",
+   "loc": {
+    "heading": "1. Introduction",
+    "lines": [
+     127,
+     134
+    ]
+   }
+  },
+  {
+   "id": "F22",
+   "source": "S2",
+   "summary": "RFC 7519 does not define JWS and JWE itself: it takes those terms from the JWS and JWE specifications.",
+   "quote": "The terms \"JSON Web Signature (JWS)\", \"Base64url Encoding\", \"Header Parameter\", \"JOSE Header\", \"JWS Compact Serialization\", \"JWS Payload\", \"JWS Signature\", and \"Unsecured JWS\" are defined by the JWS specification [JWS]. The terms \"JSON Web Encryption (JWE)\", \"Content Encryption Key (CEK)\", \"JWE Compact Serialization\", \"JWE Encrypted Key\", and \"JWE Initialization Vector\" are defined by the JWE specification [JWE].",
+   "loc": {
+    "heading": "2. Terminology",
+    "lines": [
+     150,
+     157
+    ]
+   }
+  },
+  {
+   "id": "F23",
+   "source": "S2",
+   "summary": "The JWE specification is RFC 7516 and the JWS specification is RFC 7515.",
+   "quote": "[JWE] Jones, M. and J. Hildebrand, \"JSON Web Encryption (JWE)\", RFC 7516 … [JWS] Jones, M., Bradley, J., and N. Sakimura, \"JSON Web Signature (JWS)\", RFC 7515",
+   "loc": {
+    "heading": "13.1. Normative References",
+    "lines": [
+     1065,
+     1074
+    ]
+   }
+  },
+  {
+   "id": "F24",
+   "source": "S2",
+   "summary": "A Nested JWT is a JWT used as the payload or plaintext of an enclosing JWS or JWE; an Unsecured JWT has claims that are neither integrity protected nor encrypted.",
+   "quote": "A JWT in which nested signing and/or encryption are employed. In Nested JWTs, a JWT is used as the payload or plaintext value of an enclosing JWS or JWE structure, respectively. … A JWT whose claims are not integrity protected or encrypted.",
+   "loc": {
+    "heading": "2. Terminology",
+    "lines": [
+     190,
+     196
+    ]
+   }
+  },
+  {
+   "id": "F25",
+   "source": "S2",
+   "summary": "NumericDate, the type of the time claims, is the number of seconds since 1970-01-01T00:00:00Z UTC, ignoring leap seconds.",
+   "quote": "A JSON numeric value representing the number of seconds from 1970-01-01T00:00:00Z UTC until the specified UTC date/time, ignoring leap seconds.",
+   "loc": {
+    "heading": "2. Terminology",
+    "lines": [
+     220,
+     223
+    ]
+   }
+  },
+  {
+   "id": "F26",
+   "source": "S2",
+   "summary": "The registered claims are not mandatory in every case; each application decides which claims it uses and when they are required.",
+   "quote": "None of the claims defined below are intended to be mandatory to use or implement in all cases, but rather they provide a starting point for a set of useful, interoperable claims. Applications using JWTs should define which specific claims they use and when they are required or optional.",
+   "loc": {
+    "heading": "4.1. Registered Claim Names",
+    "lines": [
+     366,
+     371
+    ]
+   }
+  },
+  {
+   "id": "F27",
+   "source": "S2",
+   "summary": "\"aud\" (audience) names the intended recipients; when \"aud\" is present and the processing party is not in it, the JWT MUST be rejected. Use is OPTIONAL.",
+   "quote": "The \"aud\" (audience) claim identifies the recipients that the JWT is intended for. Each principal intended to process the JWT MUST identify itself with a value in the audience claim. If the principal processing the claim does not identify itself with a value in the \"aud\" claim when this claim is present, then the JWT MUST be rejected.",
+   "loc": {
+    "heading": "4.1.3. \"aud\" (Audience) Claim",
+    "lines": [
+     394,
+     399
+    ]
+   }
+  },
+  {
+   "id": "F28",
+   "source": "S2",
+   "summary": "\"exp\" (expiration time) is the time on or after which the JWT MUST NOT be accepted; implementers MAY allow a small leeway, usually a few minutes at most, for clock skew. Use is OPTIONAL.",
+   "quote": "The \"exp\" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing. … Implementers MAY provide for some small leeway, usually no more than a few minutes, to account for clock skew. Its value MUST be a number containing a NumericDate value. Use of this claim is OPTIONAL.",
+   "loc": {
+    "heading": "4.1.4. \"exp\" (Expiration Time) Claim",
+    "lines": [
+     408,
+     419
+    ]
+   }
+  },
+  {
+   "id": "F29",
+   "source": "S2",
+   "summary": "\"nbf\" (not before) is the time before which the JWT MUST NOT be accepted, with the same optional clock-skew leeway.",
+   "quote": "The \"nbf\" (not before) claim identifies the time before which the JWT MUST NOT be accepted for processing. The processing of the \"nbf\" claim requires that the current date/time MUST be after or equal to the not-before date/time listed in the \"nbf\" claim.",
+   "loc": {
+    "heading": "4.1.5. \"nbf\" (Not Before) Claim",
+    "lines": [
+     423,
+     426
+    ]
+   }
+  },
+  {
+   "id": "F30",
+   "source": "S2",
+   "summary": "\"iat\" (issued at) is the time the JWT was issued and can be used to work out its age.",
+   "quote": "The \"iat\" (issued at) claim identifies the time at which the JWT was issued. This claim can be used to determine the age of the JWT.",
+   "loc": {
+    "heading": "4.1.6. \"iat\" (Issued At) Claim",
+    "lines": [
+     433,
+     434
+    ]
+   }
+  },
+  {
+   "id": "F31",
+   "source": "S2",
+   "summary": "\"jti\" (JWT ID) is a unique identifier for the JWT, assigned so collisions are negligible (across issuers too), and it can be used to prevent replay.",
+   "quote": "The \"jti\" (JWT ID) claim provides a unique identifier for the JWT. The identifier value MUST be assigned in a manner that ensures that there is a negligible probability that the same value will be accidentally assigned to a different data object … The \"jti\" claim can be used to prevent the JWT from being replayed.",
+   "loc": {
+    "heading": "4.1.7. \"jti\" (JWT ID) Claim",
+    "lines": [
+     440,
+     446
+    ]
+   }
+  },
+  {
+   "id": "F32",
+   "source": "S3",
+   "summary": "RFC 9700 also takes \"access token\" and \"refresh token\" from OAuth 2.0 (RFC 6749).",
+   "quote": "This specification uses the terms \"access token\", \"authorization endpoint\", \"authorization grant\", \"authorization server\", \"client\", \"client identifier\" (client ID), \"protected resource\", \"refresh token\", \"resource owner\", \"resource server\", and \"token endpoint\" defined by OAuth 2.0 [RFC6749].",
+   "loc": {
+    "heading": "1.2. Conventions and Terminology",
+    "lines": [
+     649,
+     653
+    ]
+   }
+  },
+  {
+   "id": "F33",
+   "source": "S3",
+   "summary": "RFC 9700 defines a sender-constrained access token as one usable only by a sender that proves knowledge of a secret, and says servers SHOULD use mutual TLS (RFC 8705) or DPoP (RFC 9449) for it.",
+   "quote": "A sender-constrained access token scopes the applicability of an access token to a certain sender. This sender is obliged to demonstrate knowledge of a certain secret as a prerequisite for the acceptance of that token at the recipient (e.g., a resource server). … Authorization and resource servers SHOULD use mechanisms for sender-constraining access tokens, such as mutual TLS for OAuth 2.0 [RFC8705] or OAuth 2.0 Demonstrating Proof of Possession (DPoP) [RFC9449]",
+   "loc": {
+    "heading": "2.2.1. Access Tokens",
+    "lines": [
+     796,
+     804
+    ]
+   }
+  },
+  {
+   "id": "F34",
+   "source": "S3",
+   "summary": "Refresh tokens for public clients MUST be sender-constrained or use refresh token rotation.",
+   "quote": "Refresh tokens for public clients MUST be sender-constrained or use refresh token rotation as described in Section 4.14.",
+   "loc": {
+    "heading": "2.2.2. Refresh Tokens",
+    "lines": [
+     808,
+     809
+    ]
+   }
+  },
+  {
+   "id": "F35",
+   "source": "S3",
+   "summary": "RFC 9700 calls the threat that rotation and sender-constraining answer \"refresh token replay\": for public clients the authorization server MUST use one of the two to detect it. A sender-constrained refresh token is bound to one client instance.",
+   "quote": "Authorization servers MUST utilize one of these methods to detect refresh token replay by malicious actors for public clients: … Sender-constrained refresh tokens: the authorization server cryptographically binds the refresh token to a certain client instance, e.g., by utilizing [RFC8705] or [RFC9449].",
+   "loc": {
+    "heading": "4.14.2. Recommendations",
+    "lines": [
+     2362,
+     2367
+    ]
+   }
+  },
+  {
+   "id": "F36",
+   "source": "S3",
+   "summary": "Refresh token rotation: each refresh response carries a new refresh token and the old one is invalidated; when an invalidated one is presented, the authorization server revokes the active refresh token, which forces the legitimate client to get a new grant.",
+   "quote": "Refresh token rotation: the authorization server issues a new refresh token with every access token refresh response. The previous refresh token is invalidated, but information about the relationship is retained by the authorization server. If a refresh token is compromised and subsequently used by both the attacker and the legitimate client, one of them will present an invalidated refresh token, which will inform the authorization server of the breach. The authorization server cannot determine which party submitted the invalid refresh token, but it will revoke the active refresh token.",
+   "loc": {
+    "heading": "4.14.2. Recommendations",
+    "lines": [
+     2369,
+     2378
+    ]
+   }
+  },
+  {
+   "id": "F37",
+   "source": "S3",
+   "summary": "A refresh token may carry its grant inside itself so the server can find every refresh token to revoke; the authorization server MUST then protect the token value's integrity, for example with signatures.",
+   "quote": "The grant to which a refresh token belongs may be encoded into the refresh token itself. This can enable an authorization server to efficiently determine the grant to which a refresh token belongs, and by extension, all refresh tokens that need to be revoked. Authorization servers MUST ensure the integrity of the refresh token value in this case, for example, using signatures.",
+   "loc": {
+    "heading": "4.14.2. Recommendations",
+    "lines": [
+     2381,
+     2387
+    ]
+   }
+  },
+  {
+   "id": "F38",
+   "source": "S3",
+   "summary": "Authorization servers MAY revoke refresh tokens on a security event such as a password change or logout, and refresh tokens SHOULD expire after a period of client inactivity.",
+   "quote": "Authorization servers MAY revoke refresh tokens automatically in case of a security event, such as: … password change or … logout at the authorization server. … Refresh tokens SHOULD expire if the client has been inactive for some time",
+   "loc": {
+    "heading": "4.14.2. Recommendations",
+    "lines": [
+     2389,
+     2397
+    ]
+   }
+  },
+  {
+   "id": "F39",
+   "source": "S3",
+   "summary": "The mutual-TLS method is named by RFC 8705's title, \"Certificate-Bound Access Tokens\": the token is tied to the fingerprint of the client's TLS public key.",
+   "quote": "\"OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens\" [RFC8705] … For the purpose of sender-constrained access tokens, the client is identified towards the resource server by the fingerprint of its public key.",
+   "loc": {
+    "heading": "4.10.1. Sender-Constrained Access Tokens",
+    "lines": [
+     2008,
+     2014
+    ]
+   }
+  },
+  {
+   "id": "F40",
+   "source": "S3",
+   "summary": "DPoP (RFC 9449) sender-constrains both access and refresh tokens at the application level, using a public/private key pair and application-level signing, and works with public clients.",
+   "quote": "DPoP outlines an application-level mechanism for sender-constraining access and refresh tokens. It uses proof-of-possession based on a public/private key pair and application-level signing. DPoP can be used with public clients",
+   "loc": {
+    "heading": "4.10.1. Sender-Constrained Access Tokens",
+    "lines": [
+     2023,
+     2027
+    ]
+   }
+  },
+  {
+   "id": "F41",
+   "source": "S3",
+   "summary": "RFC 9700 says sender-constraining fails when the attacker gets both the token and the key material, naming cross-site scripting in a browser client as a case.",
+   "quote": "Note that the security of sender-constrained tokens is undermined when an attacker gets access to the token and the key material. This is, in particular, the case for corrupted client software and cross-site scripting attacks (when the client is running in the browser).",
+   "loc": {
+    "heading": "4.10.1. Sender-Constrained Access Tokens",
+    "lines": [
+     2031,
+     2034
+    ]
+   }
+  },
+  {
+   "id": "F42",
+   "source": "S3",
+   "summary": "Audience restriction ties an access token to one resource server, which checks the intended audience and refuses the request when that check fails.",
+   "quote": "Audience restriction essentially restricts access tokens to a particular resource server. The authorization server associates the access token with the particular resource server, and the resource server is then supposed to verify the intended audience. If the access token fails the intended audience validation, the resource server refuses to serve the respective request.",
+   "loc": {
+    "heading": "4.10.2. Audience-Restricted Access Tokens",
+    "lines": [
+     2044,
+     2049
+    ]
+   }
+  },
+  {
+   "id": "F43",
+   "source": "S3",
+   "summary": "RFC 9700 uses the term \"structured access tokens\" for deployments where the authorization server mints each access token's format and content for the resource server it is meant for.",
+   "quote": "They allow the authorization server to create a different access token whose format and content are specifically minted for the respective server. This has huge functional and privacy advantages in deployments using structured access tokens.",
+   "loc": {
+    "heading": "4.10.2. Audience-Restricted Access Tokens",
+    "lines": [
+     2094,
+     2097
+    ]
+   }
+  },
+  {
+   "id": "F44",
+   "source": "S3",
+   "summary": "RFC 9068 is the JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens, a data structure for access tokens.",
+   "quote": "[RFC9068] (JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens) describes a data structure for access tokens",
+   "loc": {
+    "heading": "4.15. Client Impersonating Resource Owner",
+    "lines": [
+     2407,
+     2409
+    ]
+   }
+  },
+  {
+   "id": "F45",
+   "source": "S4",
+   "summary": "RFC 6749 defines access tokens as credentials used to access protected resources: a string, usually opaque to the client, standing for an authorization issued to it.",
+   "quote": "Access tokens are credentials used to access protected resources. An access token is a string representing an authorization issued to the client. The string is usually opaque to the client.",
+   "loc": {
+    "heading": "1.4. Access Token",
+    "lines": [
+     714,
+     716
+    ]
+   }
+  },
+  {
+   "id": "F46",
+   "source": "S4",
+   "summary": "RFC 6749 names the two access token styles: a token that denotes an identifier used to look up the authorization, or one that self-contains it in a verifiable way (data plus a signature).",
+   "quote": "The token may denote an identifier used to retrieve the authorization information or may self-contain the authorization information in a verifiable manner (i.e., a token string consisting of some data and a signature).",
+   "loc": {
+    "heading": "1.4. Access Token",
+    "lines": [
+     721,
+     724
+    ]
+   }
+  },
+  {
+   "id": "F47",
+   "source": "S4",
+   "summary": "RFC 6749 leaves access token formats and how they are used to companion specifications such as RFC 6750.",
+   "quote": "Access token attributes and the methods used to access protected resources are beyond the scope of this specification and are defined by companion specifications such as [RFC6750].",
+   "loc": {
+    "heading": "1.4. Access Token",
+    "lines": [
+     737,
+     740
+    ]
+   }
+  },
+  {
+   "id": "F48",
+   "source": "S4",
+   "summary": "RFC 6749 defines refresh tokens as credentials used to obtain new access tokens when the current one becomes invalid or expires; issuing one is optional at the authorization server's discretion.",
+   "quote": "Refresh tokens are credentials used to obtain access tokens. Refresh tokens are issued to the client by the authorization server and are used to obtain a new access token when the current access token becomes invalid or expires … Issuing a refresh token is optional at the discretion of the authorization server.",
+   "loc": {
+    "heading": "1.5. Refresh Token",
+    "lines": [
+     744,
+     751
+    ]
+   }
+  },
+  {
+   "id": "F49",
+   "source": "S4",
+   "summary": "RFC 6749 says a refresh token denotes an identifier used to retrieve the authorization, and is only for authorization servers, never sent to resource servers.",
+   "quote": "A refresh token is a string representing the authorization granted to the client by the resource owner. The string is usually opaque to the client. The token denotes an identifier used to retrieve the … authorization information. Unlike access tokens, refresh tokens are intended for use only with authorization servers and are never sent to resource servers.",
+   "loc": {
+    "heading": "1.5. Refresh Token",
+    "lines": [
+     755,
+     765
+    ]
+   }
+  },
+  {
+   "id": "F50",
+   "source": "S4",
+   "summary": "On a refresh the authorization server MAY issue a new refresh token; the client MUST then discard the old one, and the server MAY revoke the old one.",
+   "quote": "The authorization server MAY issue a new refresh token, in which case the client MUST discard the old refresh token and replace it with the new refresh token. The authorization server MAY revoke the old refresh token after issuing a new refresh token to the client.",
+   "loc": {
+    "heading": "6. Refreshing an Access Token",
+    "lines": [
+     2577,
+     2580
+    ]
+   }
+  },
+  {
+   "id": "F51",
+   "source": "S4",
+   "summary": "The resource server MUST validate the access token, including that it has not expired; RFC 6749 leaves the validation method out of scope, usually involving coordination with the authorization server.",
+   "quote": "The resource server MUST validate the access token and ensure that it has not expired and that its scope covers the requested resource. The methods used by the resource server to validate the access token (as well as any error responses) are beyond the scope of this specification but generally involve an interaction or coordination between the resource server and the authorization server.",
+   "loc": {
+    "heading": "7. Accessing Protected Resources",
+    "lines": [
+     2588,
+     2594
+    ]
+   }
+  },
+  {
+   "id": "F52",
+   "source": "S4",
+   "summary": "RFC 6749 names \"bearer\" as an access token type defined in RFC 6750, used by putting the token string in the Authorization header.",
+   "quote": "For example, the \"bearer\" token type defined in [RFC6750] is utilized by simply including the access token string in the request:",
+   "loc": {
+    "heading": "7.1. Access Token Types",
+    "lines": [
+     2615,
+     2616
+    ]
+   }
+  },
+  {
+   "id": "F53",
+   "source": "S4",
+   "summary": "Refresh tokens MUST be kept confidential in transit and storage and MUST only be sent over TLS; the authorization server MUST keep each refresh token bound to its client.",
+   "quote": "Refresh tokens MUST be kept confidential in transit and storage, and shared only among the authorization server and the client to whom the refresh tokens were issued. The authorization server MUST maintain the binding between a refresh token and the client to whom it was issued.",
+   "loc": {
+    "heading": "10.4. Refresh Tokens",
+    "lines": [
+     2947,
+     2950
+    ]
+   }
+  },
+  {
+   "id": "F54",
+   "source": "S4",
+   "summary": "RFC 6749 gives refresh token rotation as an example of how the server could detect abuse (a SHOULD to deploy some means, when client authentication is not possible): a new refresh token on each refresh, so presenting an invalidated one reveals the breach.",
+   "quote": "When client authentication is not possible, the authorization server SHOULD deploy other means to detect refresh token abuse. For example, the authorization server could employ refresh token rotation in which a new refresh token is issued with every access token refresh response. The previous refresh token is invalidated … but retained by the authorization server. If a refresh token is compromised and subsequently used by both the attacker and the legitimate client, one of them will present an invalidated refresh token, which will inform the authorization server of the breach.",
+   "loc": {
+    "heading": "10.4. Refresh Tokens",
+    "lines": [
+     2957,
+     2972
+    ]
+   }
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "X1",
+   "topic": "is refresh token rotation optional or required?",
+   "facts": [
+    "F54",
+    "F34",
+    "F35",
+    "F13"
+   ],
+   "note": "RFC 6749 offers rotation as an example (\"could employ\"); RFC 9700 and RFC 10017 make rotation or sender-constraining a MUST for public / browser-based clients"
+  },
+  {
+   "id": "X2",
+   "topic": "what a refresh token contains",
+   "facts": [
+    "F49",
+    "F37"
+   ],
+   "note": "RFC 6749 says a refresh token denotes an identifier; RFC 9700 allows encoding the grant into the refresh token itself, with integrity protection"
+  },
+  {
+   "id": "X3",
+   "topic": "does refresh token rotation detect and stop theft?",
+   "facts": [
+    "F36",
+    "F15"
+   ],
+   "note": "RFC 9700 says replay of a rotated token reveals the breach and stops the attack; RFC 10017 adds the persistent-theft case where no reuse is ever detected"
+  },
+  {
+   "id": "X4",
+   "topic": "do sender-constrained tokens survive XSS?",
+   "facts": [
+    "F41",
+    "F17"
+   ],
+   "note": "RFC 9700 says XSS undermines them when the attacker reaches the key material; RFC 10017 adds the condition of a non-exportable key, under which XSS cannot extract the key"
+  }
+ ]
+}

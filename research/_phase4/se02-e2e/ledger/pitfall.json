@@ -1,0 +1,664 @@
+{
+ "profile": "pitfall",
+ "question": "Find the misconceptions and edge cases about Head-of-Line (HOL) blocking in HTTP/2 versus HTTP/3, each with the source that refutes or limits it: \"HTTP/3 removes all HOL blocking\" (within one stream, QPACK when blocked streams are allowed, connection-level flow control, a lost packet that carries frames of several streams, receiver buffering); \"HTTP/2 is always worse than HTTP/1.1 under loss\" (one TCP connection versus several); confusion between HTTP-layer and transport-layer HOL blocking, and flow-control stalls that look like HOL blocking; UDP blocked or throttled, fallback to HTTP/2 over TCP, and the CPU cost of user-space QUIC where a source measures it.",
+ "terms": [
+  "head-of-line blocking",
+  "application-layer head-of-line blocking",
+  "TCP head-of-line blocking",
+  "multiplexing",
+  "connection",
+  "stream",
+  "flow control",
+  "flow-control window",
+  "QPACK",
+  "HPACK",
+  "QUIC stream",
+  "STREAM frame"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+   "cache": "cache/7144e96a4a52.txt",
+   "fetched": "2026-11-22T14:24:11Z",
+   "tier": "A",
+   "rank": 4,
+   "rule": "calendar.perfplanet.com/",
+   "rank_basis": "tier A: calendar.perfplanet.com/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S2",
+   "url": "https://arxiv.org/html/2310.09423v2",
+   "cache": "cache/f63d7b022073.txt",
+   "fetched": "2026-11-22T14:24:11Z",
+   "tier": "A",
+   "rank": 2,
+   "rule": "arxiv.org/",
+   "rank_basis": "tier A: arxiv.org/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S3",
+   "url": "https://arxiv.org/html/1612.07816v1",
+   "cache": "cache/95f8a1074fc4.txt",
+   "fetched": "2026-11-22T14:26:09Z",
+   "tier": "A",
+   "rank": 2,
+   "rule": "arxiv.org/",
+   "rank_basis": "tier A: arxiv.org/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S4",
+   "url": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+   "cache": "cache/48f50a086bd4.txt",
+   "fetched": "2026-11-22T14:25:56Z",
+   "tier": "A",
+   "rank": 4,
+   "rule": "blog.cloudflare.com/",
+   "rank_basis": "tier A: blog.cloudflare.com/",
+   "seed": false,
+   "provenance_ref": null
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "Over TCP, a packet that arrives after a lost one is held in TCP's receive buffer until the retransmission arrives, at least one round trip later; only then are both handed to the browser in order.",
+   "quote": "TCP keeps packet 3 in its receive buffer until it receives the retransmitted copy of packet 2 (which takes at least 1 round-trip to the server), after which it can pass both to the browser in the correct order.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     162,
+     162
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S1",
+   "summary": "The page separates two kinds: HTTP/1.1's HOL blocking (a response must be sent whole, no multiplexing) and TCP's transport-layer HOL blocking, where one lost packet holds back later packets even when they carry other streams.",
+   "quote": "HTTP/1.1 had HOL blocking because it needs to send its responses in full and cannot multiplex them … If a TCP packet is lost, all later packets need to wait for its retransmission, even if they contain unrelated data from different streams. TCP has Transport Layer HOL blocking.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/3 over QUIC",
+    "lines": [
+     182,
+     188
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S1",
+   "summary": "Loss rates given: on the order of 0.01% on fast cabled networks, rarely above 2% even on the worst cellular networks; loss and jitter tend to come in bursts.",
+   "quote": "Especially on high-speed, cabled networks, packet loss rates are on the order of 0.01%. Even on the worst cellular networks, you will rarely see rates higher than 2% in practice. … packet loss and also jitter (delay variations in the network), are often bursty.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     170,
+     170
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "source": "S1",
+   "summary": "TCP HOL blocking is real but affects Web performance much less than HTTP/1.1 HOL blocking, which is hit almost every time and also suffers TCP HOL blocking.",
+   "quote": "yes, TCP HOL blocking is real, but it has a much smaller impact on Web performance than HTTP/1.1 HOL blocking, which you are almost guaranteed to hit every time and which also suffers from TCP HOL blocking!",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     170,
+     170
+    ]
+   }
+  },
+  {
+   "id": "F5",
+   "source": "S1",
+   "summary": "The HTTP/2 advantage holds mainly against HTTP/1.1 on one connection; against HTTP/1.1 on 6 connections, one HTTP/2 connection can struggle to be as fast, mainly because of TCP congestion control.",
+   "quote": "However, this is mainly true when comparing HTTP/2 on a single connection with HTTP/1.1 on a single connection. … in some cases, HTTP/2 on a single connection has a hard time being faster than or even as fast as HTTP/1.1 on 6 connections. This is mainly due to TCP’s “congestion control” mechanism.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     172,
+     172
+    ]
+   }
+  },
+  {
+   "id": "F6",
+   "source": "S1",
+   "summary": "As deployed, HTTP/2 is typically as fast as or slightly faster than HTTP/1.1 in most conditions, partly because browsers often still open several parallel HTTP/2 connections.",
+   "quote": "HTTP/2 as it is currently deployed in browsers and servers is typically as fast or slightly faster than HTTP/1.1 in most conditions. … browsers often still open multiple parallel HTTP/2 connections (either because sites still shard their resources over different servers, or because of security-related side-effects), thus getting the best of both worlds.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     174,
+     174
+    ]
+   }
+  },
+  {
+   "id": "F7",
+   "source": "S1",
+   "summary": "On slower networks with more packet loss, HTTP/1.1 over 6 connections can still beat HTTP/2 over one connection, often because of TCP-level HOL blocking.",
+   "quote": "However, there are also some cases (especially on slower networks with higher packet loss) where HTTP/1.1 on 6 connections will still outshine HTTP/2 on one connection, which is often due to the TCP-level HOL blocking problem.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/2 over TCP",
+    "lines": [
+     176,
+     176
+    ]
+   }
+  },
+  {
+   "id": "F8",
+   "source": "S1",
+   "summary": "Congestion control runs per connection: one loss slows HTTP/2's single connection (and causes TCP HOL blocking), while a loss on one of HTTP/1.1's 6 connections slows only that connection.",
+   "quote": "Crucially: the congestion control mechanism works for each TCP (and QUIC) connection independently! … even a single packet loss means it will slow down (in addition to causing TCP HOL blocking!). However, for HTTP/1.1, a single packet loss on just one of the connections will only slow down that one: the other 5 can just keep sending and growing as normal.",
+   "loc": {
+    "heading": "Bonus: Transport Congestion Control",
+    "lines": [
+     330,
+     330
+    ]
+   }
+  },
+  {
+   "id": "F9",
+   "source": "S1",
+   "summary": "QUIC still has HOL blocking inside one stream: a byte gap in a stream holds back the later bytes of that stream until the gap is filled.",
+   "quote": "This means that we still have a form of HOL blocking, even in QUIC: if there is a byte gap inside a single stream, the latter parts of the stream are still stuck waiting until that gap is filled.",
+   "loc": {
+    "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+    "lines": [
+     220,
+     220
+    ]
+   }
+  },
+  {
+   "id": "F10",
+   "source": "S1",
+   "summary": "QUIC's HOL blocking removal helps only when several streams are active at once; with a single active stream, any loss still blocks it.",
+   "quote": "HOL blocking removal only works if there are multiple resource streams active at the same time. … However, if there is only a single stream active at a given moment, any loss will impact that lonely stream and we will still be HOL blocked, even in QUIC.",
+   "loc": {
+    "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+    "lines": [
+     222,
+     222
+    ]
+   }
+  },
+  {
+   "id": "F11",
+   "source": "S1",
+   "summary": "When a loss burst hits packets of two streams, both streams are blocked, each by its own ordering; a lost packet carrying data of several streams blocks all of them, which is why most implementations rarely mix streams in one packet.",
+   "quote": "both streams are now HOL blocked: not because they’re waiting on each other, as would be the case with TCP, but because each stream still needs to be ordered by itself. … most QUIC implementations very rarely create packets containing data from more than 1 stream at the same time. If one of those packets is lost, it immediately leads to HOL blocking for all streams in the single packet!",
+   "loc": {
+    "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+    "lines": [
+     262,
+     264
+    ]
+   }
+  },
+  {
+   "id": "F12",
+   "source": "S1",
+   "summary": "QPACK lets the user choose a trade-off between possible HOL blocking and compression; this follows from QUIC not guaranteeing that data sent first is received first across streams.",
+   "quote": "QPACK is HTTP/3’s version of HPACK and allows a self-chosen trade-off between potential HOL blocking and compression performance. … unlike TCP, QUIC does not fully guarantee that data which is sent first is also received first.",
+   "loc": {
+    "heading": "HOL blocking in HTTP/3 over QUIC",
+    "lines": [
+     210,
+     210
+    ]
+   }
+  },
+  {
+   "id": "F13",
+   "source": "S1",
+   "summary": "QUIC's congestion control is per connection, not per stream, so loss on any stream slows the whole connection; one HTTP/3 connection still won't ramp up as fast as 6 HTTP/1.1 connections.",
+   "quote": "Crucially however, QUIC’s congestion control is still done at the connection level, and not per-stream. … Put differently: the single HTTP/3+QUIC connection still won’t grow as fast as the 6 HTTP/1.1 connections, similar to how HTTP/2+TCP over one connection wasn’t faster.",
+   "loc": {
+    "heading": "Bonus: Transport Congestion Control",
+    "lines": [
+     336,
+     336
+    ]
+   }
+  },
+  {
+   "id": "F14",
+   "source": "S1",
+   "summary": "QUIC encrypts per packet instead of using TLS records, which costs more CPU than encrypting larger blocks and is named as one of the main reasons QUIC can still be slower than TCP in current implementations.",
+   "quote": "while QUIC integrates TLS, it will always encrypt data on a per-packet basis and it does not use TLS records directly. As we’ve seen, this is less efficient and requires more CPU than using larger blocks, and is one of the main reasons why QUIC can still be slower than TCP in current implementations.",
+   "loc": {
+    "heading": "Bonus: TLS HOL blocking",
+    "lines": [
+     322,
+     322
+    ]
+   }
+  },
+  {
+   "id": "F15",
+   "source": "S2",
+   "summary": "Over fast networks, the UDP+QUIC+HTTP/3 stack showed up to 45.2% lower data rate than TCP+TLS+HTTP/2, and the gap grew with bandwidth.",
+   "quote": "We find that over fast Internet, the UDP+QUIC+HTTP/3 stack suffers a data rate reduction of up to 45.2% compared to the TCP+TLS+HTTP/2 counterpart. Moreover, the performance gap between QUIC and HTTP/2 grows as the underlying bandwidth increases.",
+   "loc": {
+    "heading": "Abstract.",
+    "lines": [
+     120,
+     120
+    ]
+   }
+  },
+  {
+   "id": "F16",
+   "source": "S2",
+   "summary": "The paper attributes the gap to receiver-side processing overhead: too many data packets and QUIC's ACKs being handled in user space.",
+   "quote": "we identify the root cause to be high receiver-side processing overhead, in particular, excessive data packets and QUIC’s user-space ACKs.",
+   "loc": {
+    "heading": "Abstract.",
+    "lines": [
+     120,
+     120
+    ]
+   }
+  },
+  {
+   "id": "F17",
+   "source": "S2",
+   "summary": "In Chrome, QUIC fell behind above about 500 Mbps and was 45.2% slower than HTTP/2 at 1 Gbps; the gap was larger on weaker clients such as mobile devices.",
+   "quote": "on Chrome, QUIC begins to fall behind when the bandwidth exceeds ∼\\sim500 Mbps. When the bandwidth reaches 1 Gbps, QUIC becomes 45.2% slower than HTTP/2. On weaker clients such as mobile devices, the gap is even larger.",
+   "loc": {
+    "heading": "QUIC is Slow over Fast Internet.",
+    "lines": [
+     135,
+     135
+    ]
+   }
+  },
+  {
+   "id": "F18",
+   "source": "S2",
+   "summary": "With lightweight clients, QUIC and HTTP/2 performed alike at low bandwidth; past about 600 Mbps QUIC's throughput became bottlenecked, and cURL over QUIC used around 70% CPU.",
+   "quote": "when the available bandwidth is low, QUIC and HTTP/2 exhibit similar performance. … as the bandwidth provision grows beyond around 600 Mbps, QUIC’s actual throughput starts to be bottlenecked and a noticeable throughput disparity between QUIC and HTTP/2 emerges. The CPU usage for quic_client is always high and that of cURL QUIC hovers around 70%",
+   "loc": {
+    "heading": "3.2. File Download on Lightweight Clients",
+    "lines": [
+     224,
+     224
+    ]
+   }
+  },
+  {
+   "id": "F19",
+   "source": "S2",
+   "summary": "Chrome over QUIC neared 100% CPU at a throughput of only 200 Mbps.",
+   "quote": "Chrome with QUIC approaches 100% CPU usage when the throughput is only 200 Mbps.",
+   "loc": {
+    "heading": "3.3. File Download on Real Browsers",
+    "lines": [
+     265,
+     265
+    ]
+   }
+  },
+  {
+   "id": "F20",
+   "source": "S2",
+   "summary": "Browser versions measured: Chrome v102, Firefox v105, Edge v106, Opera v93.",
+   "quote": "In addition to Google Chrome (v102), we extend our HTTP file download experiments to other QUIC-enabled web browsers: Mozilla Firefox (v105), Microsoft Edge (v106), and Opera (v93).",
+   "loc": {
+    "heading": "3.3. File Download on Real Browsers",
+    "lines": [
+     269,
+     269
+    ]
+   }
+  },
+  {
+   "id": "F21",
+   "source": "S2",
+   "summary": "The degradation appears only at high enough bandwidth (hidden on 4G, visible on 5G); page load time over QUIC averaged 3.0% longer than HTTP/2 over 100 sites, with a tail of gaps above 50%.",
+   "quote": "such QoE degradation only exhibits when the underlying bandwidth is sufficiently high. For example, the impact is hidden over 4G but unleashed over 5G. … page load time (PLT) is 3.0% longer than HTTP/2’s, averaged across 100 representative websites, with a long tail of page load time gaps over 50%.",
+   "loc": {
+    "heading": "QUIC’s Slowness Impacts Multiple Web Applications.",
+    "lines": [
+     138,
+     138
+    ]
+   }
+  },
+  {
+   "id": "F22",
+   "source": "S2",
+   "summary": "The kernel's UDP stack performs many more packet reads than TCP for the same download, raising CPU use, because none of the QUIC implementations examined uses UDP generic receive offload (GRO).",
+   "quote": "the in-kernel UDP stack issues much more packet reads (netif_receive_skb) than TCP, leading to a significantly higher CPU usage. This is because none of the QUIC implementations we examine uses UDP generic receive offload (GRO)",
+   "loc": {
+    "heading": "The Poor Receiver-side Performance is due to Excessive Data Packets and User-space ACKs.",
+    "lines": [
+     150,
+     150
+    ]
+   }
+  },
+  {
+   "id": "F23",
+   "source": "S2",
+   "summary": "In user space, QUIC spends more on processing received packets and generating responses, attributed to the packet count from the kernel, user-space ACKs and missing optimizations such as delayed ACK.",
+   "quote": "In the user space, QUIC incurs a higher overhead when processing received packets and generating responses. This can be attributed to multiple factors: excessive packets passed from the kernel (Issue 1), user-space nature of QUIC ACKs, and lack of certain optimizations such as delayed ACK in QUIC.",
+   "loc": {
+    "heading": "The Poor Receiver-side Performance is due to Excessive Data Packets and User-space ACKs.",
+    "lines": [
+     154,
+     154
+    ]
+   }
+  },
+  {
+   "id": "F24",
+   "source": "S2",
+   "summary": "The UDP stack received about 744K packets for QUIC versus about 58K for TCP under HTTP/2, on average, and the authors confirmed retransmissions were not the cause.",
+   "quote": "the number of packets received by the OS’s UDP stack is an order of magnitude higher than the number of packets received by the TCP stack during HTTP/2 downloads (744K versus 58K on average). We have confirmed this is not caused by retransmissions.",
+   "loc": {
+    "heading": "5.2. Evidence from Packet Trace Analyses",
+    "lines": [
+     350,
+     350
+    ]
+   }
+  },
+  {
+   "id": "F25",
+   "source": "S2",
+   "summary": "Recommended mitigations: UDP GRO at the receiver, QUIC-friendlier GSO and GRO, better receiver-side QUIC logic, and several CPU cores for receiving QUIC data.",
+   "quote": "We make several recommendations for mitigating the above impact, including deploying UDP GRO on the receiver side, making generic offloading solutions (GSO and GRO) more QUIC-friendly, improving relevant QUIC logic on the receiver side, and using multiple CPU cores to receive data for QUIC.",
+   "loc": {
+    "heading": "Recommendations for Mitigation.",
+    "lines": [
+     157,
+     157
+    ]
+   }
+  },
+  {
+   "id": "F26",
+   "source": "S2",
+   "summary": "The authors ruled out TLS encryption as a cause: both stacks used TLS_AES_128_GCM_SHA256, and other cipher suites did not change the results much.",
+   "quote": "TLS Encryption. Both QUIC (TLS v1.3) and HTTP/2 (TLS v1.2) employ the TLS_AES_128_GCM_SHA256 cipher on our web server. We also benchmark different cipher suites and the results do not significantly affect the performance.",
+   "loc": {
+    "heading": "5.1. Eliminating Non-contributing Factors",
+    "lines": [
+     331,
+     331
+    ]
+   }
+  },
+  {
+   "id": "F27",
+   "source": "S2",
+   "summary": "The paper notes user-space QUIC was already known to degrade performance and that past work optimized the sender side; it presents the receiver side as the more likely bottleneck over fast networks.",
+   "quote": "although QUIC’s user-space implementation is known to cause performance degradation in general (Langley et al., 2017) and there have been efforts to optimize UDP/QUIC’s sender-side transmission performance (de Bruijn and Dumazet, 2018; clo, 2020; Ian, 2020), we are the first to identify the receiver side as a more likely performance bottleneck for QUIC over fast Internet.",
+   "loc": {
+    "heading": "QUIC’s Slowness over Fast Internet is due to Receiver-side Processing.",
+    "lines": [
+     143,
+     143
+    ]
+   }
+  },
+  {
+   "id": "F28",
+   "source": "S3",
+   "summary": "UDP works on most networks and its impairments are mostly confined to access networks, so simple fallback strategies can work around them.",
+   "quote": "UDP works on most networks, and impairments are generally confined to access networks. This allows relatively simple fallback strategies to work around it.",
+   "loc": {
+    "heading": "Abstract",
+    "lines": [
+     100,
+     103
+    ]
+   }
+  },
+  {
+   "id": "F29",
+   "source": "S3",
+   "summary": "The study saw complete UDP blocking on about 2% to 4% of terrestrial access networks, concentrated in enterprise networks and regions with otherwise poor connectivity.",
+   "quote": "we see evidence of complete blocking of UDP in between about 2%2\\% and 4%4\\% of terrestrial access networks … UDP impairment is especially concentrated in enterprise networks and networks in geographic regions with otherwise- challenged connectivity.",
+   "loc": {
+    "heading": "1 Introduction",
+    "lines": [
+     175,
+     181
+    ]
+   }
+  },
+  {
+   "id": "F30",
+   "source": "S3",
+   "summary": "Besides firewall blocking on restrictive (often enterprise) networks, UDP may be throttled or hit fast NAT timeouts, and at least one major mobile operator implicitly claims to rate-limit UDP against DDoS.",
+   "quote": "UDP is blocked by firewall rules on some restrictive access networks, especially within enterprises [23]. In addition to complete blocking, other impairments to traffic with UDP headers may exist, such as throttling or fast NAT timeouts. … at least one major mobile operator that it rate-limits UDP traffic as a preemptive defense against distributed denial of service attacks [4].",
+   "loc": {
+    "heading": "1 Introduction",
+    "lines": [
+     166,
+     173
+    ]
+   }
+  },
+  {
+   "id": "F31",
+   "source": "S3",
+   "summary": "The paper relays Google's aggregated figures: 93% of connections used QUIC, 2% used TCP for lower initial latency, and in 5% UDP was impaired (0.3% rate-limited, 0.2% blocked at the access border, 4.5% blocked near the user).",
+   "quote": "of users of Chromium selected for QUIC experimentation connecting to Google web properties on UDP port 443, 93% of connections use QUIC. 2% use TCP because TCP has lower initial latency. In 5% of cases, UDP is impaired: either rate-limited (0.3%), blocked at the access network border (0.2%), or blocked on the access network close to the user (4.5%).",
+   "loc": {
+    "heading": "2 Related Work",
+    "lines": [
+     198,
+     204
+    ]
+   }
+  },
+  {
+   "id": "F32",
+   "source": "S3",
+   "summary": "Apart from port-specific blocking and blocking of all UDP on about one in thirty access networks, UDP was found relatively unimpaired.",
+   "quote": "aside from blocking of UDP on certain ports, as well as relatively rare blocking of all UDP traffic on about one in thirty access networks, UDP is relatively unimpaired in the Internet.",
+   "loc": {
+    "heading": "4 Results",
+    "lines": [
+     437,
+     440
+    ]
+   }
+  },
+  {
+   "id": "F33",
+   "source": "S3",
+   "summary": "Of 2,240 RIPE Atlas probes in 2015, 82 (3.66%) never completed a UDP traceroute; these were more often in sub-Saharan African and east Asian countries.",
+   "quote": "Of the 2,240 RIPE Atlas probes which performed UDP traceroute measurements against targets which were reachable via UDP traceroute in 2015, 82 (3.66%) never successfully completed a UDP traceroute. … These UDP-blocked probes are more likely than the population of all examined probes to be on networks in sub-saharan African and east Asian countries.",
+   "loc": {
+    "heading": "4.1 Incidence of UDP Blocking",
+    "lines": [
+     445,
+     453
+    ]
+   }
+  },
+  {
+   "id": "F34",
+   "source": "S3",
+   "summary": "UDP-based transports are viable only where an alternative exists for networks without working UDP; HTTP/2 over TLS/TCP is that fallback on the 1-5% of networks that block or limit QUIC, which limits QUIC to protocols that run acceptably over TCP.",
+   "quote": "UDP provides a viable common basis for new transport protocols, but only in cases where alternatives exist on access networks where UDP connectivity is unavailable or severely compromised. … Since HTTP/2 has a natural fallback to TLS over TCP, this alternative can be used on the 1−5%~1-5\\% of networks where QUIC packets over UDP are blocked or limited. However, this fallback approach limits QUIC’s applicability to application layer protocols that can be made run acceptably over TCP.",
+   "loc": {
+    "heading": "5 Guidance and Outlook",
+    "lines": [
+     728,
+     737
+    ]
+   }
+  },
+  {
+   "id": "F35",
+   "source": "S3",
+   "summary": "Fallback decisions are easy: a Happy-Eyeballs-like connection race, as QUIC uses, suffices, and the result can often be cached per client access network.",
+   "quote": "accurate fallback decisions are easy to arrive at – a connection racing design similar to Happy Eyeballs [33] as used by QUIC is sufficient – and can often be cached based on client access network",
+   "loc": {
+    "heading": "5 Guidance and Outlook",
+    "lines": [
+     739,
+     744
+    ]
+   }
+  },
+  {
+   "id": "F36",
+   "source": "S3",
+   "summary": "UDP transports must send NAT keep-alive traffic ten to twenty times more often than TCP.",
+   "quote": "Transports over UDP must therefore avoid NAT timeout ten to twenty times more frequently than TCP.",
+   "loc": {
+    "heading": "5 Guidance and Outlook",
+    "lines": [
+     749,
+     750
+    ]
+   }
+  },
+  {
+   "id": "F37",
+   "source": "S4",
+   "summary": "Cloudflare found HTTP/2 uploads sometimes much slower than HTTP/1.1 (both over TLS) for users with high upload bandwidth.",
+   "quote": "We found that HTTP/2 upload speeds were sometimes much slower than HTTP/1.1 (assuming all TLS) when the user had high available upload bandwidth.",
+   "loc": {
+    "heading": "Delivering HTTP/2 upload speed improvements",
+    "lines": [
+     1681,
+     1681
+    ]
+   }
+  },
+  {
+   "id": "F38",
+   "source": "S4",
+   "summary": "Uploading 10MB at 200Mbps and 40ms RTT, HTTP/2 measured almost half the HTTP/1.1 speed; at 5Mbps upload and 20ms RTT the two were almost identical.",
+   "quote": "uploading a 10MB object over a network which has 200Mbps available bandwidth and 40ms RTT, the result was surprising. Using our production configuration, HTTP/2 upload speed tested at almost half of the same test conditions using HTTP/1.1 … On a slow network, like my home cable connection (5Mbps upload and 20ms RTT), HTTP/2 upload speed was almost identical to the performance observed with HTTP/1.1.",
+   "loc": {
+    "heading": "Initial Tests",
+    "lines": [
+     1693,
+     1695
+    ]
+   }
+  },
+  {
+   "id": "F39",
+   "source": "S4",
+   "summary": "HTTP/1.1 has no protocol-level receiver flow control, since it does not multiplex requests; receiving is left to TCP.",
+   "quote": "HTTP/1.1 doesn’t define protocol-level receiver flow control since there is no multiplexing of requests in the connection and it’s up to the TCP layer which handles receiving data.",
+   "loc": {
+    "heading": "Receiver Flow Control",
+    "lines": [
+     1701,
+     1701
+    ]
+   }
+  },
+  {
+   "id": "F40",
+   "source": "S4",
+   "summary": "HTTP/2 has a flow-control window per stream plus one for the connection; too tight a window blocks the sender, too loose wastes buffer memory, and the best receive buffer matches the current bandwidth-delay product (BDP).",
+   "quote": "Each HTTP/2 stream has its own flow control window and there is connection level flow control for all streams in the connection. If it’s too tight, the sender will be blocked by the flow control. If it’s too loose we may end up wasting memory for buffering. … the most optimal strategy is to keep the receive buffer matching the current BDP.",
+   "loc": {
+    "heading": "Receiver Flow Control",
+    "lines": [
+     1703,
+     1703
+    ]
+   }
+  },
+  {
+   "id": "F41",
+   "source": "S4",
+   "summary": "In NGINX, the stream's INITIAL_WINDOW_SIZE comes from http2_body_preread_size, which Cloudflare set to 64KB, described as the RFC 7540 default.",
+   "quote": "HTTP/2 Settings INITIAL_WINDOW_SIZE of the stream is set to http2_body_preread_size and we use 64KB as a default (the RFC7540 default value).",
+   "loc": {
+    "heading": "How NGINX handles the request body buffer",
+    "lines": [
+     1733,
+     1733
+    ]
+   }
+  },
+  {
+   "id": "F42",
+   "source": "S4",
+   "summary": "With HTTP/2 the application layer does its own receiver flow control, and NGINX's fixed-size receive buffer limits upload speed whenever the link's BDP exceeds that buffer.",
+   "quote": "with HTTP/2, the application layer also has receiver flow control and NGINX uses a fixed size buffer for the receiver. This limits upload speed when the current link has a BDP larger than the current request body buffer size.",
+   "loc": {
+    "heading": "How NGINX handles the request body buffer",
+    "lines": [
+     1739,
+     1739
+    ]
+   }
+  },
+  {
+   "id": "F43",
+   "source": "S4",
+   "summary": "TCP receive-buffer autotuning does not help HTTP/2 here, because HTTP/2 runs its own flow control and the 128KB buffer was too small for a high-BDP link.",
+   "quote": "in case of HTTP/2, TCP buffer autotuning is not very effective because the HTTP/2 layer is doing its own flow control and the existing 128KB was too small for a high BDP link.",
+   "loc": {
+    "heading": "Autotuning request body buffer size",
+    "lines": [
+     1757,
+     1757
+    ]
+   }
+  },
+  {
+   "id": "F44",
+   "source": "S4",
+   "summary": "In their tests 512KB was the best fixed client_body_buffer_size, but the best size moves with conditions and too large a buffer can hurt performance.",
+   "quote": "512KB is an optimal value for client_body_buffer_size. … the optimal buffer size is a moving target and furthermore having too large a buffer size can hurt the performance",
+   "loc": {
+    "heading": "We're going to need a bigger buffer?",
+    "lines": [
+     1745,
+     1749
+    ]
+   }
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "X1",
+   "topic": "Is HTTP/2 slower than HTTP/1.1, and why?",
+   "facts": [
+    "F6",
+    "F7",
+    "F38"
+   ],
+   "note": "S1 calls HTTP/2 typically as fast or faster and ties its losses to packet loss and one connection against six; S4 measures HTTP/2 uploads at about half HTTP/1.1 speed on a fast link, caused by a fixed receive buffer under HTTP/2 flow control, with no loss named."
+  },
+  {
+   "id": "X2",
+   "topic": "What makes QUIC cost more CPU or run slower than TCP+TLS?",
+   "facts": [
+    "F14",
+    "F16",
+    "F26"
+   ],
+   "note": "S1 (2020) names per-packet encryption as a main reason; S2 (2024, Chromium v102) rules out the cipher suite and blames receiver-side packet count and user-space ACKs. S2 varied cipher suites, not per-packet against per-record encryption."
+  }
+ ]
+}

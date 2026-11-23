@@ -1,0 +1,24 @@
+[
+ {
+  "probe_id": "probe-01",
+  "mode": "verify",
+  "runtime": "node24",
+  "expect": "stdout:exp=2011-03-22T18:43:00.000Z expired=true",
+  "uses": null,
+  "repeat": 1,
+  "line": 93,
+  "file": "probe-01.js",
+  "block_sha": "49a53afd3f12"
+ },
+ {
+  "probe_id": "probe-02",
+  "mode": "verify",
+  "runtime": "node24",
+  "expect": "stdout:hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true",
+  "uses": null,
+  "repeat": 1,
+  "line": 163,
+  "file": "probe-02.js",
+  "block_sha": "556166e39441"
+ }
+]

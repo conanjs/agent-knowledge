@@ -1,0 +1,6 @@
+SOURCE: https://example.dev/about
+FETCHED: 2026-11-22T09:00:00Z (fetch-source.mjs)
+SHA256: 3d76f34e12e93767ee57704ce06e2df776c013b8ab970e9bae575d381b700271
+
+About Ann Example
+Ann Example edited the stream states section of the HTTP/2 spec.

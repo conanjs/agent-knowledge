@@ -766,6 +766,40 @@ Feature: Knowledge validator
         KB-15  demo/concept.md: "## Mental model" has a ✅ with no footnote: "A fixture is a photograph of a valid state. ✅"
       """
 
+  Scenario: KB-15 a ✅ cited to a probe footnote passes, and KB-12 resolves the probe's entry
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `A fixture is a photograph of a valid state.` becomes `A fixture is a photograph of a valid state. ✅[^probe-01]`
+    Given in "knowledge/demo/concept.md", `Verified: 1 claim (✅)` becomes `Verified: 2 claims (✅)`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- `probes/probe-01.js` — verify, Node 24.22.1, prints true. [^probe-01]`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-12 a probe footnote with no References entry fails
+    Given in "knowledge/demo/concept.md", `A fixture is a photograph of a valid state.` becomes `A fixture is a photograph of a valid state. ✅[^probe-01]`
+    Given in "knowledge/demo/concept.md", `Verified: 1 claim (✅)` becomes `Verified: 2 claims (✅)`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-12  demo/concept.md: footnote [^probe-01] is used but no References entry carries it
+      """
+
+  Scenario: KB-17 a verified ranked doc with an open conflict marked ⚖️ in Edge cases passes, since KD-2 counts only ⚠️
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `None.` becomes `⚖️ open conflict: two Rank 3 sources disagree, and no Rank 1 source settles it.`
+    When the tool runs
+    Then it passes with no warnings
+
+  Scenario: KB-17 an open conflict marked ⚖️ in How it works fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `The validator reads each section in order.` becomes `The validator reads each section in order (⚖️ open conflict).`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-17  demo/concept.md: "## How it works" holds an open conflict (⚖️); open conflicts belong in the pitfalls section
+      """
+
   Scenario: KB-15 a ranked deep dive with a section that has no rank role fails
     Given in "knowledge/demo/deep-dive.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
     When the tool runs

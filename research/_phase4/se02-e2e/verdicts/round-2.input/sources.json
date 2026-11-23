@@ -1,0 +1,128 @@
+[
+ {
+  "url": "http://127.0.0.1:${server.address(",
+  "normalized": "http://127.0.0.1:${server.address(",
+  "status": "not fetched"
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9000.html",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc9000.html",
+  "cache": "cache/46f5fb0985f4.txt",
+  "fetched": "2026-11-22T14:15:53Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 366002,
+  "sha256": "033aabd642614a997d732ce5d2a0732ca673706f8d4d46685ae6645499767983"
+ },
+ {
+  "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+  "normalized": "https://www.rfc-editor.org/rfc/rfc9113.html",
+  "fetched_from": "https://www.rfc-editor.org/rfc/rfc9113.html",
+  "cache": "cache/31239d03b783.txt",
+  "fetched": "2026-11-22T14:15:52Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 174660,
+  "sha256": "5800402a0e424a0f98dc3a4f6916f10cb02933d6f2cfbc4dbe895ad0c8111f0d"
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/rfc9114",
+  "normalized": "https://datatracker.ietf.org/doc/html/rfc9114",
+  "fetched_from": "https://datatracker.ietf.org/doc/html/rfc9114",
+  "cache": "cache/61e9d4a5d782.txt",
+  "fetched": "2026-11-22T14:15:54Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 141978,
+  "sha256": "4e2e4557e8be61c0ae51337648cf345c7fc62684e67d55a4c4cad3fb229f9b04"
+ },
+ {
+  "url": "https://datatracker.ietf.org/doc/html/rfc9204",
+  "normalized": "https://datatracker.ietf.org/doc/html/rfc9204",
+  "fetched_from": "https://datatracker.ietf.org/doc/html/rfc9204",
+  "cache": "cache/d75ddd928b21.txt",
+  "fetched": "2026-11-22T14:15:54Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 79953,
+  "sha256": "26587def7a9f30dc1453a5f386b2b862a0db27ca286d4dc95db54643acf09149"
+ },
+ {
+  "url": "https://h2o.examp1e.net/configure/http2_directives.html",
+  "normalized": "https://h2o.examp1e.net/configure/http2_directives.html",
+  "fetched_from": "https://h2o.examp1e.net/configure/http2_directives.html",
+  "cache": "cache/44649c73a64b.txt",
+  "fetched": "2026-11-22T14:25:01Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 14950,
+  "sha256": "7c36379b70dc525deb9e1827bcf74ad2de65c691ddb2ebe8fb5c896b06915e3b"
+ },
+ {
+  "url": "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+  "normalized": "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+  "fetched_from": "https://raw.githubusercontent.com/cloudflare/quiche/0.22.0/quiche/src/h3/qpack/encoder.rs",
+  "cache": "cache/1b6d3acbd283.txt",
+  "fetched": "2026-11-22T14:26:14Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 7136,
+  "sha256": "e4fc575a77286e76104979bce88c5173b0fcfd16a82e10167efa2b3a9568d908"
+ },
+ {
+  "url": "https://arxiv.org/html/2310.09423v2",
+  "normalized": "https://arxiv.org/html/2310.09423v2",
+  "fetched_from": "https://arxiv.org/html/2310.09423v2",
+  "cache": "cache/f63d7b022073.txt",
+  "fetched": "2026-11-22T14:24:11Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 68915,
+  "sha256": "1a816283d9ac8fc03649c8bf80f25ecd210bd5f53ed4145d9f6011e9b309aac1"
+ },
+ {
+  "url": "https://arxiv.org/html/1612.07816v1",
+  "normalized": "https://arxiv.org/html/1612.07816v1",
+  "fetched_from": "https://arxiv.org/html/1612.07816v1",
+  "cache": "cache/95f8a1074fc4.txt",
+  "fetched": "2026-11-22T14:26:09Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 42350,
+  "sha256": "51fd99a9a696dffade1fe89c64b356fed4a318e4cd912618601fcf1ddeff8096"
+ },
+ {
+  "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "normalized": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "fetched_from": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+  "cache": "cache/7144e96a4a52.txt",
+  "fetched": "2026-11-22T14:24:11Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 53669,
+  "sha256": "ee000fc481247895e005a74cc12f3a14649b115ec69fb6be5c31a6be13f2ac7d"
+ },
+ {
+  "url": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+  "normalized": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+  "fetched_from": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+  "cache": "cache/5830c4e1e1ac.txt",
+  "fetched": "2026-11-22T14:25:01Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 17858,
+  "sha256": "6ec89fb0f13a8ed53cc8c213edef2b22101cd3aafa4bbcd48e95d4fa54c76ea9"
+ },
+ {
+  "url": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+  "normalized": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+  "fetched_from": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+  "cache": "cache/48f50a086bd4.txt",
+  "fetched": "2026-11-22T14:25:56Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 23087,
+  "sha256": "8d735840b46d39e2d8b835e87ea53cec4b4c695f63bdbbad31bec40df40279d9"
+ }
+]

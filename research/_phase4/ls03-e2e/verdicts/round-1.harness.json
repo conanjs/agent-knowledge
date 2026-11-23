@@ -1,0 +1,48 @@
+{
+ "round": 1,
+ "doc": "doc.md",
+ "engine": "29.8.2",
+ "kernel": "7.2.12-orbstack-00394-gbecdd6130068",
+ "runtimes": {
+  "node24": {
+   "image": "node:24.22.1-alpine",
+   "id": "sha256:976554ea4b266f797a368b22bb5959ac08d388a11445cf40f7ef55912c7c754b"
+  }
+ },
+ "probes": [
+  {
+   "probe_id": "probe-01",
+   "mode": "verify",
+   "runtime": "node24",
+   "expect": "stdout:exp=2011-03-22T18:43:00.000Z expired=true",
+   "uses": null,
+   "repeat": 1,
+   "line": 93,
+   "file": "probe-01.js",
+   "block_sha": "49a53afd3f12",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "alg=HS256 iss=joe is_root=true\nexp=2011-03-22T18:43:00.000Z expired=true\n",
+   "stderr": "",
+   "duration_ms": 267,
+   "runs": 1
+  },
+  {
+   "probe_id": "probe-02",
+   "mode": "verify",
+   "runtime": "node24",
+   "expect": "stdout:hash-denylist-blocks-variant=false jti-denylist-blocks-variant=true",
+   "uses": null,
+   "repeat": 1,
+   "line": 163,
+   "file": "probe-02.js",
+   "block_sha": "556166e39441",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "same-string=false both-verify=true\nhash-denylist-blocks-variant=false jti-denylist-blocks-variant=true\n",
+   "stderr": "",
+   "duration_ms": 197,
+   "runs": 1
+  }
+ ]
+}

@@ -1,0 +1,1218 @@
+{
+  "verdict": "PASS",
+  "overall_score": 4.5,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope (claims judged by the sections they summarize)"
+    },
+    {
+      "heading": "## 1. Mental model",
+      "role": 1
+    },
+    {
+      "heading": "### 1.1 The problem: HOL blocking moved down a layer",
+      "role": 1
+    },
+    {
+      "heading": "### 1.2 The thesis: HTTP/3 makes the stream, not the connection, the unit that blocks",
+      "role": 1
+    },
+    {
+      "heading": "### 1.3 Scope",
+      "role": 1
+    },
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How it works",
+      "role": 3
+    },
+    {
+      "heading": "### 3.1 HTTP/2: TCP hands bytes over only in order",
+      "role": 3
+    },
+    {
+      "heading": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "role": 3
+    },
+    {
+      "heading": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3
+    },
+    {
+      "heading": "### 3.4 Flow control: a stall that looks like HOL blocking",
+      "role": 3
+    },
+    {
+      "heading": "### 3.5 Congestion control: still one controller per connection",
+      "role": 3
+    },
+    {
+      "heading": "## 4. Worked examples",
+      "role": 4
+    },
+    {
+      "heading": "### 4.1 One lost packet: HTTP/2 over TCP against HTTP/3 over QUIC",
+      "role": 4
+    },
+    {
+      "heading": "### 4.2 Two streams, one burst of 8 lost packets",
+      "role": 4
+    },
+    {
+      "heading": "### 4.3 A QPACK encoder that never blocks: quiche 0.22.0",
+      "role": 4
+    },
+    {
+      "heading": "### 4.4 Probe: three HTTP/2 requests share one TCP connection",
+      "role": 4
+    },
+    {
+      "heading": "## 5. Reference & invariants",
+      "role": 5
+    },
+    {
+      "heading": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5
+    },
+    {
+      "heading": "### 5.2 QUIC (RFC 9000)",
+      "role": 5
+    },
+    {
+      "heading": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5
+    },
+    {
+      "heading": "### 5.4 Server knobs: H2O",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "### 6.1 \"HTTP/3 removes HOL blocking\"",
+      "role": 6
+    },
+    {
+      "heading": "### 6.2 \"HTTP/2 streams are independent\"",
+      "role": 6
+    },
+    {
+      "heading": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6
+    },
+    {
+      "heading": "### 6.4 The sender's own queue",
+      "role": 6
+    },
+    {
+      "heading": "### 6.5 HTTP/3 is not always faster",
+      "role": 6
+    },
+    {
+      "heading": "### 6.6 UDP may be blocked: the fallback is HTTP/2",
+      "role": 6
+    },
+    {
+      "heading": "### 6.7 Telling the stalls apart",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^rfc9000]",
+      "url": "https://www.rfc-editor.org/rfc/rfc9000.html",
+      "cache": "cache/46f5fb0985f4.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: rfc-editor.org/rfc/"
+    },
+    {
+      "ref": "[^rfc9113]",
+      "url": "https://www.rfc-editor.org/rfc/rfc9113.html",
+      "cache": "cache/31239d03b783.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: rfc-editor.org/rfc/"
+    },
+    {
+      "ref": "[^rfc9114]",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9114",
+      "cache": "cache/61e9d4a5d782.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc"
+    },
+    {
+      "ref": "[^rfc9204]",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9204",
+      "cache": "cache/d75ddd928b21.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: datatracker.ietf.org/doc/html/rfc"
+    },
+    {
+      "ref": "[^h2o]",
+      "url": "https://h2o.examp1e.net/configure/http2_directives.html",
+      "cache": "cache/44649c73a64b.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "H2O (its own directives and behaviour)",
+      "rank_basis": "rule 2, project's own home: the saved page is H2O's own documentation (header 'H2O the optimized HTTP/1.x, HTTP/2, HTTP/3 server', 'Configure > HTTP/2 Directives'). Outside H2O it would rate as class 4 at best; both citing claims are about H2O."
+    },
+    {
+      "ref": "[^quiche]",
+      "url": "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+      "cache": "cache/1b6d3acbd283.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "cloudflare/quiche 0.22.0",
+      "rank_basis": "rule 2, project's own home: the project's repository source at tag 0.22.0 (also class 1, source code at a tag). The one citing claim is about quiche 0.22.0's encoder."
+    },
+    {
+      "ref": "[^zhang]",
+      "url": "https://arxiv.org/html/2310.09423v2",
+      "cache": "cache/f63d7b022073.txt",
+      "tier": "A",
+      "rank": 2,
+      "rank_basis": "tier A: arxiv.org/"
+    },
+    {
+      "ref": "[^edeline]",
+      "url": "https://arxiv.org/html/1612.07816v1",
+      "cache": "cache/95f8a1074fc4.txt",
+      "tier": "A",
+      "rank": 2,
+      "rank_basis": "tier A: arxiv.org/"
+    },
+    {
+      "ref": "[^marx]",
+      "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+      "cache": "cache/7144e96a4a52.txt",
+      "tier": "A",
+      "rank": 4,
+      "rank_basis": "tier A: calendar.perfplanet.com/"
+    },
+    {
+      "ref": "[^fastly]",
+      "url": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+      "cache": "cache/5830c4e1e1ac.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "rule 4, class: a company engineering blog post (Fastly blog, by Patrick McManus, Distinguished Engineer, Fastly, April 17, 2020). Not the home of any project it makes claims about, and not an originator of the concepts cited."
+    },
+    {
+      "ref": "[^cfupload]",
+      "url": "https://blog.cloudflare.com/delivering-http-2-upload-speed-improvements/",
+      "cache": "cache/48f50a086bd4.txt",
+      "tier": "A",
+      "rank": 4,
+      "rank_basis": "tier A: blog.cloudflare.com/"
+    },
+    {
+      "ref": "[^probe-01]",
+      "url": "probes/probe-01.js",
+      "cache": "probes/probe-01.js",
+      "tier": "B",
+      "rank": "local",
+      "rank_basis": "probe run by the harness (harness.json: status pass, node:24.22.1-alpine)"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 5,
+    "factual_grounding": 4,
+    "diataxis_rigor": 4
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 60,
+    "checked_roles_1_5": 60,
+    "claims_role_6": 20,
+    "checked_role_6": 20,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "HTTP/2 multiplexes many requests over TCP, and because TCP's loss recovery cannot see that multiplexing, a lost or reordered packet stalls every active transaction, including those the lost packet did not directly affect",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a lost or reordered packet causes all active transactions to experience a stall regardless of whether that transaction was directly impacted by the lost packet",
+      "note": "Summary of 1.1 and 3.1; role 3 taken as the strictest. RFC 9114 section 1.1."
+    },
+    {
+      "id": "C2",
+      "section": "## Summary",
+      "role": 1,
+      "claim": "HTTP/3 runs over QUIC",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This document defines HTTP/3: a mapping of HTTP semantics over the QUIC transport protocol",
+      "note": "RFC 9114 section 1.2."
+    },
+    {
+      "id": "C3",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "where a lost packet blocks only the streams that had data in it",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When a packet loss occurs, only streams with data in that packet are blocked waiting for a retransmission to be received",
+      "note": "RFC 9000 section 13; the blocking half is a plain statement in the page too."
+    },
+    {
+      "id": "C4",
+      "section": "### 1.1 The problem: HOL blocking moved down a layer",
+      "role": 1,
+      "claim": "HTTP/1.0 allowed only one outstanding request at a time on a TCP connection. HTTP/1.1 added request pipelining, which only partly addressed concurrency and still suffers from application-layer HOL blocking, so HTTP/1.0 and HTTP/1.1 clients open several connections to a server",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "still suffers from application-layer head-of-line blocking. Therefore, HTTP/1.0 and HTTP/1.1 clients use multiple connections to a server to make concurrent requests.",
+      "note": "RFC 9113 section 1."
+    },
+    {
+      "id": "C5",
+      "section": "### 1.1 The problem: HOL blocking moved down a layer",
+      "role": 1,
+      "claim": "HTTP/2 addresses this by allowing messages to be interleaved on the same connection, but RFC 9113 also notes that \"TCP head-of-line blocking is not addressed by this protocol\"",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "it allows interleaving of messages on the same connection ... Note, however, that TCP head-of-line blocking is not addressed by this protocol.",
+      "note": "Quote is exact."
+    },
+    {
+      "id": "C6",
+      "section": "### 1.1 The problem: HOL blocking moved down a layer",
+      "role": 1,
+      "claim": "TCP's loss recovery cannot see HTTP/2's parallel streams, so a lost or reordered packet stalls all active transactions, whether or not the lost packet carried their data",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the parallel nature of HTTP/2's multiplexing is not visible to TCP's loss recovery mechanisms, a lost or reordered packet causes all active transactions to experience a stall",
+      "note": ""
+    },
+    {
+      "id": "C7",
+      "section": "### 1.2 The thesis: HTTP/3 makes the stream, not the connection, the unit that blocks",
+      "role": 1,
+      "claim": "HTTP/3 hands multiplexing to QUIC, which provides reliability per stream and congestion control across the entire connection",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "By providing reliability at the stream level and congestion control across the entire connection, QUIC has the capability to improve the performance of HTTP",
+      "note": "Section 1.2 'Delegation to QUIC' also says QUIC incorporates stream multiplexing."
+    },
+    {
+      "id": "C8",
+      "section": "### 1.2 The thesis: HTTP/3 makes the stream, not the connection, the unit that blocks",
+      "role": 1,
+      "claim": "QUIC has no way to order bytes on different streams",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QUIC does not provide any means of ensuring ordering between bytes on different streams.",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "HTTP/2 stream: an independent, bidirectional sequence of frames inside one HTTP/2 connection. Many can be open at once, and either endpoint interleaves their frames",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A \"stream\" is an independent, bidirectional sequence of frames exchanged between the client and server within an HTTP/2 connection.",
+      "note": "Next bullet: multiple concurrently open streams, either endpoint interleaving frames."
+    },
+    {
+      "id": "C10",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "QUIC stream: a unidirectional or bidirectional channel of ordered bytes inside a QUIC connection, which can carry many streams at the same time",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Streams in QUIC provide a lightweight, ordered byte-stream abstraction to an application. Streams can be unidirectional or bidirectional. ... A QUIC connection can carry multiple simultaneous streams.",
+      "note": ""
+    },
+    {
+      "id": "C11",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Order is guaranteed across all frames of all streams in HTTP/2, within each stream only in QUIC (RFC 9114 quote)",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "HTTP/2 provides an absolute ordering between frames across all streams, while QUIC provides this guarantee on each stream only.",
+      "note": "Quote is exact (Appendix A.2)."
+    },
+    {
+      "id": "C12",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "HPACK: each endpoint has one encoder context and one decoder context for all field blocks on the connection, and the dynamic table is each context's main state",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Each endpoint has an HPACK encoder context and an HPACK decoder context that are used for encoding and decoding all field blocks on a connection.",
+      "note": "Next sentence: the dynamic table 'is the primary state for each context'."
+    },
+    {
+      "id": "C13",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "QPACK (\"a name, not an abbreviation\"): a dynamic table, a first-in, first-out list of field lines that encoder and decoder share. It starts empty, and the encoder fills it with instructions sent on the encoder stream",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "share a dynamic table that is initially empty. The encoder adds entries to the dynamic table and sends them to the decoder via instructions on the encoder stream",
+      "note": "First-in, first-out order and 'a name, not an abbreviation' are both in RFC 9204 (sections 3.2 and 1.1)."
+    },
+    {
+      "id": "C14",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "HTTP/2 flow control is credit-based: with WINDOW_UPDATE frames, receivers advertise how many octets they will accept on a stream and on the whole connection",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Receivers advertise how many octets they are prepared to receive on a stream and for the entire connection. This is a credit-based scheme.",
+      "note": ""
+    },
+    {
+      "id": "C15",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "QUIC flow control is limit-based, at two levels: stream flow control and connection flow control",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QUIC employs a limit-based flow control scheme ... This leads to two levels of data flow control in QUIC",
+      "note": ""
+    },
+    {
+      "id": "C16",
+      "section": "### 3.1 HTTP/2: TCP hands bytes over only in order",
+      "role": 3,
+      "claim": "TCP's in-order guarantee means that after a packet loss, all the data that follows the loss on the connection must wait for the loss to be repaired before HTTP can see it",
+      "source": "[^fastly]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if there is a packet loss, all of the data on the connection after that loss must wait for the loss to be repaired before HTTP can see it.",
+      "note": "Rank 4 in role 3 is allowed; consistent with RFC 9114 section 1.1."
+    },
+    {
+      "id": "C17",
+      "section": "### 3.1 HTTP/2: TCP hands bytes over only in order",
+      "role": 3,
+      "claim": "HTTP/2 framing relies on that order too: recipients process frames in the order they are received, and the order of HEADERS and DATA frames is semantically significant",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Recipients process frames in the order they are received. In particular, the order of HEADERS and DATA frames is semantically significant.",
+      "note": ""
+    },
+    {
+      "id": "C18",
+      "section": "### 3.1 HTTP/2: TCP hands bytes over only in order",
+      "role": 3,
+      "claim": "Encoded field sections must arrive and be decoded in the order they were encoded, which keeps the dynamic state of both endpoints in sync",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A sequence of encoded field sections must arrive (and be decoded) at an endpoint in the same order in which they were encoded.",
+      "note": "Next sentence: this keeps the dynamic state of the two endpoints in sync."
+    },
+    {
+      "id": "C19",
+      "section": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "role": 3,
+      "claim": "QUIC multiplexes by interleaving STREAM frames from several streams into QUIC packets, and one packet can carry STREAM frames from one or more streams. The receiver uses each STREAM frame's Stream ID and Offset fields to put the data in order",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A single QUIC packet can include multiple STREAM frames from one or more streams. ... uses the Stream ID and Offset fields in STREAM frames to place data in order.",
+      "note": "RFC 9000 sections 13 and 2.2."
+    },
+    {
+      "id": "C20",
+      "section": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "role": 3,
+      "claim": "When a packet is lost, only the streams with data in that packet wait for the retransmission, and the other streams keep going. When one packet carried data from several streams, losing it blocks all of them, so RFC 9000 advises putting as few streams as necessary in each outgoing packet without losing efficiency to underfilled packets",
+      "source": "[^rfc9000]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "only streams with data in that packet are blocked waiting for a retransmission to be received, while other streams can continue making progress.",
+      "note": "The page says the other streams 'can continue making progress'; the claim drops the modal and states that they 'keep going'. They may still be held by flow control or have nothing to send. The rest of the claim (several streams in one packet, the advice on packing) is entailed."
+    },
+    {
+      "id": "C21",
+      "section": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "role": 3,
+      "claim": "QUIC allows out-of-order delivery within a stream, but HTTP/3 does not use it",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Although QUIC permits out-of-order delivery within a stream, HTTP/3 does not make use of this feature.",
+      "note": ""
+    },
+    {
+      "id": "C22",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "If HTTP/3 used HPACK, it would cause HOL blocking of field sections, because HPACK assumes a total ordering of frames across all streams",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If HPACK were used for HTTP/3 ([HTTP/3]), it would induce head-of-line blocking for field sections due to built-in assumptions of a total ordering across frames on all streams.",
+      "note": ""
+    },
+    {
+      "id": "C23",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "QPACK instead makes every change to the dynamic table on a single unidirectional stream, which keeps those updates in a total order. Frames that carry encoded fields only reference the table's state at a given time",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QPACK uses a single unidirectional stream to make all modifications to the dynamic table, ensuring a total order of updates.",
+      "note": "Next sentence: frames with encoded fields 'merely reference the table state at a given time'."
+    },
+    {
+      "id": "C24",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "References to the static table and literal representations never risk HOL blocking. A reference to the dynamic table risks it while the encoder has no acknowledgment that the entry is available at the decoder",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "References to the static table and literal representations do not require any dynamic state and never risk head-of-line blocking.",
+      "note": "'never' is the page's own word."
+    },
+    {
+      "id": "C25",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "Required Insert Count: one more than the largest absolute index referenced, or zero when none; Insert Count: the total number of entries inserted in the decoder's dynamic table",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the Required Insert Count is one larger than the largest absolute index of all referenced dynamic table entries",
+      "note": "Zero case and the Insert Count definition are in sections 2.1.2 and 1.1."
+    },
+    {
+      "id": "C26",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "Because QUIC does not guarantee order between streams, a decoder might meet a reference to an entry it has not received yet. When the Required Insert Count is less than or equal to the Insert Count, the field section can be processed immediately; otherwise the stream becomes blocked",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When the Required Insert Count is less than or equal to the decoder's Insert Count, the field section can be processed immediately.",
+      "note": "Section 2.2.1 continues: otherwise the stream becomes blocked."
+    },
+    {
+      "id": "C27",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "A blocked stream becomes unblocked when the Insert Count is greater than or equal to the Required Insert Count of every encoded field section the decoder has started reading on it",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "becomes unblocked when the Insert Count becomes greater than or equal to the Required Insert Count for all encoded field sections the decoder has started reading",
+      "note": ""
+    },
+    {
+      "id": "C28",
+      "section": "### 3.3 QPACK: compression with a bounded, chosen risk of blocking",
+      "role": 3,
+      "claim": "The encoder chooses its risk: referencing entries in transit can often improve compression but can block the stream on loss or reordering; referencing only acknowledged entries avoids blocking but may mean literals, and larger field sections can leave the encoder blocked on congestion or flow-control limits",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "An encoder can avoid the risk of blocking by only referencing dynamic table entries that have been acknowledged, but this could mean using literals.",
+      "note": "Modals match the page ('can often', 'could', 'can result')."
+    },
+    {
+      "id": "C29",
+      "section": "### 3.4 Flow control: a stall that looks like HOL blocking",
+      "role": 3,
+      "claim": "In HTTP/2 only the DATA frame payload is flow controlled. In HTTP/3 every frame travels on a QUIC stream, so all frame headers and payloads are flow controlled",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "only the DATA frame payload is subject to flow control. ... Therefore, all frame headers and payload are subject to flow control.",
+      "note": "Appendix A.2.3."
+    },
+    {
+      "id": "C30",
+      "section": "### 3.4 Flow control: a stall that looks like HOL blocking",
+      "role": 3,
+      "claim": "If an endpoint cannot make sure its peer always has more flow-control credit than the peer's BDP, flow control limits its receive throughput, and packet loss can leave gaps in the receive buffer that keep the application from consuming data",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "cannot ensure that its peer always has available flow control credit that is greater than the peer's bandwidth-delay product on this connection, its receive throughput will be limited",
+      "note": "Section 4.3; the gap sentence follows."
+    },
+    {
+      "id": "C31",
+      "section": "### 3.4 Flow control: a stall that looks like HOL blocking",
+      "role": 3,
+      "claim": "QPACK and flow control can deadlock each other: a decoder might withhold credit on a request stream until the encoder stream delivers updates; if credit on the encoder stream or connection depends on consuming that request stream, a deadlock might result",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "depends on the consumption and release of data on the stream carrying the encoded field section, a deadlock might result.",
+      "note": "The page says 'the stream that carries an encoded field section'; 'request stream' is a narrower case of it, not a wider one."
+    },
+    {
+      "id": "C32",
+      "section": "### 3.5 Congestion control: still one controller per connection",
+      "role": 3,
+      "claim": "Congestion control works per TCP or QUIC connection, not per stream. One loss slows HTTP/2's single connection, HTTP/1.1 with 6 connections slows only the one that lost a packet, and in QUIC a loss on any stream slows every stream of the connection",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QUIC’s congestion control is still done at the connection level, and not per-stream.",
+      "note": "Bonus section also: 'a single packet loss on just one of the connections will only slow down that one'."
+    },
+    {
+      "id": "C33",
+      "section": "### 4.1 One lost packet: HTTP/2 over TCP against HTTP/3 over QUIC",
+      "role": 4,
+      "claim": "JS on stream 1, CSS on stream 2, three packets; packet 2 only stream 2, packet 3 both. Over TCP, losing packet 2 makes TCP keep packet 3 until the retransmitted packet 2 arrives, at least one round trip later, so both streams wait although stream 1's data in packet 3 was usable",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "TCP keeps packet 3 in its receive buffer until it receives the retransmitted copy of packet 2 (which takes at least 1 round-trip to the server)",
+      "note": "Packet contents and the 'directly use it' point are in the next paragraph."
+    },
+    {
+      "id": "C34",
+      "section": "### 4.1 One lost packet: HTTP/2 over TCP against HTTP/3 over QUIC",
+      "role": 4,
+      "claim": "Packet 2 lost over QUIC: QUIC hands over stream 1's STREAM frame in packet 3 at once (byte 450 follows byte 449) and holds only stream 2, whose bytes 0-299 were in the lost packet",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "byte 450 follows byte 449, so there are no byte gaps in the data). It can immediately give that data to the browser for processing as well.",
+      "note": "The same paragraph contrasts this with TCP, 'which also held back stream 1's data', so the hand-over is stated as what happens in the example."
+    },
+    {
+      "id": "C35",
+      "section": "### 4.1 One lost packet: HTTP/2 over TCP against HTTP/3 over QUIC",
+      "role": 4,
+      "claim": "Packet 1 lost: TCP would hold packets 2 and 3 even though the CSS on stream 2 is complete in them; QUIC passes stream 2 to the browser and holds only stream 1",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QUIC knows it has received all expected data for stream 2 and just passed that along to the browser, only holding up stream 1.",
+      "note": ""
+    },
+    {
+      "id": "C36",
+      "section": "### 4.2 Two streams, one burst of 8 lost packets",
+      "role": 4,
+      "claim": "One burst of 8 lost packets on 2 streams: sequential sending barely benefits; multiplexed with all losses on one stream lets the other be processed; losses spread over both leave both HOL blocked, each needing its own ordering",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the received green packets after the loss cannot be processed by the browser as they belong to the same stream that experienced the loss.",
+      "note": "Middle and bottom rows of Figure 10 are described in the next two paragraphs."
+    },
+    {
+      "id": "C37",
+      "section": "### 4.2 Two streams, one burst of 8 lost packets",
+      "role": 4,
+      "claim": "Multiplexed sending (12121212) lets HTTP/3 profit from HOL removal, sequential (11112222) lets browsers process core resources sooner, and the author calls these two recommendations conflicting",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "It means we have two conflicting recommendations for optimal performance",
+      "note": ""
+    },
+    {
+      "id": "C38",
+      "section": "### 4.3 A QPACK encoder that never blocks: quiche 0.22.0",
+      "role": 4,
+      "claim": "quiche 0.22.0's encoder writes Required Insert Count 0 and Base 0 at the start of every field section, encodes each line as a static index, a literal with static name reference or a fully literal line, and its Encoder struct has no fields",
+      "source": "[^quiche]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "pub struct Encoder {}",
+      "note": "encode() calls encode_int(0, 0, 8) under '// Required Insert Count.' and encode_int(0, 0, 7) under '// Base.', then matches lookup_static into three branches. Source at tag 0.22.0, as the claim names."
+    },
+    {
+      "id": "C39",
+      "section": "### 4.3 A QPACK encoder that never blocks: quiche 0.22.0",
+      "role": 4,
+      "claim": "A Required Insert Count of 0 is never greater than the decoder's Insert Count, so every such field section can be processed immediately",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When the Required Insert Count is less than or equal to the decoder's Insert Count, the field section can be processed immediately.",
+      "note": "Insert Count is a count of insertions, so it is at least 0; the inference is direct."
+    },
+    {
+      "id": "C40",
+      "section": "### 4.4 Probe: three HTTP/2 requests share one TCP connection",
+      "role": 4,
+      "claim": "On Node.js 24.22.1 (image node:24.22.1-alpine, kernel 7.2.12-orbstack-00394-gbecdd6130068), the three requests arrived on one TCP connection and got HTTP/2 stream IDs 1, 3 and 5",
+      "source": "[^probe-01]",
+      "verdict": "observed",
+      "probe": "probe-01",
+      "severity": "none",
+      "page_says": "ids=1,3,5 sockets=1",
+      "note": "harness.json: status pass, exit 0, runtime node:24.22.1-alpine, kernel matches. The probe counts the server's 'connection' events and prints the sorted req.id values; neither is hard-coded, errors are not caught, so a second socket or other IDs would change the output. Worded as one observation with its version."
+    },
+    {
+      "id": "C41",
+      "section": "### 4.4 Probe: three HTTP/2 requests share one TCP connection",
+      "role": 4,
+      "claim": "HTTP/3 puts a client's first request on QUIC stream 0 and later ones on streams 4, 8 and so on",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the client's first request occurs on QUIC stream 0, with subsequent requests on streams 4, 8, and so on.",
+      "note": ""
+    },
+    {
+      "id": "C42",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "Field blocks MUST be transmitted as a contiguous sequence of frames, with no interleaved frames of any other type or from any other stream",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Field blocks MUST be transmitted as a contiguous sequence of frames, with no interleaved frames of any other type or from any other stream.",
+      "note": ""
+    },
+    {
+      "id": "C43",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "A HEADERS frame without END_HEADERS MUST be followed by a CONTINUATION frame for the same stream; a receiver MUST treat any other frame type or stream as a PROTOCOL_ERROR connection error",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A HEADERS frame without the END_HEADERS flag set MUST be followed by a CONTINUATION frame for the same stream.",
+      "note": "PROTOCOL_ERROR sentence follows in section 6.2."
+    },
+    {
+      "id": "C44",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "A receiver MUST terminate the connection with COMPRESSION_ERROR if it does not decompress a field block, and a decoding error MUST be treated as a COMPRESSION_ERROR connection error",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A receiver MUST terminate the connection with a connection error (Section 5.4.1) of type COMPRESSION_ERROR if it does not decompress a field block.",
+      "note": "The decoding-error MUST is in the next sentence of section 4.3."
+    },
+    {
+      "id": "C45",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "Initial windows are 65,535 octets for new streams and for the connection; SETTINGS_INITIAL_WINDOW_SIZE adjusts new streams; the connection window changes only with WINDOW_UPDATE",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "new streams are created with an initial flow-control window size of 65,535 octets. The connection flow-control window is also 65,535 octets.",
+      "note": "Section 6.9.2."
+    },
+    {
+      "id": "C46",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "The sender MUST NOT send a flow-controlled frame whose length exceeds the space in either the stream or the connection window",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The sender MUST NOT send a flow-controlled frame with a length that exceeds the space available in either of the flow-control windows advertised by the receiver.",
+      "note": ""
+    },
+    {
+      "id": "C47",
+      "section": "### 5.1 HTTP/2 (RFC 9113)",
+      "role": 5,
+      "claim": "Endpoints MUST read and process HTTP/2 frames from the TCP receive buffer as soon as data is available; reading late could lead to a deadlock",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Endpoints MUST read and process HTTP/2 frames from the TCP receive buffer as soon as data is available.",
+      "note": "'could lead to a deadlock' follows."
+    },
+    {
+      "id": "C48",
+      "section": "### 5.2 QUIC (RFC 9000)",
+      "role": 5,
+      "claim": "Endpoints MUST be able to deliver stream data as an ordered byte stream, buffering out-of-order data up to the advertised limit; implementations MAY offer out-of-order delivery",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Endpoints MUST be able to deliver stream data to an application as an ordered byte stream.",
+      "note": "MAY wording kept: 'implementations MAY choose to offer the ability to deliver data out of order'."
+    },
+    {
+      "id": "C49",
+      "section": "### 5.2 QUIC (RFC 9000)",
+      "role": 5,
+      "claim": "Senders MUST NOT exceed either limit; MAX_STREAM_DATA carries a stream's maximum absolute byte offset, MAX_DATA the maximum of the sum over all streams",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Senders MUST NOT send data in excess of either limit.",
+      "note": "Section 4.1 defines both frames as stated."
+    },
+    {
+      "id": "C50",
+      "section": "### 5.2 QUIC (RFC 9000)",
+      "role": 5,
+      "claim": "A sender at its limit is blocked and SHOULD send STREAM_DATA_BLOCKED or DATA_BLOCKED; since it is not required to, a receiver MUST NOT wait for them before sending MAX_STREAM_DATA or MAX_DATA",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A blocked sender is not required to send STREAM_DATA_BLOCKED or DATA_BLOCKED frames. Therefore, a receiver MUST NOT wait",
+      "note": "SHOULD matches section 4.1."
+    },
+    {
+      "id": "C51",
+      "section": "### 5.2 QUIC (RFC 9000)",
+      "role": 5,
+      "claim": "If the transport parameters that set initial per-stream limits are absent, streams of that type start with a flow-control limit of 0",
+      "source": "[^rfc9000]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the transport parameter is absent, streams of that type start with a flow control limit of 0.",
+      "note": ""
+    },
+    {
+      "id": "C52",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "Transport parameters MUST allow the peer at least three unidirectional streams and SHOULD give each at least 1,024 bytes of flow-control credit",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "allow the peer to create at least three unidirectional streams. These transport parameters SHOULD also provide at least 1,024 bytes of flow-control credit to each unidirectional stream.",
+      "note": "MUST precedes 'allow' in the page; modals match."
+    },
+    {
+      "id": "C53",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "Endpoints SHOULD create the control stream and mandatory-extension unidirectional streams (QPACK encoder and decoder) first",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Endpoints SHOULD create the HTTP control stream as well as the unidirectional streams required by mandatory extensions (such as the QPACK encoder and decoder streams) first",
+      "note": ""
+    },
+    {
+      "id": "C54",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "The sender MUST NOT close the control stream; closing either control stream MUST be treated as H3_CLOSED_CRITICAL_STREAM (0x0104); endpoints SHOULD give enough credit to keep the peer's control stream unblocked",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If either control stream is closed at any point, this MUST be treated as a connection error of type H3_CLOSED_CRITICAL_STREAM.",
+      "note": "Code 0x0104 is in section 8.1."
+    },
+    {
+      "id": "C55",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "Encoder stream is type 0x02, decoder stream 0x03; each endpoint MUST initiate at most one of each; the sender MUST NOT close either; closing either MUST be H3_CLOSED_CRITICAL_STREAM",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Each endpoint MUST initiate, at most, one encoder stream and, at most, one decoder stream.",
+      "note": "Types and closure rules are in section 4.2."
+    },
+    {
+      "id": "C56",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "SETTINGS_QPACK_MAX_TABLE_CAPACITY (0x01) defaults to zero and is the counterpart of SETTINGS_HEADER_TABLE_SIZE; SETTINGS_QPACK_BLOCKED_STREAMS (0x07) defaults to zero",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The default value is zero. See Section 3.2 for usage. This is the equivalent of the SETTINGS_HEADER_TABLE_SIZE from HTTP/2.",
+      "note": "Both defaults are in section 5."
+    },
+    {
+      "id": "C57",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "An encoder MUST limit the streams that could become blocked to SETTINGS_QPACK_BLOCKED_STREAMS at all times; a decoder that meets more MUST treat it as QPACK_DECOMPRESSION_FAILED",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "An encoder MUST limit the number of streams that could become blocked to the value of SETTINGS_QPACK_BLOCKED_STREAMS at all times.",
+      "note": ""
+    },
+    {
+      "id": "C58",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "While blocked, encoded field section data SHOULD remain in the blocked stream's flow-control window",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "While blocked, encoded field section data SHOULD remain in the blocked stream's flow-control window.",
+      "note": ""
+    },
+    {
+      "id": "C59",
+      "section": "### 5.3 HTTP/3 (RFC 9114) and QPACK (RFC 9204)",
+      "role": 5,
+      "claim": "An encoder SHOULD NOT write an instruction unless sufficient stream and connection flow-control credit is available for the entire instruction",
+      "source": "[^rfc9204]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "an encoder SHOULD NOT write an instruction unless sufficient stream and connection flow-control credit is available for the entire instruction.",
+      "note": ""
+    },
+    {
+      "id": "C60",
+      "section": "### 5.4 Server knobs: H2O",
+      "role": 5,
+      "claim": "Since version 2.1, H2O's latency optimization tries to keep unsent HTTP/2 frames small on connections with RTT above and CWND below thresholds; defaults min-rtt 50 ms (4294967295 disables), max-additional-delay 0.1, max-cwnd 65535; Linux and OS X only (TCP_INFO, TCP_NOTSENT_LOWAT)",
+      "source": "[^h2o]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "For TCP/IP connections with greater RTT and smaller CWND than the configured threshold, the server will try to keep the size of HTTP/2 frames unsent as small as possible",
+      "note": "Each default, the 'since v2.1' tag and the Linux/OS X line are on the page. Rank 1 holds: the claim is about H2O itself."
+    },
+    {
+      "id": "C61",
+      "section": "### 6.1 \"HTTP/3 removes HOL blocking\"",
+      "role": 6,
+      "claim": "QUIC keeps byte order within a stream, so a gap holds back that stream; HOL removal helps only when several streams are active, and a lone active stream is still HOL blocked by any loss",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "QUIC’s HOL blocking removal only works if there are multiple resource streams active at the same time.",
+      "note": ""
+    },
+    {
+      "id": "C62",
+      "section": "### 6.1 \"HTTP/3 removes HOL blocking\"",
+      "role": 6,
+      "claim": "RFC 9114's overview says streams \"are independent of each other, so one stream that is blocked or suffers packet loss does not prevent progress on other streams\"",
+      "source": "[^rfc9114]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Streams are independent of each other, so one stream that is blocked or suffers packet loss does not prevent progress on other streams.",
+      "note": "Records an apparent Rank 1 disagreement; quote is exact."
+    },
+    {
+      "id": "C63",
+      "section": "### 6.1 \"HTTP/3 removes HOL blocking\"",
+      "role": 6,
+      "claim": "A TLS record spread over 11 TCP packets whose last packet is lost cannot be decrypted until the retransmission, with no TCP HOL blocking; a highly specific case, and part of why QUIC encrypts per packet",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Imagine that the TLS record was spread out over 11 TCP packets, and the last TCP packet is lost.",
+      "note": "'highly specific case' and the per-packet reason follow."
+    },
+    {
+      "id": "C64",
+      "section": "### 6.2 \"HTTP/2 streams are independent\"",
+      "role": 6,
+      "claim": "RFC 9113's overview says HTTP/2 streams \"are largely independent of each other, so a blocked or stalled request or response does not prevent progress on other streams\"",
+      "source": "[^rfc9113]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Streams are largely independent of each other, so a blocked or stalled request or response does not prevent progress on other streams.",
+      "note": "Records an apparent Rank 1 disagreement; quote is exact."
+    },
+    {
+      "id": "C65",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "A 2016 study reported by Fastly: the higher the loss, the worse HTTP/2 did against HTTP/1, mostly from one TCP connection; below 0.5% loss benefited, 0.5-1.5% broke even, above 1.5% harmed",
+      "source": "[^fastly]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "connections with less than 0.5% packet loss benefited from HTTP/2, those with between 0.5% and 1.5% loss benefited roughly as much as they sacrificed",
+      "note": ""
+    },
+    {
+      "id": "C66",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "Marx: on high-speed cabled networks loss is about 0.01%, and even on the worst cellular networks rates above 2% are rare",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Especially on high-speed, cabled networks, packet loss rates are on the order of 0.01%. Even on the worst cellular networks, you will rarely see rates higher than 2% in practice.",
+      "note": "One side of an open conflict, same rank as Fastly."
+    },
+    {
+      "id": "C67",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "Fastly: 75% of Fastly edge connections then fell in the range HTTP/2 improved, and the rest split roughly evenly between hurt and unchanged",
+      "source": "[^fastly]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "75% of Fastly edge connections at that time fell into the “improved by HTTP/2” range of packet loss and the remainders were split roughly evenly between hurt and unchanged.",
+      "note": "Other side of the open conflict."
+    },
+    {
+      "id": "C68",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "Marx: as deployed, HTTP/2 is typically as fast as or slightly faster than HTTP/1.1 in most conditions, in his opinion partly from site optimization and parallel HTTP/2 connections",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "HTTP/2 as it is currently deployed in browsers and servers is typically as fast or slightly faster than HTTP/1.1 in most conditions.",
+      "note": "'in my opinion' kept by the doc."
+    },
+    {
+      "id": "C69",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "In some cases, especially on slower lossier networks, HTTP/1.1 on 6 connections still beats HTTP/2 on one, often because of TCP HOL blocking",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "there are also some cases (especially on slower networks with higher packet loss) where HTTP/1.1 on 6 connections will still outshine HTTP/2 on one connection",
+      "note": ""
+    },
+    {
+      "id": "C70",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "Cloudflare: a 10MB upload at 200Mbps and 40ms RTT with the production configuration ran HTTP/2 at almost half the speed of HTTP/1.1; at 5Mbps and 20ms they were almost identical",
+      "source": "[^cfupload]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Using our production configuration, HTTP/2 upload speed tested at almost half of the same test conditions using HTTP/1.1 (higher is better).",
+      "note": "Numbers 10MB, 200Mbps, 40ms, 5Mbps, 20ms all on the page."
+    },
+    {
+      "id": "C71",
+      "section": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "role": 6,
+      "claim": "The bottleneck was HTTP/2 flow control: the application layer runs its own receiver flow control and NGINX's fixed-size buffer limits upload speed when BDP exceeds the request body buffer",
+      "source": "[^cfupload]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "NGINX uses a fixed size buffer for the receiver. This limits upload speed when the current link has a BDP larger than the current request body buffer size.",
+      "note": ""
+    },
+    {
+      "id": "C72",
+      "section": "### 6.4 The sender's own queue",
+      "role": 6,
+      "claim": "H2O says the TCP send buffer should hold only packets in flight and TLS records must be small enough to avoid HOL blocking, at the cost of more CPU and slightly higher latency",
+      "source": "[^h2o]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "send buffer of the TCP/IP stack should be kept empty except for the packets in-flight, and size of the TLS records must be small enough to avoid head-of-line blocking.",
+      "note": "SHOULD and must match the page."
+    },
+    {
+      "id": "C73",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "Fastly: HTTP/3 might not significantly affect performance for the average connection, or at all, especially against an HTTP/2 session with almost no loss and best-practice TLS and TCP",
+      "source": "[^fastly]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "HTTP/3 might not significantly affect performance for the average connection — or even affect it at all.",
+      "note": ""
+    },
+    {
+      "id": "C74",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "Marx (December 2020): his gut feeling, backed by early experiments, is that QUIC's HOL removal probably won't help much, and would probably have a large impact only on lossy networks",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "my personal gut feeling (which -is- backed by my results from several early experiments) says that QUIC’s HOL blocking removal probably won’t actually help all that much for Web performance",
+      "note": "Page dated 3 Dec 2020."
+    },
+    {
+      "id": "C75",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "Zhang et al.: over fast Internet QUIC+HTTP/3 had up to 45.2% lower data rate than TCP+TLS+HTTP/2, the gap growing with bandwidth; on Chrome QUIC fell behind above about 500 Mbps and was 45.2% slower at 1 Gbps",
+      "source": "[^zhang]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When the bandwidth reaches 1 Gbps, QUIC becomes 45.2% slower than HTTP/2.",
+      "note": "Abstract gives 'up to 45.2%' and the growing gap."
+    },
+    {
+      "id": "C76",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "The cause per Zhang et al.: high receiver-side processing overhead, excessive data packets and user-space ACKs; no examined QUIC implementation uses UDP GRO",
+      "source": "[^zhang]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "we identify the root cause to be high receiver-side processing overhead, in particular, excessive data packets and QUIC’s user-space ACKs.",
+      "note": ""
+    },
+    {
+      "id": "C77",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "Marx names per-packet encryption, needing more CPU than larger blocks, as one of the main reasons QUIC can still be slower than TCP in current implementations",
+      "source": "[^marx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "this is less efficient and requires more CPU than using larger blocks, and is one of the main reasons why QUIC can still be slower than TCP in current implementations.",
+      "note": "Lower-ranked side of the CPU-cost conflict, kept in role 6."
+    },
+    {
+      "id": "C78",
+      "section": "### 6.5 HTTP/3 is not always faster",
+      "role": 6,
+      "claim": "Zhang et al. found the cipher suite made no significant difference: both stacks used TLS_AES_128_GCM_SHA256, and other cipher suites did not significantly change results",
+      "source": "[^zhang]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "employ the TLS_AES_128_GCM_SHA256 cipher on our web server. We also benchmark different cipher suites and the results do not significantly affect the performance.",
+      "note": ""
+    },
+    {
+      "id": "C79",
+      "section": "### 6.6 UDP may be blocked: the fallback is HTTP/2",
+      "role": 6,
+      "claim": "A 2016 study saw complete UDP blocking on about 2% to 4% of terrestrial access networks, concentrated in enterprise networks and regions with challenged connectivity",
+      "source": "[^edeline]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "we see evidence of complete blocking of UDP in between about 2%2\\% and 4%4\\% of terrestrial access networks",
+      "note": "The doubled numbers are math-markup residue in the saved text."
+    },
+    {
+      "id": "C80",
+      "section": "### 6.6 UDP may be blocked: the fallback is HTTP/2",
+      "role": 6,
+      "claim": "On the 1% to 5% of networks where QUIC over UDP is blocked or limited, HTTP/2's natural fallback to TLS over TCP can be used",
+      "source": "[^edeline]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Since HTTP/2 has a natural fallback to TLS over TCP, this alternative can be used on the 1−5%~1-5\\% of networks where QUIC packets over UDP are blocked or limited.",
+      "note": ""
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "RFC 9114 overview ('one stream that is blocked or suffers packet loss does not prevent progress on other streams') against RFC 9000 section 13 (a lost packet blocks every stream with data in it) and RFC 9204 blocked streams",
+      "winner": "[^rfc9000] rank 1 and [^rfc9204] rank 1 (the detailed text)",
+      "loser": "[^rfc9114] rank 1 (overview sentence read alone)",
+      "where_loser_is": "### 6.1 \"HTTP/3 removes HOL blocking\"",
+      "ok": true
+    },
+    {
+      "topic": "RFC 9113 overview ('streams are largely independent') against RFC 9113 section 1 (TCP HOL blocking not addressed) and RFC 9114 section 1.1 (all HTTP/2 transactions stall)",
+      "winner": "[^rfc9113] rank 1 section 1 and [^rfc9114] rank 1",
+      "loser": "[^rfc9113] rank 1 (overview sentence read alone)",
+      "where_loser_is": "### 6.2 \"HTTP/2 streams are independent\"",
+      "ok": true
+    },
+    {
+      "topic": "How often loss is high enough to matter",
+      "winner": "none: open conflict, same rank, marked with the open-conflict sign",
+      "loser": "[^marx] rank 4 and [^fastly] rank 4",
+      "where_loser_is": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "ok": true
+    },
+    {
+      "topic": "Whether, and why, HTTP/2 is slower than HTTP/1.1",
+      "winner": "none: open conflict, same rank, marked with the open-conflict sign",
+      "loser": "[^marx] rank 4 and [^cfupload] rank 4",
+      "where_loser_is": "### 6.3 HTTP/2 against HTTP/1.1 under loss",
+      "ok": true
+    },
+    {
+      "topic": "Main cause of QUIC's CPU cost and slowness (per-packet encryption against receiver-side processing)",
+      "winner": "[^zhang] rank 2",
+      "loser": "[^marx] rank 4",
+      "where_loser_is": "### 6.5 HTTP/3 is not always faster",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "WARN",
+      "section": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "rule": "grounding",
+      "evidence": "C20: 'the other streams keep going' states as fact what RFC 9000 section 13 gives as possibility: 'other streams can continue making progress'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 4. Worked examples",
+      "rule": "structure",
+      "evidence": "4.2 retells a figure in prose with no packet-level inputs or outputs, and 4.3 is a code reading that restates the 3.3 rule rather than showing an encoded field section. Only 4.1 and 4.4 show concrete inputs and outputs. The TCP HOL statement is also repeated in Summary, 1.1, 3.1, 6.2 and 6.7."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "### 3.2 HTTP/3: QUIC orders each stream on its own",
+      "action": "In step 2, replace 'and the other streams keep going' with 'while the other streams can continue making progress' (RFC 9000 section 13, [^rfc9000])."
+    },
+    {
+      "section": "### 4.3 A QPACK encoder that never blocks: quiche 0.22.0",
+      "action": "Optional, for structure: add the real input and output from quiche's own test encode_static_header: the field ':method: GET' encodes to the bytes [0, 0, INDEXED | 0x40 | 17], that is Required Insert Count 0, Base 0 and static index 17 ([^quiche], tests module of encoder.rs at tag 0.22.0)."
+    },
+    {
+      "section": "### 4.2 Two streams, one burst of 8 lost packets",
+      "action": "Optional, for structure: give the three rows of the 8-loss burst as a small table (row, which packets were lost, which stream can be processed) instead of prose, keeping [^marx] as the source."
+    }
+  ],
+  "final": {
+    "verdict": "PASS",
+    "checkable": 80,
+    "claims": 80,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

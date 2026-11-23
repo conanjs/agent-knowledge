@@ -1,0 +1,1346 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.5,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "fb60524",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "envelope (claims judged as role 3, the strictest role summarized)"
+    },
+    {
+      "heading": "## 1. Mental model",
+      "role": 1
+    },
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How it works",
+      "role": 3
+    },
+    {
+      "heading": "## 4. Worked examples",
+      "role": 4
+    },
+    {
+      "heading": "## 5. Reference & invariants",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": "envelope"
+    },
+    {
+      "heading": "## Related",
+      "role": "envelope"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^epoll7]",
+      "url": "https://man7.org/linux/man-pages/man7/epoll.7.html",
+      "cache": "cache/c225d5946a26.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: man7.org/linux/man-pages/"
+    },
+    {
+      "ref": "[^epollctl]",
+      "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html",
+      "cache": "cache/d4cb145dde9c.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: man7.org/linux/man-pages/"
+    },
+    {
+      "ref": "[^epollwait]",
+      "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/plain/man/man2/epoll_wait.2?h=man-pages-6.19",
+      "cache": "cache/05cdcc243187.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_basis": "class 1 (official docs): the Linux man-pages project's own source of epoll_wait(2) at ref man-pages-6.19 ('Copyright, the authors of the Linux man-pages project'); the same manual the class table lists as man7.org."
+    },
+    {
+      "ref": "[^eventpoll]",
+      "url": "https://github.com/torvalds/linux/blob/v6.12/fs/eventpoll.c",
+      "cache": "cache/787c21f1de96.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/torvalds/linux/"
+    },
+    {
+      "ref": "[^posix]",
+      "url": "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html",
+      "cache": "cache/b7a5318a6fd7.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_basis": "class 1 (spec): The Open Group Base Specifications Issue 8, IEEE Std 1003.1-2024, Definitions chapter."
+    },
+    {
+      "ref": "[^nginx]",
+      "url": "https://nginx.org/en/docs/dev/development_guide.html",
+      "cache": "cache/8534d4bd3e26.txt",
+      "tier": "B",
+      "rank": 1,
+      "rank_scope": "nginx",
+      "rank_basis": "step 2 rule 2: nginx.org is nginx's own documentation and every claim citing it is about nginx's event handling."
+    },
+    {
+      "ref": "[^mio]",
+      "url": "https://docs.rs/mio/1.0.2/mio/struct.Poll.html",
+      "cache": "cache/6a645105aed6.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: docs.rs/"
+    },
+    {
+      "ref": "[^libuv]",
+      "url": "https://github.com/libuv/libuv/blob/v1.49.2/src/unix/stream.c",
+      "cache": "cache/f17e2555df15.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/libuv/libuv/"
+    },
+    {
+      "ref": "[^gonetpoll]",
+      "url": "https://github.com/golang/go/blob/go1.23.4/src/runtime/netpoll_epoll.go",
+      "cache": "cache/5fea415e0f05.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/golang/"
+    },
+    {
+      "ref": "[^lwn]",
+      "url": "https://lwn.net/Articles/864947/",
+      "cache": "cache/f565b7589cd5.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "class 4: edited LWN.net article 'By Jonathan Corbet, August 5, 2021', closest to vetted engineering literature. The reader comments on the same page (mkerrisk, NYKevin, HenrikH) are unvetted and are treated as Rank 6 content; all [^lwn] citations sit in role 6."
+    },
+    {
+      "ref": "[^popcount1]",
+      "url": "https://idea.popcount.org/2017-02-20-epoll-is-fundamentally-broken-12/",
+      "cache": "cache/4d5f5e9bddf3.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "class 6: personal blog ('Marek's totally not insane idea of the day'); no originator, project-home or maintainer evidence."
+    },
+    {
+      "ref": "[^popcount2]",
+      "url": "https://idea.popcount.org/2017-03-20-epoll-is-fundamentally-broken-22",
+      "cache": "cache/54ee8f879da8.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "class 6: personal blog, same author and site as [^popcount1]."
+    },
+    {
+      "ref": "[^lkml2003]",
+      "url": "https://lore.kernel.org/all/20030712231147.GI15643@srv.foo21.com/T/",
+      "cache": "cache/8550958264e8.txt",
+      "tier": "B",
+      "rank": 6,
+      "rank_basis": "class 6: multi-author linux-kernel mailing-list thread (Varsanyi, Lokier, Libenzi); the page shows no poster's role, so rule 3 does not apply. Rule 1 could cover Davide Libenzi's own replies (the cached eventpoll.c header names him as its author) but not the other posters, so the thread as a source takes the higher number. Cited in role 6 only, so the rank changes no check."
+    },
+    {
+      "ref": "[^harness]",
+      "url": "verdicts/round-<n>.harness.json",
+      "cache": "harness.json",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "local artifact: harness result"
+    },
+    {
+      "ref": "[^probe-01]",
+      "url": "probes/probe-01.c",
+      "cache": "probes/probe-01.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-02]",
+      "url": "probes/probe-02.c",
+      "cache": "probes/probe-02.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-03]",
+      "url": "probes/probe-03.c",
+      "cache": "probes/probe-03.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-04]",
+      "url": "probes/probe-04.c",
+      "cache": "probes/probe-04.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-05]",
+      "url": "probes/probe-05.c",
+      "cache": "probes/probe-05.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-06]",
+      "url": "probes/probe-06.c",
+      "cache": "probes/probe-06.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    },
+    {
+      "ref": "[^probe-07]",
+      "url": "probes/probe-07.c",
+      "cache": "probes/probe-07.c",
+      "tier": "local",
+      "rank": "local",
+      "rank_basis": "probe (local); harness status pass; code read: it prints computed values compared with expect, so it can fail"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": true,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 4,
+    "factual_grounding": 1,
+    "diataxis_rigor": 4
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 56,
+    "checked_roles_1_5": 56,
+    "claims_role_6": 23,
+    "checked_role_6": 23,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "With EPOLLET, once an event has been copied out to user space the kernel does not put the item back on the ready list; in the default LT mode it does, so the next epoll_wait checks the file again",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "else if (!(epi->event.events & EPOLLET)) { … we need to insert back inside … the ready list, so that the next call to … epoll_wait() will check again the events",
+      "note": "ep_send_events v6.12."
+    },
+    {
+      "id": "C2",
+      "section": "## Summary",
+      "role": 3,
+      "claim": "That is why, under ET, a partial read can leave data that the next epoll_wait does not report, and why the man page's suggested use is non-blocking fds plus waiting for an event only after read/write returns EAGAIN",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "will probably hang despite the available data still present … (2) by waiting for an event only after read(2) or write(2) return EAGAIN.",
+      "note": "Both stated facts are in epoll(7); 'That' points back to the previous sentence, which cites eventpoll.c."
+    },
+    {
+      "id": "C3",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "An epoll instance is an in-kernel data structure that user space can consider a container for two lists: the interest list and the ready list, which the kernel fills as a result of I/O activity on those fds",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "an in-kernel data structure which, from a user-space perspective, can be considered as a container for two lists",
+      "note": ""
+    },
+    {
+      "id": "C4",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "Edge-triggered mode \"delivers events only when changes occur on the monitored file descriptor\", that is, an event is generated upon each receipt of a chunk of data; level-triggered mode is the default, and then epoll \"is simply a faster poll(2)\" with the same semantics",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "edge-triggered mode delivers events only when changes occur on the monitored file descriptor, that is, an event will be generated upon each receipt of a chunk of data.",
+      "note": ""
+    },
+    {
+      "id": "C5",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "In v6.12 the difference is one branch in ep_send_events, after an event has been copied to user space: a level-triggered item is inserted back into the ready list \"so that the next call to epoll_wait() will check again the events availability\", and an EPOLLET item is not",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if (epi->event.events & EPOLLONESHOT) … else if (!(epi->event.events & EPOLLET)) {",
+      "note": "EPOLLET appears in the file only at the private-bits and EPOLLEXCLUSIVE_OK_BITS masks and at this branch, so 'one branch' holds."
+    },
+    {
+      "id": "C6",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "struct eventpoll: stored in the private_data member of the epoll file's struct file; the main data structure of the eventpoll interface",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This structure is stored inside the \"private_data\" member of the file structure and represents the main data structure for the eventpoll interface.",
+      "note": ""
+    },
+    {
+      "id": "C7",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "struct eventpoll holds rdllist, the list of ready fds; rbr, the root of the RB tree that stores the monitored fds; and ovflist, a singly linked chain of the items that became ready while events were being transferred to user space without holding the lock",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "/* List of ready file descriptors */ … /* RB tree root used to store monitored fd structs */ … happened while transferring ready events to userspace w/out holding ->lock.",
+      "note": ""
+    },
+    {
+      "id": "C8",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Each fd added to epoll has an epitem linked into the rbr tree; its rdllink field links it into the ready list",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Each file descriptor added to the eventpoll interface will have an entry of this type linked to the \"rbr\" RB tree.",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Entry key: the fd number together with the open file description",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The key is the combination of the file descriptor number and the open file description",
+      "note": ""
+    },
+    {
+      "id": "C10",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "ep_poll_callback: the function passed to the wait-queue wakeup mechanism, called by the watched files when they have events to report",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This is the callback that is passed to the wait queue wakeup mechanism. It is called by the stored file descriptors when they have events to report.",
+      "note": ""
+    },
+    {
+      "id": "C11",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Events mask: event types, which epoll_wait returns, ORed with input flags, which change behaviour but are not returned",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "ORing together zero or more event types, returned by epoll_wait(2), and input flags, which affect its behavior, but aren't returned.",
+      "note": ""
+    },
+    {
+      "id": "C12",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "EPOLLET: an input flag that requests edge-triggered notification",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Requests edge-triggered notification for the associated file descriptor.",
+      "note": ""
+    },
+    {
+      "id": "C13",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "The kernel groups EPOLLWAKEUP, EPOLLONESHOT, EPOLLET and EPOLLEXCLUSIVE as the epoll private bits of the mask",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "#define EP_PRIVATE_BITS (EPOLLWAKEUP | EPOLLONESHOT | EPOLLET | EPOLLEXCLUSIVE)",
+      "note": ""
+    },
+    {
+      "id": "C14",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "POSIX defines the OFD as a record of how a process or group of processes is accessing a file: each fd refers to exactly one OFD, and one OFD can be referred to by more than one fd",
+      "source": "[^posix]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A record of how a process or group of processes is accessing a file. Each file descriptor refers to exactly one open file description",
+      "note": ""
+    },
+    {
+      "id": "C15",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "POSIX defines non-blocking as a property of an OFD that makes calls return without delay when the requested action cannot be completed without unknown delay",
+      "source": "[^posix]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "A property of an open file description that causes function calls involving it to return without delay",
+      "note": ""
+    },
+    {
+      "id": "C16",
+      "section": "## 3. How it works > ### 3.1 Registration: `EPOLL_CTL_ADD`",
+      "role": 3,
+      "claim": "The new interest-list entry holds the fd, a reference to its open file description, and the settings given in event",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The entry includes the file descriptor, fd, a reference to the corresponding open file description (see epoll(7) and open(2)), and the settings specified in event.",
+      "note": ""
+    },
+    {
+      "id": "C17",
+      "section": "## 3. How it works > ### 3.1 Registration: `EPOLL_CTL_ADD`",
+      "role": 3,
+      "claim": "ep_ptable_queue_proc installs ep_poll_callback on the target file's wait queue: with add_wait_queue_exclusive when the item has EPOLLEXCLUSIVE, with add_wait_queue otherwise",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if (epi->event.events & EPOLLEXCLUSIVE) add_wait_queue_exclusive(whead, &pwq->wait); else add_wait_queue(whead, &pwq->wait);",
+      "note": ""
+    },
+    {
+      "id": "C18",
+      "section": "## 3. How it works > ### 3.1 Registration: `EPOLL_CTL_ADD`",
+      "role": 3,
+      "claim": "ep_insert then polls the file once for its current event bits, and if the file is already \"ready\" and the item is not linked, it drops the item into the ready list at once",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "/* If the file is already \"ready\" we drop it inside the ready list */ if (revents && !ep_is_linked(epi)) {",
+      "note": ""
+    },
+    {
+      "id": "C19",
+      "section": "## 3. How it works > ### 3.2 The file becomes ready: `ep_poll_callback`",
+      "role": 3,
+      "claim": "ep_poll_callback stops if the item's mask has no poll(2) event left (a disabled fd, tied to EPOLLONESHOT until the next EPOLL_CTL_MOD), and stops if the wakeup carries event bits and none of them is in the item's mask",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the event mask does not contain any poll(2) event, we consider the descriptor to be disabled. … if (pollflags && !(pollflags & epi->event.events))",
+      "note": ""
+    },
+    {
+      "id": "C20",
+      "section": "## 3. How it works > ### 3.2 The file becomes ready: `ep_poll_callback`",
+      "role": 3,
+      "claim": "While events are being transferred to user space it chains the item on ovflist; otherwise, if not already linked, it adds it to the tail of rdllist; then it wakes, if they have waiters, ep->wq and the epoll file's own ->poll() wait list",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "All the events that happen during that period of time are chained in ep->ovflist and requeued later on. … Wake up ( if active ) both the eventpoll wait list and the ->poll() wait list.",
+      "note": ""
+    },
+    {
+      "id": "C21",
+      "section": "## 3. How it works > ### 3.2 The file becomes ready: `ep_poll_callback`",
+      "role": 3,
+      "claim": "Because an item that is already linked is not added again, several events that occur between two epoll_wait calls are combined, not reported separately",
+      "source": "[^epoll7]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "If more than one event occurs between epoll_wait(2) calls, are they combined or reported separately? They will be combined.",
+      "note": "The second half is in epoll(7). The first half, the kernel fact that a linked item is not added again, is not in epoll(7) (searched 'linked', 'already'); it is in eventpoll.c (ep_poll_callback '!ep_is_linked(epi)'), which this sentence does not cite."
+    },
+    {
+      "id": "C22",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "role": 3,
+      "claim": "ep_poll calls ep_send_events when events may be available and returns as soon as it delivered at least one; with zero delivered and time left it tries again",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "In case we get 0 events and there's still timeout left over, we go trying again in search of more luck.",
+      "note": ""
+    },
+    {
+      "id": "C23",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "role": 3,
+      "claim": "When nothing is available, ep_poll adds the calling thread to ep->wq with __add_wait_queue_exclusive; this path has no EPOLLET test",
+      "source": "[^eventpoll]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "if (timed_out) return 0; … eavail = ep_events_available(ep); if (!eavail) __add_wait_queue_exclusive(&ep->wq, &wait);",
+      "note": "Dropped condition: with a zero timeout ep_poll returns 0 before the wait-queue add, so 'when nothing is available' alone is wider than the code. The no-EPOLLET-test part holds."
+    },
+    {
+      "id": "C24",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "role": 3,
+      "claim": "ep_send_events starts with ep_start_scan, which moves the whole ready list to a private list, re-initializes rdllist to empty, and sets ovflist to NULL so that events happening during the copy are not lost",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Steal the ready list, and re-init the original one to the empty list. Also, set ep->ovflist to NULL so that events happening while looping w/out locks, are not lost.",
+      "note": ""
+    },
+    {
+      "id": "C25",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "role": 3,
+      "claim": "For each item it unlinks it, polls the file again, skips it if no requested event is set; otherwise copies the event out, then an EPOLLONESHOT item has its mask cut to the private bits, an LT item is added back to the tail of the ready list, and an EPOLLET item is left off it",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "list_del_init(&epi->rdllink); … if (!revents) continue; … if (epi->event.events & EPOLLONESHOT) epi->event.events &= EP_PRIVATE_BITS;",
+      "note": ""
+    },
+    {
+      "id": "C26",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "role": 3,
+      "claim": "ep_done_scan re-inserts the items chained on ovflist during the copy, splices the items not processed back onto the ready list, and, if the ready list is not empty and ep->wq has waiters, wakes it",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "We re-insert them inside the main ready-list here. … Quickly re-inject items left on \"txlist\". … if (waitqueue_active(&ep->wq)) wake_up(&ep->wq);",
+      "note": ""
+    },
+    {
+      "id": "C27",
+      "section": "## 3. How it works > ### 3.4 Re-arming: `EPOLL_CTL_MOD`",
+      "role": 3,
+      "claim": "epoll(7) says a modify on an existing fd \"will reread available I/O\"",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "You can do two operations on an existing file descriptor. Remove would be meaningless for this case. Modify will reread available I/O.",
+      "note": ""
+    },
+    {
+      "id": "C28",
+      "section": "## 3. How it works > ### 3.4 Re-arming: `EPOLL_CTL_MOD`",
+      "role": 3,
+      "claim": "In v6.12, ep_modify sets the new mask before calling the file's poll, and if the item is \"hot\" and not on the ready list, pushes it there",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Set the new event interest mask before calling f_op->poll(); … If the item is \"hot\" and it is not registered inside the ready list, push it inside.",
+      "note": ""
+    },
+    {
+      "id": "C29",
+      "section": "## 3. How it works > ### 3.5 `EPOLLONESHOT` with `EPOLLET`",
+      "role": 3,
+      "claim": "Even with ET, multiple events can be generated upon receipt of multiple chunks of data; EPOLLONESHOT tells epoll to disable the fd after one event, and the caller must re-arm it with EPOLL_CTL_MOD",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "to tell epoll to disable the associated file descriptor after the receipt of an event with epoll_wait(2). When the EPOLLONESHOT flag is specified, it is the caller's responsibility to rearm",
+      "note": ""
+    },
+    {
+      "id": "C30",
+      "section": "## 3. How it works > ### 3.5 `EPOLLONESHOT` with `EPOLLET`",
+      "role": 3,
+      "claim": "The flag (EPOLLONESHOT) exists since Linux 2.6.2",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "EPOLLONESHOT (since Linux 2.6.2)",
+      "note": ""
+    },
+    {
+      "id": "C31",
+      "section": "## 3. How it works > ### 3.6 `EPOLLEXCLUSIVE` and several threads",
+      "role": 3,
+      "claim": "EPOLLEXCLUSIVE (since Linux 4.5) sets an exclusive wakeup mode …; one or more of the attached epoll fds receive the event, where the default is all; it may be combined only with EPOLLIN, EPOLLOUT, EPOLLWAKEUP and EPOLLET (EPOLLHUP and EPOLLERR optional), and other values give EINVAL",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The following values may be specified in conjunction with EPOLLEXCLUSIVE: EPOLLIN, EPOLLOUT, EPOLLWAKEUP, and EPOLLET. … Attempts to specify other values in events yield the error EINVAL.",
+      "note": ""
+    },
+    {
+      "id": "C32",
+      "section": "## 3. How it works > ### 3.6 `EPOLLEXCLUSIVE` and several threads",
+      "role": 3,
+      "claim": "The kernel comment says epoll adds to the wakeup queue at EPOLL_CTL_ADD time only, so EPOLLEXCLUSIVE is not allowed for an EPOLL_CTL_MOD",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "epoll adds to the wakeup queue at EPOLL_CTL_ADD time only, so EPOLLEXCLUSIVE is not allowed for a EPOLL_CTL_MOD operation.",
+      "note": ""
+    },
+    {
+      "id": "C33",
+      "section": "## 3. How it works > ### 3.6 `EPOLLEXCLUSIVE` and several threads",
+      "role": 3,
+      "claim": "If several threads (or processes that inherited the epoll fd across fork) are blocked in epoll_wait on the same epoll fd and an EPOLLET fd becomes ready, just one of them is woken",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "marked for edge-triggered (EPOLLET) notification becomes ready, just one of the threads (or processes) is awoken from epoll_wait(2).",
+      "note": ""
+    },
+    {
+      "id": "C34",
+      "section": "## 3. How it works > ### 3.7 `dup`, `fork` and `close`",
+      "role": 3,
+      "claim": "dup, dup2, fcntl F_DUPFD and fork create a new fd that refers to the same OFD; an fd leaves the interest list only after all fds referring to its OFD are closed, so events may be reported for an fd already closed, and to prevent this the fd must be removed with EPOLL_CTL_DEL before it is duplicated",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "events may be reported for that file descriptor if other file descriptors referring to the same underlying file description remain open. To prevent this happening, the file descriptor must be explicitly removed",
+      "note": ""
+    },
+    {
+      "id": "C35",
+      "section": "## 3. How it works > ### 3.8 The caller's half of the contract",
+      "role": 3,
+      "claim": "An application using EPOLLET \"should use nonblocking file descriptors …\", and the suggested use is (1) non-blocking fds and (2) waiting for an event only after read or write returns EAGAIN",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "should use nonblocking file descriptors to avoid having a blocking read or write starve a task that is handling multiple file descriptors.",
+      "note": ""
+    },
+    {
+      "id": "C36",
+      "section": "## 3. How it works > ### 3.8 The caller's half of the contract",
+      "role": 3,
+      "claim": "\"You must consider it ready until the next (nonblocking) read/write yields EAGAIN\"; for packet/token files read/write until EAGAIN is the only way to detect the end; for stream files a short read or write also shows it, to be avoided if the fd may not always be stream-oriented",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "You must consider it ready until the next (nonblocking) read/write yields EAGAIN. … Avoid this latter technique if you cannot guarantee",
+      "note": ""
+    },
+    {
+      "id": "C37",
+      "section": "## 3. How it works > ### 3.8 The caller's half of the contract",
+      "role": 3,
+      "claim": "Under ET an fd can be added once with EPOLLIN|EPOLLOUT, which avoids switching between the two with EPOLL_CTL_MOD",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "it is possible to add the file descriptor inside the epoll interface (EPOLL_CTL_ADD) once by specifying (EPOLLIN|EPOLLOUT).",
+      "note": ""
+    },
+    {
+      "id": "C38",
+      "section": "## 3. How it works > ### 3.8 The caller's half of the contract",
+      "role": 3,
+      "claim": "EPOLLRDHUP (since Linux 2.6.17) reports that a stream-socket peer closed the connection or shut down its writing half, and is \"especially useful\" for detecting peer shutdown under edge-triggered monitoring",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Stream socket peer closed connection, or shut down writing half of connection. (This flag is especially useful for writing simple code to detect peer shutdown",
+      "note": ""
+    },
+    {
+      "id": "C39",
+      "section": "## 4. Worked examples > ### 4.1 The man page's pipe scenario, traced",
+      "role": 4,
+      "claim": "epoll(7) says the ET call in step 5 \"will probably hang despite the available data still present in the file input buffer\"",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the call to epoll_wait(2) done in step 5 will probably hang despite the available data still present in the file input buffer",
+      "note": ""
+    },
+    {
+      "id": "C40",
+      "section": "## 4. Worked examples > ### 4.1 The man page's pipe scenario, traced",
+      "role": 4,
+      "claim": "On Linux 7.2.12 the step-5 call timed out with 0 events under ET and returned 1 under LT",
+      "source": "[^harness][^probe-01]",
+      "verdict": "overstates",
+      "probe": "probe-01",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "harness.json probe-01: status pass, stdout \"ET second wait: 0, LT second wait: 1\"; runtime c image \"linlab:1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C41",
+      "section": "## 4. Worked examples > ### 4.2 A new write into a pipe that is not empty",
+      "role": 4,
+      "claim": "On Linux 7.2.12 a 1-byte write into a pipe that still held 1 kB produced a new ET report",
+      "source": "[^harness][^probe-02]",
+      "verdict": "overstates",
+      "probe": "probe-02",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "harness.json probe-02: status pass, stdout \"first: 1, no new write: 0, write into non-empty pipe: 1\"; image \"linlab:1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C42",
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "role": 4,
+      "claim": "On Linux 7.2.12, an EPOLL_CTL_MOD with the same mask and no new data made the next epoll_wait report the half-read pipe again",
+      "source": "[^harness][^probe-03]",
+      "verdict": "overstates",
+      "probe": "probe-03",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "harness.json probe-03: status pass, stdout \"before MOD: 0, after MOD: 1\"; image \"linlab:1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C43",
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "role": 4,
+      "claim": "On Linux 7.2.12, with EPOLLET|EPOLLONESHOT, data written while the fd was disarmed was not reported, and was reported by the first epoll_wait after the re-arm",
+      "source": "[^harness][^probe-04]",
+      "verdict": "overstates",
+      "probe": "probe-04",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "harness.json probe-04: status pass, stdout \"first: 1, new data while disarmed: 0, after re-arm: 1\"; image \"linlab:1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C44",
+      "section": "## 4. Worked examples > ### 4.4 Two threads on one epoll fd",
+      "role": 4,
+      "claim": "On Linux 7.2.12, with two threads blocked on one epoll fd and one unread byte, one thread got the event under ET and both got it under LT, in each of the harness's repeated runs",
+      "source": "[^harness][^probe-07]",
+      "verdict": "overstates",
+      "probe": "probe-07",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "harness.json probe-07: status pass, repeat 3, runs 3, stdout \"threads that got the event: ET 1, LT 2\"; image \"linlab:1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C45",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "nginx: the read and write events of each connection \"operate in Edge-Triggered mode\": a partial read does not make nginx deliver a repeated read notification until more data arrives, and even on LT mechanisms (poll, select) nginx converts notifications to ET",
+      "source": "[^nginx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "All such events operate in Edge-Triggered mode … doing a partial read on a socket does not make nginx deliver a repeated read notification until more data arrives on the socket.",
+      "note": ""
+    },
+    {
+      "id": "C46",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "The guide's sample read handler loops while rev->ready, calling c->recv until it returns NGX_AGAIN, then calls ngx_handle_read_event(rev, 0)",
+      "source": "[^nginx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "while (rev->ready) { n = c->recv(c, buf, sizeof(buf)); if (n == NGX_AGAIN) { break; } … if (ngx_handle_read_event(rev, 0) != NGX_OK)",
+      "note": ""
+    },
+    {
+      "id": "C47",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "Its pending_eof flag, EOF pending with data possibly before it, comes from the EPOLLRDHUP event on epoll",
+      "source": "[^nginx]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "pending_eof — Flag indicating that EOF is pending on the socket, even though there may be some data available before it. The flag is delivered via the EPOLLRDHUP",
+      "note": ""
+    },
+    {
+      "id": "C48",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "Go runtime (go1.23.4): netpollopen registers each fd once with EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET",
+      "source": "[^gonetpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "ev.Events = syscall.EPOLLIN | syscall.EPOLLOUT | syscall.EPOLLRDHUP | syscall.EPOLLET … func netpollarm(pd *pollDesc, mode int) { throw(\"runtime: unused\")",
+      "note": "'Once': the file has EPOLL_CTL_ADD and EPOLL_CTL_DEL only, no EPOLL_CTL_MOD, and the re-arm hook is unused."
+    },
+    {
+      "id": "C49",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "mio 1.0.2: the Poll docs list epoll as the Linux selector (a description of the current situation that the docs say is not guaranteed), and say once a readiness event is received the operation \"must be performed repeatedly until it returns WouldBlock\"; otherwise there is no guarantee another event will be delivered",
+      "source": "[^mio]",
+      "verdict": "unsupported",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "§Implementation notes … Poll is backed by the selector provided by the operating system. … Linux | epoll |",
+      "note": "The drain rule is entailed ('must be performed repeatedly until it returns WouldBlock'). The parenthetical is not: the page's 'The following is not guaranteed, just a description of the current situation!' disclaimers sit on the direct-fd I/O paragraph and on 'Polling without registering event sources', not on the Implementation notes selector table, which carries no such disclaimer."
+    },
+    {
+      "id": "C50",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "libuv v1.49.2: uv__read stops after 32 reads to \"Prevent loop starvation\", next to the comment \"XXX Need to rearm fd if we switch to edge-triggered I/O\", and returns after a read that did not fill the buffer, treating that as no more data",
+      "source": "[^libuv]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "XXX Need to rearm fd if we switch to edge-triggered I/O. … count = 32; … Return if we didn't fill the buffer, there is no more data to read.",
+      "note": ""
+    },
+    {
+      "id": "C51",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "role": 4,
+      "claim": "When a write returns EAGAIN or is partial, uv__write starts the POLLOUT watcher and returns",
+      "source": "[^libuv]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "/* If this is a blocking stream, try again. */ if (stream->flags & UV_HANDLE_BLOCKING_WRITES) continue; /* We're not done. */ uv__io_start(stream->loop, &stream->io_watcher, POLLOUT);",
+      "note": "Dropped condition: for a stream with UV_HANDLE_BLOCKING_WRITES, uv__write retries the write instead of starting the POLLOUT watcher."
+    },
+    {
+      "id": "C52",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "An item is on the ready list at most once: ep_poll_callback, ep_insert and ep_modify add it only when it is not already linked",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "} else if (!ep_is_linked(epi)) { /* In the usual case, add event to ready list. */ … if (revents && !ep_is_linked(epi)) { … if (!ep_is_linked(epi)) {",
+      "note": "The three add paths check ep_is_linked; ep_done_scan does too ('We need to check if the item is already in the list')."
+    },
+    {
+      "id": "C53",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "After an event is copied out, ep_send_events puts a level-triggered item back on the ready list, and neither an EPOLLET nor an EPOLLONESHOT item",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if (epi->event.events & EPOLLONESHOT) epi->event.events &= EP_PRIVATE_BITS; else if (!(epi->event.events & EPOLLET)) {",
+      "note": ""
+    },
+    {
+      "id": "C54",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "If more than n (the maximum-events argument) fds are ready, successive epoll_wait calls round-robin through the ready set, which helps avoid starvation",
+      "source": "[^epollwait]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "calls will round robin through the set of ready file descriptors. This behavior helps avoid starvation scenarios,",
+      "note": ""
+    },
+    {
+      "id": "C55",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "epoll(7) gives the history as Linux 2.5.44 and glibc 2.3.2",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Linux 2.5.44. glibc 2.3.2.",
+      "note": ""
+    },
+    {
+      "id": "C56",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "epoll_wait(2) gives Linux 2.6, with a source comment \"To be precise: Linux 2.5.44\" and \"The interface should be finalized by Linux 2.5.66\"",
+      "source": "[^epollwait]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Linux 2.6, .\\\" To be precise: Linux 2.5.44. .\\\" The interface should be finalized by Linux 2.5.66.",
+      "note": ""
+    },
+    {
+      "id": "C57",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.1 Pitfalls",
+      "role": 6,
+      "claim": "With a large I/O space, draining it can leave the other files unprocessed, a problem the man page says is not specific to epoll; its fix is a user-space ready list that marks fds ready and round-robins among them",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "it is possible that by trying to drain it the other files will not get processed causing starvation. (This problem is not specific to epoll.)",
+      "note": ""
+    },
+    {
+      "id": "C58",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.2 Closed fds that keep reporting",
+      "role": 6,
+      "claim": "Epoll is fundamentally broken 2/2: once the registered fd is closed, the registration cannot be removed, because EPOLL_CTL_DEL needs a valid fd and neither the closed fd nor its duplicate works; advice: always call EPOLL_CTL_DEL before close()",
+      "source": "[^popcount2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "you need a valid file descriptor handle to manage subscriptions on \"epfd\". … You always must always explicitly call epoll_ctl(EPOLL_CTL_DEL) before",
+      "note": ""
+    },
+    {
+      "id": "C59",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.2 Closed fds that keep reporting",
+      "role": 6,
+      "claim": "On Linux 7.2.12 the probe printed `events: 1 for closed fd 3 (data.fd=3); DEL closed fd: -1 Bad file descriptor; DEL dup: -1 No such file or directory`",
+      "source": "[^harness][^probe-05]",
+      "verdict": "overstates",
+      "probe": "probe-05",
+      "severity": "SOFT_WARN",
+      "page_says": "harness.json probe-05: status pass, stdout \"events: 1 for closed fd 3 (data.fd=3); DEL closed fd: -1 Bad file descriptor; DEL dup: -1 No such file or directory\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C60",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "role": 6,
+      "claim": "Linus Torvalds, quoted by LWN in 2021: \"An edge is not 'somebody wrote more data'. An edge is 'there was no data, now there is data'.\"",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "An edge is not \"somebody wrote more data\". An edge is \"there was no data, now there is data\".",
+      "note": ""
+    },
+    {
+      "id": "C61",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "role": 6,
+      "claim": "A 2019 pipe change made a write wake waiting readers only if the pipe buffer was empty at the start of the write; after it, an ET wait started on a pipe that already held data did not see the edge and did not wake",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The fix changed this behavior to only perform the wakeup if the pipe buffer was empty at the start of the operation",
+      "note": ""
+    },
+    {
+      "id": "C62",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "role": 6,
+      "claim": "Android libraries such as Realm, which relied on an ET wakeup even when data was already waiting in the pipe, broke when the 5.10 kernel went into the Android 12 beta",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "There are a number of Android libraries, such as Realm, that depend on getting edge-triggered wakeups even if there had been data waiting in the pipe",
+      "note": ""
+    },
+    {
+      "id": "C63",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "role": 6,
+      "claim": "The fix was merged for 5.14-rc4 and included in 5.10.56 and 5.13.8, doing only one wakeup per write; the regression shipped with 5.5 (January 2020), lasted about a year and a half and reached the 5.10 LTS release",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "merged for 5.14-rc4 at the end of July and was included in the 5.10.56 and 5.13.8 stable updates. … it will only perform one wakeup per write operation.",
+      "note": ""
+    },
+    {
+      "id": "C64",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "role": 6,
+      "claim": "In the article's comments, Michael Kerrisk (a reader comment) says every other mechanism he tested (Internet domain stream sockets, POSIX message queues, terminals, hierarchical epoll) behaves the same as EPOLLET historically behaved",
+      "source": "[^lwn]",
+      "verdict": "overstates",
+      "severity": "SOFT_WARN",
+      "page_says": "by mkerrisk (subscriber, #1978) … every other mechanism that I tested (Internet domain stream sockets, POSIX message queues, terminals, hierarchical epoll) behaves the same as EPOLLET historically behaved",
+      "note": "Name gap: the LWN page shows only the handle 'mkerrisk'; no cached page ties that handle to the name Michael Kerrisk. Content of the comment is entailed. LWN reader comments are Rank 6 content."
+    },
+    {
+      "id": "C65",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.4 Misconception: \"a short read means the fd is drained\"",
+      "role": 6,
+      "claim": "In a 2003 linux-kernel thread, a reply signed Davide Libenzi gives the rule: when read/write returns a lower number of bytes, it is time to stop processing the fd, and events that happened meanwhile come at the next epoll_wait()",
+      "source": "[^lkml2003]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When your read/write returns a lower number of bytes, it means that it is time to stop processing this fd. If events happened meanwhile, you will get them at the next epoll_wait().",
+      "note": ""
+    },
+    {
+      "id": "C66",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.4 Misconception: \"a short read means the fd is drained\"",
+      "role": 6,
+      "claim": "Jamie Lokier, in the same thread: some kinds of fd return a short read when more data is pending (ttys, some devices, TCP with urgent data and other conditions), so read-until-EAGAIN is required nonetheless",
+      "source": "[^lkml2003]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Some kinds of fd return a short read when there is more data pending, due to boundaries - not a HUP condition, but read-until-EAGAIN is required nonetheless.",
+      "note": ""
+    },
+    {
+      "id": "C67",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.5 Misconception: \"re-arming `EPOLLONESHOT` after the read loses events\"",
+      "role": 6,
+      "claim": "A reader comment on the LWN article (NYKevin) says that with EPOLLONESHOT you have to re-arm before calling read or write to avoid a race, which leaves another race in which duplicate notifications can still arrive",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if you use EPOLLONESHOT, then you have to re-arm the epoll before calling read or write to avoid the race",
+      "note": "Reader comment: Rank 6 content."
+    },
+    {
+      "id": "C68",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "role": 6,
+      "claim": "With level-triggered epoll and no special flags, all the workers are woken on each new connection",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Without special flags, in level-triggered mode, all the workers will be woken up on each and every new connection.",
+      "note": ""
+    },
+    {
+      "id": "C69",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "role": 6,
+      "claim": "With edge-triggered epoll a second thread can be woken needlessly: it calls accept and gets EAGAIN, because the first thread must keep calling accept until EAGAIN",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Thread A: Must perform accept() since it does not know if kernel received one or more connections originally. … Thread B: Performs accept(), receives EAGAIN.",
+      "note": ""
+    },
+    {
+      "id": "C70",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "role": 6,
+      "claim": "The post's fix for accept is kernel 4.5+ with LT events and EPOLLEXCLUSIVE; without it, ET plus EPOLLONESHOT, at the cost of one extra epoll_ctl() call after each event and with at most one worker calling accept() at a time",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "use level-triggered events with EPOLLEXCLUSIVE flag. … edge-triggered and EPOLLONESHOT, at a cost of one extra epoll_ctl() syscall after each event.",
+      "note": ""
+    },
+    {
+      "id": "C71",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "role": 6,
+      "claim": "For read on a connected socket, ET has a race: after thread A drains the buffer, new data wakes thread B, and both read the same socket; the post's fix is EPOLLONESHOT with a manual re-arm",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Kernel: one thread is currently waiting in epoll_wait, wakes up Thread B … The correct solution is to use EPOLLONESHOT and re-arm the file descriptor manually.",
+      "note": ""
+    },
+    {
+      "id": "C72",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "role": 6,
+      "claim": "The same post opens by saying multi-threaded scaling was fixed by EPOLLONESHOT and EPOLLEXCLUSIVE, and later says EPOLLEXCLUSIVE won't help with the read race",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "was fixed by EPOLLONESHOT and EPOLLEXCLUSIVE flags. … Additionally the EPOLLEXCLUSIVE won't help since there is a race condition possible.",
+      "note": ""
+    },
+    {
+      "id": "C73",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "The 2017 post (Rank 6) says a listening socket under ET does not report a new connection while earlier ones are queued: the socket \"was 'readable', still is 'readable'\", so no event is emitted",
+      "source": "[^popcount1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The socket was \"readable\", still is \"readable\". Since we are in \"edge triggered\" mode, no event is emitted.",
+      "note": ""
+    },
+    {
+      "id": "C74",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "A reader comment on the LWN article says EPOLLET \"will re-arm when there is a new write (unless it was done on a pipe on v5-v15)\"",
+      "source": "[^lwn]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "EPOLLET will re-arm when there is a new write (unless it was done on a pipe on v5-v15)",
+      "note": "Reader comment (HenrikH): Rank 6 content."
+    },
+    {
+      "id": "C75",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "On Linux 7.2.12, probe-06 saw a second connection into a non-empty accept queue reported",
+      "source": "[^harness][^probe-06]",
+      "verdict": "overstates",
+      "probe": "probe-06",
+      "severity": "SOFT_WARN",
+      "page_says": "harness.json probe-06: status pass, stdout \"first: 1, idle: 0, second connection into non-empty queue: 1\"",
+      "note": "The probe code tests the behaviour and its harness status is pass, but the claim names the run as 'Linux 7.2.12'; harness.json records only the runtime image 'linlab:1' (engine 29.8.2) and no kernel, gcc or musl version, and no probe prints uname. The version the claim gives is not in the evidence."
+    },
+    {
+      "id": "C76",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "epoll(7) describes EPOLLWAKEUP keeping the system awake from the moment the event is queued, with no condition",
+      "source": "[^epoll7]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the system will be kept awake from the moment the event is queued, through the epoll_wait(2) call which returns the event until the subsequent epoll_wait(2) call.",
+      "note": ""
+    },
+    {
+      "id": "C77",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "epoll_ctl(2) says EPOLLWAKEUP applies only if EPOLLONESHOT and EPOLLET are clear and the process has CAP_BLOCK_SUSPEND",
+      "source": "[^epollctl]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If EPOLLONESHOT and EPOLLET are clear and the process has the CAP_BLOCK_SUSPEND capability",
+      "note": ""
+    },
+    {
+      "id": "C78",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "role": 6,
+      "claim": "In v6.12, ep_take_care_of_epollwakeup clears EPOLLWAKEUP only when the caller lacks CAP_BLOCK_SUSPEND (or the kernel has no CONFIG_PM_SLEEP), with no EPOLLET test",
+      "source": "[^eventpoll]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if ((epev->events & EPOLLWAKEUP) && !capable(CAP_BLOCK_SUSPEND)) epev->events &= ~EPOLLWAKEUP;",
+      "note": ""
+    },
+    {
+      "id": "C79",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.8 EOF folded into the data event",
+      "role": 6,
+      "claim": "In 2003 Eric Varsanyi reported that under ET epoll, a client that writes data and then shuts down its write side gives the server a single EPOLLIN for both, with no way to tell EOF also occurred, and proposed a POLLRDHUP event",
+      "source": "[^lkml2003]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The server (using epoll) sees only one event for the read data ready and the read EOF condition and has no way to tell that an EOF occurred.",
+      "note": ""
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Is the single-waiter wakeup specific to EPOLLET?",
+      "winner": "[^epoll7] rank 1 and [^eventpoll] rank 1 (consistent, no contradiction)",
+      "loser": "none",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "ok": true
+    },
+    {
+      "topic": "First kernel with epoll: 2.5.44 versus 2.6",
+      "winner": "[^epollwait] rank 1 (source comment 'To be precise: Linux 2.5.44')",
+      "loser": "[^epollctl] rank 1 HISTORY 'Linux 2.6' (a release label, not a contradiction)",
+      "where_loser_is": "## 5. Reference & invariants",
+      "ok": true
+    },
+    {
+      "topic": "What an edge is: 'no data -> data' only (Torvalds) versus 'each receipt of a chunk of data'",
+      "winner": "[^epoll7] rank 1",
+      "loser": "[^lwn] rank 4 (Torvalds quote)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "ok": true
+    },
+    {
+      "topic": "Does the epoll man page agree with Torvalds's definition? The LWN article says it does; the doc's §6.3 reads epoll(7) the other way and does not record LWN's sentence or the mkerrisk reply that disputes it",
+      "winner": "[^epoll7] rank 1 text",
+      "loser": "[^lwn] rank 4 article sentence 'The epoll() man page agrees with Torvalds's description'",
+      "where_loser_is": "not recorded (should be in ## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\")",
+      "ok": false
+    },
+    {
+      "topic": "Read until EAGAIN versus stop at a short read",
+      "winner": "[^epoll7] rank 1",
+      "loser": "[^lkml2003] rank 6 (Libenzi reply)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.4 Misconception: \"a short read means the fd is drained\"",
+      "ok": true
+    },
+    {
+      "topic": "Re-arming EPOLLONESHOT after the read loses events",
+      "winner": "[^epoll7] rank 1 and [^eventpoll] rank 1 (ep_modify re-polls)",
+      "loser": "[^lwn] reader comment (Rank 6 content)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.5 Misconception: \"re-arming `EPOLLONESHOT` after the read loses events\"",
+      "ok": true
+    },
+    {
+      "topic": "Listening socket under ET: is a connection into a non-empty accept queue reported? Left open, no Rank 1 source",
+      "winner": "open",
+      "loser": "[^popcount1] rank 6 versus [^lwn] reader comment (Rank 6 content)",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources (open, marked with the warning sign)",
+      "ok": true
+    },
+    {
+      "topic": "Does EPOLLWAKEUP apply together with EPOLLET? Left open; the saved ep_send_events relaxes the item's wakeup source and re-arms it (ep_pm_stay_awake) only in the level-triggered branch, which appears to settle it for epoll_ctl(2), while the doc says this is not in the saved text",
+      "winner": "open ([^epoll7], [^epollctl], [^eventpoll], all rank 1)",
+      "loser": "none yet",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources (open, marked with the warning sign)",
+      "ok": true
+    },
+    {
+      "topic": "popcount1: 'fixed by EPOLLONESHOT and EPOLLEXCLUSIVE' versus 'EPOLLEXCLUSIVE won't help' (same source)",
+      "winner": "the post's own later section",
+      "loser": "the post's opening line",
+      "where_loser_is": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.6 Threads, `accept` and the thundering herd",
+      "ok": true
+    }
+  ],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 3. How it works > ### 3.2 The file becomes ready: `ep_poll_callback`",
+      "rule": "grounding",
+      "evidence": "C21: 'Because an item that is already linked is not added again, …' cites only [^epoll7], which says only 'They will be combined.'; the kernel premise is in eventpoll.c, not cited here."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.1 The man page's pipe scenario, traced",
+      "rule": "grounding",
+      "evidence": "C40: 'On Linux 7.2.12 …' — harness.json gives image linlab:1 and no kernel version for probe-01."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.2 A new write into a pipe that is not empty",
+      "rule": "grounding",
+      "evidence": "C41: 'On Linux 7.2.12 …' — no kernel version in harness.json for probe-02."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "rule": "grounding",
+      "evidence": "C42: 'On Linux 7.2.12 …' — no kernel version in harness.json for probe-03."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "rule": "grounding",
+      "evidence": "C43: 'On Linux 7.2.12 …' — no kernel version in harness.json for probe-04."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.4 Two threads on one epoll fd",
+      "rule": "grounding",
+      "evidence": "C44: 'On Linux 7.2.12 …' — no kernel version in harness.json for probe-07."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "rule": "grounding",
+      "evidence": "C49: mio's selector table is said to be 'a description of the current situation that the docs say is not guaranteed'; the page attaches that disclaimer to direct-fd I/O and to polling without registered sources, not to Implementation notes."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "rule": "grounding",
+      "evidence": "C23: 'When nothing is available, ep_poll adds the calling thread to ep->wq' drops the zero-timeout case, where ep_poll returns 0 first ('if (timed_out) return 0;')."
+    },
+    {
+      "severity": "WARN",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "rule": "grounding",
+      "evidence": "C51: uv__write does not start the POLLOUT watcher for UV_HANDLE_BLOCKING_WRITES streams ('If this is a blocking stream, try again.')."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.2 Closed fds that keep reporting",
+      "rule": "grounding",
+      "evidence": "C59: 'On Linux 7.2.12 the probe printed …' — no kernel version in harness.json for probe-05."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "rule": "grounding",
+      "evidence": "C64: the LWN page shows the commenter only as 'mkerrisk'; the name Michael Kerrisk is not on it."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "rule": "grounding",
+      "evidence": "C75: 'On Linux 7.2.12, probe-06 saw …' — no kernel version in harness.json for probe-06."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "rule": "KB-17",
+      "evidence": "LWN (rank 4) says 'The epoll() man page agrees with Torvalds's description'; §6.3 labels Torvalds's definition a misconception from epoll(7)'s text without recording LWN's reading or the mkerrisk reply disputing it."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "rule": "KB-17",
+      "evidence": "The EPOLLWAKEUP conflict is left open with 'whether another path ignores it under ET is not in the saved text', but the saved ep_send_events relaxes the item's wakeup source ('__pm_relax(ws)') and calls ep_pm_stay_awake(epi) only in the level-triggered branch."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "rule": "structure",
+      "evidence": "§4.5 describes other projects' docs and code (nginx, Go, mio, libuv) rather than runs with inputs and outputs; it reads as role 5 reference material inside role 4."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## 3. How it works > ### 3.2 The file becomes ready: `ep_poll_callback`",
+      "action": "Cite eventpoll.c for the kernel premise: change the mark to '✅[^eventpoll][^epoll7]' on 'Because an item that is already linked is not added again, …' (eventpoll.c v6.12 ep_poll_callback: '} else if (!ep_is_linked(epi)) { /* In the usual case, add event to ready list. */')."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.1 The man page's pipe scenario, traced",
+      "action": "C40 (probe-01): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.2 A new write into a pipe that is not empty",
+      "action": "C41 (probe-02): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "action": "C42 (probe-03): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.3 Re-arming with `EPOLL_CTL_MOD`, and `EPOLLONESHOT`",
+      "action": "C43 (probe-04): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.4 Two threads on one epoll fd",
+      "action": "C44 (probe-07): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line. If 'in each of the harness's repeated runs' stays, have harness.json record each run's stdout."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "action": "mio bullet: delete '(a description of the current situation that the docs say is not guaranteed)'; write 'The Poll docs' Implementation notes list epoll as the Linux selector' [^mio]. If the caveat is wanted, attach it to what the page says it covers: direct I/O on the raw fd and polling without registered sources."
+    },
+    {
+      "section": "## 3. How it works > ### 3.3 `epoll_wait`: `ep_poll` and `ep_send_events`",
+      "action": "Step 2: write 'When nothing is available and the timeout is not zero (a zero timeout returns 0 before this point), ep_poll adds the calling thread to ep->wq with __add_wait_queue_exclusive' [^eventpoll] ('if (timed_out) return 0;')."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "action": "libuv bullet: write 'When a write returns EAGAIN or is partial, uv__write starts the POLLOUT watcher and returns, unless the stream has UV_HANDLE_BLOCKING_WRITES, in which case it retries the write' [^libuv]."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.2 Closed fds that keep reporting",
+      "action": "C59 (probe-05): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "action": "Kerrisk bullet: write 'a reader comment by mkerrisk' (the handle the LWN page shows), or cite a saved page that ties the handle to Michael Kerrisk."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "action": "C75 (probe-06): Make the kernel version checkable or drop it: either have the probe print `uname -r` (and the compiler/libc versions) as part of its expected stdout, or have the harness record them in harness.json; otherwise write 'In the harness container (image linlab:1)' instead of 'On Linux 7.2.12'. The same applies to the §4 intro sentence and the frontmatter applies-to line."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.3 Misconception: \"an edge is only an empty-to-non-empty change\"",
+      "action": "Add to 'What governs': the LWN article itself says 'The epoll() man page agrees with Torvalds's description' (Rank 4), and the mkerrisk reply disputes it by quoting the EPOLLONESHOT passage of epoll(7) (Rank 6 content); epoll(7)'s own words ('upon each receipt of a chunk of data') govern [^epoll7][^lwn]."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions > ### 6.7 Conflicts between sources",
+      "action": "EPOLLWAKEUP item: replace 'whether another path ignores it under ET is not in the saved text' with what the saved ep_send_events shows: the item's wakeup source is relaxed ('__pm_relax(ws)') and re-armed with ep_pm_stay_awake(epi) only in the level-triggered branch, so for an EPOLLET item it is not held after epoll_wait returns, which agrees with epoll_ctl(2) [^eventpoll][^epollctl]. Then either settle the conflict or keep it open with that evidence."
+    },
+    {
+      "section": "## 4. Worked examples > ### 4.5 How production event loops use ET",
+      "action": "Move §4.5 under '## 5. Reference & invariants' as a table of how production loops drain and re-arm (project, version, registration, drain rule, source), or keep it in §4 only with a run that shows inputs and outputs."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 79,
+    "claims": 79,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

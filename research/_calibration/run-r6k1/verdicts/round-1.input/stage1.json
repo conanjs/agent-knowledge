@@ -1,0 +1,142 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [],
+   "url": "https://www.postgresql.org/docs/19/routine-vacuuming.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": 1,
+   "cache": "cache/a1c63f6fd4b0.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://www.postgresql.org/docs/19/glossary.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": 1,
+   "cache": "cache/27c43bfdc65d.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://www.postgresql.org/docs/19/runtime-config-vacuum.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": 1,
+   "cache": "cache/5c27223996ca.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/include/utils/snapshot.h",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/postgres/",
+   "written_rank": 1,
+   "cache": "cache/ee30efaea37d.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/heap/vacuumlazy.c",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/postgres/",
+   "written_rank": 1,
+   "cache": "cache/d4c2d1a71354.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/transam/varsup.c",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/postgres/",
+   "written_rank": 1,
+   "cache": "cache/62bd535f9413.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Autovacuum.NeedVacuuming.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "docs.aws.amazon.com/",
+   "written_rank": 1,
+   "cache": "cache/1a86813f6c34.txt"
+  },
+  {
+   "labels": [
+    "[^sentry]"
+   ],
+   "url": "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/b988e77d1505.txt"
+  },
+  {
+   "labels": [
+    "[^crunchy]"
+   ],
+   "url": "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/f113cf83d84a.txt"
+  },
+  {
+   "labels": [
+    "[^pganalyze]"
+   ],
+   "url": "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/dc191bb5de10.txt"
+  },
+  {
+   "labels": [
+    "[^metronome]"
+   ],
+   "url": "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/8e4fad8d2a37.txt"
+  },
+  {
+   "labels": [],
+   "url": "https://aws.amazon.com/blogs/database/multixacts-in-postgresql-usage-side-effects-and-monitoring",
+   "tier": "A",
+   "rank": 4,
+   "rule": "aws.amazon.com/blogs/",
+   "written_rank": 4,
+   "cache": "cache/4706e813af01.txt"
+  },
+  {
+   "labels": [
+    "[^percona]"
+   ],
+   "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/a205f446fd68.txt"
+  }
+ ],
+ "tier_b": [
+  "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+  "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+  "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+  "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+  "https://www.percona.com/blog/overcoming-vacuum-wraparound/"
+ ]
+}

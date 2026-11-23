@@ -13,6 +13,7 @@ Date: 2026-11-22. Design: `frameworks/knowledge/research-agent.design.md` §4.2 
 | v5 | `2b066f6` | Tier B rules in order (V, 2026-11-22): the originator of a concept (shown by a page in the input) is Rank 1 for that concept; a project's own home is Rank 1 for that project; then the maintainer's post; then the class, with the higher number on a tie. A `rank_scope` per source. A note that a script may turn PASS into `INCONCLUSIVE`. First version run as the linked `knowledge-judge` agent |
 | v6 | `ef7dc5d` | Reads code probes (`probes/`, `harness.json`): verdicts `observed` and `invalid_probe` (`CRITICAL_FAIL`); a probe backs roles 3, 4 and 6 only; a probe-only claim is worded as an observation with its version |
 | v7 | `73b3759` | "Check every cited probe first, by reading its code": a probe that cannot fail or does not test the claim makes the claim `invalid_probe` whatever its role; a claim that needs a probe is `observed`, not `entails` |
+| v8 | `d4787fb` | KB-17's open conflicts are marked `⚖️ open conflict` (V, 2026-11-22), not `⚠️ unverified`: the judge checks each side against its own source instead of skipping it |
 
 ## 2. Calibration docs
 
@@ -132,6 +133,23 @@ The probe case showed two gaps in the wording, fixed in v7: check each probe fir
 **The gate is met** (not_checkable 10/45 → 2/45 or fewer). Every probe was judged valid: "each compares its observations with the doc and exits non-zero on a mismatch". The probes moved 10 claims from unknown to judged: 5 `observed`, 3 `entails`, and the rest into findings the rules require, for example a probe-only claim in role 2 (`unsupported`) or a probe-only rule with no version (`WARN`). The doc still fails on what probes cannot fix: Rank 6 sources in mechanism sections, an unarbitrated conflict with epoll(7), and the pass criterion that §5 must state the drain-until-`EAGAIN` rule. Judge versions differ between the two columns (v3 and v7), so only the `not_checkable` row is a like-for-like measure.
 
 **Cost of Phase 2b's judge runs:** v6 calibration 490k (four runs), v7 probe case 111k, SE-04 re-judging 285k: about 886k tokens, against 850k approved (610k, plus 240k for SE-04).
+
+### 3.9 v8 recalibration, opening Phase 4 (2026-11-22)
+
+The four v6/v7 inputs, copied unchanged to new folders (`stage1.json` without the later `validator` key, as first judged):
+
+| Test (v8 run, earlier run) | Earlier result | v8 result | Tokens |
+|---|---|---|---|
+| Unchanged private-fields doc (`run-a3m6`, v6 `run-e2s8`) | PASS 4.50, 2 `WARN` | **FAIL 4.0**: 1 `CRITICAL_FAIL`, 2 `WARN`, 2 `SOFT_WARN` | 115k |
+| 5 planted errors (`run-b8t2`, v6 `run-u5n3`) | 5/5, right severity | 5/5, the same severities (P1, P2, P3, P5 `CRITICAL_FAIL`; P4 `SOFT_WARN`) | 109k |
+| MCP sample (`run-c5w9`, v6 `run-y9q4`) | K1 `CRITICAL_FAIL`, K2 `WARN` | the same | 157k |
+| Probe case (`run-d1q4`, v7 `run-j4p7` round 2) | probe-03 `invalid_probe`, P1–P5 kept | the same | 118k |
+
+**The clean doc's new finding is real, not a false alarm.** How it works item 5 of `knowledge/js-runtime/private-fields.md` reads "Reading a `#` field from an object whose class did not declare it throws a `TypeError`". The saved MDN page states the rule as an object "that doesn't have the element" (line 368); "whose class did not declare it" is V8's error message (line 381), and the same page shows a field "stamped" onto a plain `{}` and read back as 42 (lines 450–474). v6 read only line 368 and gave `entails`; v8 read on. So the doc, not the judge, is wrong: a scope wider than its source, which the judge scored `contradicted`. The calibration stays met (2/2 MCP, 5/5 planted, the rigged probe caught, no false alarm), and the clean doc is no longer a PASS reference until its item 5 is fixed.
+
+**Quote check:** 5 quotes were first reported missing (`run-a3m6` 1, `run-d1q4` 4). None was made up: the judge had appended notes in brackets (`[probe-02 stdout: false]`), quoted a probe's code, and listed search terms as `(Searched '…': not found)`. `evaluate-research.mjs quotes` now ends a part at any bracketed group, skips a "(Searched …)" note, takes `` `code` `` as a quote and checks it against the probe's file in `probes/`: 343 of 343 found over every verdict so far, the 338 found before unchanged.
+
+**Cost:** 500k tokens, about the v6 calibration's 490k.
 
 ## 4. Findings for the design
 

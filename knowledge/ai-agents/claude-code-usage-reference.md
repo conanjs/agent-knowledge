@@ -4,7 +4,7 @@ type: reference
 topic: ai-agents
 status: verified
 applies-to: ["Claude Code 2.1.278–2.1.308 (local tests)", "Claude Code docs read 2026-10-30 (features up to v2.1.307)", "Claude Code 2.1.318 (local test 2026-11-09)", "Claude Code 2.1.319 (transcripts and docs read 2026-11-10)"]
-last-verified: 2026-11-21
+last-verified: 2026-11-22
 last-updated: 2026-11-22
 tags: [claude-code, tokens, usage, cost, prompt-caching, compaction, opentelemetry, subagents, agent-teams, workflows]
 ---
@@ -130,7 +130,10 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 | Built-in Explore / Plan | Read-only research agents | Start without `CLAUDE.md` and git status, to stay cheap | ✅[^8] |
 | Fork (`/subtask`, fork mode) | A subagent that inherits the whole conversation | Reads the parent's cache on its first request | ✅[^8][^2] |
 | Background subagents | Subagents that run while you keep working | Same cost; runs in parallel | ✅[^8] |
-| Nested subagents; an agent as the main thread | A subagent can start its own subagents, which run on its model unless their `model` says otherwise. An agent started with `claude --agent <name>` runs as the main thread and can start subagents. `tools: Agent(a, b)` limits which ones; leaving `Agent` out of `tools` stops it from starting any. Read in the docs for Claude Code 2.1.330 on 2026-11-22; not run here yet | Each nested subagent adds its own requests, like any subagent | ✅[^8] |
+| `WebSearch` domain filters | The tool takes `allowed_domains` and `blocked_domains` lists, so a subagent can search only some sites, for example only specs, or skip forums | Fewer, more relevant results to read | ✅[^22] |
+| Nested subagents; an agent as the main thread | A subagent can start its own subagents, which run on its model unless their `model` says otherwise. An agent started with `claude --agent <name>` runs as the main thread and can start subagents. `tools: Agent(a, b)` limits which ones; leaving `Agent` out of `tools` stops it from starting any ✅[^8]. Run here on 2026-11-22 (Claude Code 2.1.330, desktop app): a `general-purpose` subagent started a `general-purpose` subagent, which started an `Explore` subagent, and the third answered, so three levels work ✅[^22] | Each nested subagent adds its own requests, like any subagent; the three-level test cost about 55k tokens ✅[^22] |
+| An agent added during a session | A file linked into `~/.claude/agents/` while a session runs is not usable at once: the Agent tool answered `Agent type 'research-worker' not found`. About 7 minutes later the session announced the new agents as available, and they could then be started. Run here on 2026-11-22 (Claude Code 2.1.330, desktop app) | A run that needs a just-added agent waits for that announcement, or starts in a new session | ✅[^22] |
+| A subagent writing a report file | A subagent's `Write` of `report.md` was refused with `Subagents should return findings as text, not write report files. Include this content in your final response instead.`; the same subagent's `Write` of `doc.md` worked, and so did another one's `Write` of `plan.md`. Run here on 2026-11-22 (Claude Code 2.1.330, desktop app) | Have the subagent return its report in its reply and let the caller save it | ✅[^22] |
 | Agent teams (experimental) | A lead plus peer sessions with a shared task list and messages | Each teammate is a full instance: about 7× tokens when teammates run in plan mode | ✅[^1][^9] |
 | Dynamic workflows | A script Claude writes that runs dozens to hundreds of agents | Intermediate results stay in script variables, not in a context; fan-outs wait up to 5 s so agents share the first one's cache | ✅[^10][^2] |
 | Dynamic workflows: control | JavaScript with `agent()`, `pipeline()`, `parallel()`, `phase()`; no mid-run user input (a sign-off between stages needs one workflow per stage); a relaunch in the same session replays saved results; up to 16 concurrent agents by default, 1,000 per run | The script, not Claude, decides what runs next; Claude Code only | ✅[^10] |
@@ -172,7 +175,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 98 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-21
+- Verified: 103 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-22
 
 ## References
 - [Manage costs effectively](https://code.claude.com/docs/en/costs) — Anthropic, living. Backs: `/usage`, `/insights`, levers, background usage, agent team costs, `modelPricing`. [^1]
@@ -198,6 +201,7 @@ Claude Code's own usage reporting, context and cache controls, and multi-agent o
 
 - [Model configuration](https://code.claude.com/docs/en/model-config) and [How Claude Code uses prompt caching](https://code.claude.com/docs/en/prompt-caching) — Anthropic, living, read 2026-11-10 (the model-config page partly through a summary), with the `compact_boundary` lines of `~/.claude/projects/*/*.jsonl` and the time of the reply before each, Claude Code 2.1.308–2.1.319 — local check, 2026-11-10. Backs: the default point of about 967K for native 1M-token models, `/autocompact` per model and `auto`, the cap at the model's window, the variable's precedence, idle compaction on the 1-hour cache, and the two kinds seen in the transcripts. [^20]
 - [Manage Claude's memory](https://code.claude.com/docs/en/memory) — Anthropic, living, read 2026-11-09, re-read 2026-11-19. Backs: external imports in a project need a one-time approval and stay disabled if declined; user-scope memory files load without it; `claudeMdExcludes` skips files by absolute path or glob; block-level HTML comments are stripped. [^19]
+- Local check, 2026-11-22, Claude Code 2.1.330 in the desktop app: a nested-subagent test (three levels, each answered); the `WebSearch` tool's own schema, which lists `allowed_domains` and `blocked_domains`; agents linked into `~/.claude/agents/` mid-session (not found at once, announced about 7 minutes later); and a subagent's refused write of `report.md`. [^22]
 
 ## Related
 - `ai-agents/agent-token-accounting.md`

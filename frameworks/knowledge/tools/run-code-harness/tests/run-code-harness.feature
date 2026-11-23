@@ -24,6 +24,7 @@ Feature: Code-probe harness
       """
     And the file "run/probes/probe-04.js" has a line containing "const greet"
     And the file "run/verdicts/round-1.harness.json" has a line containing '"block_sha":'
+    And the file "run/verdicts/round-1.harness.json" has a line containing '"kernel": "'
 
   Scenario: Without Docker every probe is not_run and the harness exits with 3
     Given the base fixture tree of "run-code-harness-no-docker"

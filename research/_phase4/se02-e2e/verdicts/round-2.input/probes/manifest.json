@@ -1,0 +1,13 @@
+[
+ {
+  "probe_id": "probe-01",
+  "mode": "verify",
+  "runtime": "node24",
+  "expect": "stdout:ids=1,3,5 sockets=1",
+  "uses": null,
+  "repeat": 1,
+  "line": 129,
+  "file": "probe-01.js",
+  "block_sha": "88710e5834c2"
+ }
+]

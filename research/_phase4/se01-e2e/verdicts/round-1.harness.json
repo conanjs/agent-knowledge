@@ -1,0 +1,48 @@
+{
+ "round": 1,
+ "doc": "doc.md",
+ "engine": "29.8.2",
+ "kernel": "7.2.12-orbstack-00394-gbecdd6130068",
+ "runtimes": {
+  "c": {
+   "image": "linlab:1",
+   "id": "sha256:8b4af288b49cd65d7a76bc934281968b48f63eb21be784be4b7348e2b0856266"
+  }
+ },
+ "probes": [
+  {
+   "probe_id": "probe-01",
+   "mode": "verify",
+   "runtime": "c",
+   "expect": "stdout:pct=4.66%",
+   "uses": null,
+   "repeat": 1,
+   "line": 117,
+   "file": "probe-01.c",
+   "block_sha": "1df3071cc3ba",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "warn_age=2047483647 stop_age=2144483647 wrap_age=2147483647\nleft=99985967 pct=4.66%\n",
+   "stderr": "",
+   "duration_ms": 365,
+   "runs": 1
+  },
+  {
+   "probe_id": "probe-02",
+   "mode": "verify",
+   "runtime": "c",
+   "expect": "stdout:after 2.2e9: future",
+   "uses": null,
+   "repeat": 1,
+   "line": 141,
+   "file": "probe-02.c",
+   "block_sha": "ce188e2dc836",
+   "status": "pass",
+   "exit_code": 0,
+   "stdout": "after 2.0e9: past\nafter 2.2e9: future\n4294967000 vs 100: older\n",
+   "stderr": "",
+   "duration_ms": 294,
+   "runs": 1
+  }
+ ]
+}

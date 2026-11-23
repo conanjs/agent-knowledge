@@ -2,7 +2,8 @@
 # The design is frameworks/knowledge/research-agent.design.md §3.2 (Stage 1). Output text is part of the requirement.
 
 Feature: Research verifier, Stage 1 helpers
-  `ranks` lists the rank of every References URL; `quotes` checks the judge's quotes against the saved pages.
+  `ranks` lists the rank of every References URL; `quotes` checks the judge's quotes against the saved pages;
+  `ledger` checks a research worker's ledger (ledger.schema.md) against the pages it saved.
 
   Background:
     Given the base fixture tree of "evaluate-research"
@@ -46,7 +47,7 @@ Feature: Research verifier, Stage 1 helpers
       quotes: 0 found, 1 missing, in 1 claim(s) with a verdict other than entails
       """
 
-  Scenario: quotes checks a quote of a probe's output against that probe's stdout in harness.json
+  Scenario: quotes checks a quote of a probe's output or code against harness.json and probes/, past the judge's bracketed and "(Searched …)" notes
     When the tool runs with arguments:
       """
       quotes
@@ -55,7 +56,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      quotes: 3 found, 0 missing, in 2 claim(s) with a verdict other than entails
+      quotes: 4 found, 0 missing, in 3 claim(s) with a verdict other than entails
       """
 
   Scenario: stage1 builds the judge's input folder with each source's tier and only the pages that were saved
@@ -67,13 +68,43 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      {root}/run/verdicts/round-1.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc
+      {root}/run/verdicts/round-1.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | validator: skipped (no v1 schema)
       """
     And "run/verdicts/round-1.input/doc.md" exists
     And "run/verdicts/round-1.input/cache/aaa.txt" exists
     And "run/verdicts/round-1.input/criteria.json" exists
     And the file "run/verdicts/round-1.input/stage1.json" has a line containing '"rule": "rfc-editor.org/rfc/"'
     And the file "run/verdicts/round-1.input/sources.json" has a line containing '"status": "not fetched"'
+
+  Scenario: stage1 records the validator's result for a doc outside knowledge/, leaving out the rules that need other docs, and the ledger check
+    When the tool runs with arguments:
+      """
+      stage1
+      {root}/ledger-run
+      1
+      """
+    Then it exits with 0 and prints:
+      """
+      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: FAIL (KB-15) | ledger: FAIL (3 files)
+      """
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'cites [^b], a Rank 6 source; this section allows Rank 1–5'
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'error | pitfall | F1 | quote not in cache/19b1c63f6292.txt'
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has no line containing 'TI-7'
+
+  Scenario: stage1 counts the validator's warnings for a doc that passes
+    Given in "ledger-run/doc.md", `stream. ✅[^a] A server that stops early resets the stream. ✅[^b]` becomes `stream. ✅[^a]`
+    Given the folder "ledger-run/ledger" is removed
+    When the tool runs with arguments:
+      """
+      stage1
+      {root}/ledger-run
+      1
+      """
+    Then it exits with 0 and prints:
+      """
+      {root}/ledger-run/verdicts/round-1.input | 2 References URLs: 1 tier A, 1 tier B | pages saved: 2 of 2 URLs in the doc | validator: PASS (1 warning)
+      """
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'References entry [^b] is never cited in the body'
 
   Scenario: stage1 --sample picks claims per heading with a seed, forces an --include, and skips the marking legend
     When the tool runs with arguments:
@@ -90,7 +121,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      {root}/run/verdicts/round-2.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | sample: 3 of 5 claims, seed 7
+      {root}/run/verdicts/round-2.input | 3 References URLs: 1 tier A, 2 tier B | pages saved: 2 of 3 URLs in the doc | validator: skipped (no v1 schema) | sample: 3 of 5 claims, seed 7
       """
     And the file "run/verdicts/round-2.input/claims.json" has a line containing '"claim": "Cell claim ✅[^a]"'
 
@@ -127,9 +158,85 @@ Feature: Research verifier, Stage 1 helpers
       final verdict: FAIL (judge FAIL; 1 of 4 claims checkable, 25%; threshold 70%)
       """
 
+  Scenario: ledger passes a worker's ledger whose quotes are at their place in pages saved by fetch-source.mjs
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      """
+    Then it exits with 0 and prints:
+      """
+      ledger ground-truth: 3 sources (2 counted, cap 4), 4 facts (4 at their place), 1 conflict: 0 errors, 0 warnings
+      """
+
+  Scenario: ledger reports a planted wrong quote, a quote at the wrong lines, a wrong rank, dangling ids and drafted doc text
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      pitfall
+      """
+    Then it exits with 1 and prints:
+      """
+      error | pitfall | draft | unknown key "draft": a ledger holds sources, facts and conflicts, no doc text
+      error | pitfall | S1 | tier A Rank 3, but the rule rfc-editor.org/rfc/ gives tier A Rank 1
+      warn | pitfall | S2 | tier B Rank 1 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home
+      error | pitfall | F1 | quote not in cache/19b1c63f6292.txt: "either peer may set the end_stream flag on any frame and the stream closes at on"
+      error | pitfall | F2 | quote is at line 16 of cache/19b1c63f6292.txt, not at line 7
+      error | pitfall | F3 | source S9 is not in this ledger
+      error | pitfall | X1 | fact F7 is not in this ledger
+      ledger pitfall: 2 sources (2 counted, cap 4), 3 facts (0 at their place), 1 conflict: 6 errors, 1 warning
+      """
+
+  Scenario: ledger reports a saved page edited after it was fetched
+    Given in "ledger-run/cache/f136dcfa5ee3.txt", `and does not wait for` becomes `and waits for`
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      """
+    Then it exits with 1 and prints:
+      """
+      error | ground-truth | S2 | cache/f136dcfa5ee3.txt changed after it was fetched: its text no longer matches the SHA-256 it was saved with
+      error | ground-truth | F3 | quote not in cache/f136dcfa5ee3.txt: "a server that wants to stop early sends rst_stream and does not wait for the cli"
+      ledger ground-truth: 3 sources (2 counted, cap 4), 4 facts (3 at their place), 1 conflict: 2 errors, 0 warnings
+      """
+
+  Scenario: ledger holds a page's reader comments to Rank 6, as a source of their own
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      practitioner
+      """
+    Then it exits with 1 and prints:
+      """
+      warn | practitioner | S1 | tier B Rank 4 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home
+      error | practitioner | F3 | quote is in the page's reader comments (from line 9 of cache/1ba187945fcf.txt): cite a source with "part": "comments" at Rank 6
+      error | practitioner | F4 | quote is above the page's reader comments (line 9 of cache/1ba187945fcf.txt): cite the article's source
+      ledger practitioner: 2 sources (1 counted, cap 4), 4 facts (4 at their place), 0 conflicts: 2 errors, 1 warning
+      """
+
+  Scenario: ledger holds a profile to its cap of sources, not counting seed sources
+    When the tool runs with arguments:
+      """
+      ledger
+      {root}/ledger-run
+      ground-truth
+      --cap
+      1
+      """
+    Then it exits with 1 and prints:
+      """
+      error | ground-truth | sources | 2 sources count against the cap of 1 (1 seed source not counted)
+      ledger ground-truth: 3 sources (2 counted, cap 1), 4 facts (4 at their place), 1 conflict: 1 error, 0 warnings
+      """
+
   Scenario: No command prints the usage and exits with 2
     When the tool runs
     Then it exits with 2 and prints:
       """
-      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--sample <k> --seed <s> [--include <regex>...]]
+      usage: node evaluate-research.mjs ranks <doc.md> | quotes <verdict.json> <input-dir> | verdict <verdict.json> [--write] | stage1 <run> <n> [--out <dir>] [--cap <n>] [--sample <k> --seed <s> [--include <regex>...]] | ledger <run> [<profile>...] [--cap <n>]
       """

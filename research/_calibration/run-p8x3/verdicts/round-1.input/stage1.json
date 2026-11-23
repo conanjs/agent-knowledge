@@ -1,0 +1,373 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/routine-vacuuming.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/0485c9325213.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://www.postgresql.org/docs/18/routine-vacuuming.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/59583419aa86.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/mvcc-intro.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/e6cd546103c5.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/cb4ce5048048.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/storage-page-layout.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/a6ec7ca4934a.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/transaction-id.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/87410b804d78.txt"
+  },
+  {
+   "labels": [
+    "[^7]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/functions-info.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/c39eceeac711.txt"
+  },
+  {
+   "labels": [
+    "[^8]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/storage-hot.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/594c1c4b4952.txt"
+  },
+  {
+   "labels": [
+    "[^9]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/storage-vm.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/a0d4631c1bbc.txt"
+  },
+  {
+   "labels": [
+    "[^10]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/runtime-config-vacuum.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/3e63ee03898e.txt"
+  },
+  {
+   "labels": [
+    "[^11]"
+   ],
+   "url": "https://www.postgresql.org/docs/19/release-19.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/1fca49ab9193.txt"
+  },
+  {
+   "labels": [
+    "[^12]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/varsup.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/8204316949eb.txt"
+  },
+  {
+   "labels": [
+    "[^13]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/htup_details.h",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/e3e6f3b6ad43.txt"
+  },
+  {
+   "labels": [
+    "[^14]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/heap/heapam_visibility.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/42c64b78f53d.txt"
+  },
+  {
+   "labels": [
+    "[^15]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/clog.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/f08906ad6250.txt"
+  },
+  {
+   "labels": [
+    "[^15]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/xact.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/b97968bb2a08.txt"
+  },
+  {
+   "labels": [
+    "[^16]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/commands/vacuum.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/5a58d9806138.txt"
+  },
+  {
+   "labels": [
+    "[^17]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/transam.h",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/0cea5b6617a7.txt"
+  },
+  {
+   "labels": [
+    "[^17]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/transam.c",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/fd47d501cf2f.txt"
+  },
+  {
+   "labels": [
+    "[^18]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/sql-vacuum.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/fed027b0a0d4.txt"
+  },
+  {
+   "labels": [
+    "[^19]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/progress-reporting.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/aae230722d1e.txt"
+  },
+  {
+   "labels": [
+    "[^20]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/app-pgresetwal.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/6d1eb3b3f393.txt"
+  },
+  {
+   "labels": [
+    "[^21]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/sql-prepare-transaction.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/58987ace2263.txt"
+  },
+  {
+   "labels": [
+    "[^22]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/runtime-config-client.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/1844713022bf.txt"
+  },
+  {
+   "labels": [
+    "[^23]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/view-pg-replication-slots.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/5fb6d29f1d4d.txt"
+  },
+  {
+   "labels": [
+    "[^24]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/runtime-config-replication.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/22b15bc63016.txt"
+  },
+  {
+   "labels": [
+    "[^25]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/runtime-config-resource.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/a9a6133438cf.txt"
+  },
+  {
+   "labels": [
+    "[^26]"
+   ],
+   "url": "https://www.postgresql.org/docs/current/subxacts.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "postgresql.org/docs/",
+   "written_rank": null,
+   "cache": "cache/9d704f1b5d56.txt"
+  },
+  {
+   "labels": [
+    "[^27]"
+   ],
+   "url": "https://blog.sentry.io/transaction-id-wraparound-in-postgres/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/9acd09e424d2.txt"
+  },
+  {
+   "labels": [
+    "[^28]"
+   ],
+   "url": "https://mailchimp.com/what-we-learned-from-the-recent-mandrill-outage/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/a0aa73d201de.txt"
+  },
+  {
+   "labels": [
+    "[^29]"
+   ],
+   "url": "https://en.wikipedia.org/wiki/Multiversion_concurrency_control",
+   "tier": "A",
+   "rank": 5,
+   "rule": "*.wikipedia.org/",
+   "written_rank": null,
+   "cache": "cache/2684ed39a408.txt"
+  },
+  {
+   "labels": [
+    "[^31]"
+   ],
+   "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/storage/itemid.h",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": null,
+   "cache": "cache/1aff84631cfb.txt"
+  }
+ ],
+ "tier_b": [
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/varsup.c",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/htup_details.h",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/heap/heapam_visibility.c",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/clog.c",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/xact.c",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/commands/vacuum.c",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/access/transam.h",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/backend/access/transam/transam.c",
+  "https://blog.sentry.io/transaction-id-wraparound-in-postgres/",
+  "https://mailchimp.com/what-we-learned-from-the-recent-mandrill-outage/",
+  "https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/include/storage/itemid.h"
+ ]
+}

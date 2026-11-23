@@ -1,0 +1,183 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^rfc10017]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc10017.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": 1,
+   "cache": "cache/91cdcec2ae16.txt"
+  },
+  {
+   "labels": [
+    "[^rfc7519]"
+   ],
+   "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "rfc-editor.org/rfc/",
+   "written_rank": 1,
+   "cache": "cache/a0f7f2c88ab3.txt"
+  },
+  {
+   "labels": [
+    "[^rfc9700]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/html/rfc9700",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "written_rank": 1,
+   "cache": "cache/3663f2ef567b.txt"
+  },
+  {
+   "labels": [
+    "[^rfc7009]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/html/rfc7009",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "written_rank": 1,
+   "cache": "cache/97a18f31edc7.txt"
+  },
+  {
+   "labels": [
+    "[^rfc6749]"
+   ],
+   "url": "https://datatracker.ietf.org/doc/html/rfc6749",
+   "tier": "A",
+   "rank": 1,
+   "rule": "datatracker.ietf.org/doc/html/rfc",
+   "written_rank": 1,
+   "cache": "cache/a1a8e2928216.txt"
+  },
+  {
+   "labels": [
+    "[^duende]"
+   ],
+   "url": "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/e1dbb2cd4730.txt"
+  },
+  {
+   "labels": [
+    "[^okta]"
+   ],
+   "url": "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/b3739f3168b3.txt"
+  },
+  {
+   "labels": [
+    "[^djra]"
+   ],
+   "url": "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 1,
+   "cache": "cache/4afdcd295399.txt"
+  },
+  {
+   "labels": [
+    "[^ghsa]"
+   ],
+   "url": "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 2,
+   "cache": "cache/a8bfb5bfb1bc.txt"
+  },
+  {
+   "labels": [
+    "[^owasp]"
+   ],
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 3,
+   "cache": "cache/760e80d938bb.txt"
+  },
+  {
+   "labels": [
+    "[^auth0]"
+   ],
+   "url": "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/d1402f8e38cb.txt"
+  },
+  {
+   "labels": [
+    "[^workos]"
+   ],
+   "url": "https://workos.com/blog/stateless-jwt-logout-problem",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 4,
+   "cache": "cache/894627767181.txt"
+  },
+  {
+   "labels": [
+    "[^pws]"
+   ],
+   "url": "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html",
+   "tier": "B",
+   "rank": null,
+   "rule": null,
+   "written_rank": 6,
+   "cache": "cache/c903f71e5ec6.txt"
+  }
+ ],
+ "tier_b": [
+  "https://docs.duendesoftware.com/bff/getting-started/single-frontend/",
+  "https://developer.okta.com/docs/guides/refresh-tokens/main/",
+  "https://dj-rest-auth.readthedocs.io/en/latest/guides/jwt-cookies/",
+  "https://github.com/advisories/GHSA-qwph-4952-7xr6",
+  "https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html",
+  "https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/",
+  "https://workos.com/blog/stateless-jwt-logout-problem",
+  "https://pragmaticwebsecurity.com/articles/oauthoidc/localstorage-xss.html"
+ ],
+ "validator": {
+  "result": "PASS",
+  "fails": [],
+  "warns": [],
+  "not_checked": "TI-*, KD-7, DD-3, DD-4: they compare the doc with other docs of knowledge/"
+ },
+ "ledger": {
+  "result": "PASS",
+  "files": 4,
+  "cap": 4,
+  "lines": [
+   "ledger ground-truth: 4 sources (4 counted, cap 4), 61 facts (61 at their place), 6 conflicts: 0 errors, 0 warnings",
+   "warn | pitfall | S1 | tier B Rank 4 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home",
+   "warn | pitfall | S4 | tier B Rank 4 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home",
+   "ledger pitfall: 4 sources (4 counted, cap 4), 39 facts (39 at their place), 3 conflicts: 0 errors, 2 warnings",
+   "warn | practitioner | S1 | tier B Rank 1 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home",
+   "warn | practitioner | S2 | tier B Rank 1 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home",
+   "warn | practitioner | S3 | tier B Rank 1 with no provenance_ref: name the page that shows the author's role, unless the URL is the project's own home",
+   "ledger practitioner: 4 sources (4 counted, cap 4), 44 facts (44 at their place), 4 conflicts: 0 errors, 3 warnings",
+   "ledger taxonomy: 4 sources (4 counted, cap 4), 54 facts (54 at their place), 4 conflicts: 0 errors, 0 warnings"
+  ]
+ }
+}

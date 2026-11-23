@@ -1,0 +1,86 @@
+{
+ "profile": "pitfall",
+ "question": "What goes wrong when an HTTP/2 stream ends?",
+ "terms": [
+  "RST_STREAM"
+ ],
+ "sources": [
+  {
+   "id": "S1",
+   "url": "https://www.rfc-editor.org/rfc/rfc9113",
+   "cache": "cache/19b1c63f6292.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "A",
+   "rank": 3,
+   "rule": "rfc-editor.org/rfc/",
+   "rank_basis": "tier A: rfc-editor.org/rfc/",
+   "seed": false,
+   "provenance_ref": null
+  },
+  {
+   "id": "S2",
+   "url": "https://example.dev/blog/h2",
+   "cache": "cache/f136dcfa5ee3.txt",
+   "fetched": "2026-11-22T09:00:00Z",
+   "tier": "B",
+   "rank": 1,
+   "rule": null,
+   "rank_basis": "originator: the about page shows she edited the spec section",
+   "seed": false,
+   "provenance_ref": null
+  }
+ ],
+ "facts": [
+  {
+   "id": "F1",
+   "source": "S1",
+   "summary": "END_STREAM closes a stream at once.",
+   "quote": "Either peer may set the END_STREAM flag on any frame and the stream closes at once",
+   "loc": {
+    "heading": "5.1. Stream States",
+    "lines": [
+     11,
+     12
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "source": "S1",
+   "summary": "RST_STREAM ends a stream at once.",
+   "quote": "A peer sends RST_STREAM to end a stream at once",
+   "loc": {
+    "heading": "5. Streams",
+    "lines": [
+     7,
+     7
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "source": "S9",
+   "summary": "A missing source.",
+   "quote": "A stream is a sequence of frames",
+   "loc": {
+    "heading": "5. Streams",
+    "lines": [
+     7,
+     7
+    ]
+   }
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "X1",
+   "topic": "when a stream closes",
+   "facts": [
+    "F1",
+    "F7"
+   ],
+   "note": "F7 does not exist"
+  }
+ ],
+ "draft": "## Summary\nAn HTTP/2 stream closes when either peer sends END_STREAM."
+}

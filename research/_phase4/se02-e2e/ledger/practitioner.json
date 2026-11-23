@@ -1,0 +1,507 @@
+{
+  "profile": "practitioner",
+  "question": "What do implementers and measurements report about Head-of-Line (HOL) blocking in HTTP/2 versus HTTP/3: the measured effect of packet loss (with numbers, loss rates and setups), how implementations handle QPACK blocking in practice, how HTTP/2 deployments work around TCP HOL blocking, and how prioritization interacts with HOL blocking?",
+  "terms": [
+    "head-of-line blocking",
+    "TCP head-of-line blocking",
+    "multiplexing",
+    "QUIC stream",
+    "QPACK",
+    "Required Insert Count",
+    "static table",
+    "dynamic table",
+    "flow-control window"
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://calendar.perfplanet.com/2020/head-of-line-blocking-in-quic-and-http-3-the-details/",
+      "cache": "cache/7144e96a4a52.txt",
+      "fetched": "2026-11-22T14:24:11Z",
+      "tier": "A",
+      "rank": 4,
+      "rule": "calendar.perfplanet.com/",
+      "rank_basis": "tier A: calendar.perfplanet.com/",
+      "seed": false,
+      "provenance_ref": null
+    },
+    {
+      "id": "S2",
+      "url": "https://www.fastly.com/blog/how-http3-and-quic-help-long-tail-connections",
+      "cache": "cache/5830c4e1e1ac.txt",
+      "fetched": "2026-11-22T14:25:01Z",
+      "tier": "B",
+      "rank": 4,
+      "rule": null,
+      "rank_basis": "tier B: class (company engineering blog: Fastly’s own blog; the page credits the author as Patrick McManus, Distinguished Engineer, Fastly, line 331)",
+      "seed": false,
+      "provenance_ref": "cache/5830c4e1e1ac.txt"
+    },
+    {
+      "id": "S3",
+      "url": "https://h2o.examp1e.net/configure/http2_directives.html",
+      "cache": "cache/44649c73a64b.txt",
+      "fetched": "2026-11-22T14:25:01Z",
+      "tier": "B",
+      "rank": 1,
+      "rule": null,
+      "rank_basis": "tier B: project's own home (H2O server's official configuration docs), for facts about H2O",
+      "seed": false,
+      "provenance_ref": null
+    },
+    {
+      "id": "S4",
+      "url": "https://github.com/cloudflare/quiche/blob/0.22.0/quiche/src/h3/qpack/encoder.rs",
+      "cache": "cache/1b6d3acbd283.txt",
+      "fetched": "2026-11-22T14:26:14Z",
+      "tier": "B",
+      "rank": 1,
+      "rule": null,
+      "rank_basis": "tier B: project's own home (cloudflare/quiche repository, source at release tag 0.22.0), for facts about quiche",
+      "seed": false,
+      "provenance_ref": null
+    }
+  ],
+  "facts": [
+    {
+      "id": "F1",
+      "source": "S1",
+      "summary": "Typical packet loss rates given: about 0.01% on high-speed cabled networks and rarely above 2% even on the worst cellular networks; loss and jitter are often bursty.",
+      "quote": "Especially on high-speed, cabled networks, packet loss rates are on the order of 0.01%. Even on the worst cellular networks, you will rarely see rates higher than 2% in practice. This is combined with the fact that packet loss and also jitter (delay variations in the network), are often bursty.",
+      "loc": {
+        "heading": "TCP HOL blocking",
+        "lines": [
+          170,
+          170
+        ]
+      }
+    },
+    {
+      "id": "F2",
+      "source": "S1",
+      "summary": "Worked example of TCP HOL blocking: when TCP packet 2 is lost, packet 3 waits in the receive buffer for the retransmission, which takes at least one round trip, even though part of it belongs to another HTTP/2 stream.",
+      "quote": "TCP keeps packet 3 in its receive buffer until it receives the retransmitted copy of packet 2 (which takes at least 1 round-trip to the server), after which it can pass both to the browser in the correct order. Put differently: the lost packet 2 is HOL blocking packet 3!",
+      "loc": {
+        "heading": "TCP HOL blocking",
+        "lines": [
+          162,
+          162
+        ]
+      }
+    },
+    {
+      "id": "F3",
+      "source": "S1",
+      "summary": "As deployed, HTTP/2 is reported as typically as fast as or slightly faster than HTTP/1.1 in most conditions.",
+      "quote": "HTTP/2 as it is currently deployed in browsers and servers is typically as fast or slightly faster than HTTP/1.1 in most conditions",
+      "loc": {
+        "heading": "TCP HOL blocking",
+        "lines": [
+          174,
+          174
+        ]
+      }
+    },
+    {
+      "id": "F4",
+      "source": "S1",
+      "summary": "Browsers often still open several parallel HTTP/2 connections, because sites shard resources across servers or because of security-related side effects.",
+      "quote": "browsers often still open multiple parallel HTTP/2 connections (either because sites still shard their resources over different servers, or because of security-related side-effects), thus getting the best of both worlds",
+      "loc": {
+        "heading": "TCP HOL blocking",
+        "lines": [
+          174,
+          174
+        ]
+      }
+    },
+    {
+      "id": "F5",
+      "source": "S1",
+      "summary": "On slower networks with higher packet loss, HTTP/1.1 over 6 connections can still beat HTTP/2 over one connection, often because of TCP-level HOL blocking.",
+      "quote": "there are also some cases (especially on slower networks with higher packet loss) where HTTP/1.1 on 6 connections will still outshine HTTP/2 on one connection, which is often due to the TCP-level HOL blocking problem",
+      "loc": {
+        "heading": "TCP HOL blocking",
+        "lines": [
+          176,
+          176
+        ]
+      }
+    },
+    {
+      "id": "F6",
+      "source": "S1",
+      "summary": "QPACK is described as letting the implementation choose its own trade-off between possible HOL blocking and compression ratio.",
+      "quote": "QPACK is HTTP/3’s version of HPACK and allows a self-chosen trade-off between potential HOL blocking and compression performance",
+      "loc": {
+        "heading": "HOL blocking in HTTP/3 over QUIC",
+        "lines": [
+          210,
+          210
+        ]
+      }
+    },
+    {
+      "id": "F7",
+      "source": "S1",
+      "summary": "QUIC keeps byte order within one stream, so its HOL blocking removal only helps when several streams are active; a lone stream hit by loss is still HOL blocked.",
+      "quote": "QUIC’s HOL blocking removal only works if there are multiple resource streams active at the same time. … However, if there is only a single stream active at a given moment, any loss will impact that lonely stream and we will still be HOL blocked, even in QUIC.",
+      "loc": {
+        "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+        "lines": [
+          222,
+          222
+        ]
+      }
+    },
+    {
+      "id": "F8",
+      "source": "S1",
+      "summary": "The page sets two conflicting scheduling goals: multiplexing streams (12121212) to benefit from QUIC's HOL blocking removal, against sending sequentially (11112222) so browsers can process core resources sooner.",
+      "quote": "To profit from QUIC’s HOL blocking removal: send resources multiplexed (12121212) … To make sure browsers can process core resources ASAP: send resources sequentially (11112222)",
+      "loc": {
+        "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+        "lines": [
+          248,
+          250
+        ]
+      }
+    },
+    {
+      "id": "F9",
+      "source": "S1",
+      "summary": "Worked example with one burst of 8 lost packets across 2 streams: with sequential sending HOL removal barely helps; it helps only if the loss happens to hit one stream; if the loss spans both streams, both are HOL blocked.",
+      "quote": "we assume we have a single burst of 8 lost packets while we are downloading 2 streams (green and purple) … Here, we see that QUIC’s HOL blocking removal indeed doesn’t really help all that much … The 8 lost packets are distributed across the two streams. This means that both streams are now HOL blocked",
+      "loc": {
+        "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+        "lines": [
+          254,
+          262
+        ]
+      }
+    },
+    {
+      "id": "F10",
+      "source": "S1",
+      "summary": "Most QUIC implementations rarely put data from more than one stream in the same packet, since losing such a packet HOL blocks every stream in it.",
+      "quote": "most QUIC implementations very rarely create packets containing data from more than 1 stream at the same time. If one of those packets is lost, it immediately leads to HOL blocking for all streams in the single packet!",
+      "loc": {
+        "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+        "lines": [
+          264,
+          264
+        ]
+      }
+    },
+    {
+      "id": "F11",
+      "source": "S1",
+      "summary": "In December 2020 the author had no final measurements; early experiments led him to expect that QUIC's HOL blocking removal helps little for web performance, with a large effect only on networks with much packet loss.",
+      "quote": "I don’t have final measurements to go on. However, my personal gut feeling (which -is- backed by my results from several early experiments) says that QUIC’s HOL blocking removal probably won’t actually help all that much for Web performance … We saw that it would probably only have a large impact on networks with a lot of packet loss.",
+      "loc": {
+        "heading": "Do QUIC and HTTP/3 really completely remove HOL blocking?",
+        "lines": [
+          270,
+          278
+        ]
+      }
+    },
+    {
+      "id": "F12",
+      "source": "S1",
+      "summary": "QUIC's congestion control runs per connection, not per stream, so loss on any stream slows down all streams of the HTTP/3 connection.",
+      "quote": "QUIC’s congestion control is still done at the connection level, and not per-stream. This means that even though the streams are conceptually independent, they all still impact QUIC’s singular, per-connection congestion controller, causing slowdowns if there is loss on any of the stream.",
+      "loc": {
+        "heading": "Bonus: Transport Congestion Control",
+        "lines": [
+          336,
+          336
+        ]
+      }
+    },
+    {
+      "id": "F13",
+      "source": "S2",
+      "summary": "A 2016 Fastly-side evaluation showed page load times improving by 29% on mobile and 5% on desktop after moving to HTTP/2.",
+      "quote": "It showed page load times at his organization to have improved by 29% on mobile and a more modest 5% on desktop when transitioned to HTTP/2.",
+      "loc": {
+        "heading": "The connections that HTTP/2 left behind",
+        "lines": [
+          357,
+          357
+        ]
+      }
+    },
+    {
+      "id": "F14",
+      "source": "S2",
+      "summary": "A 2016 Fastly study found HTTP/2 fares worse against HTTP/1 the higher the packet loss, because all exchanges share one TCP connection with in-order delivery.",
+      "quote": "Hooman illustrates that the higher the packet loss the worse HTTP/2 performs in comparison to HTTP/1. This is mostly because of HTTP/2’s use of just one TCP connection for all exchanges compared to HTTP/1’s use of one connection per concurrent exchange and the interaction of packet loss with TCP’s congestion control and in-order delivery guarantee.",
+      "loc": {
+        "heading": "The connections that HTTP/2 left behind",
+        "lines": [
+          361,
+          361
+        ]
+      }
+    },
+    {
+      "id": "F15",
+      "source": "S2",
+      "summary": "Rule-of-thumb loss thresholds from that study: below 0.5% loss HTTP/2 helped, between 0.5% and 1.5% gains and losses roughly cancelled, above 1.5% HTTP/2 hurt.",
+      "quote": "as a rough rule of thumb, connections with less than 0.5% packet loss benefited from HTTP/2, those with between 0.5% and 1.5% loss benefited roughly as much as they sacrificed by using HTTP/2, and those with more than 1.5% loss were harmed by the upgrade.",
+      "loc": {
+        "heading": "The connections that HTTP/2 left behind",
+        "lines": [
+          365,
+          365
+        ]
+      }
+    },
+    {
+      "id": "F16",
+      "source": "S2",
+      "summary": "75% of Fastly edge connections were then in the loss range HTTP/2 improved; the rest split roughly evenly between hurt and unchanged, so 6 times as many transactions improved as were harmed.",
+      "quote": "75% of Fastly edge connections at that time fell into the “improved by HTTP/2” range of packet loss and the remainders were split roughly evenly between hurt and unchanged. This was definitely a net win with 6 times as many HTTP transactions improved as harmed by the transition",
+      "loc": {
+        "heading": "The connections that HTTP/2 left behind",
+        "lines": [
+          369,
+          369
+        ]
+      }
+    },
+    {
+      "id": "F17",
+      "source": "S2",
+      "summary": "As of April 2020 the post says a thorough HTTP/3 performance analysis must wait for robust implementations deployed in diverse environments.",
+      "quote": "A thorough analysis of HTTP/3 performance will need to wait for a variety of robust implementations to be deployed in diverse environments.",
+      "loc": {
+        "heading": "HTTP/3, QUIC, and In-Order Delivery",
+        "lines": [
+          373,
+          373
+        ]
+      }
+    },
+    {
+      "id": "F18",
+      "source": "S2",
+      "summary": "HTTP/3's stated goal is that a loss-repair delay affects only one HTTP transaction while all transactions still share one aggregate sending rate; TCP orders all streams, QUIC orders each stream separately.",
+      "quote": "the scope of a single packet loss-driven repair delay should only apply to a single HTTP transaction. It needs to do so in a way that all the transactions coordinate their aggregate transmission rate. … TCP enforces the “in-order delivery” property on all the streams within the TCP session, while QUIC only enforces it within one stream at a time.",
+      "loc": {
+        "heading": "HTTP/3, QUIC, and In-Order Delivery",
+        "lines": [
+          375,
+          377
+        ]
+      }
+    },
+    {
+      "id": "F19",
+      "source": "S2",
+      "summary": "The post's illustration compares an HTTP/2 and an HTTP/3 connection, each with 5 mostly parallel transactions and a single early loss on the second transaction.",
+      "quote": "In each case the connection is made up of 5 mostly parallel HTTP transactions. Longer arrows indicate slower delivery times. Shortly after starting, each connection suffers a single packet loss to the second HTTP transaction in the connection.",
+      "loc": {
+        "heading": "HTTP/3, QUIC, and In-Order Delivery",
+        "lines": [
+          379,
+          379
+        ]
+      }
+    },
+    {
+      "id": "F20",
+      "source": "S2",
+      "summary": "HTTP/3 may not noticeably change performance for the average connection, especially when the HTTP/2 session has almost no loss and already follows TLS and TCP best practice.",
+      "quote": "HTTP/3 might not significantly affect performance for the average connection — or even affect it at all. This is especially true if the comparison HTTP/2 session has almost no packet loss and is already using best practice recommendations for TLS and TCP configurations.",
+      "loc": {
+        "heading": "The tail matters independent of the median",
+        "lines": [
+          385,
+          385
+        ]
+      }
+    },
+    {
+      "id": "F21",
+      "source": "S3",
+      "summary": "H2O schedules HTTP/2 responses with an O(1) scheduler that picks which response to send for every 16KB chunk.",
+      "quote": "The server implements a O(1) scheduler that determines which HTTP response should be sent to the client, per every 16KB chunk.",
+      "loc": {
+        "heading": "Prioritization",
+        "lines": [
+          30,
+          30
+        ]
+      }
+    },
+    {
+      "id": "F22",
+      "source": "S3",
+      "summary": "To switch quickly to a high-priority response, H2O says the TCP send buffer should hold only in-flight packets and TLS records must be small enough to avoid HOL blocking; the cost is more CPU and slightly higher latency.",
+      "quote": "In order to do so, send buffer of the TCP/IP stack should be kept empty except for the packets in-flight, and size of the TLS records must be small enough to avoid head-of-line blocking. The downside is that obeying the requirement increases the interaction between the server process and kernel, which result in consumption of more CPU cycles and slightly increased latency.",
+      "loc": {
+        "heading": "Latency Optimization",
+        "lines": [
+          103,
+          104
+        ]
+      }
+    },
+    {
+      "id": "F23",
+      "source": "S3",
+      "summary": "Since version 2.1, for connections with RTT above and CWND below the thresholds, H2O keeps unsent HTTP/2 frames minimal; its benchmarks suggest an average reduction of 1 RTT.",
+      "quote": "Starting from version 2.1, H2O provides directives that lets the users tune how the TCP/IP stack is used depending on the observed RTT, CWND, and the additional latency imposed by the interaction between the server and the OS. … For TCP/IP connections with greater RTT and smaller CWND than the configured threshold, the server will try to keep the size of HTTP/2 frames unsent as small as possible so that it can switch to sending a higher-priority response. Benchmarks suggest that users can expect in average 1 RTT reduction when this optimization is enabled.",
+      "loc": {
+        "heading": "Latency Optimization",
+        "lines": [
+          106,
+          109
+        ]
+      }
+    },
+    {
+      "id": "F24",
+      "source": "S3",
+      "summary": "The default thresholds are meant to activate the optimization on mobile and long-distance networks but not when a proxy sits on the path.",
+      "quote": "The default values of the thresholds have been chosen that the optimization will come into action for mobile and long-distance networks but not when a proxy exists on the network.",
+      "loc": {
+        "heading": "Latency Optimization",
+        "lines": [
+          112,
+          112
+        ]
+      }
+    },
+    {
+      "id": "F25",
+      "source": "S3",
+      "summary": "The optimization works only on Linux and OS X, which expose TCP_INFO and TCP_NOTSENT_LOWAT.",
+      "quote": "The optimization is supported only on Linux and OS X. The two are the operating systems that provide access to TCP_INFO and an interface to adjust the size of the unsent buffer (TCP_NOTSENT_LOWAT).",
+      "loc": {
+        "heading": "Latency Optimization",
+        "lines": [
+          114,
+          114
+        ]
+      }
+    },
+    {
+      "id": "F26",
+      "source": "S3",
+      "summary": "http2-latency-optimization-min-rtt is in milliseconds and defaults to 50; connections with a smaller RTT do not get the optimization, and 4294967295 disables it.",
+      "quote": "Latency optimization is disabled for TCP connections with smaller RTT (round-trip time) than the specified value. … Setting this value to 4294967295 (i.e. UINT_MAX) effectively disables the optimization. … http2-latency-optimization-min-rtt: 50",
+      "loc": {
+        "heading": "\"http2-latency-optimization-min-rtt\"",
+        "lines": [
+          327,
+          338
+        ]
+      }
+    },
+    {
+      "id": "F27",
+      "source": "S3",
+      "summary": "http2-latency-optimization-max-additional-delay, a ratio to RTT, defaults to 0.1; the optimization is off when the estimated extra delay from OS interaction exceeds it.",
+      "quote": "Maximum additional delay (as the ratio to RTT) permitted to get latency optimization activated. … http2-latency-optimization-max-additional-delay: 0.1",
+      "loc": {
+        "heading": "\"http2-latency-optimization-max-additional-delay\"",
+        "lines": [
+          346,
+          357
+        ]
+      }
+    },
+    {
+      "id": "F28",
+      "source": "S3",
+      "summary": "http2-latency-optimization-max-cwnd defaults to 65535 octets; above it the optimization stops and unsent HTTP/2 frames average slightly above the tcp_notsent_lowat sysctl value.",
+      "quote": "The server will not use or stop using latency optimization mode if CWND becomes greater than the configured value. In such case, average size of HTTP/2 frames buffered unsent will be slightly above the tcp_notsent_lowat sysctl value. … http2-latency-optimization-max-cwnd: 65535",
+      "loc": {
+        "heading": "\"http2-latency-optimization-max-cwnd\"",
+        "lines": [
+          369,
+          378
+        ]
+      }
+    },
+    {
+      "id": "F29",
+      "source": "S3",
+      "summary": "http2-reprioritize-blocking-assets (default ON) sends highest-priority content types first only when the client does not use dependency-based prioritization.",
+      "quote": "if the client uses dependency-based prioritization, do not reprioritize … if the client does not use dependency-based prioritization, send the contents of which their types are given highest priority before any other responses … http2-reprioritize-blocking-assets: ON",
+      "loc": {
+        "heading": "\"http2-reprioritize-blocking-assets\"",
+        "lines": [
+          410,
+          420
+        ]
+      }
+    },
+    {
+      "id": "F30",
+      "source": "S3",
+      "summary": "http2-input-window-size, the HTTP/2 receive window for request bodies, defaults to 16777216 bytes.",
+      "quote": "Default window size for HTTP request body. … The value is the maximum amount of request body (in bytes) that can be sent by the client in 1 RTT (round-trip time). … 16777216",
+      "loc": {
+        "heading": "\"http2-input-window-size\"",
+        "lines": [
+          259,
+          269
+        ]
+      }
+    },
+    {
+      "id": "F31",
+      "source": "S4",
+      "summary": "quiche 0.22.0's QPACK encoder writes Required Insert Count 0 and Base 0 in every field section prefix.",
+      "quote": "// Required Insert Count. encode_int(0, 0, 8, &mut b)?; … // Base. encode_int(0, 0, 7, &mut b)?;",
+      "loc": {
+        "heading": "impl Encoder {",
+        "lines": [
+          55,
+          59
+        ]
+      }
+    },
+    {
+      "id": "F32",
+      "source": "S4",
+      "summary": "Each field line is encoded only as a static-table index, a literal with a static name reference, or a fully literal line; the encoder has no dynamic-table path.",
+      "quote": "// Encode as statically indexed. … // Encode value as literal with static name reference. … // Encode as fully literal.",
+      "loc": {
+        "heading": "impl Encoder {",
+        "lines": [
+          66,
+          79
+        ]
+      }
+    },
+    {
+      "id": "F33",
+      "source": "S4",
+      "summary": "The quiche QPACK encoder struct has no fields, so it keeps no dynamic-table state.",
+      "quote": "/// A QPACK encoder. … #[derive(Default)] pub struct Encoder {}",
+      "loc": {
+        "heading": "/// A QPACK encoder.",
+        "lines": [
+          39,
+          41
+        ]
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "X1",
+      "topic": "how common loss above about 1.5 to 2% is",
+      "facts": [
+        "F1",
+        "F16"
+      ],
+      "note": "S1 says even the worst cellular networks rarely exceed 2% loss; S2's 2016 edge data puts roughly half of the 25% non-improved connections in the 'hurt' band (above 1.5% loss). Thresholds, populations and years differ."
+    }
+  ]
+}
