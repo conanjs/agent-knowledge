@@ -28,6 +28,8 @@
     { "host": "crunchydata.com", "prefix": "/blog/", "rank": 4, "why": "Crunchy Data engineering blog (decided by V, 2026-11-23)" },
     { "host": "metronome.com", "prefix": "/blog/", "rank": 4, "why": "Metronome engineering blog (decided by V, 2026-11-23)" },
     { "host": "pganalyze.com", "prefix": "/docs/", "rank": 4, "why": "pganalyze's product docs, a vendor's secondary source on PostgreSQL (decided by V, 2026-11-23)" },
+    { "host": "percona.com", "prefix": "/blog/", "rank": 4, "why": "Percona engineering blog; its reader comments, cited as the page URL plus #comments, are Rank 6 (decided by V, 2026-11-23, with judge v9)" },
+    { "host": "lwn.net", "prefix": "/Articles/", "rank": 4, "why": "LWN articles; their reader comments, cited as the page URL plus #comments, are Rank 6 (decided by V, 2026-11-23, with judge v9)" },
     { "host": "kubernetes.io", "prefix": "/docs/", "rank": 1, "why": "Kubernetes docs" },
     { "host": "kubernetes.io", "prefix": "/blog/", "rank": 4, "why": "Kubernetes project blog" },
     { "host": "nodejs.org", "prefix": "/api/", "rank": 1, "why": "Node.js API docs" },
