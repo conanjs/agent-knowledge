@@ -1,7 +1,7 @@
 ---
 schema: topic-index/v1
 kind: root
-last-updated: 2026-11-21
+last-updated: 2026-11-23
 ---
 
 # Global knowledge
@@ -27,7 +27,8 @@ New docs follow `../frameworks/knowledge/schemas/_system.md`. Topics marked *leg
 | [macos/](macos/index.md) | macOS behavior a developer hits: launchd and the environment apps get, shell startup and PATH, Homebrew, code signing and Gatekeeper, TCC privacy permissions, SIP and the App Sandbox, Keychain, APFS volumes, diagnostics tools; captured on macOS 26.1 | 5 concepts, 2 how-tos, 3 references |
 | [kubernetes/](kubernetes/index.md) | How the cluster works and workloads run: life of a pod from kubectl to iptables (deep dive), control plane and reconciliation, pods, probes, rollouts, workload controllers, scheduling, CNI and DNS, Services and kube-proxy, Ingress/Gateway/NetworkPolicy, persistent volumes, RBAC and Pod Security, troubleshooting and autoscaling; plus config and credential delivery (Secret, projected volumes) and container CPU/memory limits (throttling, OOM kills) | 6 subtopics + 6 docs |
 | [operations/](operations/index.md) | Runtime operation concerns in code: config at startup, structured logging | topic index |
-| [web-apis/](web-apis/index.md) | HTTP API design: mapping errors to status codes and problem details | topic index |
+| [web-apis/](web-apis/index.md) | HTTP API design: mapping errors to status codes and problem details; head-of-line blocking in HTTP/2 and HTTP/3 (deep dive) | topic index |
+| [security/](security/index.md) | Application security for tokens: storing and revoking JWTs in browser-based apps, backend-for-frontend, cookie attributes, refresh token rotation, denylists (deep dive) | topic index |
 | [testing/](testing/index.md) | Putting tests around code and tools that have none: characterization tests, Gherkin scenarios, proving coverage by sabotage | topic index |
 | [product-tours/](product-tours/index.md) | In-app onboarding tours with Product Fruits: integration in React/Next.js, per-user state, settings and API catalog | topic index |
 | [windows/](windows/index.md) | Windows internals mapped to Linux: user/kernel mode, boot phases, registry and services, processes, handles, jobs and scheduling, reserve/commit memory and the page file, NTFS and IRPs, tokens, DACLs, integrity levels and UAC, the Windows Filtering Platform, Windows containers and WSL 2, diagnostics tools; plus symlink privileges | 8 subtopics + 1 reference + 1 legacy |
