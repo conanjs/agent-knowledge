@@ -2,6 +2,8 @@
 
 Notes from building the research agent (Phases 0–4, 2026-11-22): each place where an instruction, a rule, a criterion or a report was read differently from what its writer meant, by an agent, a tool or a person. Each entry quotes the words as they stood, says how they were read, what the writer expected, and the fix. They are raw notes, kept for later design work: the ones that were tested as wordings belong in `knowledge/ai-agents/instruction-wording-findings.md` (IW rows), which this file feeds (tracker T-3).
 
+Limits that a better wording did not remove (a judge's search that cannot reach an exception, run-to-run variance, platform and web limits) are in `ai-limitations.md`.
+
 **Add an entry** when a run shows a misreading: the exact words (from the file, prompt or report, with its version or commit), the reading, the expected reading, the fix with its commit, or `open`.
 
 ## Patterns
