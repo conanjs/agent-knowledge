@@ -38,3 +38,4 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-w9c3 | LS-03 by the research agent (Phase 4, `research/_phase4/ls03-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-p8x3 | SE-01 baseline (written 2026-11-23 by the Phase 0 rerun prompt; pages saved after by `fetch-source.mjs`), built like run-g5r8 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-r6k1 | SE-01 by the research agent (Phase 4, `research/_phase4/se01-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |
+| run-v3n5 | SE-01's knowledge copy (`knowledge/performance/postgresql-mvcc-xid-wraparound-deep-dive.md`, tracker T-6), judged with `SCOPE` `## 2.`, `### 6.2`, `### 6.3` after its edits; `stage1.json` rebuilt after the run for the label fix (E27) | v8 `d4787fb`, `knowledge-judge` agent |

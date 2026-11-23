@@ -71,8 +71,8 @@ export function referenceEntries(refs) {
   }
   return items
     .map((e) => ({
-      labels: [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => m[1]),
-      refs: [...e.matchAll(/\[\^(\w+)\]/g)].map((m) => `[^${m[1]}]`).concat(/\[\^\w+\]/.test(e) ? [] : [e.match(/^[-*] (\[[\w.-]+\])(?!\()/)?.[1]].filter(Boolean)),
+      labels: [...e.matchAll(/\[\^([\w-]+)\]/g)].map((m) => m[1]),
+      refs: [...e.matchAll(/\[\^([\w-]+)\]/g)].map((m) => `[^${m[1]}]`).concat(/\[\^[\w-]+\]/.test(e) ? [] : [e.match(/^[-*] (\[[\w.-]+\])(?!\()/)?.[1]].filter(Boolean)),
       urls: [...e.matchAll(/https?:\/\/[^\s)>\]`|]+/g)].map((m) => m[0].replace(/[.,;]+$/, '')),
       rank: Number(e.match(/\bRank ([1-6])\./)?.[1]) || null,
     }))

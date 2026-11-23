@@ -737,6 +737,17 @@ Feature: Knowledge validator
         KB-15  demo/concept.md: "## How it works" cites [^2], a Rank 6 source; this section allows Rank 1–4
       """
 
+  Scenario: KB-15 a Rank 6 source with a hyphenated footnote label in How it works fails
+    Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
+    Given in "knowledge/demo/concept.md", `✅ [^1]` becomes `✅ [^1][^so-answer]`
+    Given in "knowledge/demo/concept.md", `the shape this doc follows. [^1]` becomes `the shape this doc follows. [^1]\n- [A forum answer](https://stackoverflow.com/q/1) — community, 2020. Rank 6. Backs: one claim. [^so-answer]`
+    When the tool runs
+    Then it exits with 1 and prints:
+      """
+      FAIL (1)
+        KB-15  demo/concept.md: "## How it works" cites [^so-answer], a Rank 6 source; this section allows Rank 1–4
+      """
+
   Scenario: KB-15 a Rank 6 source cited in a Worked example only warns
     Given in "knowledge/demo/concept.md", `tags: [fixture]\n` becomes `tags: [fixture]\nranked-sources: true\n`
     Given in "knowledge/demo/concept.md", `read the one new line it prints.` becomes `read the one new line it prints. [^2]`

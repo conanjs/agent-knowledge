@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: performance
-last-updated: 2026-11-07
+last-updated: 2026-11-23
 ---
 
 # Performance engineering and optimization
@@ -13,6 +13,7 @@ How to reason about, measure and improve performance: latency percentiles and ta
 | Doc | Type | Summary | Status |
 |---|---|---|---|
 | [learning-path.md](learning-path.md) | reference | Four stages — laws, hardware, measurement, optimization — with an exercise and a self-check per stage | verified |
+| [postgresql-mvcc-xid-wraparound-deep-dive.md](postgresql-mvcc-xid-wraparound-deep-dive.md) | deep-dive | How PostgreSQL's MVCC keeps row versions and picks one per snapshot, why the 32-bit transaction ID wraps around, and how freezing, VACUUM, autovacuum, monitoring and recovery prevent it | verified |
 | [sqlite-covering-index-lab.md](sqlite-covering-index-lab.md) | reference | SQLite 3.50.4 ordered top-k experiment | verified |
 | [accelerator-data-and-cost.md](accelerator-data-and-cost.md) | reference | Accelerator, data and cost performance | draft |
 | [architecture-selection.md](architecture-selection.md) | reference | Architecture choices by work cost | draft |
