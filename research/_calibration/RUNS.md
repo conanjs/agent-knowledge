@@ -44,3 +44,8 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-j2m6 | mcp-known-errors, the same 15-claim sample as run-c5w9 | v9 `450720c`, `knowledge-judge` agent |
 | run-n8w1 | the probe case, the same input as run-d1q4 | v9 `450720c`, `knowledge-judge` agent |
 | run-q2x8 | new: a doc on the live Percona post with its comments marked (from line 1036), `criteria.json` with a two-section and a "together" criterion; key in `planted.md` | v9 `450720c`, `knowledge-judge` agent |
+| run-b3w7 | private-fields-clean, the same input as run-e7k3 | v10 `af565c2`, `knowledge-judge` agent |
+| run-f6k2 | private-fields-planted, the same input as run-h4p9 | v10 `af565c2`, `knowledge-judge` agent |
+| run-g9t4 | mcp-known-errors, the same 15-claim sample as run-j2m6 | v10 `af565c2`, `knowledge-judge` agent |
+| run-m5r8 | the probe case, the same input as run-n8w1 | v10 `af565c2`, `knowledge-judge` agent |
+| run-x4c6 | the comments and criteria case, the same input as run-q2x8 (key in `planted.md`) | v10 `af565c2`, `knowledge-judge` agent |

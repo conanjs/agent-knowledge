@@ -1,0 +1,138 @@
+{
+ "doc_claims": 191,
+ "sample_size": 15,
+ "seed": 20261122,
+ "strata": {
+  "## Summary": [
+   4,
+   1
+  ],
+  "## 1. Q1: Architecture and lifecycle": [
+   47,
+   3
+  ],
+  "## 2. Q2: Primitives": [
+   36,
+   3
+  ],
+  "## 3. Q3: Transports and authorization": [
+   69,
+   5
+  ],
+  "## 4. Q4: Security and trust": [
+   32,
+   2
+  ],
+  "## 5. What the experiments showed that the spec text does not say": [
+   3,
+   1
+  ]
+ },
+ "claims": [
+  {
+   "id": "S1",
+   "line": 21,
+   "heading": "## Summary",
+   "claim": "It removed the `initialize` handshake and protocol-level sessions ✅[3]",
+   "context": "The current spec revision is **2026-07-28** ✅[1][2]. It removed the `initialize` handshake and protocol-level sessions ✅[3]. The previous revision, **2025-11-25**, is what most older tutorials describe, and it still has the handshake ✅[4]. A reader who wants to run an MCP session today must know both, because servers and clients of both eras are deployed and the spec defines how they interoperate ✅[5]. This document describes the current era first and the legacy era beside it."
+  },
+  {
+   "id": "S2",
+   "line": 90,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "A request missing a required key is rejected with `-32602`, and with HTTP 400 on HTTP ✅[7]",
+   "context": "A request missing a required key is rejected with `-32602`, and with HTTP 400 on HTTP ✅[7]."
+  },
+  {
+   "id": "S3",
+   "line": 96,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "On HTTP there is nothing to shut down: each request is its own POST ✅[13]",
+   "context": "- Shutdown on stdio: close the server's stdin, wait, then force-terminate if needed; servers should exit when stdin closes ✅[12]. On HTTP there is nothing to shut down: each request is its own POST ✅[13]."
+  },
+  {
+   "id": "S4",
+   "line": 120,
+   "heading": "## 1. Q1: Architecture and lifecycle",
+   "claim": "`notifications/tools/list_changed`, delivered on a GET stream or the open connection ✅[4][13]",
+   "context": "| 5. React to changes | `notifications/tools/list_changed`, delivered on a GET stream or the open connection ✅[4][13] | open `subscriptions/listen` with `toolsListChanged:true`; server acks with `notifications/subscriptions/acknowledged` ✅[14][15] |"
+  },
+  {
+   "id": "S5",
+   "line": 142,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "A missing resource is error `-32602` in 2026-07-28 (it was `-32002` before; clients should still accept `-32002`) ✅[17][3]",
+   "context": "- **Resource contents** are `text` or base64 `blob`. A missing resource is error `-32602` in 2026-07-28 (it was `-32002` before; clients should still accept `-32002`) ✅[17][3]."
+  },
+  {
+   "id": "S6",
+   "line": 160,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "The client gathers the input and retries the original request with a new `id`, `inputResponses` and the echoed `requestState` ✅[23]",
+   "context": "**How server-to-client requests work now: Multi Round-Trip Requests (MRTR).** In 2026-07-28 a server must not send its own JSON-RPC request to the client. Instead it answers a client request with `resultType: \"input_required\"`, an `inputRequests` map (each value an `elicitation/create`, `sampling/createMessage` or `roots/list` request) and optionally an opaque `requestState`. The client gathers the input and retries the original request with a new `id`, `inputResponses` and the echoed `requestState` ✅[23]. Only `tools/call`, `resources/read` and `prompts/get` may return `input_required` ✅[23]."
+  },
+  {
+   "id": "S7",
+   "line": 162,
+   "heading": "## 2. Q2: Primitives",
+   "claim": "Worked example (2026-07-28, from the spec): `tools/call` id 2 returns an `input_required` result asking for a GitHub username via form elicitation; the client retries `tools/call` as id 3 with `inputResponses: {\"github_login\":{\"action\":\"accept\",\"content\":{\"name\":\"octocat\"}}}` and the same `requestState` ✅[14][23]",
+   "context": "Worked example (2026-07-28, from the spec): `tools/call` id 2 returns an `input_required` result asking for a GitHub username via form elicitation; the client retries `tools/call` as id 3 with `inputResponses: {\"github_login\":{\"action\":\"accept\",\"content\":{\"name\":\"octocat\"}}}` and the same `requestState` ✅[14][23]."
+  },
+  {
+   "id": "S8",
+   "line": 190,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "optional `MCP-Session-Id`; 400 without it; 404 when ended; client `DELETE` to end ✅[4]",
+   "context": "| Sessions | optional `MCP-Session-Id`; 400 without it; 404 when ended; client `DELETE` to end ✅[4] | none; a server should ignore an incoming `Mcp-Session-Id` ✅[13] |"
+  },
+  {
+   "id": "S9",
+   "line": 233,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "keep old endpoints only for old clients, add Streamable HTTP ✅[13]",
+   "context": "| Existing HTTP+SSE server | keep old endpoints only for old clients, add Streamable HTTP ✅[13] | deprecated |"
+  },
+  {
+   "id": "S10",
+   "line": 234,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "`subscriptions/listen` (2026-07-28) or GET stream (legacy) ✅[15][4]",
+   "context": "| Need server push of tool-list changes | `subscriptions/listen` (2026-07-28) or GET stream (legacy) ✅[15][4] | |"
+  },
+  {
+   "id": "S11",
+   "line": 238,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "Alternative transports must follow established best practice for their protocol ✅[26]",
+   "context": "Scope. Authorization is optional. HTTP implementations should follow the spec; stdio implementations should not, and should read credentials from the environment ✅[26]. Alternative transports must follow established best practice for their protocol ✅[26]."
+  },
+  {
+   "id": "S12",
+   "line": 252,
+   "heading": "## 3. Q3: Transports and authorization",
+   "claim": "Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs ✅[26]",
+   "context": "9. Server must validate the token and that it was issued for this server as audience; invalid or expired gives `401`; insufficient scope gives `403` with `error=\"insufficient_scope\"` and a `scope` listing what the operation needs ✅[26]."
+  },
+  {
+   "id": "S13",
+   "line": 293,
+   "heading": "## 4. Q4: Security and trust",
+   "claim": "Resources ✅[17]",
+   "context": "Resources ✅[17]: servers must validate URIs and sanitize `file://` paths against traversal."
+  },
+  {
+   "id": "S14",
+   "line": 325,
+   "heading": "## 4. Q4: Security and trust",
+   "claim": "; SSRF through metadata URLs (clients should require HTTPS and block private ranges, and use an egress proxy on servers) ✅[30]",
+   "context": "Related attacks with required mitigations: mix-up (verify `iss`; PKCE alone does not stop it) ✅[30][26]; SSRF through metadata URLs (clients should require HTTPS and block private ranges, and use an egress proxy on servers) ✅[30]; localhost redirect impersonation (authorization servers must display the redirect host) ✅[29][30]; dangerous authorization URLs (`javascript:`, shell-opening must be rejected) ✅[30]; local-server one-click install (client must show the exact command and get approval) ✅[30]."
+  },
+  {
+   "id": "S15",
+   "line": 339,
+   "heading": "## 5. What the experiments showed that the spec text does not say",
+   "claim": "- v1 SDK has no `server/discover`; its `initialize` negotiated an unknown version down to 2025-11-25 (E2) ✅",
+   "context": "- v1 SDK has no `server/discover`; its `initialize` negotiated an unknown version down to 2025-11-25 (E2) ✅."
+  }
+ ]
+}

@@ -1,0 +1,286 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3.5,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "af565c2",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "—",
+      "note": "Envelope; its one claim summarizes §1, §2 and §5, so it is graded under the strictest of them, role 5 (ranks 1-4)."
+    },
+    {
+      "heading": "## 1. Mental model",
+      "role": 1
+    },
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "## 3. How it works",
+      "role": 3
+    },
+    {
+      "heading": "## 4. Worked examples",
+      "role": 4
+    },
+    {
+      "heading": "## 5. Reference & invariants",
+      "role": 5
+    },
+    {
+      "heading": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6
+    },
+    {
+      "heading": "## References",
+      "role": "—"
+    },
+    {
+      "heading": "## Related",
+      "role": "—"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^percona]",
+      "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+      "cache": "cache/a205f446fd68.txt",
+      "tier": "B",
+      "rank": 4,
+      "rank_basis": "tier B, rated by class: a company engineering blog post (Percona blog, 'Insight for DBAs', by Robert Bernier, April 13, 2022). Rules 1-3 do not fit: the input shows no evidence the author originated the concept, Percona is not the PostgreSQL project, and it is not a mailing-list post. The rank covers the article body only (lines 1-1035); lines from 1036 on are reader comments, Rank 6."
+    },
+    {
+      "ref": "[^percona-comments]",
+      "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/#comments",
+      "cache": "cache/a205f446fd68.txt",
+      "tier": "A",
+      "rank": 6,
+      "rank_basis": "tier A: reader comments (#comments); lines 1036 onward of the saved page, including the article author's own replies there."
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": true,
+    "rank_quarantine_intact": false,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 5,
+    "rank_compliance": 2,
+    "factual_grounding": 5,
+    "diataxis_rigor": 2
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 8,
+    "checked_roles_1_5": 8,
+    "claims_role_6": 1,
+    "checked_role_6": 1,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## Summary",
+      "role": 5,
+      "claim": "PostgreSQL forces a shutdown to protect the data when the number of unique transaction IDs reaches its maximum, and Percona's post gives queries that report how close each database is",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If the number of unique transaction IDs reaches the maximum transaction limit ... Postgres will force a shutdown in order to protect the data. ... Database query for transaction age per database",
+      "note": "Lines 396 and 455-460 of the article body. The per-database query returns the age and a percentage per database."
+    },
+    {
+      "id": "C2",
+      "section": "## 1. Mental model",
+      "role": 1,
+      "claim": "PostgreSQL tracks transactions with unique IDs, and the count approaches an upper limit that can be registered",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "PostgreSQL tracks transactions using unique IDs. Every so often, that number approaches the upper limit that can be registered.",
+      "note": "Line 396. A close paraphrase of the passage."
+    },
+    {
+      "id": "C3",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "The post's database-level query reports `age(datfrozenxid)` per database, and a column it names `% WRAPAROUND RISK`",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "datname, age(datfrozenxid), (age(datfrozenxid)::numeric / 1000000000 * 100)::numeric(4, 2) AS \"% WRAPAROUND RISK\" FROM pg_database",
+      "note": "Lines 456-460."
+    },
+    {
+      "id": "C4",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Its table-level query takes the greater of a table's `relfrozenxid` age and its TOAST table's",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "greatest(age(c.relfrozenxid), age(t.relfrozenxid)) AS \"TXID age\" ... LEFT JOIN pg_class t ON c.reltoastrelid = t.oid",
+      "note": "Lines 504-508. The join on reltoastrelid makes t the table's TOAST relation, so the query code says this."
+    },
+    {
+      "id": "C5",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "200 million transactions is the default threshold used by `autovacuum_freeze_max_age`",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "For example, 200 million transactions is the default threshold used by autovacuum_freeze_max_age.",
+      "note": "Line 396."
+    },
+    {
+      "id": "C6",
+      "section": "## 3. How it works",
+      "role": 3,
+      "claim": "VACUUM cannot operate on a TOAST table alone, so to vacuum a TOAST table you vacuum the table it belongs to",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Because vacuum cannot operate on TOAST tables alone, as they are not relations, one has no choice but to vacuum the table itself that the toast is related.",
+      "note": "The wording matches, but the only passage is at line 1112, in the author's reply below the comments line (1036). The article body (lines 1-1035) mentions TOAST only in the identifier reltoastrelid. So the claim rests on a Rank 6 source although it cites the Rank 4 [^percona]: a KB-15 CRITICAL_FAIL in role 3, recorded under violations. The reader in the same comments (lines 1084, 1130) says the opposite: a KB-17 conflict, also under violations."
+    },
+    {
+      "id": "C7",
+      "section": "## 4. Worked examples",
+      "role": 4,
+      "claim": "The post's sample log message for a database close to shutdown carries the hint \"To avoid a database shutdown, execute a database-wide VACUUM in \"mydb\".\"",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "HINT: To avoid a database shutdown, execute a database-wide VACUUM in \"mydb\".",
+      "note": "Lines 426-432, given as 'an example error message ... when threatened by shutdown due to wraparound'."
+    },
+    {
+      "id": "C8",
+      "section": "## 5. Reference & invariants",
+      "role": 5,
+      "claim": "2 billion transactions is the upper limit that PostgreSQL permits before forcing a shutdown",
+      "source": "[^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "2 billion transactions, or 231, is the upper limit that PostgreSQL permits before forcing a shutdown.",
+      "note": "Line 402 ('231' is 2^31 with the superscript lost in extraction)."
+    },
+    {
+      "id": "C9",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "role": 6,
+      "claim": "One reader in a wraparound situation listed the oldest tables and found they were all TOAST tables, and reported no problem vacuuming a TOAST table directly",
+      "source": "[^percona-comments]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "facing the wraparound situation and grabbed a list of oldest tables ... they were all TOAST tables. ... there didn’t seem to be any problem manually vacuuming the TOAST directly",
+      "note": "Line 1084, reader 'Eddie'. Sampled because it cites a Rank 6 source. The claim describes what the reader reported, and the page supports that report."
+    }
+  ],
+  "conflicts": [
+    {
+      "topic": "Whether VACUUM can run on a TOAST table on its own",
+      "winner": "none: both sides are Rank 6 reader comments ([^percona-comments]); no Rank 1 source is cached to settle it",
+      "loser": "author's reply, line 1112 (Rank 6: 'vacuum cannot operate on TOAST tables alone') vs reader Eddie, lines 1084 and 1130 (Rank 6: manual vacuum of the TOAST table worked; autovacuum processes TOAST tables independently)",
+      "where_loser_is": "## 3. How it works states the author's side as fact (cited as [^percona]); ## 6 gives the reader's side as a plain report with no ⚖️ open conflict mark and no link to §3",
+      "ok": false
+    },
+    {
+      "topic": "Scale of the % WRAPAROUND RISK column, inside [^percona]",
+      "winner": "n/a: one source disagrees with itself",
+      "loser": "n/a",
+      "where_loser_is": "not stated in the doc",
+      "ok": true,
+      "note": "The queries divide age by 1,000,000,000 (lines 459, 505), so 100% equals 1 billion. The post gives 2 billion as the limit (line 402) and calls the column a 'percentage of maximum permitted transactions' (line 455). The doc states neither the divisor nor what 100% means, so it breaks no rule. It is worth a role 6 caveat."
+    }
+  ],
+  "criteria_checks": [
+    {
+      "criterion": "Sections 2 and 5 must name the query column that reports wraparound risk.",
+      "met": false,
+      "evidence": "Section 2 (role 2) meets it: line 23 names `% WRAPAROUND RISK`. Section 5 (role 5) does not: its only text on this is 'The risk columns are defined in §2.' (line 35), and a pointer to another section does not count."
+    },
+    {
+      "criterion": "Sections 3 and 5 together must give both the 200 million default threshold and the 2 billion upper limit.",
+      "met": true,
+      "evidence": "This criterion says 'together', so the sections are read as a whole. Section 3 gives the 200 million default threshold (line 27) but not 2 billion. Section 5 gives the 2 billion upper limit (line 34) but not 200 million. Between them, both values are present."
+    }
+  ],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 3. How it works",
+      "rule": "KB-15",
+      "evidence": "Step 2 ('VACUUM cannot operate on a TOAST table alone ...') cites [^percona] (Rank 4), but its only supporting passage is at line 1112, below comments_from_line 1036: the author's reply in the reader comments. That makes it Rank 6. Role 3 allows ranks 1-4. The article body above line 1036 has no TOAST prose."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 3. How it works",
+      "rule": "KB-17",
+      "evidence": "Two Rank 6 comments disagree. The author (line 1112) says vacuum cannot operate on TOAST tables alone. Reader Eddie (lines 1084, 1130) vacuumed the TOAST table directly and says autovacuum processes TOAST tables independently. No Rank 1 source settles it, yet the doc states one side as fact in role 3, and §6 gives the other side with no ⚖️ open conflict mark."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## 5. Reference & invariants",
+      "rule": "criteria",
+      "evidence": "CAL-02 says Sections 2 and 5 must each name the risk column. §5 says only 'The risk columns are defined in §2.' (line 35) and never names `% WRAPAROUND RISK` itself."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 3. How it works",
+      "rule": "structure",
+      "evidence": "No mechanism or steps: it holds one default value, which is reference material, and one unvetted claim. It leaves out the post's own sequence ('Here is how it works:', lines 398-406: 2 billion limit, countdown warnings at 10 million, read-only at 1 million, then shutdown)."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 4. Worked examples",
+      "rule": "structure",
+      "evidence": "It quotes one log hint and nothing else: no input and output run, such as the risk query and the result it returns."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "rule": "structure",
+      "evidence": "One reader report, with no trade-off, decision table or failure mode. It does not record that the report contradicts §3."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## 3. How it works",
+      "action": "Delete step 2 ('VACUUM cannot operate on a TOAST table alone ...'). Its only support is the author's comment at line 1112, which is Rank 6. Replace it with the post's own sequence, cited [^percona]: '10 million transactions before the upper limit is reached, warning messages consisting of a countdown will be logged' (line 404) and '1 million transactions before the upper limit is reached, PostgreSQL goes into read-only mode' (line 406). Then the post forces a shutdown at the 2 billion limit (lines 396, 402)."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "action": "Turn the TOAST bullet into a '⚖️ open conflict' entry with each side's source and rank. Side A: the post's author, replying in the comments, says vacuum cannot operate on TOAST tables alone, so you vacuum the owning table ([^percona-comments], Rank 6, line 1112). Side B: a reader vacuumed the TOAST tables directly with no apparent problem and says autovacuum processes TOAST tables independently ([^percona-comments], Rank 6, lines 1084 and 1130). Leave it open until a Rank 1 source, such as the PostgreSQL routine-vacuuming docs the post lists in its References, is fetched and cited."
+    },
+    {
+      "section": "## 5. Reference & invariants",
+      "action": "Replace 'The risk columns are defined in §2.' with a bullet that names the column in §5's own text, for example: 'Both of the post's risk queries, per database and per table, report the risk in a column named `% WRAPAROUND RISK` ✅[^percona]' (lines 459, 505)."
+    },
+    {
+      "section": "## 4. Worked examples",
+      "action": "Add a real run with an input and an output. Either pair the post's database-level query (lines 455-460) with the log output it shows (lines 430-432), saying that the post gives no sample query output, or add a probe that runs the query against a pinned PostgreSQL image and quotes the result."
+    },
+    {
+      "section": "## 6. Trade-offs, pitfalls & misconceptions",
+      "action": "Add concrete pitfalls, ideally as a decision table. One candidate: the `% WRAPAROUND RISK` column divides age by 1,000,000,000 (lines 459, 505), so 100% equals 1 billion transactions, not the 2 billion limit the post gives (line 402), cited [^percona]."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 9,
+    "claims": 9,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

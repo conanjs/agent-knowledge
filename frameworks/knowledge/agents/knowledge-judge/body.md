@@ -83,6 +83,10 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
    - A probe backs claims in roles 3, 4 and 6 only. In roles 1, 2 and 5 a probe alone supports nothing.
    - Where a claim cites a page and a probe, the page must support what the page is cited for: a probe does not excuse a dropped condition or a raised modal.
 
+   Two search rules, before you decide:
+   - **Search every cited page.** A footnote can stand for several pages: `stage1.json` lists each page of each footnote. Before a claim gets `unsupported`, or your note says a name, number, version or date is missing or different, search all of the claim's cited pages for it, written as the claim writes it, and name in `page_says` the pages you searched.
+   - **Read past the first match.** A passage that seems to settle a claim can be narrowed or contradicted further down the same page, by an example, an exception or a note. Before `entails`, read every hit of your search on that page, not only the first.
+
    Three reading rules:
    - **A plain statement of behaviour is a requirement.** "A full disk stops all writes" or "the server returns X", written with no modal verb, says it always happens. If the page says SHOULD or MAY, the claim `overstates`. A modal verb at the start of a sentence or list item ("Clients must …; …; …") covers every clause after it.
    - **No pass with a caveat.** If your note has to name a gap (a word or qualifier the page lacks, a weaker modal, a page for another version), the verdict is not `entails`.
