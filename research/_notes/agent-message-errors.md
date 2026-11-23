@@ -11,7 +11,7 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 | An example in the reader's input is the answer to the test | E1, E6 | Take examples from topics no test covers; check every file an agent reads for test answers |
 | An agent that can read the repo finds test material by search | E4, E5 | Forbid the folders by name *and* give the agent what it was going to look for; audit its reads after each run |
 | A rule silent on a case is read as permission | E7, E11, E14, E22, E24, E25 | Name the case and what to do in it ("after a PASS, change nothing") |
-| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
+| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18, E27 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
 | A criterion that names several sections can be read as each or as all | E8 | Write "each of sections 2 and 3" or "sections 2 and 3 together" |
 | A message copied in place of the rule | E20 | State the rule; quote the message only as the message |
 | An instruction that assumes a state no one checked | E19, E23 | Check the state (what is unpushed, what the reader can know) before acting on the instruction |
@@ -174,3 +174,9 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Read as (by the sampler):** two claims; the judge marked both `not_checkable`.
 - **Expected:** a line that talks about the markers is not a claim.
 - **Fix (open):** skip a line whose ✅ is followed by a count or by "with a footnote", and any heading that starts with "Verification"; re-sample earlier inputs only if their samples held such lines (to check).
+
+### E27 A hyphenated footnote label, a second time (`referenceEntries`)
+- **Words:** `classify-source.mjs`'s `referenceEntries` matched labels with `\[\^(\w+)\]`, like the validator before E16's fix. SE-01's References use `[^pg-vac]`, `[^pg-glossary]` and others.
+- **Read as (by the tools):** those entries have no label, so `stage1.json` mapped no page to them, the quote check reported a real quote missing (`run-v3n5`, C8), and KB-14 and KB-15 could not see a hyphenated label's rank at all: a Rank 6 `[^x-y]` in a core section passed.
+- **Expected:** one label syntax across the tools.
+- **Fix:** labels may hold hyphens in `referenceEntries` too, with a KB-15 scenario for a hyphenated Rank 6 label; the knowledge base showed no new failure under it. Lesson (E16 again): when one parser of a shared format is fixed, search for the others.

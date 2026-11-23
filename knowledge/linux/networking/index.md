@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: subtopic
 topic: linux/networking
-last-updated: 2026-11-04
+last-updated: 2026-11-23
 ---
 
 # Networking
@@ -12,6 +12,7 @@ The path of a packet through the kernel (NAPI, RSS/RPS, routing, socket buffers)
 ## Docs
 | Doc | Type | Summary | Status |
 |---|---|---|---|
+| [epoll-edge-triggered-deep-dive.md](epoll-edge-triggered-deep-dive.md) | deep-dive | What `EPOLLET` makes epoll do, from a readiness change to `epoll_wait` returning: the `fs/eventpoll.c` path at v6.12, the caller's non-blocking and drain contract, how production loops use it, pitfalls and the conflicts between sources | verified |
 | [packet-path.md](packet-path.md) | concept | An incoming packet goes: NIC → ring buffer in RAM (DMA) → interrupt → **NAPI** poll in a software interrupt (softirq) → protocol layers (IP: netfilter hooks and a routing decision; then TCP/UDP) → the **socket's receive buffer** → the application's `recv()` | verified |
 | [netfilter-and-nat.md](netfilter-and-nat.md) | concept | Netfilter is a set of **hooks** inside the kernel's network path (prerouting, input, forward, output, postrouting) | verified |
 | [tcp-connection-lifecycle.md](tcp-connection-lifecycle.md) | concept | A TCP connection moves through the RFC 9293 states: three-way handshake (`SYN-SENT`/`SYN-RECEIVED` → `ESTABLISHED`), data, then a four-step close | verified |

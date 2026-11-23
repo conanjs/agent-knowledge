@@ -1,0 +1,145 @@
+[
+ {
+  "url": "https://www.postgresql.org/docs/19/routine-vacuuming.html",
+  "normalized": "https://www.postgresql.org/docs/19/routine-vacuuming.html",
+  "fetched_from": "https://www.postgresql.org/docs/19/routine-vacuuming.html",
+  "cache": "cache/a1c63f6fd4b0.txt",
+  "fetched": "2026-11-22T17:32:43Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 43862,
+  "sha256": "0135b8c33b2f2f4cea941c91865e93e528b6faf17d9756e90ab612dc36764f6c"
+ },
+ {
+  "url": "https://www.postgresql.org/docs/19/glossary.html",
+  "normalized": "https://www.postgresql.org/docs/19/glossary.html",
+  "fetched_from": "https://www.postgresql.org/docs/19/glossary.html",
+  "cache": "cache/27c43bfdc65d.txt",
+  "fetched": "2026-11-22T17:32:44Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 37060,
+  "sha256": "e63dfa804bc3e077d53dc807af8826848ea64c435668e5a139aea254cb27fe59"
+ },
+ {
+  "url": "https://www.postgresql.org/docs/19/runtime-config-vacuum.html",
+  "normalized": "https://www.postgresql.org/docs/19/runtime-config-vacuum.html",
+  "fetched_from": "https://www.postgresql.org/docs/19/runtime-config-vacuum.html",
+  "cache": "cache/5c27223996ca.txt",
+  "fetched": "2026-11-22T17:39:49Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 21179,
+  "sha256": "5033ae7221a100b3c6e4deae84499861a031285fab70c58df2735ded844faf19"
+ },
+ {
+  "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/include/utils/snapshot.h",
+  "normalized": "https://github.com/postgres/postgres/blob/REL_19_0/src/include/utils/snapshot.h",
+  "fetched_from": "https://raw.githubusercontent.com/postgres/postgres/REL_19_0/src/include/utils/snapshot.h",
+  "cache": "cache/ee30efaea37d.txt",
+  "fetched": "2026-11-22T17:34:16Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 7782,
+  "sha256": "b4c9413a287028a87d7c6f557c16ce002da227c4d5b9a80426a10ad2eda23ea7"
+ },
+ {
+  "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/heap/vacuumlazy.c",
+  "normalized": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/heap/vacuumlazy.c",
+  "fetched_from": "https://raw.githubusercontent.com/postgres/postgres/REL_19_0/src/backend/access/heap/vacuumlazy.c",
+  "cache": "cache/d4c2d1a71354.txt",
+  "fetched": "2026-11-22T17:34:17Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 133617,
+  "sha256": "e750f8adb57e479b348489a8cefff299bfbd5f8880fbd155ac55ec7d18d81817"
+ },
+ {
+  "url": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/transam/varsup.c",
+  "normalized": "https://github.com/postgres/postgres/blob/REL_19_0/src/backend/access/transam/varsup.c",
+  "fetched_from": "https://raw.githubusercontent.com/postgres/postgres/REL_19_0/src/backend/access/transam/varsup.c",
+  "cache": "cache/62bd535f9413.txt",
+  "fetched": "2026-11-22T17:39:49Z",
+  "status": 200,
+  "content_type": "text/plain",
+  "chars": 26192,
+  "sha256": "48f89b8db0bd2524fc37ec62266312139a710a38f7c4900a7111e88506e7be81"
+ },
+ {
+  "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Autovacuum.NeedVacuuming.html",
+  "normalized": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Autovacuum.NeedVacuuming.html",
+  "fetched_from": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Autovacuum.NeedVacuuming.html",
+  "cache": "cache/1a86813f6c34.txt",
+  "fetched": "2026-11-22T17:39:24Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 3446,
+  "sha256": "91322b4835ce4023edb7583ce6e132f16531c61c8920f693dbe507a03b18895d"
+ },
+ {
+  "url": "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+  "normalized": "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+  "fetched_from": "https://blog.sentry.io/transaction-id-wraparound-in-postgres",
+  "cache": "cache/b988e77d1505.txt",
+  "fetched": "2026-11-22T17:39:23Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 14482,
+  "sha256": "2996035f570d11ec2873ec1be50ca8062af37a7d9b2ed5bb4c1772e6491c750a"
+ },
+ {
+  "url": "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+  "normalized": "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+  "fetched_from": "https://www.crunchydata.com/blog/managing-transaction-id-wraparound-in-postgresql",
+  "cache": "cache/f113cf83d84a.txt",
+  "fetched": "2026-11-22T17:40:44Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 12880,
+  "sha256": "c2d9bf2ee3c6c236c9924884949b2db0d9ec81d02d2ba1b0948024e35d20e404"
+ },
+ {
+  "url": "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+  "normalized": "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+  "fetched_from": "https://pganalyze.com/docs/checks/vacuum/xmin_horizon",
+  "cache": "cache/dc191bb5de10.txt",
+  "fetched": "2026-11-22T17:40:26Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 7721,
+  "sha256": "b04b44b53d26a17ec0fe956d915428522448c33a15338fc34c3f9aad4afd94d5"
+ },
+ {
+  "url": "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+  "normalized": "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+  "fetched_from": "https://metronome.com/blog/root-cause-analysis-postgresql-multixact-member-exhaustion-incidents-may-2025",
+  "cache": "cache/8e4fad8d2a37.txt",
+  "fetched": "2026-11-22T17:40:19Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 25071,
+  "sha256": "48eaf434a706df93a247463f55ccb1052e09d910ffe414c955c3a3d39cf66693"
+ },
+ {
+  "url": "https://aws.amazon.com/blogs/database/multixacts-in-postgresql-usage-side-effects-and-monitoring",
+  "normalized": "https://aws.amazon.com/blogs/database/multixacts-in-postgresql-usage-side-effects-and-monitoring",
+  "fetched_from": "https://aws.amazon.com/blogs/database/multixacts-in-postgresql-usage-side-effects-and-monitoring",
+  "cache": "cache/4706e813af01.txt",
+  "fetched": "2026-11-22T17:40:49Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 33469,
+  "sha256": "87845398f969b22a086e0d9097b10350cc4fa2a902b8e279d2808a3d8b6796f2"
+ },
+ {
+  "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "normalized": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "fetched_from": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "cache": "cache/a205f446fd68.txt",
+  "fetched": "2026-11-22T17:40:48Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 20085,
+  "sha256": "c2da08e057db209731866626affcb6b34d965ece02e319a881183991d4462284"
+ }
+]

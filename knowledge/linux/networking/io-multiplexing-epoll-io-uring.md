@@ -5,7 +5,7 @@ topic: linux/networking
 status: verified
 applies-to: ["Linux ≥ 5.10 (epoll and io_uring)"]
 last-verified: 2026-11-04
-last-updated: 2026-11-04
+last-updated: 2026-11-23
 tags: [linux, epoll, io-uring, select, poll, non-blocking-io, event-loop, edge-triggered, c10k]
 ---
 
@@ -107,6 +107,7 @@ The edge-triggered trap in numbers: 64 KiB arrive on a socket, the handler reads
 - [epoll_ctl(2)](https://man7.org/linux/man-pages/man2/epoll_ctl.2.html) — Linux man-pages project, living. Backs: `ENOSPC` when `max_user_watches` is reached; `EPERM` when the file does not support epoll. [^5]
 
 ## Related
+- `linux/networking/epoll-edge-triggered-deep-dive.md` — `EPOLLET` end to end: the kernel path in `fs/eventpoll.c`, the caller's contract, how production loops drain and re-arm, pitfalls and source conflicts (deep dive).
 - `linux/networking/tcp-connection-lifecycle.md` — the sockets an event loop serves.
 - `concurrency/blocking-in-async-runtimes.md` — blocking work inside event loops, language side.
 - `linux/processes/ipc-pipes-sockets-shm.md` — pipes and UNIX sockets watched by the same loop.

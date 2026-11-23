@@ -44,3 +44,13 @@ Both docs judged by v8 (`d4787fb`) in neutral folders, built as for SE-02 and LS
 The comparison judges cost 230,494 (baseline) and 220,558 (agent) tokens; every quote either made was found. SE-01 in all: 2.02M, under the 2.1M V set.
 
 What SE-01 was run to check: the `## 5.` fix held (the rule is in §5, the baseline's is not); the explicit-refutation fix half held (an explicit entry exists, but without the lock, the harm the criterion names).
+
+## The knowledge copy (2026-11-23)
+
+`knowledge/performance/postgresql-mvcc-xid-wraparound-deep-dive.md` is this doc with four changes: the ACCESS EXCLUSIVE lock and the manual's "avoid VACUUM FULL" advice added to misconception 8 (§6.3), "concurrently" restored in the `xmax` row (§2), the Summary's status note removed, and the two points without a source moved out of §6.2 to here, per the orchestrator's E25 rule:
+- whether Sentry's 1GB `maintenance_work_mem` limit still applies in PostgreSQL 19 (no saved source states it);
+- whether the MultiXact member limit Metronome hit still exists in PostgreSQL 19, and which release added `pg_get_multixact_stats()`.
+
+The changed sections were judged again by v8 with `SCOPE` (`research/_calibration/run-v3n5`).
+
+Scoped v8 judge on the knowledge copy (`run-v3n5`, `SCOPE`: `## 2.`, `### 6.2`, `### 6.3`; 136,381 tokens): 25 of 25 claims checked, 23 `entails`, 2 `overstates` at `SOFT_WARN`, no `CRITICAL_FAIL` or `WARN`. Both new or changed claims (the lock in misconception 8, "concurrently" in §2) are `entails`. The two `SOFT_WARN`s are older claims, left as judged and open for a later patch: §6.2 item 2 says one Sentry autovacuum "failed" where Sentry wrote it "either failed or simply didn't work correctly"; §6.3 item 7 drops "long-running" from the AWS post's point about transactions. The copy is set to `verified` (2026-11-23). `run-v3n5`'s `stage1.json` was rebuilt after the judge ran, to fix its footnote labels (notes E27); only the `labels` fields differ from what the judge saw.

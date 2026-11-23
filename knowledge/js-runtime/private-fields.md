@@ -5,7 +5,7 @@ topic: js-runtime
 status: verified
 applies-to: ["ES2022+", "TypeScript ≥ 3.8", "V8 ≥ 9.7 (Node ≥ 18)"]
 last-verified: 2026-11-03
-last-updated: 2026-11-14
+last-updated: 2026-11-23
 tags: [private-fields, encapsulation, typescript, serialization, performance, v8]
 ---
 
@@ -36,7 +36,7 @@ JSON.stringify(new Hard()); // {"id":1}
 2. `#` fields stay private after compilation and have no bracket-notation escape hatch: they are "hard private". ✅[^1]
 3. When compiling to ES2021 or lower, TypeScript replaces `#` with `WeakMap`s. The handbook notes that these runtime privacy checks could affect performance. ✅[^1]
 4. Private elements are not properties. They cannot be enumerated, deleted, proxied, or reached through `Object` methods, and `structuredClone()` does not copy them. ✅[^2]
-5. Reading a `#` field from an object whose class did not declare it throws a `TypeError`. `#x in obj` checks for it without throwing. ✅[^2]
+5. Reading a `#` field from an object that does not have it throws a `TypeError`; `#x in obj` checks for it without throwing. The test is whether the object holds the field, not which class it came from: V8's message reads "from an object whose class did not declare it", yet a derived class whose base constructor returns another object installs ("stamps") its `#` fields on that object, even a plain `{}`. ✅[^2]
 6. V8 9.7 moved class-field initialization, including private fields, onto its inline-cache fast path. Before that it went through slower runtime calls. ✅[^3]
 
 **Where each form fits**
@@ -85,7 +85,7 @@ The speed difference is within run-to-run noise. A first attempt that ran both c
 
 ## References
 - [TypeScript Handbook: Classes, member visibility caveats](https://www.typescriptlang.org/docs/handbook/2/classes.html) — TypeScript team, living. Backs: How it works 1–3, Edge cases. [^1]
-- [Private elements](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements) — MDN, living. Backs: How it works 4–5, Edge cases. [^2]
+- [Private elements](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements) — MDN, living. Backs: How it works 4–5, Edge cases; How it works 5 re-checked 2026-11-23 against the saved page, its "Returning overriding object" example included. [^2]
 - [Faster initialization of instances with new class features](https://v8.dev/blog/faster-class-features) — V8 team, 2022. Backs: How it works 6. [^3]
 - [Modules: TypeScript](https://nodejs.org/api/typescript.html) — Node.js, living (read 2026-11-03). Backs: stability and version history of type stripping, unsupported syntax, removal of `--experimental-transform-types` in 26.0.0, tsconfig ignored, `.ts` extensions; the 24.22.1 behaviour re-tested the same day. [^4]
 

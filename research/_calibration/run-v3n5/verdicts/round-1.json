@@ -1,0 +1,342 @@
+{
+  "verdict": null,
+  "overall_score": null,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "d4787fb",
+    "scope": [
+      "## 2. Concept architecture",
+      "### 6.2 Pitfalls",
+      "### 6.3 Misconceptions"
+    ]
+  },
+  "section_map": [
+    {
+      "heading": "## 2. Concept architecture",
+      "role": 2
+    },
+    {
+      "heading": "### 6.2 Pitfalls",
+      "role": 6
+    },
+    {
+      "heading": "### 6.3 Misconceptions",
+      "role": 6
+    }
+  ],
+  "sources": [],
+  "deterministic_checks": {},
+  "rubric_scores": null,
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 6,
+    "checked_roles_1_5": 6,
+    "claims_role_6": 19,
+    "checked_role_6": 19,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "`xmin` is the row's insertion XID, visible as a system column; `xmax` is a field of the tuple header, where a multixact ID is stored whenever more than one transaction concurrently locks a row",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a row's insertion XID with FrozenTransactionId, which was visible in the row's xmin system column … only the multixact ID appears in the xmax field in the tuple header",
+      "note": "Lines 210 and 279 of the cached manual page; the multixact part matches the 'whenever there is more than one transaction concurrently locking a row' condition."
+    },
+    {
+      "id": "C2",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Transaction ID (XID) and epoch: the unique, sequentially assigned number a transaction receives when it first causes a database modification, only 32 bits wide on disk; a 32-bit epoch extends it, and in some contexts epoch and XID are considered together as a single 64-bit value",
+      "source": "[^pg-gloss]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "unique, sequentially-assigned identifier that each transaction receives when it first causes a database modification … epochs are used, also 32 bits wide … considered together as a single 64-bit value",
+      "note": "Glossary entry 'Transaction ID' also says 'When stored on disk, xids are only 32-bits wide'."
+    },
+    {
+      "id": "C3",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "MVCC snapshot: a `SnapshotData` structure; the same structure also represents special snapshots with non-MVCC semantics",
+      "source": "[^src-snap]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "We use SnapshotData structures to represent both \"regular\" (MVCC) snapshots and \"special\" snapshots that have non-MVCC semantics.",
+      "note": "snapshot.h at REL_19_0, comment above the snapshot type enum."
+    },
+    {
+      "id": "C4",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "Visibility map: two bits per page: all-visible (all tuples on the page are visible to all transactions) and all-frozen (all tuples on the page are marked frozen)",
+      "source": "[^pg-gloss]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The visibility map entry for each page stores two bits: the first one (all-visible) … The second one (all-frozen) indicates that all tuples in the page are marked frozen.",
+      "note": ""
+    },
+    {
+      "id": "C5",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "`pg_class.relfrozenxid` holds a table's oldest unfrozen XID left at the end of the last VACUUM that advanced it; `pg_database.datfrozenxid` is the minimum of those per-table values",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "contains the oldest remaining unfrozen XID at the end of the most recent VACUUM that successfully advanced relfrozenxid … it is just the minimum of the per-table relfrozenxid values",
+      "note": ""
+    },
+    {
+      "id": "C6",
+      "section": "## 2. Concept architecture",
+      "role": 2,
+      "claim": "A multixact ID encodes lock information when more than one transaction locks a row at once; `pg_class.relminmxid` stores the oldest multixact ID that may still appear in the table",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "multixact ID for short, whenever there is more than one transaction concurrently locking a row … pg_class.relminmxid stores the oldest possible multixact ID still appearing in any tuple of that table",
+      "note": ""
+    },
+    {
+      "id": "C7",
+      "section": "### 6.2 Pitfalls",
+      "role": 6,
+      "claim": "Lock conflicts starve autovacuum. A lock request that conflicts with a normal autovacuum's SHARE UPDATE EXCLUSIVE lock interrupts it, and regularly running such commands, ANALYZE for example, can effectively prevent autovacuums from ever completing",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a lock that conflicts with the SHARE UPDATE EXCLUSIVE lock held by autovacuum, lock acquisition will interrupt the autovacuum … (e.g., ANALYZE) can effectively prevent autovacuums from ever completing",
+      "note": "'normal' correctly carries the manual's exception for anti-wraparound autovacuums, which are not automatically interrupted."
+    },
+    {
+      "id": "C8",
+      "section": "### 6.2 Pitfalls",
+      "role": 6,
+      "claim": "Silent vacuums. Sentry could not tell why one autovacuum failed (§4.6); `VACUUM VERBOSE`, and autovacuum logging controlled by `log_autovacuum_min_duration`, report how `relfrozenxid` and `relminmxid` advanced and how many pages were newly frozen",
+      "source": "[^pg-vac] (Sentry part via the §4.6 cross-reference to [^sentry])",
+      "verdict": "overstates",
+      "severity": "SOFT_WARN",
+      "page_says": "Unfortunately one of them either failed or simply didn’t work correctly. It’s unclear as to what happened … how relfrozenxid and relminmxid advanced, and the number of newly frozen pages",
+      "note": "The VERBOSE and log_autovacuum_min_duration part is entailed by the manual. The Sentry part is not backed by the source at the mark ([^pg-vac] says nothing about Sentry); read through §4.6's [^sentry], it still presumes a failure, while Sentry says it could not tell whether the autovacuum failed or simply did not work, and that its logs showed nothing suggesting failure."
+    },
+    {
+      "id": "C9",
+      "section": "### 6.2 Pitfalls",
+      "role": 6,
+      "claim": "Memory that is never used. Sentry later found that `maintenance_work_mem` had a hard internal limit of 1GB for the relevant paths, so its much larger setting was not used",
+      "source": "[^sentry]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "maintenance_work_mem has a hard internal limit of 1GB for the relevant paths, and thus our 100GB of memory dedicated to it wasn’t even being used.",
+      "note": "From the post's later update; worded as Sentry's 2015 finding, not as a current rule."
+    },
+    {
+      "id": "C10",
+      "section": "### 6.2 Pitfalls",
+      "role": 6,
+      "claim": "A second MultiXact limit. Metronome, on Aurora PostgreSQL 13.18, describes a hard limit of approximately 4 billion members across all MultiXacts and says PostgreSQL exposes no metric for member space consumption",
+      "source": "[^metronome]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "This space has a hard limit of approximately 4 billion total members across all MultiXacts. … PostgreSQL does not expose metrics for member space consumption",
+      "note": "Version 13.18 on Aurora is stated on the page ('running version 13.18'). Records a disagreement with the PostgreSQL 19 manual (C11), kept in role 6 with attribution."
+    },
+    {
+      "id": "C11",
+      "section": "### 6.2 Pitfalls",
+      "role": 6,
+      "claim": "The PostgreSQL 19 manual instead describes a members storage that cannot wrap around but must be managed to keep disk usage under control",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a separate storage area which holds the list of members in each multixact, which cannot wrap around but must also be managed to keep disk usage under control",
+      "note": "The trailing clause about pg_get_multixact_stats() sits after the mark; the manual does document that function (line 287)."
+    },
+    {
+      "id": "C12",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"At wraparound PostgreSQL shuts down.\" Percona's 2022 post says the service is forced to shut down and quotes a hint reading \"To avoid a database shutdown\", and Crunchy Data's 2019 post says the database will be forced to shut down",
+      "source": "[^percona][^crunchy]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the PostgreSQL service is forced to shut down … HINT: To avoid a database shutdown … If exhaustion is ever reached, the database will be forced to shut down",
+      "note": "Dates match: Percona 'April 13, 2022', Crunchy Data 'Jan 31, 2019'. Disagreement claim, correctly attributed."
+    },
+    {
+      "id": "C13",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "That is wrong for PostgreSQL 19: the server refuses to assign new XIDs, while read-only transactions can still start and VACUUM can still be run (§3.4), and the `REL_19_0` hint reads \"To avoid transaction ID assignment failures\"",
+      "source": "[^pg-vac][^src-xid]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "the system will refuse to assign new XIDs … only read-only transactions can be started … The VACUUM command can still be run normally. | errhint(\"To avoid transaction ID assignment failures",
+      "note": "In varsup.c this hint belongs to the WARNING branch, the same message whose hint Percona quotes, so the comparison is like for like."
+    },
+    {
+      "id": "C14",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"Warnings start 10 million and writes stop 1 million before the limit.\" Percona gives a countdown from 10 million and read-only mode at 1 million, and Sentry says commands stop with fewer than one million left",
+      "source": "[^percona][^sentry]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "warning messages consisting of a countdown … 1 million transactions …, PostgreSQL goes into read-only mode. | stop accepting commands when there are fewer than one million transactions left",
+      "note": "Percona: '10 million transactions before the upper limit is reached, warning messages consisting of a countdown will be logged.' Sentry's sentence is in its 'Transaction ID Wraparound' section."
+    },
+    {
+      "id": "C15",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "In PostgreSQL 19 the warning starts 100,000,000 and the stop 3,000,000 transactions before `xidWrapLimit`",
+      "source": "[^src-xid]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "xidStopLimit = xidWrapLimit - 3000000; … xidWarnLimit = xidWrapLimit - 100000000;",
+      "note": "varsup.c at REL_19_0, the PostgreSQL 19 tag. The unmarked trailing clause ('neither post names the release') is consistent with the cached posts."
+    },
+    {
+      "id": "C16",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"Recover in single-user mode.\" Percona's recovery procedure is a cluster-wide VACUUM in single-user mode (`postgres --single`), and Sentry cites restarting in single-user mode as general advice",
+      "source": "[^percona][^sentry]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "performing a cluster-wide vacuum in single-user mode. | One piece of general advice is to stop the database and restart in single-user mode",
+      "note": "Percona's commands use 'postgres --single -D \"$PGDATA\"'."
+    },
+    {
+      "id": "C17",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "The PostgreSQL 19 manual says this was sometimes recommended in earlier releases and is not necessary or desirable now, since in the stopped state the VACUUM command can still be run normally (§5.3, rule 3)",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "contrary to what was sometimes recommended in earlier releases, it is not necessary or desirable to stop the postmaster or enter single user-mode in order to restore normal operation",
+      "note": "The preceding sentence on the page is 'The VACUUM command can still be run normally.', so the causal 'since' follows the manual's own sequence."
+    },
+    {
+      "id": "C18",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"Turning autovacuum off, or running it only at quiet times, is a safe way to save load.\" Sentry calls such advice awful, and Percona lists autovacuum turned off among the causes of wraparound",
+      "source": "[^sentry][^percona]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "The internet is full of awful advice from users suggesting you should turn off autovacuum, or run it manually at low traffic times | Autovacuum is turned off.",
+      "note": "Percona's line sits in its list of circumstances that can cause wraparound."
+    },
+    {
+      "id": "C19",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "Turning autovacuum off does not stop the anti-wraparound runs, because the system launches autovacuum processes to prevent wraparound even when autovacuum is otherwise disabled",
+      "source": "[^pg-conf]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Note that the system will launch autovacuum processes to prevent wraparound even when autovacuum is otherwise disabled.",
+      "note": "autovacuum_freeze_max_age entry of the PostgreSQL 19 configuration page."
+    },
+    {
+      "id": "C20",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"MultiXact IDs well under their threshold mean MultiXacts are safe.\" Metronome's metrics showed MultiXact ID use below 50% of the threshold, and emergency vacuums began at around 200 million MultiXact IDs although `autovacuum_multixact_freeze_max_age` was 400 million, because the separate member space limit was hit first",
+      "source": "[^metronome]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "hitting the separate MultiXact member space limit rather than the MultiXact ID threshold, explaining why emergency vacuums triggered at around 200M MultiXact IDs despite our threshold being set at 400M",
+      "note": "The page also gives 'less than 50% utilization' and 'autovacuum_multixact_freeze_max_age at 400 million'."
+    },
+    {
+      "id": "C21",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "Member entries are a second budget, separate from MXID age: once multixact member entries exceed approximately 2 billion, PostgreSQL 19 runs aggressive vacuum scans more often for all tables (§3.6), and `pg_get_multixact_stats()` reports the member count and size (§4.4)",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "if the number of multixact member entries created exceeds approximately 2 billion entries … aggressive vacuum scans will occur more often for all tables | num_mxids | num_members | members_size",
+      "note": ""
+    },
+    {
+      "id": "C22",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"A plain VACUUM cleans up finished MultiXacts.\" In the AWS Database Blog demo a standard VACUUM left the MultiXact in the row's `xmax`, because it only releases MultiXact IDs older than `vacuum_multixact_freeze_min_age`, and only VACUUM FREEZE cleared it",
+      "source": "[^aws-mxact]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "a standard VACUUM command will only release MultiXact IDs older than vacuum_multixact_freeze_min_age … the XMAX field will be cleared only after a VACUUM FREEZE cleanup is performed",
+      "note": "The demo output shows xmax 670526 after VACUUM and 0 after VACUUM FREEZE."
+    },
+    {
+      "id": "C23",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"Only transactions that write hold vacuum back.\" Read-only transactions do too: vacuum must retain the information they may need until they close, for both XIDs and MultiXacts",
+      "source": "[^aws-mxact]",
+      "verdict": "overstates",
+      "severity": "SOFT_WARN",
+      "page_says": "Long-running transactions affect vacuum operations in two ways: … For read-only transactions: Vacuum must retain its information until the transaction is closed. This retention requirement applies to both",
+      "note": "Dropped qualifier: the page states this for long-running read-only transactions (its section heading is 'Reduce long-running transactions'); the claim drops 'long-running', and 'the information they may need' is the doc's own gloss."
+    },
+    {
+      "id": "C24",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "\"VACUUM FULL is the strong fix.\" The standard VACUUM does not return space to the operating system, except when pages at the end of a table become entirely free and an exclusive table lock can be easily obtained, while VACUUM FULL rewrites the whole table, can take a long time and needs extra disk space for the new copy; in the stopped state it fails because it requires an XID, except in super-user mode, where it consumes one and increases the risk of wraparound (§5.3, rule 2)",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "it will not return the space to the operating system, except in the special case … requires an XID and will therefore fail, except in super-user mode",
+      "note": "Lines 154 and 269 of the cached manual page; 'can take a long time' and 'extra disk space for the new copy' are on line 154."
+    },
+    {
+      "id": "C25",
+      "section": "### 6.3 Misconceptions",
+      "role": 6,
+      "claim": "VACUUM FULL also requires an ACCESS EXCLUSIVE lock on the table it is working on, so it cannot run in parallel with other use of the table, and the manual's advice is to strive to use standard VACUUM and avoid VACUUM FULL",
+      "source": "[^pg-vac]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "requires an ACCESS EXCLUSIVE lock on the table it is working on, and therefore cannot be done in parallel … administrators should strive to use standard VACUUM and avoid VACUUM FULL",
+      "note": "Kept as advice ('strive'), matching the manual's 'should'. The unmarked last sentence of the bullet (a scheduled VACUUM FULL locks the table on every run) is the doc's own inference and was not graded."
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "SOFT_WARN",
+      "section": "### 6.2 Pitfalls",
+      "rule": "grounding",
+      "evidence": "C8: 'Sentry could not tell why one autovacuum failed' presumes a failure; Sentry says 'one of them either failed or simply didn’t work correctly. It’s unclear as to what happened', and the mark cites only [^pg-vac], which does not mention Sentry."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "### 6.3 Misconceptions",
+      "rule": "grounding",
+      "evidence": "C23: 'Read-only transactions do too' drops the page's 'long-running' scope ('Long-running transactions affect vacuum operations in two ways: … For read-only transactions')."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "### 6.2 Pitfalls",
+      "action": "Item 2: replace 'Sentry could not tell why one autovacuum failed (§4.6);' with 'Sentry could not tell whether one autovacuum failed or simply did nothing, since its logs showed no failure and it had no autovacuum verbosity (§4.6) ✅[^sentry];' so the Sentry clause cites the Sentry post ('one of them either failed or simply didn’t work correctly … we didn’t have verbosity for autovacuums'). Keep ✅[^pg-vac] on the VACUUM VERBOSE / log_autovacuum_min_duration clause."
+    },
+    {
+      "section": "### 6.3 Misconceptions",
+      "action": "Item 7: replace 'Read-only transactions do too: vacuum must retain the information they may need until they close' with 'Long-running read-only transactions do too: vacuum must retain its information until the transaction is closed', keeping 'for both XIDs and MultiXacts ✅[^aws-mxact]', per the AWS Database Blog's 'Reduce long-running transactions' section."
+    }
+  ]
+}
