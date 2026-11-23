@@ -14,6 +14,7 @@ Date: 2026-11-22. Design: `frameworks/knowledge/research-agent.design.md` §4.2 
 | v6 | `ef7dc5d` | Reads code probes (`probes/`, `harness.json`): verdicts `observed` and `invalid_probe` (`CRITICAL_FAIL`); a probe backs roles 3, 4 and 6 only; a probe-only claim is worded as an observation with its version |
 | v7 | `73b3759` | "Check every cited probe first, by reading its code": a probe that cannot fail or does not test the claim makes the claim `invalid_probe` whatever its role; a claim that needs a probe is `observed`, not `entails` |
 | v8 | `d4787fb` | KB-17's open conflicts are marked `⚖️ open conflict` (V, 2026-11-22), not `⚠️ unverified`: the judge checks each side against its own source instead of skipping it |
+| v9 | `450720c` | Reader comments: every line from the `READER COMMENTS BELOW` line on is Rank 6, whatever the page's rank, and a claim supported only there is held to Rank 6 (KB-15); a criterion that names several sections is met only when each one meets it, unless it says "together" |
 
 ## 2. Calibration docs
 
@@ -150,6 +151,24 @@ The four v6/v7 inputs, copied unchanged to new folders (`stage1.json` without th
 **Quote check:** 5 quotes were first reported missing (`run-a3m6` 1, `run-d1q4` 4). None was made up: the judge had appended notes in brackets (`[probe-02 stdout: false]`), quoted a probe's code, and listed search terms as `(Searched '…': not found)`. `evaluate-research.mjs quotes` now ends a part at any bracketed group, skips a "(Searched …)" note, takes `` `code` `` as a quote and checks it against the probe's file in `probes/`: 343 of 343 found over every verdict so far, the 338 found before unchanged.
 
 **Cost:** 500k tokens, about the v6 calibration's 490k.
+
+### 3.10 v9 recalibration (2026-11-23, tracker T-7)
+
+The four v8 inputs, copied unchanged, plus one new case for v9's two rules (`run-q2x8`: a small doc on the live Percona post, fetched with its comments marked from line 1036, with `criteria.json` and an answer key in `planted.md`):
+
+| Test (v9 run) | v8 result | v9 result | Tokens |
+|---|---|---|---|
+| Unchanged private-fields doc (`run-e7k3`) | FAIL 4.0: item 5's real defect (`CRITICAL_FAIL`), 2 `WARN`, 2 `SOFT_WARN` | FAIL 4.25: the same 2 `WARN` and 2 `SOFT_WARN`, **item 5 not found** | 109k |
+| 5 planted errors (`run-h4p9`) | 5/5 | 5/5, the same severities | 101k |
+| MCP sample (`run-j2m6`) | K1 `CRITICAL_FAIL`, K2 `WARN`; S4 `WARN` | K1 and K2 the same; **S4 `unsupported`, `CRITICAL_FAIL`**, on the ground that no cited page has `notifications/tools/list_changed` | 150k |
+| Probe case (`run-n8w1`) | probe-03 `invalid_probe` | the same | 111k |
+| New: comments and criteria (`run-q2x8`) | — | all 4 expected: the §3 claim resting on a reply below the comments line is a KB-15 `CRITICAL_FAIL`; the §6 claim cited through `#comments` passes; "Sections 2 and 5 must …" is not met (§5 only points to §2); "Sections 3 and 5 together …" is met. One more, right, finding: the two comments disagree, and the doc states both sides without `⚖️` | 88k |
+
+**The gate is met** (2/2 MCP errors, 5/5 planted, the rigged probe caught, no false alarm on the clean doc), and the two new rules work on their case. Two results differ from v8 in parts v9 did not change, which is run-to-run variance, not the new wording:
+- **A false `CRITICAL_FAIL`:** `notifications/tools/list_changed` is on two pages S4 cites (the security best-practices page of `[4]`, line 455; `[13]`, line 253); this judge searched others.
+- **A miss:** private-fields item 5 (a real defect, fixed in `knowledge/` on 2026-11-23) passed again, as under v6. v8 had read on to MDN's stamping example.
+
+Both are reading depth: the judge did not search every page, or every passage, before deciding. A rule for it waits for the next judge change (tracker), so as not to recalibrate twice. **Quote check:** 4 quotes first reported missing in `run-n8w1` were the judge's probe notes (`probe-02 stdout: false`) and a trailing "(…)" note; the tool now reads both: 415 of 415 found over every verdict. **Cost:** 559k tokens.
 
 ## 4. Findings for the design
 

@@ -1,0 +1,6 @@
+{
+ "id": "CAL-02",
+ "prompt": "Transaction ID wraparound warnings in PostgreSQL.",
+ "pass_criteria": "Sections 2 and 5 must name the query column that reports wraparound risk. Sections 3 and 5 together must give both the 200 million default threshold and the 2 billion upper limit.",
+ "source": "judge v9 calibration case, 2026-11-23"
+}

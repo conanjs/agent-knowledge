@@ -47,6 +47,9 @@ export function classify(url, rules) {
   let u;
   try { u = new URL(url); } catch { return null; }
   if (!/^https?:$/.test(u.protocol)) return null;
+  // A page's reader comments, cited as the page URL plus #comments (or #comment-<n>): Rank 6 whatever the article's rank,
+  // since fetch-source.mjs marks them in the saved text (research-agent design §2.1, decided by V 2026-11-23).
+  if (/^#comments?$|^#comment-\d+$/i.test(u.hash)) return { rank: 6, tier: 'A', rule: 'reader comments (#comments)' };
   const host = bareHost(u.hostname);
   const p = (u.pathname.endsWith('/') ? u.pathname : u.pathname + '/').toLowerCase();
   const fits = rules.filter((r) => (r.host.startsWith('*.') ? host.endsWith(r.host.slice(1)) : host === r.host) && r.re.test(p));

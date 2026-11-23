@@ -1,0 +1,363 @@
+{
+  "verdict": "FAIL",
+  "overall_score": 3,
+  "judge": {
+    "model": "claude-opus-5-5",
+    "prompt_sha": "450720c",
+    "scope": "all"
+  },
+  "section_map": [
+    {
+      "heading": "## Summary",
+      "role": "—",
+      "note": "Envelope summary; no ✅ claims. Its claims would take role 3 (strictest of How it works and Worked example)."
+    },
+    {
+      "heading": "## Problem",
+      "role": 1
+    },
+    {
+      "heading": "## Mental model",
+      "role": 1
+    },
+    {
+      "heading": "## How it works",
+      "role": 3,
+      "note": "Includes the bold-labelled table 'Where each form fits', which has no heading of its own and so takes role 3."
+    },
+    {
+      "heading": "## Worked example",
+      "role": 4
+    },
+    {
+      "heading": "## Edge cases",
+      "role": 6
+    },
+    {
+      "heading": "## Trade-offs",
+      "role": 6
+    },
+    {
+      "heading": "## Takeaways",
+      "role": "—",
+      "note": "Summary-like restatement of guidance (rule candidates); no ✅ claims."
+    },
+    {
+      "heading": "## Verification status",
+      "role": "—"
+    },
+    {
+      "heading": "## References",
+      "role": "—"
+    },
+    {
+      "heading": "## Related",
+      "role": "—"
+    }
+  ],
+  "sources": [
+    {
+      "ref": "[^1]",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html",
+      "cache": "cache/56877450f820.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: typescriptlang.org/docs/"
+    },
+    {
+      "ref": "[^2]",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements",
+      "cache": "cache/bef9a389da4e.txt",
+      "tier": "A",
+      "rank": 3,
+      "rank_basis": "tier A: developer.mozilla.org/en-US/docs/"
+    },
+    {
+      "ref": "[^3]",
+      "url": "https://v8.dev/blog/faster-class-features",
+      "cache": "cache/bfccfe616eb2.txt",
+      "tier": "A",
+      "rank": 4,
+      "rank_basis": "tier A: v8.dev/blog/"
+    },
+    {
+      "ref": "[^4]",
+      "url": "https://nodejs.org/api/typescript.html",
+      "cache": "cache/88356b0b53c0.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: nodejs.org/api/"
+    },
+    {
+      "ref": "[^5]",
+      "url": "https://github.com/microsoft/TypeScript/issues/36282",
+      "cache": "cache/206ad4d09891.txt",
+      "tier": "A",
+      "rank": 6,
+      "rank_basis": "tier A: github.com/*/*/issues/"
+    },
+    {
+      "ref": "[^6]",
+      "url": "https://github.com/tc39/proposal-class-fields",
+      "cache": "cache/75a7a16ac9d9.txt",
+      "tier": "A",
+      "rank": 1,
+      "rank_basis": "tier A: github.com/tc39/"
+    }
+  ],
+  "deterministic_checks": {
+    "checked_by": "judge",
+    "sections_present": true,
+    "zero_orphan_citations": false,
+    "rank_quarantine_intact": false,
+    "core_claims_cited": true
+  },
+  "rubric_scores": {
+    "citation_integrity": 4,
+    "rank_compliance": 3,
+    "factual_grounding": 2,
+    "diataxis_rigor": 3
+  },
+  "coverage": {
+    "sampled": false,
+    "claims_roles_1_5": 7,
+    "checked_roles_1_5": 7,
+    "claims_role_6": 4,
+    "checked_role_6": 4,
+    "no_cache": 0,
+    "not_checkable": 0
+  },
+  "claim_checks": [
+    {
+      "id": "C1",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`private` and `protected` are enforced only during type checking. Runtime lookups, and bracket notation even during type checking, still reach the member: it is \"soft private\".",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "severity": "WARN",
+      "page_says": "private and protected are only enforced during type checking. ... private also allows access using bracket notation during type checking ... these fields are soft private",
+      "note": "Runtime access is stated for both private and protected, but the handbook gives the bracket-notation escape hatch and the 'soft private' label to `private` only. The claim widens both to `protected` (wider scope)."
+    },
+    {
+      "id": "C2",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "`#` fields stay private after compilation and have no bracket-notation escape hatch: they are \"hard private\".",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "JavaScript’s private fields (#) remain private after compilation and do not provide the previously mentioned escape hatches like bracket notation access, making them hard private.",
+      "note": ""
+    },
+    {
+      "id": "C3",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "When compiling to ES2021 or lower, TypeScript replaces `#` with `WeakMap`s. The handbook notes that these runtime privacy checks will degrade performance.",
+      "source": "[^1]",
+      "verdict": "overstates",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #. ... Note that these added privacy checks during runtime could affect performance.",
+      "note": "The first sentence is entailed. The second raises the handbook's 'could affect' to 'will degrade' (modal raised to MUST level). It also narrows the referent: the handbook's note is about hard runtime privacy mechanisms in general (closures, WeakMaps, private fields), not only the WeakMap downlevel."
+    },
+    {
+      "id": "C4",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Private elements are not properties. They cannot be enumerated, deleted, proxied, or reached through `Object` methods, and `structuredClone()` copies them like public fields.",
+      "source": "[^2]",
+      "verdict": "contradicted",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "they cannot be proxied, enumerated, deleted, or interacted with using any Object method. ... For this reason, structuredClone() does not clone private elements",
+      "note": "The first part is entailed. The structuredClone part inverts the page: MDN says structuredClone() does not clone private elements."
+    },
+    {
+      "id": "C5",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "Reading a `#` field from an object whose class did not declare it throws a `TypeError`. `#x in obj` checks for it without throwing.",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "If you access a private element from an object that doesn't have the element, a TypeError is thrown ... You can use the in operator to check",
+      "note": "The claim's wording matches the error the page prints for C.getX({}): 'Cannot read private member #x from an object whose class did not declare it'. The in operator returns true or false."
+    },
+    {
+      "id": "C6",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "V8 9.4 moved class-field initialization, including private fields, onto its inline-cache fast path. Before that it went through slower runtime calls.",
+      "source": "[^3]",
+      "verdict": "contradicted",
+      "severity": "CRITICAL_FAIL",
+      "page_says": "The first issue has been fixed in V8 v9.7 ... Before v9.7, V8 always used a costly runtime call for class field initializations.",
+      "note": "The page gives V8 v9.7, not 9.4 (wrong version number). The claim also drops the page's condition that the new IC is used only 'when V8 considers the pattern of the initialization to be predictable enough'. The doc's own front matter says V8 ≥ 9.7."
+    },
+    {
+      "id": "C7",
+      "section": "## How it works",
+      "role": 3,
+      "claim": "A `#` name cannot be a parameter property (row: injected collaborator → `private readonly x` constructor parameter).",
+      "source": "[^5]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "Allow `#`-private names in parameter property positions ... That this is not possible is a bit surprising",
+      "note": "The text supports it, but [^5] is a rank 6 issue cited in a role 3 section: a KB-15 breach, recorded separately in violations."
+    },
+    {
+      "id": "C8",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Private elements cannot be proxied (row: object wrapped in a Proxy → `#` access does not go through the proxy).",
+      "source": "[^2]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "While private elements are accessed with the familiar dot notation, they cannot be proxied, enumerated, deleted, or interacted with using any Object method.",
+      "note": ""
+    },
+    {
+      "id": "C9",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "TypeScript downlevels it (row: target ES2021 or lower → `#` becomes `WeakMap` lookups).",
+      "source": "[^1]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "When compiling to ES2021 or less, TypeScript will use WeakMaps in place of #.",
+      "note": ""
+    },
+    {
+      "id": "C10",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Working around it with `--experimental-transform-types`: runs on Node 24.22 with an `ExperimentalWarning` (re-tested 2026-11-03); the flag is removed in Node 26.0.0. So code meant to run unbuilt keeps injected collaborators as `readonly #field`s assigned in the constructor.",
+      "source": "[^4]",
+      "verdict": "unsupported",
+      "severity": "SOFT_WARN",
+      "page_says": "v26.0.0 | Removed --experimental-transform-types flag.",
+      "note": "The removal in 26.0.0 is entailed. The page (v26.13.1 docs) says nothing about an ExperimentalWarning on Node 24.22. That rests on a local re-test with no probe. The recommendation in the ✅ cell is the author's inference, not something the page says."
+    },
+    {
+      "id": "C11",
+      "section": "## Edge cases",
+      "role": 6,
+      "claim": "Node only deletes types (row: type stripping stable (stability 2) since Node 24.12.0 and 25.2.0; no warning since 24.3.0; Node ignores tsconfig.json and needs .ts extensions in relative imports).",
+      "source": "[^4]",
+      "verdict": "entails",
+      "severity": "none",
+      "page_says": "v25.2.0, v24.12.0 | Type stripping is now stable. ... v24.3.0, v22.18.0 | Type stripping no longer emits an experimental warning. ... Node.js ignores tsconfig.json files",
+      "note": "The page also shows 'Stability: 2 - Stable', mandatory extensions ('import './file.ts', not import './file'') and 'Node.js is only removing inline types'."
+    }
+  ],
+  "conflicts": [],
+  "criteria_checks": [],
+  "violations": [
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C3, item 3: 'will degrade performance' where [^1] says 'could affect performance' (modal raised to MUST level)."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C4, item 4: 'structuredClone() copies them like public fields' where [^2] says 'structuredClone() does not clone private elements' (inverted)."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C6, item 6: 'V8 9.4' where [^3] says the fix shipped in 'V8 v9.7' (wrong version)."
+    },
+    {
+      "severity": "CRITICAL_FAIL",
+      "section": "## How it works",
+      "rule": "KB-15",
+      "evidence": "The 'Where each form fits' table cites [^5] (github.com issue, rank 6) for 'A # name cannot be a parameter property' in a role 3 section, which allows ranks 1–4 only."
+    },
+    {
+      "severity": "WARN",
+      "section": "## How it works",
+      "rule": "grounding",
+      "evidence": "C1, item 1: the bracket-notation escape hatch and 'soft private' are given to private and protected, but [^1] gives them to `private` only (wider scope)."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Edge cases",
+      "rule": "grounding",
+      "evidence": "C10: the 'Runs on Node 24.22 with an ExperimentalWarning' observation and the recommendation are not in [^4]; only the 26.0.0 removal is."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## References",
+      "rule": "KB-16",
+      "evidence": "[^6] (TC39 class fields proposal) is never cited in the body, although its entry says 'Backs: How it works 2'."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Worked example",
+      "rule": "structure",
+      "evidence": "The section gives a results table but not the benchmark code (no inputs), cites no probe or local artifact, and its measured claims carry neither ✅ nor ⚠️. The Summary ('costs the same as public fields') and Takeaways ('measured cost is nil') restate the measurement as a general rule. The Edge cases row on ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX ('Reproduced on Node 24.22') is also unmarked and has no probe."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## How it works",
+      "rule": "structure",
+      "evidence": "A mechanism section also holds a guidance or decision table ('Where each form fits'). The doc has no role 2 (concept architecture) or role 5 (reference) section."
+    },
+    {
+      "severity": "SOFT_WARN",
+      "section": "## Verification status",
+      "rule": "structure",
+      "evidence": "It says 'Verified: 10 claims (✅)', but the body has 11 ✅ marks (How it works 1–6, one table row, four Edge cases rows), and it says 0 unverified while several measured claims are unmarked."
+    }
+  ],
+  "patch_instructions": [
+    {
+      "section": "## How it works",
+      "action": "Item 3: replace 'The handbook notes that these runtime privacy checks will degrade performance.' with 'The handbook notes that added runtime privacy checks (closures, WeakMaps or private fields) could affect performance.' ✅[^1] (handbook: 'Note that these added privacy checks during runtime could affect performance.')"
+    },
+    {
+      "section": "## How it works",
+      "action": "Item 4: replace 'and `structuredClone()` copies them like public fields' with 'and `structuredClone()` does not clone them; `Object.freeze()` and `Object.seal()` have no effect on them' ✅[^2] (MDN: 'structuredClone() does not clone private elements')."
+    },
+    {
+      "section": "## How it works",
+      "action": "Item 6: change 'V8 9.4' to 'V8 v9.7', and add the condition 'when V8 considers the initialization pattern predictable enough' ✅[^3] (V8 blog: 'Before v9.7, V8 always used a costly runtime call ... With v9.7, when V8 considers the pattern ... predictable enough, it uses a new IC')."
+    },
+    {
+      "section": "## How it works",
+      "action": "Item 1: split it into 'Runtime lookups still reach `private` and `protected` members' and '`private` also allows bracket-notation access during type checking, so `private` fields are \"soft private\"' ✅[^1]."
+    },
+    {
+      "section": "## How it works",
+      "action": "'Where each form fits', injected-collaborator row: replace [^5] (rank 6) with a rank 1–4 source, for example [^1]'s Parameter Properties section ('created by prefixing a constructor argument with one of the visibility modifiers public, private, protected, or readonly'). Or move the table to ## Trade-offs (role 6), where [^5] may stay with its rank stated."
+    },
+    {
+      "section": "## References",
+      "action": "Cite [^6] in How it works item 2 (TC39: 'It's impossible to access the private field from outside of the class'), or remove the [^6] entry."
+    },
+    {
+      "section": "## Edge cases",
+      "action": "'--experimental-transform-types' row: keep ✅[^4] only on 'the flag is removed in Node 26.0.0'. Back 'Runs on Node 24.22 with an ExperimentalWarning' with a probe, or mark it ⚠️. State the readonly #field recommendation as the doc's own advice, not as backed by [^4]."
+    },
+    {
+      "section": "## Worked example",
+      "action": "Add the benchmark code (inputs) and a probe or local artifact for the timings. Word the result as an observation ('On Node 24.22 (V8 13.6), target ES2023, ...'), and reword ## Summary ('costs the same') and ## Takeaways ('measured cost is nil') to that observation with its version, or mark them ⚠️."
+    },
+    {
+      "section": "## Verification status",
+      "action": "Recount the ✅ and ⚠️ marks after the fixes above (the body now has 11 ✅), and count the unmarked measured claims as unverified."
+    }
+  ],
+  "final": {
+    "verdict": "FAIL",
+    "checkable": 11,
+    "claims": 11,
+    "share": 1,
+    "threshold": 0.7,
+    "by": "evaluate-research.mjs verdict"
+  }
+}

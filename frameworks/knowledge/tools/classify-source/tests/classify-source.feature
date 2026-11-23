@@ -129,3 +129,17 @@ Feature: Source rank classifier
       """
       rules file {root}/rules.json, rule 2: www.example.org /A/ is listed twice
       """
+
+  Scenario: A page's reader comments, cited as the page URL plus #comments, are Rank 6 whatever the page's rule gives
+    When the tool runs with arguments:
+      """
+      https://www.rfc-editor.org/rfc/rfc9113#comments
+      https://www.rfc-editor.org/rfc/rfc9113#comment-12
+      https://www.rfc-editor.org/rfc/rfc9113#section-5
+      """
+    Then it exits with 0 and prints:
+      """
+      Rank 6 | tier A | reader comments (#comments) | https://www.rfc-editor.org/rfc/rfc9113#comments
+      Rank 6 | tier A | reader comments (#comments) | https://www.rfc-editor.org/rfc/rfc9113#comment-12
+      Rank 1 | tier A | rfc-editor.org/rfc/ | https://www.rfc-editor.org/rfc/rfc9113#section-5
+      """

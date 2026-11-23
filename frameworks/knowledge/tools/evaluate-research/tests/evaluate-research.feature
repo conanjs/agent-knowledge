@@ -56,7 +56,7 @@ Feature: Research verifier, Stage 1 helpers
       """
     Then it exits with 0 and prints:
       """
-      quotes: 4 found, 0 missing, in 3 claim(s) with a verdict other than entails
+      quotes: 6 found, 0 missing, in 4 claim(s) with a verdict other than entails
       """
 
   Scenario: stage1 builds the judge's input folder with each source's tier and only the pages that were saved
@@ -90,6 +90,7 @@ Feature: Research verifier, Stage 1 helpers
     And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'cites [^b], a Rank 6 source; this section allows Rank 1–5'
     And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing 'error | pitfall | F1 | quote not in cache/19b1c63f6292.txt'
     And the file "ledger-run/verdicts/round-1.input/stage1.json" has no line containing 'TI-7'
+    And the file "ledger-run/verdicts/round-1.input/stage1.json" has a line containing '"comments_from_line": null'
 
   Scenario: stage1 counts the validator's warnings for a doc that passes
     Given in "ledger-run/doc.md", `stream. ✅[^a] A server that stops early resets the stream. ✅[^b]` becomes `stream. ✅[^a]`

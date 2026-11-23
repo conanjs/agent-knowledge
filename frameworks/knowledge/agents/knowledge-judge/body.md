@@ -30,6 +30,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
 
 2. **Rank every external source**, 1 to 6, by who published it (provenance), not by how well it is written.
    - **Tier A** (in `stage1.json` with a rank): take that rank as given, and write `tier A: <rule>` as its `rank_basis`. Do not re-rate it.
+   - **Reader comments.** In a saved page, every line from the line `=== READER COMMENTS BELOW (Rank 6: unvetted) ===` on is a reader comment (`stage1.json` gives that line as the source's `comments_from_line`). Comments are Rank 6, whatever rank the page's article has, tier A or tier B. A claim whose supporting passage lies only below that line rests on a Rank 6 source, whichever footnote it cites: in a role that bars Rank 6 that is a KB-15 `CRITICAL_FAIL`. A doc cites comments through their own References entry, the page URL plus `#comments`, which `stage1.json` ranks 6.
    - **Tier B** (no rule, or missing from `stage1.json`): rate it yourself. Apply these in order; the first one that fits decides:
      1. **Originator.** The author coined or first published the concept or method the claim is about, for example the person who named a design pattern, writing about that pattern. The evidence must be in the input: the page itself, or another saved page in `cache/`, says so. Then the source is Rank 1 for claims about that concept only: write the concept in `rank_scope`.
      2. **The project's own home.** The page is the project's own repository, docs or release notes, and the claim is about that project. Rank 1 for claims about that project: write the project in `rank_scope`.
@@ -93,7 +94,7 @@ Read cache files by searching them (for example `grep -n -i '<distinctive words>
 
 7. **Check structure** (Diátaxis): each section does its role's job. Role 4 holds real runs with inputs and outputs, not restated definitions. Role 6 holds concrete trade-offs or failure modes, ideally as a decision table. Role 2 holds no mechanism text. Filler or repetition lowers the score.
 
-8. **Check `criteria.json`**, when present. Each pass criterion names sections by number: map those numbers to roles through `section_map`. An unmet criterion is a `CRITICAL_FAIL`. The `conflict_trap_claim` must not be stated as true in roles 1–5, and should be refuted in role 6. Record each check in `criteria_checks`.
+8. **Check `criteria.json`**, when present. Each pass criterion names sections by number: map those numbers to roles through `section_map`. A criterion that names several sections ("Sections 2 and 4 must …") is met only when each named section meets it in its own text; a pointer to another section does not count. Read the sections as a whole only when the criterion says so ("together", "between them"), and record each section's result in `criteria_checks`. An unmet criterion is a `CRITICAL_FAIL`. The `conflict_trap_claim` must not be stated as true in roles 1–5, and should be refuted in role 6. Record each check in `criteria_checks`.
 
 9. **Score and decide.** Score each dimension from 1 to 5 with these anchors:
 
