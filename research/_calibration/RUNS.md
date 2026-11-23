@@ -39,3 +39,8 @@ Contaminated baselines (writers read the design doc): the first LS-03 and SE-02 
 | run-p8x3 | SE-01 baseline (written 2026-11-23 by the Phase 0 rerun prompt; pages saved after by `fetch-source.mjs`), built like run-g5r8 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-r6k1 | SE-01 by the research agent (Phase 4, `research/_phase4/se01-e2e`), built like run-m2v6 | v8 `d4787fb`, `knowledge-judge` agent |
 | run-v3n5 | SE-01's knowledge copy (`knowledge/performance/postgresql-mvcc-xid-wraparound-deep-dive.md`, tracker T-6), judged with `SCOPE` `## 2.`, `### 6.2`, `### 6.3` after its edits; `stage1.json` rebuilt after the run for the label fix (E27) | v8 `d4787fb`, `knowledge-judge` agent |
+| run-e7k3 | private-fields-clean, the same input as run-a3m6 | v9 `450720c`, `knowledge-judge` agent |
+| run-h4p9 | private-fields-planted, the same input as run-b8t2 | v9 `450720c`, `knowledge-judge` agent |
+| run-j2m6 | mcp-known-errors, the same 15-claim sample as run-c5w9 | v9 `450720c`, `knowledge-judge` agent |
+| run-n8w1 | the probe case, the same input as run-d1q4 | v9 `450720c`, `knowledge-judge` agent |
+| run-q2x8 | new: a doc on the live Percona post with its comments marked (from line 1036), `criteria.json` with a two-section and a "together" criterion; key in `planted.md` | v9 `450720c`, `knowledge-judge` agent |

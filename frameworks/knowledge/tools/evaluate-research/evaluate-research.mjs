@@ -14,7 +14,8 @@
 //           name each page before its "quoted" text, and then only the quoted text is checked. A footnote's pages come from
 //           stage1.json when the input folder has it, plus the verdict's own sources; a quote of a cited probe's output
 //           is checked against that probe's stdout in harness.json and its code in probes/; a [bracketed] note and a
-//           "(Searched …)" note are the judge's own words, not quotes
+//           "(Searched …)" note are the judge's own words, not quotes; so are a probe note ("probe-02 stdout: …", of which only
+//           the stdout part is checked) and a trailing "(…)" note
 //   verdict the final verdict (design §3.4, decided by V 2026-11-22): the judge's FAIL stays FAIL; its PASS stays PASS only
 //           when at least 70% of the judged claims are checkable (a verdict other than not_checkable and no_cache), and
 //           becomes INCONCLUSIVE otherwise. --write adds it to the verdict file as "final"
@@ -128,9 +129,18 @@ function quotes(verdictPath, inputDir) {
     const parts = quoted.length ? quoted : [q.replace(/^[\w .-]{1,40}:\s+/, '')];
     // Any [bracketed] group ends a part: a footnote label, or the judge's own note such as "[probe-02 stdout: false]".
     for (const seg of parts.flatMap((x) => x.split(/\s*(?:…|\.\.\.|\[[^\]]*\]|\s\|\s|\s\/\s)\s*/))) {
-      const s = norm(seg.replace(/^["'`\s]+|["'`\s]+$/g, ''));
+      let raw = seg.replace(/^["'`\s]+|["'`\s]+$/g, '');
+      // A note on a probe ("probe-02 stdout: false", "stdout: …", "exit 0, …"): only its stdout part is a quote.
+      if (/^(?:probe-\d+\b[^:]*:|stdout:|stderr:|exit\b)/i.test(raw)) {
+        const so = raw.match(/stdout:\s*(.+)$/i)?.[1];
+        if (!so) continue;
+        raw = so;
+      }
+      const s = norm(raw);
       if (s.length < 12) continue;
-      if (where.some((t) => t && t.includes(s))) found++;
+      const on = (x) => where.some((t) => t && t.includes(x));
+      // A trailing "(…)" may be the judge's own note: the quote counts as found when the text before it is on the page.
+      if (on(s) || on(norm(raw.replace(/\s*\([^()]*\)\s*\.?\s*$/, '')))) found++;
       else { missing++; out(`missing | ${c.id ?? '?'} | ${s.slice(0, 80)}`); }
     }
   }
@@ -294,8 +304,9 @@ function stage1(args) {
     for (const url of e.urls) {
       const c = classify(url, rules);
       if (!c) continue;
+      const entry = byUrl.get(url.split('#')[0]);
       sources.push({ labels: e.refs, url, tier: c.tier, rank: c.rank, rule: c.rule,
-        written_rank: e.rank, cache: byUrl.get(url.split('#')[0])?.cache ?? null });
+        written_rank: e.rank, cache: entry?.cache ?? null, comments_from_line: entry?.comments_from_line ?? null });
     }
   }
   const tierB = sources.filter((s) => s.tier === 'B').map((s) => s.url);
@@ -310,7 +321,7 @@ function stage1(args) {
   }
   fs.writeFileSync(path.join(dst, 'stage1.json'), JSON.stringify({
     stage: 1, doc: 'doc.md', rules: 'frameworks/knowledge/tools/classify-source/source-ranks.json',
-    note: 'Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.',
+    note: 'Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one. In a saved page, the lines from comments_from_line on (under "=== READER COMMENTS BELOW (Rank 6: unvetted) ===") are reader comments: Rank 6 whatever the page\'s rank.',
     sources, tier_b: tierB, validator, ...(ledgerCheck ? { ledger: ledgerCheck } : {}),
   }, null, 1) + '\n');
   const codes = [...new Set((validator.fails ?? []).map((f) => f.code))];

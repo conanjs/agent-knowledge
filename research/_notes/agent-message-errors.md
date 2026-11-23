@@ -10,8 +10,9 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 |---|---|---|
 | An example in the reader's input is the answer to the test | E1, E6 | Take examples from topics no test covers; check every file an agent reads for test answers |
 | An agent that can read the repo finds test material by search | E4, E5 | Forbid the folders by name *and* give the agent what it was going to look for; audit its reads after each run |
-| A rule silent on a case is read as permission | E7, E11, E14, E22, E24, E25 | Name the case and what to do in it ("after a PASS, change nothing") |
-| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18, E27 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
+| A rule silent on a case is read as permission | E7, E11, E14, E22, E24, E25 |
+| A judge that decides before it has searched every cited page | E28 | Ask for the search in the rule, and treat a lone "absent" finding as a lead, not a verdict | Name the case and what to do in it ("after a PASS, change nothing") |
+| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18, E27, E29 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
 | A criterion that names several sections can be read as each or as all | E8 | Write "each of sections 2 and 3" or "sections 2 and 3 together" |
 | A message copied in place of the rule | E20 | State the rule; quote the message only as the message |
 | An instruction that assumes a state no one checked | E19, E23 | Check the state (what is unpushed, what the reader can know) before acting on the instruction |
@@ -65,7 +66,7 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Words:** SE-02's `criteria.json`: "Sections 2 and 3 must differentiate Application-layer vs Transport-layer HoL blocking". The agent's judge (`run-m2v6`): "I read "Sections 2 and 3" as each section, not the two taken together. If the caller means them together, the doc passes." The baseline's judge (`run-g5r8`): "Role 2 … gives HTTP-message ordering its own row … Role 3 … shows HTTP/2 frames already interleaved while TCP holds the 7 later packets" — met.
 - **Read as:** one judge required each section to cover both layers; the other took the two sections together.
 - **Expected:** V's reading: "Judge chấm Baseline hiểu gộp cả hai mục (Mục 2 nói tầng ứng dụng + Mục 3 nói tầng giao vận = Đạt), còn Judge chấm Agent lại hiểu khắt khe là từng mục riêng lẻ đều phải phân tích cả hai tầng, nên đánh trượt Mục 3 vì mục này chỉ tập trung giải thích tầng giao vận QUIC. Đây là dao động diễn giải tự nhiên của tiêu chí đề bài, không phải lỗi của hệ thống."
-- **Fix (open):** write multi-section criteria as "each of …" or "… together"; or give the judge one rule for them (a judge prompt change, so after Phase 4, with recalibration). Until then, count a criterion result as weaker evidence than grounding findings.
+- **Fix:** judge v9 (`450720c`, 2026-11-23): a criterion that names several sections is met only when each one meets it in its own text, unless it says "together" or "between them"; tested on `run-q2x8` (both readings came out as written). Criteria writers can still say which they mean.
 
 ### E9 A rigged probe seen but mislabelled (judge v6)
 - **Words:** `REPORT.md` §3.7: "It said the rigged probe-03 "cannot fail: the empty catch swallows every error", but gave the claim `not_checkable`, not `invalid_probe`."
@@ -180,3 +181,15 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Read as (by the tools):** those entries have no label, so `stage1.json` mapped no page to them, the quote check reported a real quote missing (`run-v3n5`, C8), and KB-14 and KB-15 could not see a hyphenated label's rank at all: a Rank 6 `[^x-y]` in a core section passed.
 - **Expected:** one label syntax across the tools.
 - **Fix:** labels may hold hyphens in `referenceEntries` too, with a KB-15 scenario for a hyphenated Rank 6 label; the knowledge base showed no new failure under it. Lesson (E16 again): when one parser of a shared format is fixed, search for the others.
+
+### E28 A judge that stops searching too early (v9 recalibration)
+- **Words:** judge v9 on the MCP sample: S4 is `unsupported`, a `CRITICAL_FAIL`, because no cited page has `notifications/tools/list_changed`; on the private-fields doc, item 5 `entails`.
+- **Read as:** the judge searched some of the cited pages (for S4) and part of one page (for item 5), and decided.
+- **Expected:** the name is on two pages S4 cites (`[4]`'s security best-practices page, line 455; `[13]`, line 253); MDN's stamping example, further down the page item 5 cites, contradicts item 5 (v8 found it, v6 and v9 did not).
+- **Fix (open):** a judge rule "before calling a name, number or version absent, search every page the claim cites for it, and read past the first matching passage" (tracker), with the next judge change, so as to recalibrate once. Until then, a lone `unsupported` on a name deserves a look before it is acted on.
+
+### E29 Probe notes in the judge's quotes (v9 recalibration)
+- **Words:** the judge's `page_says`: "… | probe-02 stdout: false", "… | stdout: not listed", "… | probe-01 (tsc 5.9.3): exit 0, no diagnostics", "Removed --experimental-transform-types flag. (history row v26.0.0)."
+- **Read as (by the quote check):** 4 quotes missing.
+- **Expected:** the probe notes are the judge's own (only a `stdout:` part is a quote of the probe), and so is a trailing "(…)".
+- **Fix:** `ce9e9dd`'s parser extended: a probe note checks only its `stdout:` text against the probe's output, and a quote counts as found when the text before a trailing "(…)" is on the page; 415 of 415 found over every verdict, no earlier count lowered.

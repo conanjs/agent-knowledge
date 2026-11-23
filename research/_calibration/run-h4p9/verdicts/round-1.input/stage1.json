@@ -1,0 +1,75 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[^1]"
+   ],
+   "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "typescriptlang.org/docs/",
+   "written_rank": null,
+   "cache": "cache/56877450f820.txt"
+  },
+  {
+   "labels": [
+    "[^2]"
+   ],
+   "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_elements",
+   "tier": "A",
+   "rank": 3,
+   "rule": "developer.mozilla.org/en-US/docs/",
+   "written_rank": null,
+   "cache": "cache/bef9a389da4e.txt"
+  },
+  {
+   "labels": [
+    "[^3]"
+   ],
+   "url": "https://v8.dev/blog/faster-class-features",
+   "tier": "A",
+   "rank": 4,
+   "rule": "v8.dev/blog/",
+   "written_rank": null,
+   "cache": "cache/bfccfe616eb2.txt"
+  },
+  {
+   "labels": [
+    "[^4]"
+   ],
+   "url": "https://nodejs.org/api/typescript.html",
+   "tier": "A",
+   "rank": 1,
+   "rule": "nodejs.org/api/",
+   "written_rank": null,
+   "cache": "cache/88356b0b53c0.txt"
+  },
+  {
+   "labels": [
+    "[^5]"
+   ],
+   "url": "https://github.com/microsoft/TypeScript/issues/36282",
+   "tier": "A",
+   "rank": 6,
+   "rule": "github.com/*/*/issues/",
+   "written_rank": null,
+   "cache": "cache/206ad4d09891.txt"
+  },
+  {
+   "labels": [
+    "[^6]"
+   ],
+   "url": "https://github.com/tc39/proposal-class-fields",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/tc39/",
+   "written_rank": null,
+   "cache": "cache/75a7a16ac9d9.txt"
+  }
+ ],
+ "tier_b": []
+}

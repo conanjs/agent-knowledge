@@ -49,6 +49,8 @@ In a doc with `ranked-sources: true` (§4.1), every external entry also gives it
 - [Fast properties in V8](https://v8.dev/blog/fast-properties) — V8 team, 2017. Rank 4. Backs: How it works §3. [^2]
 ```
 
+A page's reader comments are a source of their own, Rank 6 whatever the page's rank: cite them with the page URL plus `#comments`, which `classify-source.mjs` ranks 6, for example `- [Reader comments on Fast properties in V8](https://v8.dev/blog/fast-properties#comments) — readers, 2017. Rank 6. Backs: Pitfalls, one report. [^3]`. `fetch-source.mjs` marks where they start in a saved page (decided by V, 2026-11-23).
+
 ## 3. Claim marking
 
 Inline markers, used in any body section:

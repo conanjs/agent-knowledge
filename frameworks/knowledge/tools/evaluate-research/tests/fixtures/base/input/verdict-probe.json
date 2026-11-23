@@ -29,6 +29,12 @@
    "source": "[^a]",
    "verdict": "unsupported",
    "page_says": "(Searched 'ExperimentalWarning', 'drain loop': not found)"
+  },
+  {
+   "id": "C10",
+   "source": "[^probe-01]",
+   "verdict": "overstates",
+   "page_says": "read(4096) = -1 (Resource temporarily unavailable) (history note). | probe-01 stdout: events: 1 of 4"
   }
  ]
 }

@@ -43,7 +43,7 @@ Write only inside `RUN`: `plan.md`, `doc.md`, and what the tools write (`cache/`
      - `## 6. Trade-offs, pitfalls & misconceptions`: edge cases, trade-offs, what goes wrong and why, and the losing side of each conflict. Each misconception the `pitfall` ledger records gets its own entry that states the false belief and refutes it in so many words (what is wrong, what holds instead, the source), never only by implication, and says the harm of acting on it (what breaks, for whom, how badly, as the source states it). When the belief is a practice, the entry also says what to do instead;
    - `## References`, one entry per source, ordered by rank, 1 first: `- [<page title>](<url>) — <publisher>, <year>. Rank <n>. Backs: <what>. [^<label>]`; then `## Related`, with the `knowledge/` docs from step 1.
 
-   A fact whose ledger source has `"part": "comments"` comes from a page's reader comments: it is Rank 6, so it may back only `## 6.`, and its References entry names the comments ("reader comments on …") with `Rank 6.`.
+   A fact whose ledger source has `"part": "comments"` comes from a page's reader comments: it is Rank 6, so it may back only `## 6.`, and its References entry names the comments ("reader comments on …") with the page's URL plus `#comments`, which `classify-source.mjs` ranks 6, and `Rank 6.`.
 
    Mark each claim `✅[^<label>]` right after it. The rank a section may cite: `## 1.`, `## 2.`, Summary: 1–5; `## 3.`, `## 5.`: 1–4; `## 4.`: 1–5 (6 only warns); `## 6.`: any. Keep the doc to at most 80 ✅ claims, so one judge can check them all.
 
