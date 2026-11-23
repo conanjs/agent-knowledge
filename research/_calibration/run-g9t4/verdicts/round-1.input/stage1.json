@@ -1,0 +1,372 @@
+{
+ "stage": 1,
+ "doc": "doc.md",
+ "rules": "frameworks/knowledge/tools/classify-source/source-ranks.json",
+ "note": "Tier A ranks come from the rules and are taken as given. Tier B sources have no rule: rate each one.",
+ "sources": [
+  {
+   "labels": [
+    "[1]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/versioning",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/a55ad56b64e9.txt"
+  },
+  {
+   "labels": [
+    "[2]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/d1aed5d46f78.txt"
+  },
+  {
+   "labels": [
+    "[3]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/changelog",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/a739f7343f18.txt"
+  },
+  {
+   "labels": [
+    "[4]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/44399078c55f.txt"
+  },
+  {
+   "labels": [
+    "[4]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/transports",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/937fae6437b3.txt"
+  },
+  {
+   "labels": [
+    "[4]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2025-11-25",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/7b138caa8e63.txt"
+  },
+  {
+   "labels": [
+    "[4]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2025-11-25/basic/security_best_practices",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/44f3cfe0d3ba.txt"
+  },
+  {
+   "labels": [
+    "[5]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/c6bfb6f59aa5.txt"
+  },
+  {
+   "labels": [
+    "[6]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/architecture",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/eee6cbbccab2.txt"
+  },
+  {
+   "labels": [
+    "[7]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/index",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/e8d957787d4b.txt"
+  },
+  {
+   "labels": [
+    "[8]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/7296cd40e850.txt"
+  },
+  {
+   "labels": [
+    "[9]"
+   ],
+   "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/releases",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/modelcontextprotocol/",
+   "written_rank": null,
+   "cache": "cache/139640d70140.txt"
+  },
+  {
+   "labels": [
+    "[10]"
+   ],
+   "url": "https://github.com/modelcontextprotocol/typescript-sdk",
+   "tier": "A",
+   "rank": 1,
+   "rule": "github.com/modelcontextprotocol/",
+   "written_rank": null,
+   "cache": "cache/f7fb7d70e0ff.txt"
+  },
+  {
+   "labels": [
+    "[11]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/discover",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/1d962c091f09.txt"
+  },
+  {
+   "labels": [
+    "[12]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/stdio",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/d615a0183fe5.txt"
+  },
+  {
+   "labels": [
+    "[13]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/6e1c66cfb825.txt"
+  },
+  {
+   "labels": [
+    "[14]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/tools",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/920caecd56af.txt"
+  },
+  {
+   "labels": [
+    "[15]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/subscriptions",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/7345b33e447b.txt"
+  },
+  {
+   "labels": [
+    "[17]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/resources",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/a4347016e843.txt"
+  },
+  {
+   "labels": [
+    "[18]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/server/prompts",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/626e6a88e5b1.txt"
+  },
+  {
+   "labels": [
+    "[19]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/0049ed6bcde6.txt"
+  },
+  {
+   "labels": [
+    "[20]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/sampling",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/b13d8c59508c.txt"
+  },
+  {
+   "labels": [
+    "[21]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/deprecated",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/3adf6f101c1f.txt"
+  },
+  {
+   "labels": [
+    "[22]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/client/roots",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/f431985927ec.txt"
+  },
+  {
+   "labels": [
+    "[23]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/39e0293cbb4e.txt"
+  },
+  {
+   "labels": [
+    "[24]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/7296cd40e850.txt"
+  },
+  {
+   "labels": [
+    "[25]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/0120b26ae8e5.txt"
+  },
+  {
+   "labels": [
+    "[26]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/34fabf499cb7.txt"
+  },
+  {
+   "labels": [
+    "[27]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/authorization-server-discovery",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/117c3edbfcd7.txt"
+  },
+  {
+   "labels": [
+    "[28]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/5655f61af2a0.txt"
+  },
+  {
+   "labels": [
+    "[29]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/4b9b953ca683.txt"
+  },
+  {
+   "labels": [
+    "[30]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/0120b26ae8e5.txt"
+  },
+  {
+   "labels": [
+    "[31]"
+   ],
+   "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+   "tier": "A",
+   "rank": 1,
+   "rule": "modelcontextprotocol.io/specification/",
+   "written_rank": null,
+   "cache": "cache/d1aed5d46f78.txt"
+  }
+ ],
+ "tier_b": []
+}

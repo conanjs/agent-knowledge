@@ -1,0 +1,14 @@
+[
+ {
+  "url": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "normalized": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "fetched_from": "https://www.percona.com/blog/overcoming-vacuum-wraparound/",
+  "cache": "cache/a205f446fd68.txt",
+  "fetched": "2026-11-23T03:38:21Z",
+  "status": 200,
+  "content_type": "text/html",
+  "chars": 20135,
+  "sha256": "f29de0f2f93155e5ae5ca0f687f4b7915eb12ddfd037078b0741320ed925e175",
+  "comments_from_line": 1036
+ }
+]

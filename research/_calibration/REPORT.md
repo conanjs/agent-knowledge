@@ -15,6 +15,7 @@ Date: 2026-11-22. Design: `frameworks/knowledge/research-agent.design.md` §4.2 
 | v7 | `73b3759` | "Check every cited probe first, by reading its code": a probe that cannot fail or does not test the claim makes the claim `invalid_probe` whatever its role; a claim that needs a probe is `observed`, not `entails` |
 | v8 | `d4787fb` | KB-17's open conflicts are marked `⚖️ open conflict` (V, 2026-11-22), not `⚠️ unverified`: the judge checks each side against its own source instead of skipping it |
 | v9 | `450720c` | Reader comments: every line from the `READER COMMENTS BELOW` line on is Rank 6, whatever the page's rank, and a claim supported only there is held to Rank 6 (KB-15); a criterion that names several sections is met only when each one meets it, unless it says "together" |
+| v10 | `af565c2` | Two search rules (tracker T-8): before `unsupported` or a "missing name, number, version or date" note, search every page the claim cites and name them in `page_says`; before `entails`, read every hit on the page, not only the first |
 
 ## 2. Calibration docs
 
@@ -165,10 +166,24 @@ The four v8 inputs, copied unchanged, plus one new case for v9's two rules (`run
 | New: comments and criteria (`run-q2x8`) | — | all 4 expected: the §3 claim resting on a reply below the comments line is a KB-15 `CRITICAL_FAIL`; the §6 claim cited through `#comments` passes; "Sections 2 and 5 must …" is not met (§5 only points to §2); "Sections 3 and 5 together …" is met. One more, right, finding: the two comments disagree, and the doc states both sides without `⚖️` | 88k |
 
 **The gate is met** (2/2 MCP errors, 5/5 planted, the rigged probe caught, no false alarm on the clean doc), and the two new rules work on their case. Two results differ from v8 in parts v9 did not change, which is run-to-run variance, not the new wording:
-- **A false `CRITICAL_FAIL`:** `notifications/tools/list_changed` is on two pages S4 cites (the security best-practices page of `[4]`, line 455; `[13]`, line 253); this judge searched others.
+- **S4 graded harder than v8:** `CRITICAL_FAIL` (`unsupported`) where v8 gave a `WARN`. First recorded here as a false alarm, which was wrong (corrected 2026-11-23, §3.11): the doc's own References give `[4]` only the lifecycle and transports pages, which lack the name; the security page that has it is `[4a-sess]`, which S4 does not cite; and `[13]` is the 2026-07-28 version, not the 2025-11-25 column S4 sits in. The false-alarm reading came from `stage1.json`, which files every URL of that References line under `[4]`.
 - **A miss:** private-fields item 5 (a real defect, fixed in `knowledge/` on 2026-11-23) passed again, as under v6. v8 had read on to MDN's stamping example.
 
 Both are reading depth: the judge did not search every page, or every passage, before deciding. A rule for it waits for the next judge change (tracker), so as not to recalibrate twice. **Quote check:** 4 quotes first reported missing in `run-n8w1` were the judge's probe notes (`probe-02 stdout: false`) and a trailing "(…)" note; the tool now reads both: 415 of 415 found over every verdict. **Cost:** 559k tokens.
+
+### 3.11 v10 recalibration (2026-11-23, tracker T-8)
+
+v10 adds two search rules (search every cited page before `unsupported` or a "missing" note; read every hit before `entails`). The five v9 inputs, copied unchanged:
+
+| Test (v10 run) | v9 result | v10 result | Tokens |
+|---|---|---|---|
+| Unchanged private-fields doc (`run-b3w7`) | FAIL 4.25, item 5 missed | **PASS 4.5**: 2 `WARN`, 1 `SOFT_WARN`, the unmarked-claims note; item 5 missed again | 112k |
+| 5 planted errors (`run-f6k2`) | 5/5 | 5/5, the same severities | 106k |
+| MCP sample (`run-g9t4`) | K1 `CRITICAL_FAIL`, K2 `WARN`, S4 `CRITICAL_FAIL` | the same; for S4 it searched all four 2025-11-25 pages, found the name on the security page, and gave its reasons: that page is `[4a-sess]`, which S4 does not cite, and `[13]` is another version | 158k |
+| Probe case (`run-m5r8`) | probe-03 `invalid_probe` | the same | 111k |
+| Comments and criteria (`run-x4c6`) | 4 of 4 | 4 of 4, and the same KB-17 finding | 90k |
+
+**The gate is met**, with no regression. **What T-8 fixed and what it did not:** the judge now searches every cited page and says which ones (S4), so an "absent" finding can be checked. Item 5 is still missed: the search a claim's own words suggest ("doesn't have the element", "TypeError") never reaches MDN's stamping example, which uses other words ("stamp", "Returning overriding object"). Only v8, of v6–v10, read that far. A search rule cannot fix a miss that needs the judge to think of an exception; borderline claims are for repeated runs or V (§4, finding 3). **Quote check:** 35 of 35 found. **Cost:** 577k tokens.
 
 ## 4. Findings for the design
 

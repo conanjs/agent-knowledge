@@ -12,7 +12,7 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 | An agent that can read the repo finds test material by search | E4, E5 | Forbid the folders by name *and* give the agent what it was going to look for; audit its reads after each run |
 | A rule silent on a case is read as permission | E7, E11, E14, E22, E24, E25 |
 | A judge that decides before it has searched every cited page | E28 | Ask for the search in the rule, and treat a lone "absent" finding as a lead, not a verdict | Name the case and what to do in it ("after a PASS, change nothing") |
-| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18, E27, E29 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
+| Two parts use different conventions for one thing | E10, E13, E15, E16, E17, E18, E27, E29, E30 | When a tool, a rule or a prompt names a format, check every other part that reads or writes it |
 | A criterion that names several sections can be read as each or as all | E8 | Write "each of sections 2 and 3" or "sections 2 and 3 together" |
 | A message copied in place of the rule | E20 | State the rule; quote the message only as the message |
 | An instruction that assumes a state no one checked | E19, E23 | Check the state (what is unpushed, what the reader can know) before acting on the instruction |
@@ -186,10 +186,16 @@ Notes from building the research agent (Phases 0–4, 2026-11-22): each place wh
 - **Words:** judge v9 on the MCP sample: S4 is `unsupported`, a `CRITICAL_FAIL`, because no cited page has `notifications/tools/list_changed`; on the private-fields doc, item 5 `entails`.
 - **Read as:** the judge searched some of the cited pages (for S4) and part of one page (for item 5), and decided.
 - **Expected:** the name is on two pages S4 cites (`[4]`'s security best-practices page, line 455; `[13]`, line 253); MDN's stamping example, further down the page item 5 cites, contradicts item 5 (v8 found it, v6 and v9 did not).
-- **Fix (open):** a judge rule "before calling a name, number or version absent, search every page the claim cites for it, and read past the first matching passage" (tracker), with the next judge change, so as to recalibrate once. Until then, a lone `unsupported` on a name deserves a look before it is acted on.
+- **Fix (partly):** judge v10 (`af565c2`, tracker T-8) searches every cited page and names them, and reads every hit. On S4 it did, and its `CRITICAL_FAIL` turned out right (E30). Item 5 is still missed, because the claim's words never lead a search to the stamping example: only a judge that thinks of an exception finds it. Settle such borderline claims by a second run or by V.
 
 ### E29 Probe notes in the judge's quotes (v9 recalibration)
 - **Words:** the judge's `page_says`: "… | probe-02 stdout: false", "… | stdout: not listed", "… | probe-01 (tsc 5.9.3): exit 0, no diagnostics", "Removed --experimental-transform-types flag. (history row v26.0.0)."
 - **Read as (by the quote check):** 4 quotes missing.
 - **Expected:** the probe notes are the judge's own (only a `stdout:` part is a quote of the probe), and so is a trailing "(…)".
 - **Fix:** `ce9e9dd`'s parser extended: a probe note checks only its `stdout:` text against the probe's output, and a quote counts as found when the text before a trailing "(…)" is on the page; 415 of 415 found over every verdict, no earlier count lowered.
+
+### E30 My own misreading of a judge finding (S4, v9)
+- **Words:** I wrote in REPORT §3.10 that v9's S4 `CRITICAL_FAIL` was a false alarm, because `notifications/tools/list_changed` "is on two pages S4 cites". I had grepped the pages `stage1.json` files under `[4]`.
+- **Read as:** `stage1.json`'s label map is the doc's own citation map.
+- **Expected:** the doc's References line reads "[4] lifecycle and transports ([4a] = …; [4a-sess] = …/security_best_practices)": `[4]` is the two pages without the name, `[4a-sess]` is a page S4 does not cite, and `[13]` is another version. v9 was right; `stage1`'s parser files every URL of a References line under its first label, and does not read sub-labels in parentheses.
+- **Fix:** REPORT §3.10 corrected (§3.11). Lesson: check a judge's citation reading against the doc's References, not only the tool's map. The sub-label case is a legacy citation style (bare `[4]`, not `[^4]`), so `stage1` is left as is; open if a ranked doc ever uses it.
