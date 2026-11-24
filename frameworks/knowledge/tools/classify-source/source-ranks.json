@@ -66,6 +66,7 @@
     { "host": "github.com", "prefix": "/rust-lang/", "rank": 1, "why": "Org: Rust project; decided by V, 2026-11-22" },
     { "host": "github.com", "prefix": "/nodejs/", "rank": 1, "why": "Org: Node.js project; decided by V, 2026-11-22" },
     { "host": "github.com", "prefix": "/golang/", "rank": 1, "why": "Org: Go project; decided by V, 2026-11-22" },
+    { "host": "github.com", "prefix": "/dotnet/", "rank": 1, "why": "Org: .NET project (runtime, Roslyn, C# language design, docs, release notes); decided by V, 2026-11-24" },
     { "host": "github.com", "prefix": "/python/", "rank": 1, "why": "Org: Python project; decided by V, 2026-11-22" },
     { "host": "github.com", "prefix": "/denoland/", "rank": 1, "why": "Org: Deno project; decided by V, 2026-11-22" },
     { "host": "github.com", "prefix": "/oven-sh/", "rank": 1, "why": "Org: Bun project; decided by V, 2026-11-22" },
