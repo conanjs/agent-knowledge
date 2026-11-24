@@ -1,7 +1,7 @@
 ---
 schema: topic-index/v1
 kind: root
-last-updated: 2026-11-23
+last-updated: 2026-11-24
 ---
 
 # Global knowledge
@@ -21,6 +21,7 @@ New docs follow `../frameworks/knowledge/schemas/_system.md`. Topics marked *leg
 | [javascript/](javascript/index.md) | The JavaScript language, consolidated from javascript.info Part 1 into one subtopic per chapter: types and conversions, operators, functions, objects and `this`, data types and collections, closures, prototypes, classes, errors, promises and the event loop, generators, modules, Proxy, BigInt and Unicode — every behaviour run in Node 24, with a lesson-to-doc map; plus the browser platform from javascript.info Parts 2–8 (DOM, events, forms, frames, binary data, network, IndexedDB, animation, web components) verified in Chrome 152 | 17 subtopics + 1 reference |
 | [floating-point/](floating-point/index.md) | IEEE 754 end to end: binary formats and limits, rounding and error growth, ±0/∞/NaN/subnormals and exception flags, choosing representations for money and IDs — measured in C, Python and JavaScript | 1 deep dive + 4 docs |
 | [js-runtime/](js-runtime/index.md) | V8 and Node.js runtime behavior that shapes how TypeScript/JavaScript code is written: hidden classes, promise rejections, AbortSignal | topic index |
+| [rust/](rust/index.md) | The Rust language from basics to advanced, one subtopic per group of Rust Book chapters plus advanced subtopics: toolchain and syntax, ownership, borrowing and lifetimes, structs/enums/patterns, collections and UTF-8 strings, errors, traits and generics, closures and iterators, modules/Cargo/testing, smart pointers, threads, atomics and memory ordering, async with `Pin` and Tokio, unsafe and the Rustonomicon, macros, performance and the compiler pipeline, API and type-driven design, serde, `no_std` and WebAssembly — every behaviour run in Rust 1.100.0 | 16 subtopics + 1 reference |
 | [concurrency/](concurrency/index.md) | Cross-language concurrency: structured concurrency, blocking inside async runtimes, shared state and data races (Go, Python, Rust, TypeScript) | topic index |
 | [error-handling/](error-handling/index.md) | Cross-language error design: handle errors once, library vs. application errors | topic index |
 | [linux/](linux/index.md) | Linux internals from the system-call boundary to containers: system calls, boot, permissions, modules and udev, KVM, processes, signals, EEVDF scheduling, IPC, virtual memory, page cache and OOM killer, VFS, `fsync`, ext4 and LVM, the packet path, netfilter/NAT, TCP states, epoll and io_uring, namespaces, cgroups v2, overlayfs, container networking and isolation (with a build-a-container-by-hand deep dive), LSMs and Landlock, systemd, observability, eBPF and triage; a learning path and a lab, with outputs captured on Linux 6.17 | 8 subtopics + 1 reference + 1 how-to |
