@@ -1,0 +1,73 @@
+n	label	kind	verdict	evidence	source
+1	3	source	OK	15.1: "the cosine similarity between one-hot vectors of any two different words is 0"	https://d2l.ai/chapter_natural-language-processing-pretraining/word2vec.html
+2	12	lab	LAB-OK	Output (5) positive-only: final loss -1.000, neg cos 1.000, std of normalized z 0.002	lab
+3	12	lab	LAB-OK	Output (4): tau=1.0 kNN acc h 0.735 vs tau=0.1 h 0.812	lab
+4	12	lab	LAB-OK	Artifact block equals output section (2); e.g. tau=0.05 loss 0.127, weights [0.119, 0.0, 0.0, 0.0]	lab
+5	1	source	OK	weight: "of shape (num_embeddings, embedding_dim) initialized from N(0,1)"; Input arbitrary shape, Output (*, H)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html
+6	12	lab	LAB-OK	Output (1): "emb(ids) == one_hot(ids) @ weight: True"	lab
+7	1	source	OK	padding_idx: "do not contribute to the gradient"; newly constructed: "will default to all zeros"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html
+8	12	lab	LAB-OK	Output (1): "padding row 0: [0.0, 0.0, 0.0] | its grad: [0.0, 0.0, 0.0]"	lab
+9	1	source	FIXED	max_norm: "each embedding vector with norm larger than max_norm is renormalized"; forward modifies weight in-place; sparse note: SGD, SparseAdam, Adagrad (CPU)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html
+10	3	source	OK	15.1: cosine similarity "the cosine of the angle between them", xTy/(|x||y|) in [-1, 1]	https://d2l.ai/chapter_natural-language-processing-pretraining/word2vec.html
+11	2	source	OK	Signature cosine_similarity(x1, x2, dim=1, eps=1e-8); denominator max(||x1||_2, eps) * max(||x2||_2, eps)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.cosine_similarity.html
+12	12	lab	LAB-OK	Output (1): "cos(a, 2a) = 1.0 | cos(a, -a) = -1.0"	lab
+13	3	source	OK	15.1: "both skip-gram and continuous bag of words are self-supervised models"; skip-gram centre->context, CBOW context->centre	https://d2l.ai/chapter_natural-language-processing-pretraining/word2vec.html
+14	3	source	OK	15.1: "each word has two d-dimensional-vector representations" (centre word and context word)	https://d2l.ai/chapter_natural-language-processing-pretraining/word2vec.html
+15	11	source	OK	Abstract: "mask random patches of the input image and reconstruct the missing pixels"; encoder on visible patches "without mask tokens"	https://ar5iv.labs.arxiv.org/html/2111.06377
+16	11	source	OK	Figure 5 (PDF p.4, rendered): at 75 % fine-tuning 84.9, linear probing 73.5 = highest point of the curve; Table 1f 'random 75 84.9 73.5'	https://arxiv.org/pdf/2111.06377
+17	11	source	OK	4.2: "By fine-tuning with a 448 size, we achieve 87.8% accuracy, using only IN1K data"	https://ar5iv.labs.arxiv.org/html/2111.06377
+18	4	source	OK	Abstract: "predicting the future in latent space"; "probabilistic contrastive loss"; "tractable by using negative sampling"	https://ar5iv.labs.arxiv.org/html/1807.03748
+19	4	source	OK	2.3: N samples, one positive, N-1 negatives from 'proposal' distribution; "categorical cross-entropy"; "based on NCE, which we will call InfoNCE"	https://ar5iv.labs.arxiv.org/html/1807.03748
+20	4	source	OK	2.3: I(x_{t+k}, c_t) >= log(N) - L_N, "becomes tighter as N becomes larger"	https://ar5iv.labs.arxiv.org/html/1807.03748
+21	5	source	OK	2.1: "we treat the other 2(N-1) augmented examples within a minibatch as negative examples"; sim = cosine, tau temperature	https://ar5iv.labs.arxiv.org/html/2002.05709
+22	7	source	OK	1: "automatically concentrates on optimizing the hard negative samples"; abstract: tau "controls the strength of penalties on hard negative samples"	https://ar5iv.labs.arxiv.org/html/2012.09740
+23	12	lab	LAB-OK	Artifact: tau=0.05 puts weight 0.119 on the 0.7 negative and ~0 on the others; tau=1.0 spreads it	lab
+24	7	source	OK	Fig. 2 caption: "Small temperature tends to generate more uniform distribution and be less tolerant"; 5.3 large: "not enough uniformity"	https://ar5iv.labs.arxiv.org/html/2012.09740
+25	8	source	FIXED	Theorem 1: fixed tau>0, M->inf, lim L - log M = alignment term + uniformity term; "If perfectly uniform encoders exist"	https://ar5iv.labs.arxiv.org/html/2005.10242
+26	5	source	OK	5.1, Table 5 (linear evaluation): l2 norm yes, tau 0.05/0.1/0.5/1 -> 59.7/64.4/60.7/58.0; "without normalization and proper temperature scaling" worse	https://ar5iv.labs.arxiv.org/html/2002.05709
+27	5	source	OK	2.1: "random cropping followed by resize back", colour distortion, Gaussian blur; "combination of random crop and color distortion is crucial"	https://ar5iv.labs.arxiv.org/html/2002.05709
+28	5	source	OK	2.1: "We use a MLP with one hidden layer to obtain" z = g(h), sigma a ReLU; loss on z	https://ar5iv.labs.arxiv.org/html/2002.05709
+29	5	source	OK	Figure 2 caption: "After training is completed, we throw away the projection head"; use h	https://ar5iv.labs.arxiv.org/html/2002.05709
+30	5	source	FIXED	4.2: nonlinear "better than a linear projection (+3%), and much better than no projection (>10%)"; authors "conjecture"; "may be useful for the downstream task"	https://ar5iv.labs.arxiv.org/html/2002.05709
+31	5	source	OK	2.2: batch 256 to 8192, LARS; 2.3: "We train at batch size 4096"; intro: benefits "compared to its supervised counterpart"; 76.5 % ResNet-50 (4x)	https://ar5iv.labs.arxiv.org/html/2002.05709
+32	6	source	OK	2.2: "400 million (image, text) pairs"; 2.3: N x N pairings, "symmetric cross entropy loss over these similarity scores"	https://ar5iv.labs.arxiv.org/html/2103.00020
+33	6	source	OK	2.3: "only a linear projection"; 2.5: temperature "initialized to the equivalent of 0.07", clipped at 100; "minibatch size of 32,768"	https://ar5iv.labs.arxiv.org/html/2103.00020
+34	6	source	OK	3.1.4 default template "A photo of a {label}."; 3.1.3 matches original ResNet-50, 76.2 %, none of 1.28 M labeled examples	https://ar5iv.labs.arxiv.org/html/2103.00020
+35	6	source	OK	2.3: "a further 4x efficiency improvement in the rate of zero-shot transfer to ImageNet" vs bag-of-words prediction (Fig. 2)	https://ar5iv.labs.arxiv.org/html/2103.00020
+36	9	source	OK	3: "a representation that is constant across views is always fully predictive of itself"	https://ar5iv.labs.arxiv.org/html/2006.07733
+37	10	source	OK	Abstract: "collapsing solutions do exist for the loss and structure"	https://ar5iv.labs.arxiv.org/html/2011.10566
+38	12	lab	LAB-OK	Output (4): "constant embedding: InfoNCE loss 6.236 = log(2N - 1) = 6.236"	lab
+39	9	source	OK	3.1: target params "an exponential moving average of the online parameters"; 3.3 tau_base 0.996; normalized MSE (Eq. 2) = 2 - 2cos; gradient wrt theta only	https://ar5iv.labs.arxiv.org/html/2006.07733
+40	9	source	FIXED	Abstract: "74.3% top-1 classification accuracy on ImageNet using a linear evaluation with a ResNet-50"; state of the art without negative pairs	https://ar5iv.labs.arxiv.org/html/2006.07733
+41	9	source	OK	5: "the additional predictor is critical to prevent collapse"; 3.2: target "to ensure the near-optimality of the predictor"	https://ar5iv.labs.arxiv.org/html/2006.07733
+42	10	source	OK	Fig. 1: "Two augmented views of one image are processed by the same encoder network"; predictor, stop-grad; symmetrized neg. cosine; "BYOL without the momentum encoder"	https://ar5iv.labs.arxiv.org/html/2011.10566
+43	10	source	OK	Abstract: none of negative pairs, large batches, momentum encoders; 4.1 no stop-grad "0.1%"; 4.2 without h "Collapsing is observed"	https://ar5iv.labs.arxiv.org/html/2011.10566
+44	10	source	OK	4.1 / Fig. 2: with stop-gradient the per-channel std of l2-normalized output stays near 1/sqrt(d)	https://ar5iv.labs.arxiv.org/html/2011.10566
+45	12	lab	LAB-OK	Output (3): "1/sqrt(32) = 0.177"	lab
+46	12	lab	LAB-OK	Output block sections (1), (3)-(5) as printed by the full script; prose figures match it	lab
+47	5	source	OK	Table 5 with l2 norm: 59.7, 64.4, 60.7, 58.0 peaks at tau 0.1 like lab 0.795/0.812/0.785/0.735	https://ar5iv.labs.arxiv.org/html/2002.05709
+48	9	source	OK	3: "a representation that is constant across views is always fully predictive of itself"	https://ar5iv.labs.arxiv.org/html/2006.07733
+49	10	source	OK	Abstract: "collapsing solutions do exist for the loss and structure"	https://ar5iv.labs.arxiv.org/html/2011.10566
+50	12	lab	LAB-OK	Output (5) positive-only: "std of normalized z 0.002"	lab
+51	7	source	OK	Fig. 2 caption: small temperature "less tolerant to similar samples"; 5.3: "break the underlying semantic structure"	https://ar5iv.labs.arxiv.org/html/2012.09740
+52	4	source	OK	2.3: the bound log(N) - L_N "becomes tighter as N becomes larger"	https://ar5iv.labs.arxiv.org/html/1807.03748
+53	5	source	OK	5.2 heading: "Contrastive learning benefits (more) from larger batch sizes and longer training"	https://ar5iv.labs.arxiv.org/html/2002.05709
+54	5	source	OK	Table 5: l2 norm No, tau 10 -> top-1 57.2	https://ar5iv.labs.arxiv.org/html/2002.05709
+55	5	source	OK	4.2 / Fig. 8: representation before the head is better; "g can remove information that may be useful"	https://ar5iv.labs.arxiv.org/html/2002.05709
+56	6	source	OK	2.5: temperature "clipped to prevent scaling the logits by more than 100"	https://ar5iv.labs.arxiv.org/html/2103.00020
+57	1	source	OK	Note: "When max_norm is not None, Embedding's forward method will modify the weight tensor in-place"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html
+58	1	source	OK	Note: "currently it's optim.SGD (CUDA and CPU), optim.SparseAdam (CUDA and CPU) and optim.Adagrad (CPU)"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html
+59	2	source	OK	Formula denominator max(||x1||_2, eps) * max(||x2||_2, eps); "eps ... Default: 1e-8"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.cosine_similarity.html
+60	9	source	FIXED	5 Batch size: SimCLR drop "likely due to the decrease in the number of negative examples"; augmentations: "incentivized to keep any information captured by the target"	https://ar5iv.labs.arxiv.org/html/2006.07733
+61	12	lab	LAB-OK	Output (4): constant embedding loss 6.236, far above trained losses; InfoNCE runs keep std 0.174-0.176	lab
+62	5	source	OK	Introduction: "benefits from larger batch sizes and longer training compared to its supervised counterpart"	https://ar5iv.labs.arxiv.org/html/2002.05709
+63	7	source	FIXED	1: "Pushing the semantically consistent samples away is harmful to generate useful features"; 4.2 'Tolerance to Potential Positive Samples'	https://ar5iv.labs.arxiv.org/html/2012.09740
+64	10	source	OK	Abstract: works with none of "(ii) large batches, (iii) momentum encoders"	https://ar5iv.labs.arxiv.org/html/2011.10566
+65	9	source	FIXED	5: removing the predictor "collapses"; "the additional predictor is critical to prevent collapse in an unsupervised scenario"	https://ar5iv.labs.arxiv.org/html/2006.07733
+66	10	source	FIXED	Abstract: stop-gradient "plays an essential role in preventing collapsing"; 4.2 without predictor "Collapsing is observed"	https://ar5iv.labs.arxiv.org/html/2011.10566
+67	11	source	OK	Abstract: ViT-Huge "best accuracy (87.8%) among methods that use only ImageNet-1K data"; encoder on visible patches only	https://ar5iv.labs.arxiv.org/html/2111.06377
+68	6	source	OK	3.1.4: zero-shot classifier from prompts, default template "A photo of a {label}."	https://ar5iv.labs.arxiv.org/html/2103.00020
+69	6	source	OK	2.2: "400 million (image, text) pairs"; 2.5: "very large minibatch size of 32,768"	https://ar5iv.labs.arxiv.org/html/2103.00020
+70	7	source	OK	Fig. 2 caption: "Small temperature tends to generate more uniform distribution"; abstract: penalties on hard negatives	https://ar5iv.labs.arxiv.org/html/2012.09740
+71	7	source	OK	Fig. 2 caption: small temperature tends to "be less tolerant to similar samples"	https://ar5iv.labs.arxiv.org/html/2012.09740
+72	12	lab	LAB-OK	Output (4): "tau=1.0 ... kNN acc h 0.735"	lab

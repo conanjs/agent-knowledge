@@ -52,7 +52,7 @@ The input is `[[0, 1, 2], [3, 4, 5], [6, 7, 8]]` and the kernel `[[0, 1], [2, 3]
 4. **Two conventions:** d2l's `p_h` is the total padding over both sides, `floor((n − k + p_h + s)/s)` ✅[^5]; PyTorch's `padding` is the amount added to each side ✅[^3].
 
 ### Pooling
-Pooling slides a fixed window like a convolution but has no parameters; it outputs the maximum or the average of each window ✅[^6]. It pools each channel separately, so the number of channels does not change ✅[^6], and frameworks default the stride to the window size ✅[^6]; in PyTorch, `MaxPool2d`'s `stride` defaults to `kernel_size` ✅[^7]. Pooling gives some invariance to small shifts and, by reducing the resolution, makes later kernels cover a larger part of the input ✅[^6].
+Pooling slides a fixed window like a convolution but has no parameters; it outputs the maximum or the average of each window ✅[^6]. It pools each channel separately, so the number of channels does not change ✅[^6], and frameworks default the stride to the window size ✅[^6]; in PyTorch, `MaxPool2d`'s `stride` defaults to `kernel_size` ✅[^7]. Pooling makes the output less sensitive to where a pattern sits (after 2 × 2 max-pooling, a pattern the convolution found is still detected if it moves by at most one element in height or width) and, by reducing the resolution, makes later kernels cover a larger effective area of the input ✅[^6].
 
 ### Receptive field
 The receptive field of an element is every element, in all previous layers, that can affect it in the forward pass; it grows with depth and can be larger than the input itself ✅[^2]. In the lab, each extra 3 × 3 layer at stride 1 widens it by 2 pixels, and putting a stride-2 layer first makes every later layer widen it twice as fast ✅[^8].
@@ -171,7 +171,7 @@ Reading it, block by block:
 |---|---|---|
 | Convolution instead of dense | Parameters per layer independent of image size (1,792 vs 201,392,128 in the lab) ✅[^8] | Locality and translation invariance are assumed ✅[^1] |
 | Two stacked 3 × 3 layers vs one 5 × 5 | Same 5 × 5 receptive field ✅[^8] with `2·9 = 18` instead of 25 weights per channel pair, and a nonlinearity between | One more layer of activations to store ✅[^11] |
-| Stride or pooling early | Receptive field grows faster ✅[^6] ✅[^8]; smaller maps | Coarser maps ✅[^6]; a stride that does not fit the size skips edge pixels ✅[^3] |
+| Stride or pooling early | Receptive field grows faster ✅[^6] ✅[^8]; smaller maps | Coarser maps ✅[^6]; a stride that does not fit the size skips edge pixels ✅[^8] |
 | Max vs average pooling | Average combines adjacent pixels for a better signal-to-noise ratio ✅[^6] | d2l finds max pooling preferable in almost all cases, for its invariance ✅[^6] |
 | Residual connections | Train 152-layer networks; no extra parameters for identity shortcuts ✅[^9] | Shapes must match, or a projection or zero-padded shortcut is needed ✅[^9] |
 
@@ -190,7 +190,7 @@ Reading it, block by block:
 - [torch.nn.Conv2d](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html) — PyTorch, 2026 (2.15). Backs: cross-correlation definition, channel sum, weight shape, output-size formula, per-side padding, `padding='same'` stride restriction. [^3]
 - [Multiple Input and Multiple Output Channels (Dive into Deep Learning, 7.4)](https://d2l.ai/chapter_convolutional-neural-networks/channels.html) — Zhang, Lipton, Li, Smola, living. Backs: 1 × 1 convolution as a per-pixel dense layer. [^4]
 - [Padding and Stride (Dive into Deep Learning, 7.3)](https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html) — Zhang, Lipton, Li, Smola, living. Backs: `n − k + 1`, 240 → 200, total-padding formula, odd kernels and symmetric padding, even-kernel rule. [^5]
-- [Pooling (Dive into Deep Learning, 7.5)](https://d2l.ai/chapter_convolutional-neural-networks/pooling.html) — Zhang, Lipton, Li, Smola, living. Backs: no parameters, max and average, per-channel pooling, default stride equals window, shift invariance, faster receptive-field growth. [^6]
+- [Pooling (Dive into Deep Learning, 7.5)](https://d2l.ai/chapter_convolutional-neural-networks/pooling.html) — Zhang, Lipton, Li, Smola, living. Backs: no parameters, max and average, per-channel pooling, default stride equals window, less sensitivity to location (2 × 2 max-pooling and one-element shifts), faster receptive-field growth. [^6]
 - [torch.nn.MaxPool2d](https://docs.pytorch.org/docs/2.15/generated/torch.nn.MaxPool2d.html) — PyTorch, 2026 (2.15). Backs: `stride` defaults to `kernel_size`, `ceil_mode`. [^7]
 - `machine-learning/lab-setup.md` — the lab where the cross-correlation, output sizes, parameter counts, receptive fields and plain-vs-residual gradients ran on 2026-11-24. [^8]
 - [Deep Residual Learning for Image Recognition](https://arxiv.org/html/1512.03385v1) — He, Zhang, Ren, Sun, 2015 (full text read on arXiv HTML; Figures 1, 2, 3 and 5 checked in the PDF). Backs: degradation problem, residual formulation, parameter-free identity shortcuts, zero-padding and projection shortcuts, 152 layers, bottleneck blocks for ResNet-50/101/152. [^9]

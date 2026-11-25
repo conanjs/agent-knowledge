@@ -37,13 +37,13 @@ Random noise in the same box barely moves accuracy; the gradient-chosen perturba
 ## How it works
 ### Threat model
 1. **What a threat model fixes:** the adversary's goals, knowledge and capabilities, and it is part of the defense itself ✅[^8]. Goal: any misclassification (untargeted) or a chosen wrong class (targeted) ✅[^8].
-2. **Capability, the budget:** usually a perturbation `δ` with `‖δ‖_p ≤ ε`; L∞ and L2 are the common norms for images ✅[^8]. L∞ bounds every feature: `ε = 8/255` means no pixel moves more than 8 of 255 levels, a typical CIFAR-10 (Canadian Institute for Advanced Research, 10 classes) and ImageNet budget ✅[^8]. L2 bounds the total Euclidean length, so a few features may move far. The Lp model does not match real-world threats perfectly ✅[^8].
-3. **Knowledge:** white-box means the attacker knows the model and its parameters; black-box means it can only query or must transfer ✅[^8]. Assume the attacker knows the defense (Kerckhoffs' principle); white-box robustness implies black-box robustness, not the reverse ✅[^8]. Transfer is why black-box attacks work: an example built for one model is often misclassified by others ✅[^2].
+2. **Capability, the budget:** usually a perturbation `δ` with `‖δ‖_p ≤ ε`, an Lp norm being a common choice for image classification ✅[^8]. L∞ bounds every feature: `ε = 8/255` means no pixel moves more than 8 of 255 levels, the budget Carlini et al. use in their CIFAR-10 (Canadian Institute for Advanced Research, 10 classes) and ImageNet example ✅[^8]. L2 bounds the total Euclidean length, so a few features may move far. The Lp model does not match real-world threats perfectly ✅[^8].
+3. **Knowledge:** white-box means the attacker knows the model and its parameters; black-box means no knowledge of the model, with limited access such as a number of queries, the output probabilities or the training data ✅[^8]. Assume the attacker knows the defense (Kerckhoffs' principle); white-box robustness implies black-box robustness, not the reverse ✅[^8]. Transfer attacks build the example on a substitute model and use it against the target ✅[^8]; this works because an example built for one model is often misclassified by others, even ones with a different architecture or trained on disjoint data ✅[^2].
 
 ### Why small perturbations work: the linearity explanation
 1. Goodfellow et al. argue the main cause is that networks behave too linearly ✅[^2]. For a linear score `wᵀx`, the perturbation `η = ε·sign(w)` raises it by `ε·Σ|w_i|`, which is about `ε·m·n` for `n` features with average weight size `m`: many tiny changes add up to one large change in high dimension ✅[^2].
 2. Example: 50 features each with weight 0.2 and `ε = 0.4` shift the score by `50 × 0.2 × 0.4 = 4`, though no single feature moved more than 0.4.
-3. Random noise is inefficient: zero-mean noise does not line up with `w`, so its effects mostly cancel ✅[^2]. Lab: random ±0.4 corners cost 0.9 points, the attack 82 points ✅[^7].
+3. Random noise is inefficient: zero-mean noise has an expected dot product of zero with `w`, so in many cases it has essentially no effect ✅[^2]. Lab: random ±0.4 corners cost 0.9 points, the attack 82 points ✅[^7].
 
 ### FGSM and PGD
 1. **FGSM:** `x_adv = x + ε·sign(∇ₓ J(θ, x, y))`, one gradient computed by back-propagation ✅[^2]. Goodfellow et al. report 99.9 % error for a shallow softmax classifier on MNIST at `ε = 0.25` ✅[^2].
@@ -53,7 +53,7 @@ Random noise in the same box barely moves accuracy; the gradient-chosen perturba
 ### Adversarial training and the trade-off
 1. **Min–max objective:** minimize over `θ` the expected value of `max_{δ∈S} L(θ, x + δ, y)`: an inner attack, an outer training step ✅[^3]. Goodfellow et al.'s earlier version mixed clean and FGSM losses, `α·J(x) + (1 − α)·J(x + ε·sign(∇J))` with `α = 0.5` ✅[^2].
 2. **Capacity:** robust classification needs a stronger classifier; Madry et al. found that robust training needs larger networks, and their smallest MNIST networks trained against PGD did not learn at all, always predicting one fixed class ✅[^3].
-3. **Robustness vs accuracy:** Tsipras et al. argue there may be an inherent tension between robustness and standard generalization, with robust models learning different features ✅[^4]. Their construction: `x₁ = y` with probability `p`, else `−y`, plus `d` weak features `x_i ~ N(ηy, 1)`; averaging the weak features gives more than 99 % accuracy when `η ≥ 3/√d`, and an L∞ adversary with `ε ≥ 2η` shifts every weak feature to look like the other class ✅[^4]. Their theorem: any classifier with standard accuracy `≥ 1 − δ` has robust accuracy `≤ p/(1 − p)·δ` against that adversary ✅[^4]. With little data, robust training can instead act as data augmentation and raise clean accuracy, clearly on MNIST and much less on CIFAR-10 and Restricted ImageNet ✅[^4]. The lab uses this construction with `p = 0.9`, `η = 0.2`, `d = 50`; that `η` is below `3/√50 ≈ 0.42`, so the 99 % bound does not apply to it.
+3. **Robustness vs accuracy:** Tsipras et al. argue there may be an inherent tension between robustness and standard generalization, with robust models learning different features ✅[^4]. Their construction: `x₁ = y` with probability `p`, else `−y`, plus `d` weak features `x_i ~ N(ηy, 1)`; averaging the weak features gives more than 99 % accuracy when `η ≥ 3/√d`, and an L∞ adversary with `ε ≥ 2η` shifts every weak feature to look like the other class ✅[^4]. Their theorem: any classifier with standard accuracy `≥ 1 − δ` has robust accuracy `≤ p/(1 − p)·δ` against that adversary ✅[^4]. With little data, robust training can instead act as data augmentation and raise clean accuracy, clearly on MNIST and less so on CIFAR-10 and Restricted ImageNet ✅[^4]. The lab uses this construction with `p = 0.9`, `η = 0.2`, `d = 50`; that `η` is below `3/√50 ≈ 0.42`, so the 99 % bound does not apply to it.
 
 ### Pitfall: gradient masking and obfuscated gradients
 1. **Definition:** obfuscated gradients are a kind of gradient masking that makes gradient-based attacks fail without making the model robust ✅[^5]. Three types: shattered (non-differentiable or numerically broken), stochastic (test-time randomness), and vanishing or exploding gradients ✅[^5].
@@ -191,7 +191,7 @@ Reading it, line by line:
 |---|---|---|
 | Evaluating with random noise only | Looks robust (lab 94.4 % at ε = 0.4) | Noise does not align with the gradient ✅[^2]; lab ✅[^7] |
 | FGSM stronger than PGD | Suspect gradient masking | One-step beating iterative is a warning sign ✅[^5] |
-| Accuracy stays above 0 at huge ε | Evaluation or defense broken | Unbounded attacks must reach 100 % ✅[^5] ✅[^8] |
+| Accuracy stays above 0 at huge ε | The attack is broken or too weak, not the model robust | Unbounded attacks should reach 100 % ✅[^5] ✅[^8] |
 | Non-differentiable preprocessing in the defense | Gradient attack fails, model still vulnerable | Shattered gradients; BPDA ✅[^5] |
 | Randomized defense | Single-sample gradients mislead | Stochastic gradients; EOT ✅[^5] |
 | Black-box only evaluation | Overstates robustness | White-box implies black-box, not the reverse ✅[^8] |
@@ -217,17 +217,17 @@ Reading it, line by line:
 - A defense that only breaks gradients is not a defense; attack it adaptively (BPDA, EOT) before trusting it.
 
 ## Verification status
-- Verified: 66 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 67 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Intriguing properties of neural networks](https://arxiv.org/abs/1312.6199) — Szegedy, Zaremba, Sutskever, Bruna, Erhan, Goodfellow, Fergus, 2013 (full text read on ar5iv). Backs: imperceptible perturbations found by maximizing error with box-constrained L-BFGS, weaker transfer to a model trained on a disjoint half of MNIST. [^1]
 - [Explaining and Harnessing Adversarial Examples](https://ar5iv.labs.arxiv.org/html/1412.6572) — Goodfellow, Shlens, Szegedy, 2014 (ar5iv HTML of arXiv:1412.6572). Backs: linearity explanation, FGSM formula, MNIST 99.9 %, noise inefficiency, transfer, mixed adversarial objective. [^2]
 - [Towards Deep Learning Models Resistant to Adversarial Attacks](https://ar5iv.labs.arxiv.org/html/1706.06083) — Mądry, Makelov, Schmidt, Tsipras, Vladu, 2017 (ar5iv HTML). Backs: min–max formulation, PGD update, random starts and restarts, universal first-order adversary, MNIST and CIFAR-10 numbers, capacity and fixed-class collapse of small networks. [^3]
 - [Robustness May Be at Odds with Accuracy](https://ar5iv.labs.arxiv.org/html/1805.12152) — Tsipras, Santurkar, Engstrom, Turner, Madry, 2018 (ar5iv HTML). Backs: inherent tension, the `p`/`η` construction, `ε ≥ 2η`, the `p/(1 − p)·δ` theorem, low-data regime mainly on MNIST. [^4]
-- [Obfuscated Gradients Give a False Sense of Security](https://ar5iv.labs.arxiv.org/html/1802.00420) — Athalye, Carlini, Wagner, 2018 (ar5iv HTML). Backs: obfuscated-gradient types, BPDA, EOT, reparameterization, 7 of 9 defenses, warning signs. [^5]
+- [Obfuscated Gradients Give a False Sense of Security: Circumventing Defenses to Adversarial Examples](https://ar5iv.labs.arxiv.org/html/1802.00420) — Athalye, Carlini, Wagner, 2018 (ar5iv HTML). Backs: obfuscated-gradient types, BPDA, EOT, reparameterization, 7 of 9 defenses, warning signs. [^5]
 - [Certified Adversarial Robustness via Randomized Smoothing](https://ar5iv.labs.arxiv.org/html/1902.02918) — Cohen, Rosenfeld, Kolter, 2019 (ar5iv HTML). Backs: smoothed classifier, certified radius, Monte Carlo and abstention, ImageNet 49 % at 0.5, σ trade-off at small and large radii, L2 only. [^6]
 - `machine-learning/lab-setup.md` — the lab where the FGSM, PGD and adversarial-training script ran on 2026-11-25. [^7]
-- [On Evaluating Adversarial Robustness](https://ar5iv.labs.arxiv.org/html/1902.06705) — Carlini, Athalye, Papernot, Brendel, Rauber, Tsipras, Goodfellow, Madry, Kurakin, 2019 (ar5iv HTML). Backs: threat-model parts, Lp budgets and 8/255, white- vs black-box, Kerckhoffs, adaptive attacks, accuracy-vs-ε curves and unbounded attacks reaching 100 %. [^8]
+- [On Evaluating Adversarial Robustness](https://ar5iv.labs.arxiv.org/html/1902.06705) — Carlini, Athalye, Papernot, Brendel, Rauber, Tsipras, Goodfellow, Madry, Kurakin, 2019 (ar5iv HTML). Backs: threat-model parts, Lp budgets and 8/255, white- vs black-box, Kerckhoffs, transfer attacks, adaptive attacks, accuracy-vs-ε curves and unbounded attacks reaching 100 %. [^8]
 
 ## Related
 - `machine-learning/deep-learning/interpretability-and-attribution.md` — input gradients used to explain a prediction.

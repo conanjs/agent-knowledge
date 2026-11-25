@@ -1,0 +1,56 @@
+n	label	kind	verdict	evidence	source
+1	7	lab	LAB-OK	Output: relu N(0,1) nan; tanh N(0,0.01^2) |grad W1| 0.00e+00; sigmoid Xavier 1.17e-33, He 2.69e-27; float32 .norm() 0.00e+00	lab
+2	7	lab	LAB-OK	Artifact lines z, relu, gelu, gelu tanh, sample std equal the last 5 lines the full script prints	lab
+3	1	source	OK	§5.1.2.2: sigmoid derivative sigmoid(x)(1-sigmoid(x)); 'reaches a maximum of 0.25' at 0; 'gradient vanishes for large positive and negative arguments'	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+4	1	source	OK	§5.1.2.3: tanh = (1-exp(-2x))/(1+exp(-2x)), interval -1 to 1; derivative 1-tanh^2; 'point symmetry about the origin'; derivative approaches 0 away from 0	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+5	1	source	FIXED	§5.1.2.1: ReLU max(x,0); 'either they vanish or they just let the argument through'; 'mitigated the well-documented problem of vanishing gradients'	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+6	3	source	OK	Abstract: 'weights inputs by their value, rather than gates inputs by their sign'; §4: 'non-convex, non-monotonic'; 'ReLU and GELU are equal asymptotically'	https://arxiv.org/pdf/1606.08415v5
+7	1	source	OK	§5.1.2.2: sigmoid 'largely been replaced by the simpler and more easily trainable ReLU' in hidden layers; still used on output units for binary probabilities	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+8	8	source	OK	GELU page: GELU(x) = x*Phi(x), Phi the Gaussian CDF; approximate='tanh': 0.5*x*(1+Tanh(sqrt(2/pi)*(x+0.044715*x^3)))	https://docs.pytorch.org/docs/2.15/generated/torch.nn.GELU.html
+9	7	lab	LAB-OK	Artifact: gelu(z) [..., -0.1587, 0.0, 0.8413, ...]; gelu tanh [..., -0.1588, 0.0, 0.8412, ...]; relu 0.0 and 1.0	lab
+10	2	source	OK	§5.4.1: gradient 'is the product of L-l matrices M(L)...M(l+1) and the gradient vector v(l)'; product 'very large or very small'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+11	2	source	OK	§5.4.1.2: 'we draw 100 Gaussian random matrices'; 4x4, sigma^2=1; printed tensor entries from 2.6578e+23 to 2.4899e+25	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+12	2	source	OK	§5.4.1.1: sigmoid's gradient vanishes when inputs large and small; 'the gradient will likely be cut off at some layer'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+13	4	source	OK	Abstract: sigmoid 'is unsuited for deep networks with random initialization because of its mean value'; drives top hidden layer into saturation	https://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+14	4	source	OK	§3.1, Fig. 2: four hidden layers; top layer 'quickly saturates at 0', 'slowly desaturates around epoch 100'; 'depth-five model never escaped'; 'We hypothesize'	https://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+15	2	source	OK	§5.4.1: gradients 'excessively large, destroying our model'; 'excessively small ... rendering learning impossible as parameters hardly move'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+16	2	source	OK	§5.4.2.2: weights zero mean, variance sigma^2; inputs variance gamma^2, independent; derivation ends Var[o_i] = n_in sigma^2 gamma^2	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+17	7	lab	LAB-OK	Output row 'tanh N(0,0.01^2)': std@1 1.57e-01	lab
+18	2	source	OK	§5.4.2.2: n_in sigma^2 = 1 and n_out sigma^2 = 1; sigma = sqrt(2/(n_in+n_out)); U(-sqrt(6/(n_in+n_out)), ...); U(-a,a) 'has variance a^2/3'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+19	2	source	OK	§5.4.2.2: assumption of no nonlinearities 'can be easily violated'; 'Xavier initialization method turns out to work well in practice'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+20	5	source	OK	xavier_uniform_: a = gain x sqrt(6/(fan_in+fan_out)); xavier_normal_: std = gain x sqrt(2/(fan_in+fan_out)) (KaTeX source)	https://docs.pytorch.org/docs/2.15/nn.init.html
+21	6	source	OK	§2.2 eqs. 7-10: E[x^2] = 1/2 Var[y] for ReLU with symmetric w; sufficient condition 1/2 n_l Var[w_l] = 1; std sqrt(2/n_l); 'We also initialize b = 0'	https://arxiv.org/pdf/1502.01852v1
+22	5	source	OK	kaiming_normal_: std = gain/sqrt(fan_mode); 'fan_in' (default) preserves variance in forward pass; 'fan_out' 'preserves the magnitudes in the backwards pass'	https://docs.pytorch.org/docs/2.15/nn.init.html
+23	6	source	OK	§2.2 Comparisons with Xavier: linear case std 1/sqrt(n_l); 'When there are L layers, the std will be 1/sqrt(2)^L of our derived std'	https://arxiv.org/pdf/1502.01852v1
+24	7	lab	LAB-OK	Output: relu Xavier std@1 5.87e-01, std@50 1.51e-08; relu He 8.31e-01, 5.08e-01; '(1/sqrt(2))**49 = 4.2e-08'; script reuses generator seed 1	lab
+25	5	source	OK	calculate_gain table: Linear 1, Sigmoid 1, Tanh 5/3, ReLU sqrt(2), Leaky ReLU sqrt(2/(1+negative_slope^2)), SELU 3/4	https://docs.pytorch.org/docs/2.15/nn.init.html
+26	2	source	OK	§5.4.1.3: minibatch SGD 'would not break this symmetry'; Summary: 'Random initialization is key to ensuring that symmetry is broken before optimization'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+27	7	lab	LAB-OK	Output block: header, 9 rows and 3 summary lines are the first 13 lines; z, relu, gelu, gelu tanh, sample std the last 5	lab
+28	2	source	OK	§5.4.1.3: same inputs and parameters give the same activation and gradient; 'The hidden layer would behave as if it had only a single unit'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+29	1	source	OK	§5.1.2.2: sigmoid derivative 'reaches a maximum of 0.25' when the input is 0	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+30	4	source	OK	Abstract: sigmoid's 'mean value, which can drive especially the top hidden layer into saturation'	https://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf
+31	7	lab	LAB-OK	Output rows: sigmoid Xavier |grad W1| 1.17e-33, sigmoid He 2.69e-27	lab
+32	7	lab	LAB-OK	Output line 'same |grad W1| as a float32 .norm()': sigmoid Xavier 0.00e+00, sigmoid He 0.00e+00, tanh N(0,1) inf	lab
+33	6	source	OK	§2.2, Fig. 3: 30-layer model, ours converges, Xavier 'completely stalls'; 30-layer 38.56/16.59 error worse than 14-layer 33.82/13.34	https://arxiv.org/pdf/1502.01852v1
+34	6	source	OK	§2.2 eq. 8: Var[y_l] = 1/2 n_l Var[w_l] Var[y_l-1]; with Xavier's n_l Var[w_l] = 1 the variance halves per layer	https://arxiv.org/pdf/1502.01852v1
+35	7	lab	LAB-OK	Output row 'relu Xavier': std@50 1.51e-08	lab
+36	6	source	OK	§2.2, Fig. 2: 22-layer model, 'Both methods are able to make them converge. But ours starts reducing error earlier'	https://arxiv.org/pdf/1502.01852v1
+37	5	source	OK	Note: fan_in/fan_out assume 'x @ w.T ... where w.shape = [fan_out, fan_in]'; for x @ w 'pass in a transposed weight matrix'	https://docs.pytorch.org/docs/2.15/nn.init.html
+38	5	source	OK	SELU note: use nonlinearity='linear' not 'selu'; SELU gain 'sacrifices the normalization effect for more stable gradient flow'	https://docs.pytorch.org/docs/2.15/nn.init.html
+39	9	source	OK	Linear page: weight 'initialized from U(-sqrt(k), sqrt(k)), where k = 1/in_features'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Linear.html
+40	2	source	OK	§5.4.2.2: 'the uniform distribution U(-a, a) has variance a^2/3'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+41	2	source	OK	§5.4.2.1: framework default 'random initialization method, which often works well in practice for moderate problem sizes'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+42	6	source	OK	§2.2: input variance 'roughly preserved from the first layer to the last'; unnormalized [-128,128] input: 'softmax operator will overflow'	https://arxiv.org/pdf/1502.01852v1
+43	1	source	OK	§5.1.2.1: 'When the input is negative, the derivative of the ReLU function is 0'	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+44	1	source	OK	§5.1.2: sigmoid squashes to (0,1), tanh to the interval -1 to 1; tanh 'exhibits point symmetry about the origin'	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+45	1	source	FIXED	§5.1.2.2-5.1.2.3: sigmoid gradient vanishes for large positive and negative arguments; tanh derivative approaches 0 away from 0	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+46	2	source	FIXED	§5.4.1.1: sigmoid's gradient vanishes for large and small inputs; with many layers 'the gradient will likely be cut off at some layer'	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+47	1	source	OK	§5.1.2.1: ReLU derivative 0 for negative input, 1 for positive; mitigated vanishing gradients	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+48	1	source	OK	§5.1.2.1: 'When the input is negative, the derivative of the ReLU function is 0'	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+49	6	source	FIXED	§2.2, Fig. 3: 30-layer ReLU model converges with ours, Xavier 'completely stalls the learning'	https://arxiv.org/pdf/1502.01852v1
+50	3	source	OK	§1: GELU 'matches or exceeds models with ReLUs or ELUs' across computer vision, natural language processing and speech recognition tasks	https://arxiv.org/pdf/1606.08415v5
+51	3	source	OK	§4 practical tips: 'using a close approximation to the cumulative distribution function of a Gaussian distribution is important'	https://arxiv.org/pdf/1606.08415v5
+52	2	source	OK	§5.4.2.2: compromise between forward n_in sigma^2 = 1 and backward n_out sigma^2 = 1, derived assuming no nonlinearity	https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html
+53	6	source	OK	§2.2: Xavier std 'will be 1/sqrt(2)^L of our derived std' after L layers, i.e. 1/sqrt(2) per layer	https://arxiv.org/pdf/1502.01852v1
+54	6	source	OK	§2.2 eqs. 9-10: product of 1/2 n_l Var[w_l] set to 1; Fig. 3: 30-layer model converges, Xavier stalls	https://arxiv.org/pdf/1502.01852v1
+55	5	source	OK	kaiming_normal_ nonlinearity: 'recommended to use only with relu or leaky_relu'; calculate_gain gives a gain per nonlinearity	https://docs.pytorch.org/docs/2.15/nn.init.html

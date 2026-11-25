@@ -1,0 +1,63 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	Section "Evaluation Mode (nn.Module.eval())": user must call model.eval() and model.train() for Dropout/BatchNorm; example: no BatchNorm running-statistics updates from validation data	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+2	7	lab	LAB-OK	Output: eval row 0 [0.6849, -3.8593, 9.4535]; train row 0 [-1.2663, -0.9897, -0.3218]; with other batch-mates [0.7761, -2.5625, 2.556]	lab
+3	7	lab	LAB-OK	Output: "train mode, batch of 1 -> Expected more than 1 value per channel when training"	lab
+4	7	lab	LAB-OK	Dropout block: fraction zeroed 0.4942, kept values [2.0], mean 1.0116, "eval: output equals input: True"	lab
+5	2	source	OK	Formula y = (x − E[x]) / √(Var[x] + ε) · γ + β; "the elements of γ are set to 1 and the elements of β are set to 0"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+6	2	source	OK	"At train time in the forward pass, the variance is calculated via the biased estimator" (correction=0); eps "Default: 1e-5"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+7	3	source	FIXED	§8.5: "After applying standardization, the resulting minibatch has zero mean and unit variance"; γ, β "recover this degree of freedom"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+8	3	source	OK	§8.5 (convolutional layers): normalization "over the m·p·q elements per output channel"; scale and shift per channel, "both of which are scalars"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+9	2	source	OK	Momentum note: update x̂_new = (1 − momentum)·x̂ + momentum·x_t; "default momentum of 0.1"; stored variance "via the unbiased estimator" (correction=1)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+10	2	source	OK	"This momentum argument is different from one used in optimizer classes"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+11	7	lab	LAB-OK	batch mean 1.9517, unbiased var 0.8275, running_mean 0.1952, running_var 0.9827 for feature 1	lab
+12	2	source	OK	Running estimates "which are then used for normalization during evaluation"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+13	4	source	OK	§3.1: "we want the output to depend only on the input, deterministically"; population statistics; normalization "simply a linear transform"	https://arxiv.org/pdf/1502.03167v3
+14	2	source	OK	track_running_stats=False: "batch statistics are instead used during evaluation time as well"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+15	3	source	OK	§8.5: original paper "inserted batch normalization after the affine transformation and before the nonlinear activation"; h = φ(BN(Wx + b))	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+16	4	source	OK	Abstract: "much higher learning rates and be less careful about initialization"; regularizer "in some cases eliminating the need for Dropout"; "14 times fewer training steps"	https://arxiv.org/pdf/1502.03167v3
+17	4	source	OK	§4.2.1-4.2.2, Fig. 3: BN-x5 lr ×5, Dropout removed and other changes, "14 times fewer steps"; BN-Baseline 72.2 % "in less than half the number of training steps"	https://arxiv.org/pdf/1502.03167v3
+18	3	source	OK	§8.5 Discussion: "The explanation offers an under-specified intuition"; the name "a misnomer"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+19	5	source	OK	"calculated over the last D dimensions, where D is the dimension of normalized_shape"; variance "via the biased estimator"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LayerNorm.html
+20	6	source	OK	§3: "all the hidden units in a layer share the same normalization terms"; different training cases have different terms	https://arxiv.org/pdf/1607.06450v1
+21	6	source	OK	Abstract: "layer normalization performs exactly the same computation at training and test times"	https://arxiv.org/pdf/1607.06450v1
+22	5	source	OK	"This layer uses statistics computed from input data in both training and evaluation modes"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LayerNorm.html
+23	6	source	OK	§3: "does not impose any constraint on the size of a mini-batch"; usable "in the pure online regime with batch size 1"	https://arxiv.org/pdf/1607.06450v1
+24	6	source	OK	Abstract: "computing the normalization statistics separately at each time step"	https://arxiv.org/pdf/1607.06450v1
+25	5	source	OK	γ, β are "parameters of normalized_shape"; BN applies "scalar scale and bias for each entire channel/plane", LN per-element	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LayerNorm.html
+26	3	source	OK	§8.5 (layer normalization): "ignoring ε, the output of the layer normalization is scale independent", stated for any α ≠ 0	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+27	8	source	OK	"The zeroed elements are chosen independently for each forward call"; Bernoulli, probability p; outputs scaled by 1/(1−p) during training	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Dropout.html
+28	9	source	OK	§5.6: "By design, the expectation remains unchanged, i.e., E[h'] = h"	https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+29	9	source	OK	"their respective gradient also vanishes when performing backpropagation"; output layer "cannot be overly dependent on any one element"	https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+30	8	source	OK	"during evaluation the module simply computes an identity function"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Dropout.html
+31	10	source	OK	Abstract: "dropout samples from an exponential number of different thinned networks"; test time "single unthinned network that has smaller weights"	https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf
+32	10	source	OK	§1 Fig. 2: unit kept with probability p, test weights "multiplied by p"; §10: scale "by 1/p at training time", "equivalent with appropriate scaling of the learning rate"	https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf
+33	9	source	OK	Eq. 5.6.1: h' = h/(1−p) with probability 1−p, else 0; "the expectation remains unchanged"	https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+34	8	source	OK	"during evaluation the module simply computes an identity function"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Dropout.html
+35	10	source	OK	Abstract: "This prevents units from co-adapting too much"; "gives major improvements over other regularization methods"	https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf
+36	10	source	OK	§6.5 Table 9, one 784-1024-1024-2048-10 network: L2 1.62, Max-norm 1.35, Dropout + L2 1.25, Dropout + Max-norm 1.05	https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf
+37	7	lab	LAB-OK	11-line output block printed; the 3 Dropout lines are the Mental model artifact; run 2026-11-24, two runs identical	lab
+38	3	source	OK	§8.5: "after subtracting the means, each hidden unit would take value 0"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+39	1	source	OK	Section "Evaluation Mode (nn.Module.eval())": Dropout and BatchNorm2d behave differently by mode; avoid BatchNorm running-statistics updates on validation data	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+40	2	source	OK	"The running estimates are kept with a default momentum of 0.1"; update rule (1 − momentum)·x̂ + momentum·x_t	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+41	7	lab	LAB-OK	eval row 0 [0.6849, -3.8593, 9.4535] vs train row 0 [-1.2663, -0.9897, -0.3218]; running stats 10 % of batch values	lab
+42	3	source	OK	§8.5: "after subtracting the means, each hidden unit would take value 0"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+43	7	lab	LAB-OK	Output: batch of 1 -> "Expected more than 1 value per channel when training"; script catches ValueError	lab
+44	3	source	OK	§8.5.2.3: "in the context of convolutions the batch normalization is well defined even for minibatches of size 1"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+45	3	source	OK	"works best for moderate minibatch sizes in the 50–100 range"; larger "regularizes less"; "tiny minibatches destroy useful signal"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+46	2	source	OK	eps: "a value added to the denominator for numerical stability. Default: 1e-5"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+47	7	lab	LAB-OK	Output: "std (biased) [1.0, 1.0, 0.9995]"	lab
+48	6	source	OK	§1: BN on RNNs "appears to require different statistics for different time-steps"; §3.1 LN terms depend only on the current time-step	https://arxiv.org/pdf/1607.06450v1
+49	2	source	OK	momentum: "Can be set to None for cumulative moving average (i.e. simple average)"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm1d.html
+50	9	source	OK	"some researchers use dropout at test time as a heuristic for estimating the uncertainty"; agreement means "more confident"	https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+51	9	source	OK	§5.6 code "if dropout == 1: return torch.zeros_like(X)"; printed dropout_p = 1 output all zeros	https://d2l.ai/chapter_multilayer-perceptrons/dropout.html
+52	4	source	OK	Abstract: "We refer to this phenomenon as internal covariate shift", addressed by normalizing layer inputs	https://arxiv.org/pdf/1502.03167v3
+53	3	source	FIXED	§8.5 Discussion: "under-specified intuition", "misnomer"; Santurkar behaviour "in some ways opposite"; "We conjecture, though, that the guiding principles" "may well lead" to inventions	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+54	4	source	OK	Abstract: "much higher learning rates and be less careful about initialization. It also acts as a regularizer"	https://arxiv.org/pdf/1502.03167v3
+55	3	source	OK	"batch normalization typically behaves differently in training mode than in prediction mode"; best at 50–100 batch sizes	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+56	6	source	OK	Abstract: same computation at training and test times; §3 no mini-batch-size constraint; per-time-step statistics for RNNs	https://arxiv.org/pdf/1607.06450v1
+57	3	source	OK	LN "is simply a deterministic transformation"; BN's noisy estimates: "this variation appears to act as a form of regularization"	https://d2l.ai/chapter_convolutional-modern/batch-norm.html
+58	10	source	OK	Abstract: dropout "gives major improvements over other regularization methods"	https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf
+59	8	source	OK	"during evaluation the module simply computes an identity function"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Dropout.html
+60	1	source	OK	Section "Evaluation Mode (nn.Module.eval())": modules like torch.nn.Dropout behave differently by training mode; call model.eval() for validation	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+61	4	source	OK	Abstract: Batch Normalization "also acts as a regularizer"	https://arxiv.org/pdf/1502.03167v3
+62	4	source	OK	Abstract: "in some cases eliminating the need for Dropout"	https://arxiv.org/pdf/1502.03167v3

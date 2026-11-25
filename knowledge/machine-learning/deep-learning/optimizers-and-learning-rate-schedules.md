@@ -40,7 +40,7 @@ Adam lr=0.1              steps= 20  x=(-3.06034, -0.222452)  f=1.04e+00
 Adam lr=0.1              steps=100  x=(0.039004, 0.0084228)  f=2.94e-04
 ```
 
-The SGD rows reproduce Dive into Deep Learning's own trace to every digit printed (`x1: −0.943467` at learning rate 0.4, `x2: −1673.365109` at 0.6) ✅[^1]. Momentum 0.5 converges at the learning rate where plain SGD diverges ✅[^1] ✅[^9]. RMSprop's per-coordinate scaling removes the canyon almost entirely; Adam, at `lr=0.1` with its default betas, is the slowest of the converging runs on this noise-free bowl ✅[^9].
+The SGD rows reproduce Dive into Deep Learning's own trace to every digit printed (`x1: −0.943467` at learning rate 0.4, `x2: −1673.365109` at 0.6) ✅[^1]. Momentum 0.5 converges at the learning rate where plain SGD diverges ✅[^1] ✅[^9]. RMSprop's per-coordinate scaling moves much faster than SGD along the flat axis (`x1 = −1.8e-06` after 100 steps, against `−0.0012` for SGD at 0.4); Adam, at `lr=0.1` with its default betas, is the slowest of the converging runs on this noise-free bowl ✅[^9].
 
 ## How it works
 Notation: `θ` the parameters, `g` the gradient of the loss at the current `θ`, `η` (PyTorch's `lr`) the learning rate, `t` the step number, `⊙` element-wise multiplication.
@@ -48,7 +48,7 @@ Notation: `θ` the parameters, `g` the gradient of the loss at the current `θ`,
 ### SGD and momentum
 1. **SGD:** `θ ← θ − η·g` ✅[^3]; PyTorch's default `lr` is `1e-3` ✅[^3].
 2. **Momentum (heavy ball):** `v_t = β·v_{t−1} + g_t`, `θ_t = θ_{t−1} − η·v_t`; `β = 0` gives back gradient descent ✅[^1]. Over many steps the weights `β^τ` add up to `1/(1 − β)`, so the effective step is `η/(1 − β)`: with `β = 0.9`, ten times `η` along a steady direction ✅[^1]. Momentum is much more effective on ill-conditioned problems, where progress is much slower in some directions than in others, like a narrow canyon ✅[^1]; it was proposed by Polyak in 1964 ✅[^1].
-3. **PyTorch's form:** `v ← μ·v + g`, `p ← p − lr·v` (`μ` is the `momentum` argument, `p` the parameters), where other frameworks and Sutskever et al. use `v ← μ·v + lr·g`, `p ← p − v`; PyTorch also starts the buffer at the first gradient instead of zeros, so `dampening` applies only from step 2 ✅[^3].
+3. **PyTorch's form:** `v ← μ·v + g`, `p ← p − lr·v` (`μ` is the `momentum` argument, `p` the parameters), where Sutskever et al. and some other frameworks use `v ← μ·v + lr·g`, `p ← p − v`; PyTorch also starts the buffer at the first gradient, where some other frameworks start it at zeros, so `dampening` applies only from step 2 ✅[^3].
 4. **Nesterov:** with `nesterov=True`, PyTorch steps along `g + μ·b` (gradient plus the momentum buffer `b`) instead of `b` ✅[^3].
 
 ### Per-coordinate step sizes: RMSprop
@@ -58,7 +58,7 @@ Adagrad divides by the square root of a sum of all past squared gradients, `s_t 
 1. **Two leaky averages:** `v_t = β1·v_{t−1} + (1 − β1)·g_t` (the mean, like momentum) and `s_t = β2·s_{t−1} + (1 − β2)·g_t²` (the second moment, like RMSprop); common choices are `β1 = 0.9`, `β2 = 0.999` ✅[^2].
 2. **Bias correction:** both start at 0, so early values are too small; dividing gives `v̂_t = v_t/(1 − β1^t)` and `ŝ_t = s_t/(1 − β2^t)` ✅[^2]. Example at `t = 1`: `v_1 = 0.1·g`, `v̂_1 = 0.1·g/0.1 = g`, and `ŝ_1 = g²`, so the first step is `η·g/|g|`: size `η` in every coordinate, whatever the gradient's scale.
 3. **Update:** `θ_t = θ_{t−1} − η·v̂_t/(√ŝ_t + ε)` ✅[^2]; PyTorch defaults `lr=1e-3`, `betas=(0.9, 0.999)`, `eps=1e-8`, `weight_decay=0` ✅[^6].
-4. **What its authors claim:** Adam is invariant to a diagonal rescaling of the gradients; their derivation sets `ε = 0`, so that multiplying the gradients by `c` multiplies `v̂_t` by `c` and `ŝ_t` by `c²`, which cancel in the step ✅[^7]. Its hyperparameters typically need little tuning, though the paper's own experiments still searched the learning rate and momentum over a dense grid for every comparison ✅[^7]. Reddi et al. showed cases where Adam diverges ✅[^2].
+4. **What its authors claim:** Adam is invariant to a diagonal rescaling of the gradients; their derivation sets `ε = 0`, so that multiplying the gradients by `c` multiplies `v̂_t` by `c` and `ŝ_t` by `c²`, which cancel in the step ✅[^7]. Its hyperparameters typically need little tuning, though the paper's own experiments still searched hyperparameters such as the learning rate and momentum over a dense grid and reported the best setting ✅[^7]. Reddi et al. showed cases where Adam diverges ✅[^2].
 
 ### Weight decay: L2 in the gradient vs decoupled (AdamW)
 1. **`SGD` and `Adam` in PyTorch:** `weight_decay=λ` adds `λ·θ` to the gradient before anything else, which is the gradient of an L2 term `λ/2·‖θ‖²` in the loss ✅[^3] ✅[^6].
@@ -67,8 +67,8 @@ Adagrad divides by the square root of a sum of all past squared gradients, `s_t 
 
 ### Learning-rate schedules
 1. **Why schedule:** too large a rate diverges, too small is slow; the rate should decay; and early large steps may not help while the parameters are still random ✅[^11].
-2. **Cosine decay:** `η_t = η_T + (η_0 − η_T)/2 · (1 + cos(π·t/T))` for `t` in `[0, T]`, from the initial rate `η_0` to the final `η_T` ✅[^11], proposed by Loshchilov and Hutter ✅[^11]. PyTorch's `CosineAnnealingLR(T_max, eta_min)` implements this closed form recursively and, unlike SGDR (SGD with warm restarts), never restarts ✅[^12].
-3. **Gradual warmup:** Goyal et al., training with a batch `k` times larger than a baseline that uses rate `η`, raise the rate by a constant amount each iteration from `η` to `k·η` over the first 5 epochs; with a large `k`, a constant low-rate warmup followed by a jump could make the training error spike ✅[^13]. In their ImageNet runs with batches of 8,192 images, the error did spike right after constant warmup and never fully recovered (validation error 25.88 %, worse than no warmup's 24.84 %), while gradual warmup reached 23.74 % against 23.60 % for the 256-image baseline ✅[^13]. PyTorch's `LinearLR(start_factor, total_iters)` multiplies the base rate by a factor that moves linearly to `end_factor` ✅[^14], and `SequentialLR` hands over between schedulers at `milestones` ✅[^15].
+2. **Cosine decay:** `η_t = η_T + (η_0 − η_T)/2 · (1 + cos(π·t/T))` for `t` in `[0, T]`, from the initial rate `η_0` to the final `η_T` ✅[^11], proposed by Loshchilov and Hutter ✅[^11]. PyTorch's `CosineAnnealingLR(T_max, eta_min)` approximates this closed form recursively and, unlike SGDR (SGD with warm restarts), never restarts ✅[^12].
+3. **Gradual warmup:** Goyal et al., training with a batch `k` times larger than a baseline that uses rate `η`, raise the rate by a constant amount each iteration from `η` to `k·η` over the first 5 epochs; with a large `k`, a constant low-rate warmup followed by a jump could make the training error spike ✅[^13]. In their ImageNet runs with batches of 8,192 images, the training error spiked right after constant warmup and training never fully recovered; top-1 validation error was 25.88 % with constant warmup, worse than no warmup's 24.84 %, while gradual warmup reached 23.74 % against 23.60 % for the 256-image baseline ✅[^13]. PyTorch's `LinearLR(start_factor, total_iters)` multiplies the base rate by a factor that moves linearly to `end_factor` ✅[^14], and `SequentialLR` hands over between schedulers at `milestones` ✅[^15].
 4. **Call order:** call `scheduler.step()` after `optimizer.step()`; the other order skips the first value of the schedule ✅[^16].
 
 Warmup then cosine, peak rate 1.0, from the same lab run ✅[^9]:
@@ -184,11 +184,11 @@ Reading it, line by line:
 ## Trade-offs
 | Option | Gains | Costs |
 |---|---|---|
-| SGD + momentum | One state buffer `b` ✅[^3]; converges on the canyon where plain SGD diverges ✅[^1] ✅[^9] | Needs a tuned rate per problem ✅[^11] |
+| SGD + momentum | One state buffer `b` ✅[^3]; converges on the canyon where plain SGD diverges ✅[^1] ✅[^9] | The rate has to be adjusted: too large diverges, too small trains slowly or ends at a worse result ✅[^11] |
 | Adam | Per-coordinate scaling, invariant to diagonal rescaling of the gradients, little tuning ✅[^7] | Two state buffers, first and second moment ✅[^6]; L2 interacts with the scaling ✅[^10]; can diverge ✅[^2] |
 | AdamW | Decay independent of gradient size; generalized substantially better than Adam with L2 in the AdamW paper, about 15 % relative test-error improvement on its image tasks ✅[^10] | Another default to know (`weight_decay=0.01`) ✅[^8] |
 | Warmup | Avoids the error spike of a sudden large rate ✅[^13] | One more hyperparameter (length) |
-| Cosine decay | Smooth decay to `η_T` with two parameters besides the peak rate, `η_T` and `T` ✅[^11] | `T_max`, the number of iterations of the decay, must be planned in advance ✅[^12] |
+| Cosine decay | Smooth decay to `η_T` with two parameters besides the peak rate, `η_T` and `T` ✅[^11] | `T_max`, the maximum number of iterations, is a required argument, so the decay's length is fixed when the scheduler is built ✅[^12] |
 
 ## Takeaways
 - Use `AdamW` when you mean weight decay with an adaptive optimizer; `Adam(weight_decay=…)` is L2 regularization. [rule-candidate]
@@ -211,7 +211,7 @@ Reading it, line by line:
 - `machine-learning/lab-setup.md` — the lab where the six optimizers on the quadratic, the L2-vs-AdamW fits and the warmup-cosine schedule ran on 2026-11-24 (re-run 2026-11-25, same output), and `CosineAnnealingLR` past `T_max` was checked on 2026-11-25. [^9]
 - [Decoupled Weight Decay Regularization](https://arxiv.org/html/1711.05101v3) — Loshchilov, Hutter, 2019 (v3; full text read on ar5iv). Backs: L2 and weight decay equivalent for SGD, not for Adam; large-gradient weights regularized less; decoupled hyperparameters; 15 % relative improvement. [^10]
 - [Learning Rate Scheduling (Dive into Deep Learning, 12.11)](https://d2l.ai/chapter_optimization/lr-scheduler.html) — Zhang, Lipton, Li, Smola, living. Backs: why schedule, cosine formula, Loshchilov and Hutter, warmup motivation. [^11]
-- [torch.optim.lr_scheduler.CosineAnnealingLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html) — PyTorch, 2026 (2.15). Backs: recursive closed form, no restarts, `T_max`. [^12]
+- [torch.optim.lr_scheduler.CosineAnnealingLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html) — PyTorch, 2026 (2.15). Backs: recursive approximation of the closed form, no restarts, `T_max` required. [^12]
 - [Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour](https://arxiv.org/html/1706.02677v2) — Goyal et al., 2017 (v2; full text read on ar5iv). Backs: gradual warmup over 5 epochs, constant-warmup error spike (§2.2; §5.2, Figure 2 and Table 1), linear scaling rule. [^13]
 - [torch.optim.lr_scheduler.LinearLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.LinearLR.html) — PyTorch, 2026 (2.15). Backs: `start_factor`, `end_factor`, `total_iters`. [^14]
 - [torch.optim.lr_scheduler.SequentialLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.SequentialLR.html) — PyTorch, 2026 (2.15). Backs: chaining schedulers at milestones. [^15]

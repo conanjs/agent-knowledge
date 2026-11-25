@@ -17,7 +17,7 @@ tags: [machine-learning, deep-learning, rnn, recurrent-neural-network, backpropa
 **Not this doc:** the backpropagation mechanism itself → `machine-learning/deep-learning/neural-networks-and-backpropagation.md`; vanishing gradients in deep feed-forward stacks → `machine-learning/deep-learning/activations-and-initialization.md`; attention and the transformer → `machine-learning/transformers/attention-and-the-transformer.md`.
 
 ## Problem
-Text, audio and time series have order and variable length, and the answer at one step can depend on an input far back. A vanilla RNN can represent such dependencies, but training it is another matter: in the worked example, the last output of a 100-step tanh (hyperbolic tangent) RNN depends on its first input through a gradient of `2.9e-27`, and on the input 50 steps back through `3.4e-14` ✅[^9]. In the other direction, an occasional huge gradient can destroy the weights in one step, which is why gradient clipping is "vital" for RNN training ✅[^1].
+Text, audio and time series have order and variable length, and the answer at one step can depend on an input far back. A vanilla RNN can represent such dependencies, but training it is another matter: in the worked example, the last output of a 100-step tanh (hyperbolic tangent) RNN depends on its first input through a gradient of `2.9e-27`, and on the input 50 steps back through `3.4e-14` ✅[^9]. In the other direction, an occasional massive gradient can destabilize training, which is why gradient clipping is "vital" for RNN training ✅[^1].
 
 ## Mental model
 **Analogy:** a whisper game along a line of 100 people. In a vanilla RNN, every person rewrites the whole message in their own words before passing it on, so after 50 people the first words are gone, or garbled into shouting. The LSTM adds a notebook passed along beside the whispers: each person may cross out entries (forget gate), add new ones (input gate) and read from it (output gate), but if nobody crosses anything out, what was written at the start arrives unchanged. Gradient clipping is a volume limiter on the backward pass: it caps how loud the correction can be, without changing what it says.
@@ -154,13 +154,13 @@ Reading it, row by row:
 | Case | What happens | Why |
 |---|---|---|
 | Tensor passed as `(batch, seq, feature)` with defaults | Batch and time are swapped silently | `batch_first=False` by default: input is `(seq, batch, feature)` ✅[^5] |
-| `batch_first=True` and the hidden state | `h_0`/`c_0` keep the shape `(D·num_layers, N, H_out)` (`D` = 2 if bidirectional, else 1) | `batch_first` does not apply to hidden or cell states ✅[^5] |
+| `batch_first=True` and the hidden state | `h_0` keeps the shape `(D·num_layers, N, H_out)` and `c_0` the shape `(D·num_layers, N, H_cell)` (`D` = 2 if bidirectional, else 1) | `batch_first` does not apply to hidden or cell states ✅[^5] |
 | LSTM straight from initialization | Long-range gradients vanish like a vanilla RNN's | Forget gate ≈ 0.5 at default init (lab) ✅[^9] |
-| Clipping used against vanishing gradients | No effect | Clipping only caps large gradients; vanishing needs gating ✅[^6] |
+| Clipping used against vanishing gradients | No effect | Clipping helps with exploding gradients; vanishing ones appear to need a more elaborate solution, such as the LSTM's gates ✅[^6] |
 | Large recurrent weights | May or may not explode | Largest eigenvalue > 1 is derived only as a necessary condition ✅[^4]; lab: no explosion of the per-input gradient ✅[^9] |
 | Truncated BPTT with window `τ` | Dependencies longer than `τ` get no gradient | The sum stops after `τ` steps; the model favours short-term influence ✅[^1] |
 | Element-wise clipping (an older alternative) | Each entry is clipped at a threshold | Mikolov's approach, which Pascanu et al. build on ✅[^4] |
-| Batch normalization in an RNN | Statistics depend on sequence length | Layer norm computes them per time step ✅[^13]; details in `machine-learning/deep-learning/normalization-and-dropout.md` |
+| Batch normalization in an RNN | Needs separate statistics for each time step, a problem when a test sequence is longer than every training sequence | Layer norm computes its statistics separately at each time step ✅[^13]; details in `machine-learning/deep-learning/normalization-and-dropout.md` |
 | GRU or LSTM? | Often similar results | Comparable in Chung et al., the better one depending on the dataset ✅[^10]; GRU has 3/4 of the LSTM's parameters (lab) ✅[^9] |
 
 ## Trade-offs

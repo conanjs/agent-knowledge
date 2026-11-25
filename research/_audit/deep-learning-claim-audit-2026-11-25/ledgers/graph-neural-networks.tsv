@@ -1,0 +1,61 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	Challenges section: 'no guarantee that these different matrices would produce the same result'	https://distill.pub/2021/gnn-intro/
+2	7	lab	LAB-OK	Output 2: 'flattened-A MLP same output after relabel: False'	lab
+3	1	source	OK	Challenges section: four types of information, 'nodes, edges, global-context and connectivity'	https://distill.pub/2021/gnn-intro/
+4	1	source	OK	Challenges section: 'memory-efficient way of representing sparse matrices is as adjacency lists'	https://distill.pub/2021/gnn-intro/
+5	1	source	OK	Comparing aggregation operations: 'simple candidate permutation-invariant operations are sum, mean, and max'	https://distill.pub/2021/gnn-intro/
+6	1	source	OK	Passing messages: gather neighbour embeddings; 'Aggregate all messages via an aggregate function (like sum)'; learned update	https://distill.pub/2021/gnn-intro/
+7	5	source	OK	Sec 2, Eq. 2.1: a_v = AGGREGATE({h_u : u in N(v)}), h_v = COMBINE(h_v, a_v)	https://arxiv.org/pdf/1810.00826
+8	2	source	OK	Sec 2.1: filters 'effectively convolve the kth-order neighborhood of a node'; k = number of layers	https://arxiv.org/pdf/1609.02907
+9	1	source	OK	Pooling section: 'The gathered embeddings are then aggregated, usually via a sum operation'	https://distill.pub/2021/gnn-intro/
+10	5	source	OK	Sec 2: 'READOUT can be a simple permutation invariant function such as summation'	https://arxiv.org/pdf/1810.00826
+11	2	source	OK	Sec 2, Eq. 2: 'A~ = A + IN is the adjacency matrix ... with added self-connections'; D~ii = sum_j A~ij	https://arxiv.org/pdf/1609.02907
+12	7	lab	LAB-OK	Output 1: 'degrees + 1: [4.0, 2.0, ...]' and 'A_hat row 0: [0.25, 0.3536, 0.3536, ...]'	lab
+13	2	source	OK	Sec 2.2: 'eigenvalues in the range [0,2]'; 'numerical instabilities and exploding/vanishing gradients'	https://arxiv.org/pdf/1609.02907
+14	7	lab	LAB-OK	Output 1: 'largest eigenvalue of A_hat: 1.0'	lab
+15	2	source	OK	Abstract: 'Our model scales linearly in the number of graph edges'	https://arxiv.org/pdf/1609.02907
+16	2	source	OK	Eq. 9 two-layer model; App. B Fig. 5, 1-10 layers: 'best results are obtained with a 2- or 3-layer model'; >7 layers	https://arxiv.org/pdf/1609.02907
+17	3	source	OK	Algorithm 1 lines 4, 5, 7: AGGREGATE, sigma(W . CONCAT(h_v, h_N(v))), h / ||h||2	https://arxiv.org/pdf/1706.02216
+18	3	source	FIXED	Sec 3.3: 'An important distinction' is no concatenation; it 'leads to significant gains'; mean 'nearly equivalent'	https://arxiv.org/pdf/1706.02216
+19	3	source	FIXED	Sec 4: 'K = 2 with neighborhood sample sizes S1 = 25 and S2 = 10'; App. A: S2 immediate, S1*S2 2-hop	https://arxiv.org/pdf/1706.02216
+20	3	source	OK	Abstract: 'efficiently generate node embeddings for previously unseen data'; 'generalizes to completely unseen graphs'	https://arxiv.org/pdf/1706.02216
+21	3	source	OK	Sec 3.3: mean; LSTM 'applying the LSTMs to a random permutation'; pooling via fully-connected net then max	https://arxiv.org/pdf/1706.02216
+22	4	source	OK	Sec 2.1: LeakyReLU 'negative input slope alpha = 0.2'; masked attention; 'first-order neighbors of i (including i)'	https://arxiv.org/pdf/1710.10903
+23	4	source	OK	Sec 2.1, Eq. 2: alpha_ij = softmax_j(e_ij); Eq. 4: h'_i = sigma(sum_j alpha_ij W h_j)	https://arxiv.org/pdf/1710.10903
+24	7	lab	LAB-OK	Output 5: 'alpha_0j ... [0.1022, 0.4003, 0.4749, 0.0227]' and GCN row '[0.25, 0.3536, 0.3536, 0.2887]'	lab
+25	4	source	OK	Eq. 5 concat, Eq. 6 averaging on final layer; Sec 3.3: 'K = 8 attention heads computing F' = 8 features each'	https://arxiv.org/pdf/1710.10903
+26	4	source	OK	Sec 2.2: 'O(|V|FF' + |E|F')'; 'This complexity is on par with' GCNs	https://arxiv.org/pdf/1710.10903
+27	6	source	FIXED	p.4: graph convolution is 'a special form of Laplacian smoothing'; p.1: 'vertices from different clusters may become indistinguishable'; Fig. 2 rendered	https://arxiv.org/pdf/1801.07606
+28	6	source	OK	p.4: 'they will converge to be proportional to the square root of the vertex degree'; Theorem 1; p.5 self-loops	https://arxiv.org/pdf/1801.07606
+29	1	source	FIXED	Design lessons: 'lower bound for performance decreases with four layers'; chart data min AUC 1L .557, 2L .597, 3L .598, 4L .578	https://distill.pub/2021/gnn-intro/
+30	5	source	OK	Sec 2: WL 'hashes the aggregated labels into unique new labels'; App. A: same label collections, WL 'cannot decide'	https://arxiv.org/pdf/1810.00826
+31	5	source	FIXED	Lemma 2: GNN at most as powerful as WL; Theorem 3: 'With a sufficient number of GNN layers', f and phi injective	https://arxiv.org/pdf/1810.00826
+32	5	source	OK	Fig. 2 caption: 'sum captures the full multiset, mean captures the proportion/distribution'; max reduces to a set	https://arxiv.org/pdf/1810.00826
+33	5	source	OK	Abstract: GCN and GraphSAGE 'cannot learn to distinguish certain simple graph structures'	https://arxiv.org/pdf/1810.00826
+34	5	source	OK	Eq. 4.1 MLP((1 + eps) h_v + sum h_u); 'learnable parameter or a fixed scalar'; GIN-0 eps = 0; Eq. 4.2 CONCAT	https://arxiv.org/pdf/1810.00826
+35	5	source	OK	Sec 5.1: 'the 1-layer perceptron (even with the bias term) is not a universal approximator'	https://arxiv.org/pdf/1810.00826
+36	7	lab	LAB-OK	Worked example block: sections 1-5 match the script's prints line by line; GCN row re-derived by hand	lab
+37	1	source	OK	Challenges section: 'there are many adjacency matrices that can encode the same connectivity'	https://distill.pub/2021/gnn-intro/
+38	7	lab	LAB-OK	Output 2: 'flattened-A MLP same output after relabel: False'	lab
+39	2	source	OK	Sec 2, Eq. 2: 'A~ = A + IN ... with added self-connections'	https://arxiv.org/pdf/1609.02907
+40	6	source	OK	p.4: features 'within each connected component of the graph will converge to the same values'	https://arxiv.org/pdf/1801.07606
+41	7	lab	LAB-OK	Output 3: 'depth  8: ... 0.1275' and 'depth 16: ... 0.0063'	lab
+42	2	source	OK	App. B: 'best results are obtained with a 2- or 3-layer model'; 'deeper than 7 layers' without residuals	https://arxiv.org/pdf/1609.02907
+43	3	source	OK	Sec 3.1: 'uniformly sample a fixed-size set of neighbors, instead of using full neighborhood sets'	https://arxiv.org/pdf/1706.02216
+44	3	source	FIXED	Abstract: transductive methods 'do not naturally generalize to unseen nodes'; Sec 4.1 DeepWalk needs 'new rounds of SGD'	https://arxiv.org/pdf/1706.02216
+45	5	source	OK	Lemma 2: GNN at most as powerful as WL; Sec 3: WL fails 'with a few exceptions, e.g., regular graphs'	https://arxiv.org/pdf/1810.00826
+46	7	lab	LAB-OK	Output 4: 'GCN readouts equal: True | GIN readouts equal: True'	lab
+47	5	source	FIXED	Sec 5.2: mean and max-pooling 'are not injective'; Sec 4.1: 'sum aggregators can represent injective' multiset functions	https://arxiv.org/pdf/1810.00826
+48	7	lab	LAB-OK	Output 4: mean and max of {a} vs {a, a} both '[1.0, 0.0] [1.0, 0.0]'; sum gives [2.0, 0.0]	lab
+49	3	source	OK	Sec 3.3: 'applying the LSTMs to a random permutation of the node's neighbors'	https://arxiv.org/pdf/1706.02216
+50	2	source	OK	Sec 3.1: A^ computed 'in a pre-processing step'; Eq. 9 cost 'linear in the number of graph edges'	https://arxiv.org/pdf/1609.02907
+51	5	source	OK	Eq. 2.3 GCN as MEAN pooling; Sec 5.3: mean captures 'the distribution (proportions) ... but not the exact multiset'	https://arxiv.org/pdf/1810.00826
+52	3	source	OK	Sec 3.1: 'per-batch space and time complexity for GraphSAGE is fixed'; inductive framework (abstract)	https://arxiv.org/pdf/1706.02216
+53	5	source	OK	Sec 5: mean or max variants 'get confused by surprisingly simple graphs and are less powerful than the WL test'	https://arxiv.org/pdf/1810.00826
+54	4	source	OK	Sec 2.2: 'assigning different importances to nodes of a same neighborhood'; complexity on par with GCNs	https://arxiv.org/pdf/1710.10903
+55	4	source	OK	Sec 2.2: 'multi-head attention multiplies the storage and parameter requirements by a factor of K'	https://arxiv.org/pdf/1710.10903
+56	5	source	OK	Abstract: 'as powerful as the Weisfeiler-Lehman graph isomorphism test'; graph classification benchmarks	https://arxiv.org/pdf/1810.00826
+57	5	source	OK	Sec 3: 'any aggregation-based GNN is at most as powerful as the WL test'	https://arxiv.org/pdf/1810.00826
+58	2	source	OK	Sec 2.1: k layers convolve the 'kth-order neighborhood of a node'; App. B effective context grows per layer	https://arxiv.org/pdf/1609.02907
+59	6	source	OK	p.5: 'over-smoothing will make the features indistinguishable and hurt the classification accuracy'	https://arxiv.org/pdf/1801.07606
+60	2	source	OK	App. B: 'training without the use of residual connections can become difficult'	https://arxiv.org/pdf/1609.02907

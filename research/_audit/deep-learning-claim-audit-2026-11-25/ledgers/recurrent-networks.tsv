@@ -1,0 +1,55 @@
+n	label	kind	verdict	evidence	source
+1	9	lab	LAB-OK	Output (2) RNN default init: "t=50:3.4e-14  t=1:2.9e-27"	lab
+2	1	source	FIXED	9.7: "gradient clipping is vital for preventing the occasional massive gradients from destabilizing training"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+3	9	lab	LAB-OK	Output (1): "max |hand - nn.LSTM| = 0.0 | mean forget gate at init: 0.526"	lab
+4	2	source	OK	h_t = tanh(x_t W_ih^T + b_ih + h_{t-1} W_hh^T + b_hh); hx "Defaults to zeros if not provided"; input-hidden, hidden-hidden weights	https://docs.pytorch.org/docs/2.15/generated/torch.nn.RNN.html
+5	3	source	OK	9.4.2: "even at different time steps, RNNs always use these model parameters"; cost "does not grow"	https://d2l.ai/chapter_recurrent-neural-networks/rnn.html
+6	1	source	OK	9.7: "expand (or unroll) the computational graph of an RNN one time step at a time"; gradients "summed across all places"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+7	1	source	OK	9.7 (Eq. 9.7.15): "very large powers of" W_hh^T; "eigenvalues smaller than 1 vanish and eigenvalues larger than 1 diverge"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+8	4	source	OK	2.1: lambda1 < 1 "sufficient" to vanish, >1 "necessary" to explode; "For tanh we have γ=1 while for sigmoid we have γ=1/4"	https://arxiv.org/html/1211.5063v2
+9	4	source	OK	2.1: "necessary for it to be larger than 1 for gradients to explode"	https://arxiv.org/html/1211.5063v2
+10	9	lab	LAB-OK	Output (2) "RNN  W_hh x 3": per-input gradients 7.4e-01, 1.2e+00, 1.1e-01, 8.6e-02, 2.0e-03, no explosion	lab
+11	1	source	OK	9.7.1: "In practice this works quite well"; "focuses primarily on short-term influence"; "detaching the gradient"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+12	1	source	OK	9.7: "text sequences consisting of over a thousand tokens"; "over 1000 matrix products"; "another 1000" for the gradient	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+13	5	source	OK	LSTM equations: i_t, f_t, o_t = σ(W x_t + b + W h_{t-1} + b), g_t = tanh(...); "σ is the sigmoid function"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html
+14	5	source	OK	"c_t = f_t ⊙ c_{t-1} + i_t ⊙ g_t", "h_t = o_t ⊙ tanh(c_t)"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html
+15	5	source	OK	weight_ih_l[k]: "(W_ii|W_if|W_ig|W_io), of shape (4*hidden_size, input_size) for k = 0"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html
+16	6	source	OK	10.1: "If the forget gate is always 1 and the input gate is always 0" state constant; "alleviates the vanishing gradient problem"	https://d2l.ai/chapter_recurrent-modern/lstm.html
+17	6	source	OK	10.1: "While gradient clipping helps with exploding gradients"; LSTM "one of the first and most successful techniques" (Hochreiter and Schmidhuber)	https://d2l.ai/chapter_recurrent-modern/lstm.html
+18	7	source	OK	GRU equations r_t, z_t, n_t, h_t = (1 - z_t) ⊙ n_t + z_t ⊙ h_{t-1}; "reset, update, and new gates"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.GRU.html
+19	7	source	OK	weight_ih_l[k]: "(W_ir|W_iz|W_in), of shape (3*hidden_size, input_size) for k = 0"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.GRU.html
+20	9	lab	LAB-OK	Output (3): "parameters  RNN: 1344  GRU: 4032  LSTM: 5376"	lab
+21	8	source	OK	10.2 intro: "a streamlined version of the LSTM memory cell that often achieves comparable performance"; faster to compute	https://d2l.ai/chapter_recurrent-modern/gru.html
+22	10	source	OK	5: gated units "clearly outperformed the more traditional tanh-RNN on both of the Ubisoft datasets"; music close; Table 2 Nottingham test tanh 3.13 best; 6: no concrete conclusion	https://arxiv.org/pdf/1412.3555v1
+23	4	source	OK	3.2 Algorithm 1: "if ‖ĝ‖ ≥ threshold then ĝ ← threshold/‖ĝ‖ ĝ"	https://arxiv.org/html/1211.5063v2
+24	4	source	OK	3.2: "average norm over a sufficiently large number of updates"; "training is not very sensitive to this hyper-parameter"	https://arxiv.org/html/1211.5063v2
+25	11	source	OK	"as if the norms of the individual gradients were concatenated into a single vector"; "modified in-place"; returns total norm	https://docs.pytorch.org/docs/2.15/generated/torch.nn.utils.clip_grad_norm_.html
+26	12	source	OK	1: "This inherently sequential nature precludes parallelization within training examples"	https://arxiv.org/html/1706.03762v7
+27	12	source	OK	Table 1: Recurrent O(n·d²), O(n), O(n); Self-Attention O(n²·d), O(1), O(1); 4: faster "when the sequence length n is smaller than" d	https://arxiv.org/html/1706.03762v7
+28	12	source	OK	1: "new state of the art in translation quality after being trained for as little as twelve hours" on eight P100 GPUs	https://arxiv.org/html/1706.03762v7
+29	9	lab	LAB-OK	Output block sections (2)-(3) as printed by the full script; prose figures match it	lab
+30	9	lab	LAB-OK	Re-run 2026-11-25, PyTorch 2.15.0 (work/recurrent-networks/f32check.py): float32 t=1 0.0e+00, float64 2.9e-27	lab
+31	4	source	OK	2.1: "necessary for it to be larger than 1 for gradients to explode"	https://arxiv.org/html/1211.5063v2
+32	5	source	OK	batch_first: "(batch, seq, feature) instead of (seq, batch, feature)", "Default: False"; input (L, N, H_in)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html
+33	5	source	FIXED	h_0 (D*num_layers, N, H_out), c_0 (D*num_layers, N, H_cell); "Note that this does not apply to hidden or cell states"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html
+34	9	lab	LAB-OK	Output (1): "mean forget gate at init: 0.526"	lab
+35	6	source	FIXED	10.1: "While gradient clipping helps with exploding gradients"; vanishing "appears to require a more elaborate solution"	https://d2l.ai/chapter_recurrent-modern/lstm.html
+36	4	source	OK	2.1: "necessary for it to be larger than 1 for gradients to explode"	https://arxiv.org/html/1211.5063v2
+37	9	lab	LAB-OK	Output (2) "RNN  W_hh x 3": largest per-input gradient 1.2e+00	lab
+38	1	source	OK	9.7.1: truncate the sum after tau steps; "focuses primarily on short-term influence rather than long-term consequences"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+39	4	source	OK	3.1: Mikolov's "clipping the gradient's temporal components element-wise"; 3.2: "very similar to the one proposed by Tomas Mikolov"	https://arxiv.org/html/1211.5063v2
+40	13	source	FIXED	3.1: "compute and store separate statistics for each time step"; abstract: "computing the normalization statistics separately at each time step"	https://arxiv.org/html/1607.06450v1
+41	10	source	OK	5: "results are not conclusive in comparing the LSTM and the GRU"; "may depend heavily on the dataset"	https://arxiv.org/pdf/1412.3555v1
+42	9	lab	LAB-OK	Output (3): GRU 4032 / LSTM 5376 = 3/4	lab
+43	9	lab	LAB-OK	Output (3): "RNN: 1344"	lab
+44	3	source	OK	9.4.2: "even at different time steps, RNNs always use these model parameters"	https://d2l.ai/chapter_recurrent-neural-networks/rnn.html
+45	1	source	OK	9.7: "eigenvalues smaller than 1 vanish and eigenvalues larger than 1 diverge"; clipping "vital"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+46	6	source	OK	10.1: forget gate 1 and input gate 0 keep the cell constant; "alleviates the vanishing gradient problem"	https://d2l.ai/chapter_recurrent-modern/lstm.html
+47	9	lab	LAB-OK	Output (3): LSTM 5376 = 4 x RNN 1344	lab
+48	10	source	OK	5: on music "all the three models performed closely to each other"; 6: "could not make concrete conclusion"	https://arxiv.org/pdf/1412.3555v1
+49	8	source	OK	10.2 intro: GRUs have the advantage of being faster to compute	https://d2l.ai/chapter_recurrent-modern/gru.html
+50	9	lab	LAB-OK	Output (3): GRU 4032 = 3 x RNN 1344	lab
+51	1	source	OK	9.7: full sum "too much memory"; truncation "needed for computational convenience and numerical stability"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+52	1	source	OK	9.7.1: truncated model "focuses primarily on short-term influence rather than long-term consequences"	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+53	12	source	OK	Table 1: Self-Attention sequential operations O(1), maximum path length O(1); 1: recurrence precludes parallelization	https://arxiv.org/html/1706.03762v7
+54	12	source	OK	Table 1: Self-Attention complexity O(n²·d); 4: faster only "when the sequence length n is smaller than" d	https://arxiv.org/html/1706.03762v7

@@ -1,0 +1,66 @@
+n	label	kind	verdict	evidence	source
+1	7	lab	FIXED	Output (3) line 224x224: '196 patches, sequence 197, attention scores per head 38,809' (197^2)	lab
+2	1	source	OK	Sec 4.2, Fig. 3 text: 'The BiT CNNs outperform ViT on ImageNet, but with the larger datasets, ViT overtakes'	https://arxiv.org/pdf/2010.11929
+3	7	lab	LAB-OK	Artifact lines 1-5: 'conv tokens (1, 196, 768) | max |conv - linear| 8.34e-07 | params 590592'	lab
+4	1	source	OK	Sec 3.1: 'N = HW/P2 ... also serves as the effective input sequence length'	https://arxiv.org/pdf/2010.11929
+5	1	source	OK	Sec 3.1: 'map to D dimensions with a trainable linear projection (Eq. 1)'	https://arxiv.org/pdf/2010.11929
+6	2	source	OK	Sec 11.8.2, one convolution where 'the kernel size and the stride size are set to the patch size'	https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+7	5	source	FIXED	Examples comment: 'Convolution is equivalent with Unfold + Matrix Multiplication + Fold (or view to output shape)'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Unfold.html
+8	7	lab	LAB-OK	Artifact line 5: 'max |conv - linear| 8.34e-07'	lab
+9	1	source	OK	Sec 3.1: prepend a learnable embedding 'whose state at the output of the Transformer encoder' serves as image representation	https://arxiv.org/pdf/2010.11929
+10	2	source	OK	Sec 11.8.1: 'the <cls> token attends to all the image patches via self-attention'	https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+11	1	source	OK	Sec 3.1, head MLP with 'one hidden layer at pre-training time and by a single linear layer at fine-tuning'	https://arxiv.org/pdf/2010.11929
+12	2	source	FIXED	Sec 11.8.1: 'summed with learnable positional embeddings' (no 1-D vs 2-D statement, so marker moved here)	https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+13	1	source	FIXED	Sec 3.1: 'standard learnable 1D position embeddings, since we have not observed significant performance gains' (2D-aware)	https://arxiv.org/pdf/2010.11929
+14	7	lab	LAB-OK	Output (5): 'position embeddings off ... 3.58e-07' and 'position embeddings on ... 1.55e-02'	lab
+15	2	source	OK	Sec 11.8.3: 'normalization is applied right before multi-head attention or the MLP'	https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+16	1	source	OK	Sec 4.1 Model Variants: 'ViT-L/16 means the Large variant with 16x16 input patch size'	https://arxiv.org/pdf/2010.11929
+17	1	source	OK	Table 1: ViT-Base 12 / 768 / 86M; ViT-Large 24 / 1024 / 307M; ViT-Huge 32 / 1280 / 632M	https://arxiv.org/pdf/2010.11929
+18	6	source	OK	Classification table, ViT_B_16_Weights.IMAGENET1K_V1: Params 86.6M, GFLOPS 17.56	https://docs.pytorch.org/vision/stable/models.html
+19	7	lab	LAB-OK	Output (4): 'total 86,567,656'; re-derived by hand (12 x 7,087,872 + embed, pos, cls, norm, head)	lab
+20	1	source	OK	Sec 4.1: 'sequence length is inversely proportional to the square of the patch size' so smaller patches cost more	https://arxiv.org/pdf/2010.11929
+21	7	lab	LAB-OK	Output (3): 'patch 32: 49 patches' and 'patch 8: 784 patches'	lab
+22	1	source	OK	Sec 3.2: keep patch size, 'larger effective sequence length'; '2D interpolation of the pre-trained position embeddings'	https://arxiv.org/pdf/2010.11929
+23	7	lab	LAB-OK	Output (6): '14x14 -> (24, 24) | sequence 197 -> 577'	lab
+24	1	source	FIXED	Sec 3.1 Inductive bias: 'only MLP layers are local and translationally equivariant'; 2-D used at patching and fine-tuning	https://arxiv.org/pdf/2010.11929
+25	2	source	OK	Sec 11.8.6: 'Transformers lack those useful principles in convolution, such as translation invariance and locality'	https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+26	1	source	OK	Sec 1: 'a few percentage points below ResNets of comparable size'; 'large scale training trumps inductive bias'	https://arxiv.org/pdf/2010.11929
+27	1	source	FIXED	Sec 4.3: 'ViT-Large models underperform compared to ViT-Base'; 'Only with JFT-300M, do we see the full benefit'	https://arxiv.org/pdf/2010.11929
+28	8	source	OK	Sec 8.8.5 Discussion: 'showing that scalability trumps inductive biases'	https://d2l.ai/chapter_convolutional-modern/cnn-design.html
+29	1	source	OK	Sec 3.1 Hybrid: projection E 'applied to patches extracted from a CNN feature map'; patches can be 1x1	https://arxiv.org/pdf/2010.11929
+30	1	source	OK	Sec 4.4: 'hybrids slightly outperform ViT at small computational budgets, but the difference vanishes'	https://arxiv.org/pdf/2010.11929
+31	3	source	OK	Sec 1: 'single 8-GPU node in two to three days (53 hours of pre-training'; Table 5: DeiT-B 81.8, DeiT-B up384 83.1	https://arxiv.org/pdf/2012.12877
+32	3	source	OK	Sec 6 Data-Augmentation: 'experiments confirm that transformers require a strong data augmentation'	https://arxiv.org/pdf/2012.12877
+33	3	source	OK	Sec 1 contributions: 'plays the same role as the class token'; 'Both tokens interact in the transformer through attention'	https://arxiv.org/pdf/2012.12877
+34	3	source	OK	Sec 5.2: 'Hard distillation significantly outperforms soft distillation'; convnet teacher better; Table 2 RegNetY-16GF vs DeiT-B	https://arxiv.org/pdf/2012.12877
+35	3	source	OK	Sec 5.2: 'Our best model on ImageNet-1k is 85.2% top-1 accuracy'	https://arxiv.org/pdf/2012.12877
+36	4	source	OK	Sec 1: 'shift of the window partition between consecutive self-attention layers'; windows bridge preceding layer's windows	https://arxiv.org/pdf/2103.14030
+37	4	source	OK	Sec 3.2 Eq. 1: Omega(MSA), Omega(W-MSA); 'latter is linear when M is fixed (set to 7 by default)'	https://arxiv.org/pdf/2103.14030
+38	4	source	OK	Sec 3.1: 'patch size of 4x4'; merging 'concatenates the features of each group of 2x2 neighboring patches'; can replace backbones	https://arxiv.org/pdf/2103.14030
+39	4	source	OK	Table 1(a), regular ImageNet-1K training: 'Swin-T 224 29M 4.5G 755.2 81.3'	https://arxiv.org/pdf/2103.14030
+40	6	source	OK	Classification table, Swin_T_Weights.IMAGENET1K_V1: Params 28.3M, GFLOPS 4.49	https://docs.pytorch.org/vision/stable/models.html
+41	7	lab	LAB-OK	Worked example block: 21 lines (6-26) = script sections (3)-(7); Swin numbers re-derived by hand	lab
+42	5	source	OK	Shape: L = prod floor((size + 2pad - dil(k-1) - 1)/stride + 1); (230-16)/16+1 floors to 14	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Unfold.html
+43	6	source	OK	ViT_B_16_Weights.IMAGENET1K_V1 Params 86.6M; lab total 86,567,656 rounds to 86.6 M	https://docs.pytorch.org/vision/stable/models.html
+44	5	source	OK	Shape: block count L uses floor of (spatial_size ... - 1)/stride + 1	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Unfold.html
+45	7	lab	LAB-OK	Output (3): 'not divisible: 230x230, patch 16 -> (14, 14) grid'	lab
+46	1	source	OK	Sec 3.2: 'We therefore perform 2D interpolation of the pre-trained position embeddings'	https://arxiv.org/pdf/2010.11929
+47	7	lab	LAB-OK	Output (6): 'sequence 197 -> 577'	lab
+48	7	lab	LAB-OK	Output (5): 'position embeddings off: max |logits(original) - logits(shuffled)| = 3.58e-07'	lab
+49	1	source	FIXED	Sec 1: 'mid-sized datasets such as ImageNet without strong regularization ... a few percentage points below ResNets'	https://arxiv.org/pdf/2010.11929
+50	1	source	OK	Sec 4.3: 'pre-trained on the smallest dataset, ImageNet, ViT-Large models underperform compared to ViT-Base'	https://arxiv.org/pdf/2010.11929
+51	1	source	OK	Sec 3.1: 'N = HW/P2 is the resulting number of patches'	https://arxiv.org/pdf/2010.11929
+52	7	lab	LAB-OK	Output (3): '224x224 with patch  8:  784 patches'	lab
+53	4	source	OK	Sec 3.2: 'the former is quadratic to patch number hw'	https://arxiv.org/pdf/2103.14030
+54	7	lab	LAB-OK	Output (7): global 2.00 G, 30.67 G, 485.23 G as tokens grow 4x per step	lab
+55	3	source	OK	Sec 5.2: 'using a convnet teacher gives better performance than using a transformer'	https://arxiv.org/pdf/2012.12877
+56	1	source	OK	Sec 3.1: 'much less image-specific inductive bias than CNNs'; Sec 4.4: 'appear not to saturate within the range tried'	https://arxiv.org/pdf/2010.11929
+57	1	source	OK	Sec 1: 'do not generalize well when trained on insufficient amounts of data'	https://arxiv.org/pdf/2010.11929
+58	6	source	OK	ViT_B_16_Weights.IMAGENET1K_V1: GFLOPS 17.56	https://docs.pytorch.org/vision/stable/models.html
+59	3	source	OK	Sec 1: 'single 8-GPU node in two to three days'; 'Imagenet as the sole training set'; Table 5 up384 83.1	https://arxiv.org/pdf/2012.12877
+60	3	source	OK	Sec 6: 'transformers require a strong data augmentation'; Sec 5.2: convnet teacher better, default RegNetY-16GF	https://arxiv.org/pdf/2012.12877
+61	4	source	OK	Abstract: 'linear computational complexity with respect to image size'; Sec 1: hierarchical maps for FPN, U-Net	https://arxiv.org/pdf/2103.14030
+62	4	source	FIXED	Sec 3.2: shifting 'will result in more windows'; some smaller than MxM; padding/masking or cyclic-shift batching	https://arxiv.org/pdf/2103.14030
+63	1	source	OK	Sec 4.4: 'hybrids slightly outperform ViT at small computational budgets'	https://arxiv.org/pdf/2010.11929
+64	1	source	OK	Sec 4.4: 'but the difference vanishes for larger models'	https://arxiv.org/pdf/2010.11929
+65	1	source	OK	Sec 4.1: 'models with smaller patch size are computationally more expensive'	https://arxiv.org/pdf/2010.11929

@@ -1,0 +1,65 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	§3 p.6 and App. E Table 4: Inception and MLPs "still fit perfectly the random training set with weight decay"; AlexNet with weight decay "Failed to converge"; §2 ImageNet random labels 95.20% top-1	https://arxiv.org/pdf/1611.03530
+2	9	lab	LAB-OK	Landscape output: top Hessian eigenvalues 3.576 / 5.292 / 5.721, test acc 0.921 / 0.913 / 0.916; c = 25.0 gives 1167.345 with "same outputs True"	lab
+3	9	lab	LAB-OK	Mental model artifact lines a = -0.25 ... 1.50 (0.6936, 0.6914, 0.2525, 0.0320, 0.0266, 0.2418); run 2026-11-25, PyTorch 2.15.0	lab
+4	2	source	FIXED	Abstract: "a deeper and more profound difficulty originates from the proliferation of saddle points"; plateaus "can dramatically slow down learning"	https://arxiv.org/pdf/1406.2572
+5	2	source	FIXED	§2 p.2 (Bray and Dean 2007): high-error critical points "exponentially likely to be saddle points"; local minima "likely to have an error very close" to the global minimum	https://arxiv.org/pdf/1406.2572
+6	2	source	OK	§3: "small MLP trained on a down-sampled version of MNIST and CIFAR-10"; Bray and Dean's observations "qualitatively hold for neural networks"	https://arxiv.org/pdf/1406.2572
+7	3	source	FIXED	Abstract: "never encounter any significant obstacles"; §4: conv barrier "reasonably wide but not very tall"; MP-DBM "secondary local minimum with high error" that SGD passed far around; seven models (§1)	https://arxiv.org/pdf/1412.6544
+8	4	source	OK	Abstract: "large-batch methods tend to converge to sharp minimizers"; small-batch methods "consistently converge to flat minimizers"	https://arxiv.org/pdf/1609.04836
+9	4	source	OK	§2.2: "10% of the training data as batch size for the large-batch experiments", 256 for small batch, ADAM for both	https://arxiv.org/pdf/1609.04836
+10	4	source	OK	§2.2 Metric 2.1, Eq. (3)-(4) with A = I, ε = 10−3 and 5·10−4; "heuristic metric of sharpness"; value "relates to the largest eigenvalue" of the Hessian	https://arxiv.org/pdf/1609.04836
+11	4	source	OK	Abstract: experiments "support a commonly held view that this is due to the inherent noise in the gradient estimation"	https://arxiv.org/pdf/1609.04836
+12	5	source	OK	Abstract: noise scale "g = ε(N/B−1) ≈ εN/B"; optimum batch size "proportional to both the learning rate and" N; §4 shallow 800-unit ReLU net on MNIST	https://arxiv.org/pdf/1710.06451
+13	4	source	OK	§4: strategies "improve the generalization of large-batch methods but still lead to relatively sharp minima"; App. E.3 adversarial training "did not improve generalization"	https://arxiv.org/pdf/1609.04836
+14	4	source	OK	§3 p.7: "warm-started with only a few initial epochs, the LB method does not yield a generalization improvement"; Fig. 5 (F2, C1, rendered): piggyback LB accuracy reaches SB level (about 64 %, 80 %) after about 10-20 SB epochs as sharpness falls	https://arxiv.org/pdf/1609.04836
+15	6	source	OK	Abstract: "build equivalent models corresponding to arbitrarily sharper minima"; reparametrization changes geometry "without affecting its generalization properties"	https://arxiv.org/pdf/1703.04933
+16	9	lab	LAB-OK	Dinh block: c = 1.0 eigenvalue 3.576, c = 25.0 eigenvalue 1167.345, train loss 0.0971 in both, "same outputs True"	lab
+17	7	source	OK	§3: "it is difficult to visualize non-convexities using 1D plots"; the method "does not consider batch normalization or invariance symmetries"	https://arxiv.org/pdf/1712.09913
+18	7	source	OK	§4: "normalize each filter in d to have the same norm of the corresponding filter in θ"; Eq. (1) L(θ* + αδ + βη)	https://arxiv.org/pdf/1712.09913
+19	7	source	OK	§4: "Scale invariance prevents us from making meaningful comparisons between plots"	https://arxiv.org/pdf/1712.09913
+20	7	source	OK	§5: "small batches generalize better in all experiments" (also App. Table 1); weight decay flips 1D sharpness; filter-normalized "sharpness correlates well with generalization error" (VGG-9, CIFAR-10)	https://arxiv.org/pdf/1712.09913
+21	7	source	OK	§6: ResNet-20-noshort convex contours, 56/110-noshort chaotic; chaotic landscapes "result in worse training and test error"; "residual connections prevent the transition to chaotic behavior"	https://arxiv.org/pdf/1712.09913
+22	8	source	OK	Abstract: optima "connected by simple curves over which training and test accuracy are nearly constant"; Fast Geometric Ensembling inspired by it	https://arxiv.org/pdf/1802.10026
+23	8	source	OK	Fig. 1 caption: "A quadratic Bezier curve, and a polygonal chain with one bend"; "a direct linear path between each mode would incur high loss"	https://arxiv.org/pdf/1802.10026
+24	10	source	OK	Abstract: paths "essentially flat in both the training and test landscapes"; Fig. 5 caption: width and especially depth close the gap, "On CIFAR100, a small gap remains"; §4 saddles "small for the shallow networks"	https://arxiv.org/pdf/1803.00885
+25	11	source	OK	Abstract: SGD noise "random data order and augmentation"; §3 "only LeNet is stable to SGD noise at initialization"; §1 "3% for ResNet-20 on CIFAR-10 and 20% for ResNet-50"	https://arxiv.org/pdf/1912.05671
+26	12	source	OK	Abstract: generalization "from random chance level to perfect generalization", "well past the point of overfitting"	https://arxiv.org/pdf/2201.02177
+27	12	source	OK	§2: equations "of the form a◦b = c"; App. A.1.1 "for a prime number p = 97", first operation x + y (mod p)	https://arxiv.org/pdf/2201.02177
+28	12	source	OK	Abstract: "smaller datasets require increasing amounts of optimization for generalization"	https://arxiv.org/pdf/2201.02177
+29	12	source	FIXED	§3.1.1 (S5 product, steps to 99 % validation): "a decrease of 1% of training data leads to an increase of 40-50%" near 25-30 %	https://arxiv.org/pdf/2201.02177
+30	12	source	OK	§3.3: weight decay "more than halving the amount of samples needed compared to most other interventions"; App. A.1.2 AdamW, lr 10−3, weight decay 1	https://arxiv.org/pdf/2201.02177
+31	13	source	FIXED	Abstract: "dense, randomly-initialized, feed-forward networks contain subnetworks (winning tickets)"; "less than 10-20% of the size", MNIST and CIFAR10	https://arxiv.org/pdf/1803.03635
+32	13	source	OK	§1 steps 1-4: "Prune p% of the parameters", "Reset the remaining parameters to their values in θ0"; iterative rounds prune p^(1/n) %	https://arxiv.org/pdf/1803.03635
+33	13	source	OK	§1: reinitialized tickets "no longer match the performance of the original network"; §2 "learn progressively slower when randomly reinitialized"	https://arxiv.org/pdf/1803.03635
+34	13	source	FIXED	§1: in deeper networks "it requires warmup to find winning tickets at higher learning rates"; §4 VGG-19 and Resnet-18	https://arxiv.org/pdf/1803.03635
+35	11	source	OK	§5: IMP subnetworks of ResNet-50 and Inception-v3 "become stable at epochs 5 (5.5% into training) and 6"; not matching at k = 0, matching when rewound later	https://arxiv.org/pdf/1912.05671
+36	14	source	OK	create_graph: "graph of the derivative will be constructed, allowing to compute higher order derivative products"	https://docs.pytorch.org/docs/2.15/generated/torch.autograd.grad.html
+37	9	lab	LAB-OK	Both output blocks printed with run date 2026-11-25; extra interpolation points a = -0.5, 0.25, 0.75, 0.9, 1.25 named as omitted	lab
+38	2	source	OK	Abstract: saddles "surrounded by high error plateaus" that "give the illusory impression of the existence of a local minimum"	https://arxiv.org/pdf/1406.2572
+39	9	lab	LAB-OK	Batch 16 at loss 0.0971 eigenvalue 3.576; trained on to loss 0.0027, eigenvalue 1.420	lab
+40	6	source	OK	§3 Theorem 1: rectifier "is non-negative homogeneous"; §4 equivalent parameter "whose Hessian has an arbitrarily large spectral norm"	https://arxiv.org/pdf/1703.04933
+41	9	lab	LAB-OK	c = 5.0 eigenvalue 47.259, c = 25.0 eigenvalue 1167.345, train loss 0.0971, same outputs True	lab
+42	7	source	OK	§4: scale invariance; "plots without filter normalization can be very misleading"	https://arxiv.org/pdf/1712.09913
+43	9	lab	LAB-OK	Eigenvalue order 3.576 < 5.292 < 5.721 vs Keskar sharpness 1.194 > 0.913 > 0.731 for batch 16 / 128 / 2000	lab
+44	4	source	OK	§2.2: "a proposed heuristic metric of sharpness (Equation (4))"	https://arxiv.org/pdf/1609.04836
+45	5	source	OK	§5: "the SGD noise scale g = ε(N/B−1) ≈ εN/B. The noise scale falls when the batch size increases"	https://arxiv.org/pdf/1710.06451
+46	7	source	OK	§3: "it is difficult to visualize non-convexities using 1D plots"	https://arxiv.org/pdf/1712.09913
+47	7	source	OK	§6: deep nets without skip connections turn chaotic; "SGD was unable to train a 156 layer network without skip connections"	https://arxiv.org/pdf/1712.09913
+48	12	source	OK	Abstract: generalization "well past the point of overfitting"; §1 "weight decay is particularly effective at improving generalization"	https://arxiv.org/pdf/2201.02177
+49	9	lab	LAB-OK	Grokking, wd 1.0: train acc 1.000 from step 300, test acc 0.000 at step 1000, 0.995 at step 6000	lab
+50	12	source	OK	§3.3 weight decay "has a very large effect on data efficiency"; Fig. 2 left (rendered): Adam without weight decay generalizes within 10^5 steps only at high data fractions	https://arxiv.org/pdf/2201.02177
+51	9	lab	LAB-OK	Grokking control, wd 0: "step 6000: train acc 1.000 test acc 0.000"	lab
+52	13	source	OK	§1: randomly reinitialized winning tickets "no longer match the performance of the original network"	https://arxiv.org/pdf/1803.03635
+53	11	source	OK	§5: standard ResNet-20, VGG-16, ResNet-50, Inception-v3 not matching at step 0; they "become matching when rewinding later"	https://arxiv.org/pdf/1912.05671
+54	4	source	OK	Abstract: small-batch methods converge to flat minimizers, due to "the inherent noise in the gradient estimation"	https://arxiv.org/pdf/1609.04836
+55	5	source	OK	Abstract: noise scale g ≈ εN/B, "where ε is the learning rate, N the training set size"	https://arxiv.org/pdf/1710.06451
+56	4	source	OK	Abstract: large-batch methods "tend to converge to sharp minimizers"; generalization gap; Table 2 SB vs LB test accuracy	https://arxiv.org/pdf/1609.04836
+57	4	source	OK	§4: these strategies "do not correct the problem"; they still "lead to relatively sharp minima"	https://arxiv.org/pdf/1609.04836
+58	14	source	FIXED	create_graph allows "higher order derivative products"; grad_outputs is "The vector in the vector-Jacobian product"	https://docs.pytorch.org/docs/2.15/generated/torch.autograd.grad.html
+59	6	source	OK	Abstract: "if we allow to reparametrize a function, the geometry of its parameters can change drastically"	https://arxiv.org/pdf/1703.04933
+60	7	source	OK	Abstract: filter normalization enables "meaningful side-by-side comparisons"; §1 sharpness "correlates well with generalization error"	https://arxiv.org/pdf/1712.09913
+61	12	source	OK	Fig. 2 caption: within a 10^5-step budget on S5, "Weight decay improves generalization the most"	https://arxiv.org/pdf/2201.02177
+62	9	lab	LAB-OK	Grokking, wd 1.0: "step 6000: train acc 1.000 test acc 0.995"	lab
+63	13	source	OK	Abstract: winning tickets "reach test accuracy comparable to the original network in a similar number of iterations"	https://arxiv.org/pdf/1803.03635
+64	13	source	OK	§2 One-shot pruning: iterative pruning's "repeated training means they are costly to find"	https://arxiv.org/pdf/1803.03635
