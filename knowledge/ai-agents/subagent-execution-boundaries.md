@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: ai-agents
 status: verified
-applies-to: ["Official documentation read 2026-11-07 (Claude Code, Codex) and 2026-11-11 (Claude Code limits, Copilot CLI, VS Code); host-specific behavior"]
-last-verified: 2026-11-11
-last-updated: 2026-11-11
+applies-to: ["Official documentation read 2026-11-07 (Claude Code, Codex) and 2026-11-11 (Claude Code limits, Copilot CLI, VS Code); Claude Code rows re-read and Gemini CLI added 2026-11-24; `skills:` session-mode note measured on Claude Code 2.1.332, 2026-11-25; host-specific behavior"]
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [skills, subagents, context, portability, prompt-caching]
 ---
 
@@ -16,7 +16,7 @@ tags: [skills, subagents, context, portability, prompt-caching]
 **Use this when:** deciding whether a skill should delegate, porting an agent definition, or investigating missing context in a child run.
 
 ## Scope
-Current documented Claude Code and ChatGPT/Codex behavior, checked 2026-11-07; Claude Code limits and GitHub Copilot (CLI and VS Code) added 2026-11-11. Think of a skill as a recipe and a subagent as the cook assigned to execute a job. The job ticket must say which ingredients and result are required. Model Context Protocol (MCP) supplies connections to external tools. YAML and TOML are text configuration formats; the examples below are the concrete artifacts.
+Current documented Claude Code and ChatGPT/Codex behavior, checked 2026-11-07; Claude Code limits and GitHub Copilot (CLI and VS Code) added 2026-11-11; Gemini CLI added 2026-11-24. Think of a skill as a recipe and a subagent as the cook assigned to execute a job. The job ticket must say which ingredients and result are required. Model Context Protocol (MCP) supplies connections to external tools. YAML and TOML are text configuration formats; the examples below are the concrete artifacts.
 
 ## Catalog
 
@@ -26,13 +26,17 @@ Current documented Claude Code and ChatGPT/Codex behavior, checked 2026-11-07; C
 | Forked skill background | Defaults to background; `background: false` waits; non-interactive execution also waits | ✅[^skill] |
 | `agent: Explore` | Forked skill uses Explore's startup context; Explore/Plan omit `CLAUDE.md` | ✅[^skill] |
 | Custom definition | `.claude/agents/*.md` or `~/.claude/agents/*.md`; YAML configuration and Markdown system prompt | ✅[^agent] |
-| `skills:` | Injects named skills' full bodies at startup; unlisted skills can remain callable | ✅[^agent] |
+| `skills:` | Injects named skills' full bodies at startup; unlisted skills can remain callable. Only in subagent mode: when the same agent definition runs as the whole session (`claude --agent`), the listed skills were not loaded (measured 2026-11-25, Claude Code 2.1.332) | ✅[^agent][^lab_2611] |
 | Tools | `tools` selects; `disallowedTools` removes; omitted `tools` inherits tools available to subagents | ✅[^agent] |
-| Repository isolation | `isolation: worktree` requests a separate checkout; context isolation alone does not | ✅[^agent] |
+| Repository isolation | `isolation: worktree` requests a separate checkout, branched by default from the default branch rather than the parent session's `HEAD`, and cleaned up when the subagent changes nothing; context isolation alone does not | ✅[^agent] ✅[^agent_2611] |
 | Description budget | Every subagent's description is in the parent's context; above 15,000 tokens combined (built-ins excluded) Claude Code warns at startup and still loads them all | ✅[^agent] |
 | What loads at startup | The whole `CLAUDE.md` hierarchy the main conversation loads (not for Explore and Plan, or with `omitClaudeMd`); not the main conversation's auto memory, which the agent's own `memory` field replaces | ✅[^agent] |
 | Inline `mcpServers` | An inline server definition connects when the subagent starts and disconnects when it ends; the parent never gets its tools. A name reference shares the parent's connection. Ignored for plugin subagents | ✅[^agent] |
 | Nesting depth | Subagents may spawn subagents up to three layers below the main conversation; at the limit the `Agent` tool is withheld | ✅[^agent] |
+| Turn limit | `maxTurns`: at the limit the output returns marked as partial and the subagent can be resumed (partial marking from v2.1.246) | ✅[^agent_2611] |
+| `Stop` in frontmatter hooks | Converted to `SubagentStop` at runtime. Frontmatter hooks of a project subagent run only after the workspace trust dialog is accepted for its folder | ✅[^agent_2611] |
+| `SubagentStop` input and control | Receives `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`; `decision: "block"` with a `reason`, or exit 2 with stderr, keeps the subagent working | ✅[^hooks_2611] |
+| Who holds the plan | Subagents and skills: Claude, turn by turn, results in its context. Agent teams (experimental, off by default): a lead agent with a shared task list, no worktree isolation. Dynamic workflows: a script the runtime executes, resumable, dozens to hundreds of agents | ✅[^parallel_2611] |
 
 | OpenAI surface or control | Meaning | Evidence |
 |---|---|---|
@@ -59,6 +63,12 @@ Current documented Claude Code and ChatGPT/Codex behavior, checked 2026-11-07; C
 | Locations | `.github/agents`, `.claude/agents`, `~/.copilot/agents`, `~/.claude/agents` | ✅[^vscode] |
 | Visibility | `user-invocable: false` hides it from the picker; `disable-model-invocation: true` stops other agents from calling it; `infer` is deprecated | ✅[^vscode] |
 | Copilot-harness fields | `skills` (preload), `include-custom-instructions`, `deferred-tool-loading`, `mcp-servers`, `model-policy`; handoffs work only in the Local harness | ✅[^vscode] |
+
+| Gemini CLI control | Meaning | Evidence |
+|---|---|---|
+| What a subagent is | A specialist with its own system prompt, tools and context loop; the main agent calls it as a tool of the same name | ✅[^gemini_sub] |
+| Custom definition | Markdown files with YAML front-matter: project `.gemini/agents/*.md`, user `~/.gemini/agents/*.md` | ✅[^gemini_sub] |
+| Hooks | Events include `BeforeTool`, `BeforeAgent` and `SessionStart`; a hook blocks by printing JSON such as `{"decision": "deny", "reason": "…"}` with exit 0, or by its exit code; logs go to stderr, only the final JSON to stdout | ✅[^gemini_hooks] |
 
 ## Lookup notes
 **Configuration example, not an installed agent:** TOML is a text format for settings. This minimal Codex file deliberately leaves model selection to the session:
@@ -107,17 +117,23 @@ Review observation: Anthropic's changelog records a fix for workflow agents rece
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 29 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-11
+- Verified: 37 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
-Source verification only: current official pages were read; illustrative configurations were not executed in a product session. Recommendations and worked scenarios are this document's synthesis, not measured product guarantees.
+Source verification, except one measured row: current official pages were read, and illustrative configurations were not executed in a product session. The `skills:` row's session-versus-subagent note was measured with Claude Code 2.1.332 (lab notebook, E19). Recommendations and worked scenarios are this document's synthesis, not measured product guarantees.
 
 ## References
 - [Run skills in a subagent](https://code.claude.com/docs/en/skills#run-skills-in-a-subagent) — Anthropic, living. Backs: forked-skill semantics. [^skill]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, re-read 2026-11-11. Backs: Claude definitions, preloading, tools, worktrees, description budget, startup context, inline `mcpServers`, nesting depth. [^agent]
+- [Create custom subagents](https://code.claude.com/docs/en/sub-agents.md) — Anthropic, living, re-read 2026-11-24. Backs: worktree base branch and clean-up, `maxTurns`, frontmatter `Stop` → `SubagentStop`, trust dialog. [^agent_2611]
+- [Hooks reference: SubagentStop](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-24. Backs: `SubagentStop` input fields and `decision: "block"`. [^hooks_2611]
+- [Run agents in parallel](https://code.claude.com/docs/en/agents.md) and [Dynamic workflows](https://code.claude.com/docs/en/workflows.md) — Anthropic, living, read 2026-11-24. Backs: who holds the plan per approach; agent teams experimental and without worktree isolation. [^parallel_2611]
+- [Gemini CLI: subagents](https://github.com/google-gemini/gemini-cli/blob/main/docs/core/subagents.md) — Google, living, read 2026-11-24. Backs: Gemini subagent model and custom definitions. [^gemini_sub]
+- [Gemini CLI: writing hooks](https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/writing-hooks.md) — Google, living, read 2026-11-24. Backs: Gemini hook events and blocking. [^gemini_hooks]
 - [GitHub Copilot CLI command reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference) — GitHub, living, read 2026-11-11. Backs: Copilot CLI agent locations, fields, instructions for subagents, memory. [^copilot]
 - [Creating and using custom agents for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-custom-agents-for-cli) — GitHub, living, read 2026-11-11. Backs: own context window. [^copilotcli]
 - [Custom agent file reference](https://code.visualstudio.com/docs/agents/reference/custom-agent-file-reference) — Microsoft, living, read 2026-11-11. Backs: VS Code locations and fields. [^vscode]
 - [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) — OpenAI, living. Backs: surfaces, definitions and inheritance. [^openai]
+- [Harness lab notebook](harness-lab/lab-notebook.md) — local experiments, 2026-11-25, entry E19. Backs: `skills:` loaded only in subagent mode. [^lab_2611]
 - [Claude Code changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md) — Anthropic, living; v2.1.295 entry read 2026-11-07. Backs: workflow result-delivery fix. [^changes]
 - `copilot/knowledge/ai-agents/claude-code-agents-and-skills.md` — older version-scoped local observations.
 - `copilot/procedures/review-docs.procedure.md` — source and meaning review used for this document.

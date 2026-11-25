@@ -2,11 +2,11 @@
 schema: deep-dive/v1
 topic: ai-agents
 status: verified
-applies-to: ["LLM agents with tool use and multi-turn context (Claude, OpenAI, Gemini and similar)", "sources read 2026-10-30"]
+applies-to: ["LLM agents with tool use and multi-turn context (Claude, OpenAI, Gemini and similar)", "sources read 2026-10-30; §5.1 and the Gemini caching row 2026-11-23; the NoLiMa, IFScale and agent-scaling rows 2026-11-24"]
 last-verified: 2026-10-30
-last-updated: 2026-10-30
+last-updated: 2026-11-24
 synthesized-into: []
-tags: [context-engineering, context-window, context-rot, compaction, memory, subagents, prompt-caching, rag]
+tags: [context-engineering, context-window, context-rot, compaction, memory, memory-architecture, subagents, prompt-caching, rag]
 ---
 
 # Context engineering, end to end
@@ -59,6 +59,8 @@ tags: [context-engineering, context-window, context-rot, compaction, memory, sub
 | Distractors | "Even a single distractor reduces performance"; four make it worse; Claude models abstained more, GPT models hallucinated more | ✅[^chroma] |
 | Focused vs. full | On LongMemEval, every model scored much higher on a focused prompt than on the full ~113k-token one | ✅[^chroma] |
 | Position | Models use information at the start and end of a long input better than in the middle, even long-context models | ✅[^lost] |
+| No keyword overlap | NoLiMa removes literal overlap between question and answer. Of 13 models that claim at least 128K tokens, 11 fell below 50% of their short-input score at 32K; GPT-4o fell from 99.3% to 69.7% | ✅[^nolima] |
+| Many instructions at once | IFScale gave 20 models up to 500 simultaneous instructions: the best reached 68% at 500, with a bias toward earlier instructions | ✅[^ifscale] |
 | Too many tools | On the Berkeley Function-Calling Leaderboard every model did worse with more than one tool; a small model failed with 46 tools and succeeded with 19 | ✅[^breunig] |
 | Size threshold | A Databricks study saw correctness start falling around 32k tokens for Llama 3.1 405b, sooner for smaller models | ✅[^breunig] |
 
@@ -110,6 +112,34 @@ LangChain groups the techniques into four strategies ✅[^langchain_ctx]. Anthro
 | | Sandbox | Heavy objects stay in the environment; only selected results return ✅[^langchain_ctx] | Code execution holds a dataframe | Needs a runtime |
 | | State object | Fields hidden from the model until needed ✅[^langchain_ctx] | A typed graph state | Builder must choose the fields |
 
+### 5.1 Long-term memory: how it is divided, and how a context learns
+
+Analogy: a workshop has a workbench (what is in use now), a logbook of past jobs, a shelf of reference manuals, and the craft itself (trained hands plus written procedures). Memory schemes name these parts differently.
+
+| Scheme | Parts | What to know | Source |
+|---|---|---|---|
+| CoALA (Cognitive Architectures for Language Agents), a 2023 paper revised in 2024 | **Working memory**: what the current decision cycle uses. Three long-term memories: **episodic** (experience from earlier cycles), **semantic** (knowledge about the world and the agent itself), **procedural** (implicit in the model's weights, explicit in the agent's code) | A conceptual framework from the cognitive-architecture tradition (Soar), not a standard. Writing to procedural memory is "significantly riskier" than writing to episodic or semantic memory, because it can introduce bugs or let an agent subvert its designers' intentions | ✅[^coala] |
+| Letta | **Memory blocks**: strings the agent edits with memory tools; attached blocks sit in the system prompt and can be shared by several agents. **Messages**: all stored, still retrievable after compaction. **Archival memory** | A product's own division, which does not map one-to-one onto CoALA's | ✅[^letta] |
+| Claude Code | Instruction files written by people (`CLAUDE.md`); auto memory written by the agent (`MEMORY.md` plus topic files) | Details in [agent-memory-features.md](agent-memory-features.md) | ✅[^cc_memory] |
+
+**A context that learns from its own runs: ACE** (Agentic Context Engineering, a 2025 paper revised in 2026):
+- **Three roles** ✅[^ace]:
+  - the *Generator* produces reasoning trajectories;
+  - the *Reflector* distills insights from successes and errors;
+  - the *Curator* turns those insights into small delta entries.
+- **Deltas, not rewrites.** The deltas are merged into the existing context by lightweight code, not by a model rewriting the whole context ✅[^ace].
+- **The two failures it targets** ✅[^ace]:
+  - *brevity bias*: optimisation drifts toward short, generic prompts;
+  - *context collapse*: repeated full rewrites shrink the context, and performance drops sharply.
+- **Results.** It gained 10.6 % on agent benchmarks and 8.6 % on finance benchmarks, learning from execution feedback without labelled data. One model (DeepSeek-V3.1) played all three roles, so a stronger model could not leak knowledge into a weaker one ✅[^ace].
+- **How strong the Reflector must be.**
+  - A weaker Reflector still gave gains, and moderate injected noise was tolerated ✅[^ace].
+  - The authors still list reliance on a "reasonably strong Reflector" as a limitation, and note that some tasks are better served by a few concise rules than by a rich context ✅[^ace].
+
+**Synthesis (this doc's reading, not a sourced claim):**
+- For a coding agent, the context such a loop rewrites is its instruction files and skills. In CoALA's terms that is procedural memory, the riskiest kind to write.
+- So the safe shape is ACE's: small deltas merged by code, plus a check or a person before a lesson becomes a rule.
+
 ---
 
 ## 6. Cross-part interactions
@@ -121,8 +151,9 @@ Changing one part of the context has effects on the others. The matrix lists eac
 | **Add or remove a tool mid-task** | New capability, or one fewer | The tool list sits near the front of the prefix, so a change invalidates the cache for everything after it. Earlier turns that mention a removed tool can produce schema violations. Manus therefore *masks* tools during decoding instead of removing them ✅[^manus] ✅[^ant_cache] |
 | **Put a timestamp or other changing value in the system prompt** | Fresher information | One changed token invalidates the cache from that point on ✅[^manus]; cached input cost 0.30 vs. 3 USD/MTok uncached on Claude Sonnet (10×) ✅[^manus] |
 | **Serialise JSON without stable key order** | None visible | Silent cache misses ✅[^manus] |
+| **Plan on explicit cache objects with Gemini** | Works on supported Gemini 3 and 2.5 models through `generateContent` | Not supported for Gemini 4 models or in the Interactions API. There, only implicit caching applies: on by default for Gemini 2.5 and newer, with a 4,096-token minimum on Gemini 4 models ✅[^gem_cache] |
 | **Compact the history** | Room to continue | Fine detail is gone. Errors the model needed to learn from may vanish: Manus keeps failed actions and traces in context so the model does not repeat them ✅[^manus] |
-| **Split work across sub-agents** | Clean windows; parallel speed. Anthropic's multi-agent research system beat single-agent Opus 4 by 90.2% on its research eval ✅[^ant_multi] | About 15× chat tokens ✅[^ant_multi]. Sub-agents make implicit decisions that may conflict (Cognition's Flappy Bird example) ✅[^cognition]. Poor fit where all agents need the same context, and for most coding tasks ✅[^ant_multi] |
+| **Split work across sub-agents** | Clean windows; parallel speed. Anthropic's multi-agent research system beat single-agent Opus 4 by 90.2% on its research eval ✅[^ant_multi] | About 15× chat tokens ✅[^ant_multi]. Sub-agents make implicit decisions that may conflict (Cognition's Flappy Bird example) ✅[^cognition]. Poor fit where all agents need the same context, and for most coding tasks ✅[^ant_multi]. A controlled Google study: a centralized multi-agent setup gained 80.9% on a parallelizable finance task, but every multi-agent variant lost 39–70% on sequential planning; the coordination cost grows with the number of tools; independent agents amplified errors 17.2×, a central orchestrator 4.4× ✅[^scaling] |
 | **Grow the instruction file** | More rules available | Every session pays the tokens; adherence drops ✅[^cc_memory]; rules rot and contradict each other ✅[^openai_harness]; contradictions are resolved arbitrarily ✅[^cc_memory] |
 | **Return verbose tool results** | More detail available | Pushes other parts toward the middle of the window or out of it ✅[^lost]; use pagination, filtering and a concise/detailed `response_format` ✅[^ant_tools] |
 | **Retrieve up front instead of just in time** | Faster first answer | More distractors for every later step ✅[^chroma] |
@@ -164,7 +195,7 @@ The flow follows the Claude Code behaviour described in the sources. The task is
 4. **Treat instruction files as a map, not an encyclopedia.** A short entry point that points to deeper docs ✅[^openai_harness]; under 200 lines per `CLAUDE.md` ✅[^cc_memory].
 5. **Prefer just-in-time retrieval for agents**, with a little loaded up front ✅[^ant_ctx].
 6. **Plan for long tasks from the start:** notes file, compaction policy, which tool results to clear ✅[^ant_ctx].
-7. **Use sub-agents for wide, parallel and separable work** (research, search), not for tightly coupled work like most coding ✅[^ant_multi] ✅[^cognition].
+7. **Use sub-agents for wide, parallel and separable work** (research, search), not for tightly coupled or sequential work like most coding ✅[^ant_multi] ✅[^cognition] ✅[^scaling].
 8. **Measure:** cache hit rate ✅[^manus], tokens per task ✅[^ant_multi], and the eval score as context grows ✅[^chroma].
 
 ---
@@ -189,6 +220,8 @@ The flow follows the Claude Code behaviour described in the sources. The task is
 ## 10. Verification
 
 - **Verified on 2026-10-30:** every ✅ claim, against the sources in References: vendor posts and docs read live, the Chroma report, and arXiv.
+- **Verified on 2026-11-24:** the NoLiMa and IFScale rows in §3 (arXiv abstracts) and the Google agent-scaling sentence in §6 and §8 (Google Research blog and arXiv abstract).
+- **Verified on 2026-11-23:** §5.1 (CoALA, Letta and ACE, read on arXiv and the Letta docs) and the Gemini caching row in §6 (Gemini API docs).
 - **Synthesis, not a sourced claim:** the "three currencies" reading in §6, and the ordering of the checklist in §8.
 - **Illustrative:** the task in §7. Its steps follow documented behaviour, but no measurement was taken.
 - **Diagnostic guidance:** in §9 every fix is sourced; the pairing of situation and cause follows the cited failure modes.
@@ -212,6 +245,13 @@ The flow follows the Claude Code behaviour described in the sources. The task is
 - [Claude Code: How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living. Backs: §4 load order, 200-line guidance; §6, §9 contradictions. [^cc_memory]
 - [OpenAI: Harness engineering](https://openai.com/index/harness-engineering/) — Ryan Lopopolo, 2026. Backs: §4, §6, §8 the map-not-manual `AGENTS.md`. [^openai_harness]
 - [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Anthropic, living. Backs: §9 fresh window vs. compaction; state in files and git. [^ant_bp]
+- [Cognitive Architectures for Language Agents](https://arxiv.org/abs/2309.02427) — Theodore R. Sumers, Shunyu Yao, Karthik Narasimhan and Thomas L. Griffiths, 2023, revised 2024. Backs: §5.1 memory modules and the procedural-memory risk. [^coala]
+- [Letta: memory](https://docs.letta.com/guides/agents/memory) — Letta, living, read 2026-11-23. Backs: §5.1 memory blocks, messages, archival memory. [^letta]
+- [Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models](https://arxiv.org/abs/2510.04618) — Qizheng Zhang et al., 2025, revised 2026-03-29. Backs: §5.1 roles, delta merge, brevity bias, context collapse, results, Reflector strength. [^ace]
+- [NoLiMa: Long-Context Evaluation Beyond Literal Matching](https://arxiv.org/abs/2502.05167) — Ali Modarressi et al., ICML 2025, read 2026-11-24. Backs: §3 no keyword overlap. [^nolima]
+- [How Many Instructions Can LLMs Follow at Once?](https://arxiv.org/abs/2507.11538) — Daniel Jaroslawicz, Brendan Whiting, Parth Shah, Karime Maamari, 2025, read 2026-11-24. Backs: §3 many instructions. [^ifscale]
+- [Towards a science of scaling agent systems](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/) — Yubin Kim and Xin Liu, Google Research, 2026-01-28, with the paper [arXiv 2512.08296](https://arxiv.org/abs/2512.08296); read 2026-11-24. Backs: §6 sub-agents; §8 item 7. [^scaling]
+- [Gemini API: Context caching](https://aistudio.google.com/docs/caching) — Google, living, read 2026-11-23. Backs: §6 implicit and explicit caching. [^gem_cache]
 - `copilot/atlas/` — this repo's own "map, not manual" for agents: one registry and generated pages that point to every file.
 
 ## Related
