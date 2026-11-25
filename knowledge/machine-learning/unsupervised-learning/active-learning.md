@@ -369,3 +369,5 @@ Reading it:
 - `machine-learning/supervised-learning/logistic-regression.md` — the model used in the lab runs.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — training data that does not match the deployment distribution.
 - `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md` — the embeddings that typicality and k-center distances are computed in.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — uncertainty estimates that query strategies rely on.
+- `machine-learning/foundations/information-theory.md` — entropy and mutual information, the quantities behind entropy sampling and BALD.

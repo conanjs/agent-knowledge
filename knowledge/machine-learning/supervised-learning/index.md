@@ -7,7 +7,7 @@ last-updated: 2026-11-24
 
 # Classical supervised learning
 
-The classical models that learn from labelled examples: linear and logistic regression, k-nearest neighbours, decision trees, tree ensembles (random forests, gradient boosting) and support vector machines, each with its mechanism, its knobs in scikit-learn 1.9.1, its failure modes, and a lab experiment that shows the mechanism with real numbers. Read them in table order: each doc builds on the one before (the linear score, then trees, then ensembles of trees). Not covered: the shared foundations these docs link to instead of repeating (loss functions, gradient descent, regularization, overfitting: see `machine-learning/foundations/`), neural networks (see `machine-learning/deep-learning/`), naive Bayes and Gaussian processes (see `machine-learning/probabilistic-ml/`), and how to evaluate models (see `machine-learning/evaluation/`).
+The classical models that learn from labelled examples: linear and logistic regression, generalized linear models (Poisson, Gamma, Tweedie), linear and quadratic discriminant analysis, k-nearest neighbours, decision trees, tree ensembles (random forests, gradient boosting) and support vector machines, each with its mechanism, its knobs in scikit-learn 1.9.1, its failure modes, and a lab experiment that shows the mechanism with real numbers. Read them in table order: each doc builds on the one before (the linear score, then trees, then ensembles of trees). Not covered: the shared foundations these docs link to instead of repeating (loss functions, gradient descent, regularization, overfitting: see `machine-learning/foundations/`), neural networks (see `machine-learning/deep-learning/`), naive Bayes and Gaussian processes (see `machine-learning/probabilistic-ml/`), and how to evaluate models (see `machine-learning/evaluation/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -18,6 +18,8 @@ The classical models that learn from labelled examples: linear and logistic regr
 | [decision-trees.md](decision-trees.md) | concept | CART's greedy split search, Gini and entropy by hand, depth and leaf limits, cost-complexity pruning, why trees overfit and do not extrapolate | verified |
 | [tree-ensembles.md](tree-ensembles.md) | concept | Bagging and random forests (variance, out-of-bag), gradient boosting as trees fitted to negative gradients, shrinkage, histogram gradient boosting | verified |
 | [support-vector-machines.md](support-vector-machines.md) | concept | Maximum margin, hinge loss and the soft-margin `C`, support vectors and the dual, the kernel trick, RBF `gamma` from under- to overfitting | verified |
+| [generalized-linear-models.md](generalized-linear-models.md) | concept | Link and variance functions, deviance, Poisson regression with an exposure offset (IRLS by hand = PoissonRegressor), Gamma and Tweedie for positive targets, why least squares on counts or logs fails | verified |
+| [discriminant-analysis.md](discriminant-analysis.md) | concept | Gaussian class models and Bayes' rule, LDA by hand vs scikit-learn, QDA vs LDA, Ledoit–Wolf shrinkage with few samples, LDA as a supervised projection, links to logistic regression and naive Bayes | verified |
 
 ## References
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope.

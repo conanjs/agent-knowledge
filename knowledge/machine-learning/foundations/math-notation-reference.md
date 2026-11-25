@@ -233,3 +233,4 @@ print("N(0,1) density at 0", round(norm.pdf(0), 4), " KL(P||P)", entropy([0.5, 0
 - `machine-learning/foundations/regularization.md` — `‖w‖₁` and `‖w‖₂²` as penalties.
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — the chain rule as an algorithm.
 - `floating-point/special-values-and-exceptions.md` — where `inf` and `nan` come from.
+- `machine-learning/foundations/information-theory.md` — entropy, cross-entropy, KL divergence and mutual information in full.

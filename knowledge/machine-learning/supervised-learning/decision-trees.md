@@ -212,3 +212,4 @@ Reading it:
 - `machine-learning/data-and-features/feature-importance-and-selection.md` — what impurity-based importances mean and when they mislead.
 - `machine-learning/data-and-features/categorical-and-missing-data.md` — encoding categories before a tree, native NaN support.
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — choosing `max_depth` or `ccp_alpha` without the test set.
+- `machine-learning/foundations/information-theory.md` — entropy and information gain.

@@ -323,3 +323,4 @@ Reading it, line by line:
 - `machine-learning/supervised-learning/tree-ensembles.md` — how histogram gradient boosting works.
 - `machine-learning/deep-learning/recurrent-networks.md` — the LSTM behind DeepAR and the M4 winner.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — the pinball loss as a loss function.
+- `machine-learning/evaluation/conformal-prediction.md` — turning quantile forecasts into intervals with valid coverage.

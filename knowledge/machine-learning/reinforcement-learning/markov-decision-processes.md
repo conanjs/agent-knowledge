@@ -217,3 +217,4 @@ Reading it:
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — the one-state special case: exploration without state transitions.
 - `machine-learning/reinforcement-learning/policy-gradients-and-ppo.md` — optimizing the policy directly, using the advantage.
 - `machine-learning/foundations/what-is-machine-learning.md` — where reinforcement learning sits among the learning paradigms.
+- `machine-learning/reinforcement-learning/model-based-reinforcement-learning.md` — learning the MDP's model and planning with it.

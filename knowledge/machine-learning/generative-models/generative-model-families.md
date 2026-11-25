@@ -182,3 +182,4 @@ Reading it line by line:
 - `machine-learning/transformers/pretraining-and-scaling-laws.md` — autoregressive language models and perplexity.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — maximum likelihood, the objective of the explicit families.
 - `machine-learning/unsupervised-learning/gaussian-mixtures-and-em.md` — the GMM baseline in the worked example.
+- `machine-learning/foundations/information-theory.md` — KL divergence, likelihood and bits per dimension.

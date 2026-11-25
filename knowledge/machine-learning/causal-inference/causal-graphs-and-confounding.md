@@ -246,3 +246,4 @@ Reading it, line by line:
 - `machine-learning/data-and-features/partial-dependence-and-shapley-values.md` — why feature attributions of a predictive model are not causal effects.
 - `machine-learning/evaluation/data-leakage.md` — post-treatment variables have a predictive-modelling cousin: features computed after the label.
 - `machine-learning/supervised-learning/linear-regression.md` — the regressions whose coefficients this doc interprets.
+- `machine-learning/probabilistic-ml/probabilistic-graphical-models.md` — the same graphs used for probabilistic inference rather than causal effects.

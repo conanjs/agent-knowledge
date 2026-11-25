@@ -190,3 +190,7 @@ Reading it line by line:
 - `machine-learning/evaluation/metrics-catalog.md` — which metric to compute when labels arrive.
 - `machine-learning/evaluation/class-imbalance.md` — base rates, which label shift changes.
 - `machine-learning/evaluation/probability-calibration.md` — calibrated scores, which shift can break.
+- `machine-learning/ml-systems/domain-adaptation.md` — correcting a shift once it is detected.
+- `machine-learning/evaluation/conformal-prediction.md` — coverage under shift, and weighted conformal prediction.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — model uncertainty on shifted and out-of-distribution inputs.
+- `machine-learning/reinforcement-learning/offline-reinforcement-learning.md` — distribution shift when learning a policy from logged data.

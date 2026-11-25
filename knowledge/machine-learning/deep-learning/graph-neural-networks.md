@@ -230,3 +230,4 @@ Reading it:
 - `machine-learning/transformers/attention-and-the-transformer.md` — softmax attention over all tokens; GAT restricts it to graph neighbours.
 - `machine-learning/deep-learning/convolutional-networks.md` — convolution on a regular image grid, the other way of aggregating an element's neighbours.
 - `machine-learning/deep-learning/normalization-and-dropout.md` — normalization and dropout layers also used inside GNNs.
+- `machine-learning/probabilistic-ml/probabilistic-graphical-models.md` — message passing in probabilistic graphical models (belief propagation).

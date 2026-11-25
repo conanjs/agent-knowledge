@@ -203,3 +203,5 @@ Reading it, row by row:
 - `machine-learning/deep-learning/optimizers-and-learning-rate-schedules.md` — the optimizer step that follows clipping.
 - `machine-learning/transformers/attention-and-the-transformer.md` — the architecture that replaced recurrence.
 - `machine-learning/transformers/tokenization.md` — how text becomes the sequence of ids an RNN or transformer reads.
+- `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — hidden Markov models, the probabilistic sequence model.
+- `machine-learning/recommender-systems/sequential-recommendation.md` — recurrent and attention models for next-item recommendation.

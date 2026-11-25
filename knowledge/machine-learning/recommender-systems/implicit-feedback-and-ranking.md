@@ -270,3 +270,4 @@ Reading it:
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — tuning `α`, `λ` and the rank on a validation split.
 - `machine-learning/evaluation/data-leakage.md` — holding out by time when timestamps exist.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — the log loss inside BPR and MAP (maximum a posteriori) estimation as a penalized likelihood.
+- `machine-learning/recommender-systems/sequential-recommendation.md` — ranking the next item from the order of past interactions.

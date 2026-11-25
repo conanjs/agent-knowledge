@@ -232,3 +232,4 @@ Reading it, block by block:
 - `machine-learning/transformers/pretraining-and-scaling-laws.md` — large-scale pretraining, the regime where ViT shines.
 - `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md` — MAE and CLIP, which pretrain ViT encoders without class labels.
 - `machine-learning/deep-learning/data-augmentation-and-transfer-learning.md` — the strong augmentation DeiT depends on.
+- `machine-learning/transformers/multimodal-models.md` — vision encoders feeding a language model.

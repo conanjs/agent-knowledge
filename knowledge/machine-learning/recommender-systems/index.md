@@ -7,7 +7,7 @@ last-updated: 2026-11-25
 
 # Recommender systems
 
-Predicting what a user will want from past interactions. The docs cover collaborative filtering and matrix factorization on explicit ratings; learning from implicit feedback with confidence weighting and ranking losses, and evaluating a ranked list offline without the sampled-metric trap; the multi-stage retrieval-and-ranking pipeline, with two-tower models, the popularity bias of in-batch negatives and cold start; and the feedback loop that forms when a recommender is retrained on the clicks its own lists produced. Every experiment runs on simulated users and items whose ground truth is known. Not covered: approximate nearest-neighbour search itself (see `algorithms/vector-search-evaluation.md`), sequence-aware and session-based recommenders, and click-through-rate models for the ranking stage.
+Predicting what a user will want from past interactions. The docs cover collaborative filtering and matrix factorization on explicit ratings; learning from implicit feedback with confidence weighting and ranking losses, and evaluating a ranked list offline without the sampled-metric trap; the multi-stage retrieval-and-ranking pipeline, with two-tower models, the popularity bias of in-batch negatives and cold start; the feedback loop that forms when a recommender is retrained on the clicks its own lists produced; and sequential recommenders that predict the next item from a user's history. Every experiment runs on simulated users and items whose ground truth is known. Not covered: approximate nearest-neighbour search itself (see `algorithms/vector-search-evaluation.md`), sequence-aware and session-based recommenders, and click-through-rate models for the ranking stage.
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -16,6 +16,7 @@ Predicting what a user will want from past interactions. The docs cover collabor
 | [implicit-feedback-and-ranking.md](implicit-feedback-and-ranking.md) | concept | Clicks and plays as implicit feedback, confidence-weighted ALS (iALS), BPR with negative sampling, leave-one-out recall@k and NDCG, why sampled metrics can reverse model order, the popularity baseline | verified |
 | [retrieval-and-ranking-pipelines.md](retrieval-and-ranking-pipelines.md) | concept | Candidate generation, scoring and re-ranking; two-tower models with in-batch negatives and the logQ correction against a full softmax; cold start from content features | verified |
 | [feedback-loops-and-popularity-bias.md](feedback-loops-and-popularity-bias.md) | concept | Algorithmic confounding when a recommender retrains on its own logs: homogenized users, concentrated exposure (Gini, distinct items), biased offline evaluation; a 30-round simulation with exploration slots and a randomly collected log | verified |
+| [sequential-recommendation.md](sequential-recommendation.md) | concept | Next-item prediction: Markov-chain baselines, GRU4Rec, SASRec, BERT4Rec; leave-last-out splits, sampled vs full-ranking metrics reversing model order, BERT4Rec replicability and undertraining | verified |
 
 ## References
 - [Introduction (Recommendation Systems course)](https://developers.google.com/machine-learning/recommendation?hl=en) — Google for Developers, living. Backs: topic scope (candidate generation, matrix factorization, deep models, retrieval, scoring, re-ranking).

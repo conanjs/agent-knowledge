@@ -269,3 +269,4 @@ Reading it, block by block:
 - `machine-learning/deep-learning/normalization-and-dropout.md` — the BatchNorm layers inside the projection head.
 - `machine-learning/unsupervised-learning/principal-component-analysis.md` — a linear, closed-form way to get low-dimensional representations.
 - `machine-learning/transformers/tokenization.md` — where the ids that `nn.Embedding` looks up come from.
+- `machine-learning/transformers/multimodal-models.md` — CLIP-style encoders inside multimodal language models.

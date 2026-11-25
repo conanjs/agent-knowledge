@@ -190,3 +190,5 @@ Reading it:
 - `machine-learning/probabilistic-ml/naive-bayes.md` — the independence assumption behind its overconfidence.
 - `machine-learning/supervised-learning/tree-ensembles.md` — random forests and why averaging avoids 0 and 1.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — log loss as negative log-likelihood.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — uncertainty estimates for neural networks.
+- `machine-learning/evaluation/conformal-prediction.md` — prediction sets with a coverage guarantee.

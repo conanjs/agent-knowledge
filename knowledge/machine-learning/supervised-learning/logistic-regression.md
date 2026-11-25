@@ -197,3 +197,5 @@ Reading it line by line:
 - `machine-learning/foundations/math-notation-reference.md` — sigmoid, softmax and log-sum-exp, with numbers.
 - `machine-learning/evaluation/probability-calibration.md` — checking whether `predict_proba` values match observed frequencies.
 - `machine-learning/supervised-learning/support-vector-machines.md` — another linear classifier, with the hinge loss instead of log loss.
+- `machine-learning/supervised-learning/generalized-linear-models.md` — logistic regression as a generalized linear model.
+- `machine-learning/supervised-learning/discriminant-analysis.md` — the generative counterpart with a linear boundary (LDA).

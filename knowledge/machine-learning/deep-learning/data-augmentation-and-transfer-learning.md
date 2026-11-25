@@ -265,3 +265,4 @@ Reading it:
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — detecting domain shift after deployment.
 - `machine-learning/ml-systems/reproducibility-and-determinism.md` — seeding the random augmentations.
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — choosing augmentation strength and learning rates on validation data.
+- `machine-learning/ml-systems/domain-adaptation.md` — adapting to a shifted target domain.

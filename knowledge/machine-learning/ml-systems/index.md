@@ -7,7 +7,7 @@ last-updated: 2026-11-25
 
 # Machine learning in production
 
-What changes when a model leaves the notebook: the maintenance debt that builds up around a model (entangled features, unstable data dependencies, undeclared consumers, feedback loops), detecting covariate, label and concept shift and training–serving skew, making training runs repeatable (seeds, nondeterministic kernels, versioning data and models), and making models smaller and cheaper (int8 quantization, pruning, distillation, fp16/bf16 mixed precision). Every doc has a lab experiment with its full script. Not covered: generic service operation (see `operations/`), the IEEE 754 formats themselves (see `floating-point/`), and evaluation metrics (see `machine-learning/evaluation/`).
+What changes when a model leaves the notebook: the maintenance debt that builds up around a model (entangled features, unstable data dependencies, undeclared consumers, feedback loops), detecting covariate, label and concept shift and training–serving skew, correcting a known shift (domain adaptation), making training runs repeatable (seeds, nondeterministic kernels, versioning data and models), and making models smaller and cheaper (int8 quantization, pruning, distillation, fp16/bf16 mixed precision). Every doc has a lab experiment with its full script. Not covered: generic service operation (see `operations/`), the IEEE 754 formats themselves (see `floating-point/`), and evaluation metrics (see `machine-learning/evaluation/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -17,6 +17,7 @@ What changes when a model leaves the notebook: the maintenance debt that builds 
 | [reproducibility-and-determinism.md](reproducibility-and-determinism.md) | concept | Seeds in Python, NumPy, PyTorch and scikit-learn, float summation order, `torch.use_deterministic_algorithms`, versioning data, code and models | verified |
 | [model-compression-and-quantization.md](model-compression-and-quantization.md) | concept | Symmetric int8 by hand, per-tensor vs per-channel and outliers, post-training vs quantization-aware, torchao status, fp16 vs bf16 ranges and the loss-scaling recipe | verified |
 | [pruning-and-knowledge-distillation.md](pruning-and-knowledge-distillation.md) | concept | Magnitude pruning with retraining, global vs per-layer sparsity, CSR storage and when sparsity speeds inference, the PyTorch prune API; distillation with temperature-softened soft targets and the `T²` factor | verified |
+| [domain-adaptation.md](domain-adaptation.md) | concept | Importance weights from a domain classifier and clipping, importance-weighted validation, BBSE for label shift, gradient reversal (DANN) in outline, the Ben-David bound and when adaptation is impossible | verified |
 
 ## References
 - [Hidden Technical Debt in Machine Learning Systems (abstract)](https://papers.nips.cc/paper_files/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) — Sculley et al., NeurIPS 2015. Backs: topic scope (ML-specific maintenance risks).
