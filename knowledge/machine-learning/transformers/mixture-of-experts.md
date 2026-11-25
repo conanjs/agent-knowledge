@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/transformers
 status: verified
 applies-to: ["PyTorch 2.15.0 (lab, plain torch)", "any"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, transformers, mixture-of-experts, moe, sparse-moe, top-k-gating, router, load-balancing, auxiliary-loss, switch-transformer, capacity-factor, expert-parallelism, mixtral]
 ---
 
@@ -51,7 +51,7 @@ for e in range(E):                                 # expert e sees only its toke
 ### Total vs active parameters (Mixtral)
 11. **Where the experts sit:** in Mixtral each layer has 8 feed-forward blocks (SwiGLU experts), the MoE layer replaces the feed-forward sub-block of each transformer block, and a router picks 2 experts per token at every layer ✅[^3]. The gate is a softmax over the top-2 router logits ✅[^3], which equals the lab's softmax over all logits renormalized over the top 2.
 12. **The two numbers:** each token has access to 47B parameters but uses only 13B active ones during inference ✅[^3], so compute per token is that of a 13B dense model while memory must hold all 47B. 13/47 is 28 %, more than `2/8`, because some layers run for every token: in the lab the shared router alone lifts the active share from 25 % to 25.6 % ✅[^4], and in a transformer the attention layers are shared the same way.
-13. **What experts learn:** Mixtral's authors saw no obvious assignment of experts by topic, but did see syntax-related patterns and repeated choices for consecutive tokens ✅[^3].
+13. **What experts learn:** Mixtral's authors saw no obvious assignment of experts by topic (only DM Mathematics, a synthetic dataset, differs slightly), but did see syntax-related patterns and repeated choices for consecutive tokens, well above chance at layers 15 and 31 and close to chance at layer 0 ✅[^3].
 
 ### Expert parallelism (briefly)
 14. With expert parallelism, each device holds some of the experts and tokens are sent to the device of their expert ✅[^3]; Switch Transformer gives each core its own expert and moves tokens between cores with all-to-all communication ✅[^2]. Imbalance then becomes a device-load problem too ✅[^3]. The communication pattern and its cost are in `machine-learning/deep-learning/distributed-training.md`.
@@ -179,12 +179,12 @@ Reading it:
 - When implementing top-k gating, take the softmax over the selected logits (or renormalize the selected probabilities) so the `k` weights sum to 1.
 
 ## Verification status
-- Verified: 44 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 44 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
-- [Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://ar5iv.labs.arxiv.org/html/1701.06538) — Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, Dean, 2017. Backs: MoE output, noisy top-k gating, 1000× capacity, thousands of experts, 137B parameters, 4 active experts, self-reinforcing imbalance, importance and load losses, shrinking batch. [^1]
-- [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://ar5iv.labs.arxiv.org/html/2101.03961) — Fedus, Zoph, Shazeer, 2021. Backs: top-1 routing, capacity formula and factors, dropped tokens via the residual, auxiliary loss and `α`, uniform minimum, float32 router, cost of a large capacity factor, 7× speed-up, 1.6T parameters and 2,048 experts, expert parallelism with all-to-all. [^2]
-- [Mixtral of Experts](https://ar5iv.labs.arxiv.org/html/2401.04088) — Jiang et al., 2024. Backs: 8 SwiGLU experts, top-2, MoE replaces the FFN sub-block, softmax over top-2 logits, 47B total vs 13B active, expert parallelism and load balance, routing analysis. [^3]
+- [Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://ar5iv.labs.arxiv.org/html/1701.06538) — Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, Dean, 2017 (full text read, PDF). Backs: MoE output, noisy top-k gating, 1000× capacity, thousands of experts, 137B parameters, 4 active experts, self-reinforcing imbalance, importance and load losses, shrinking batch. [^1]
+- [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://ar5iv.labs.arxiv.org/html/2101.03961) — Fedus, Zoph, Shazeer, 2021 (full text read, PDF). Backs: top-1 routing, capacity formula and factors, dropped tokens via the residual, auxiliary loss and `α`, uniform minimum, float32 router, cost of a large capacity factor (Figure 3), 7× speed-up, 1.6T parameters and 2,048 experts, expert parallelism with all-to-all. [^2]
+- [Mixtral of Experts](https://ar5iv.labs.arxiv.org/html/2401.04088) — Jiang et al., 2024 (full text read, PDF). Backs: 8 SwiGLU experts, top-2, MoE replaces the FFN sub-block, softmax over top-2 logits, 47B total vs 13B active, expert parallelism and load balance, routing analysis (Figure 7, Figure 8, Table 5). [^3]
 - `machine-learning/lab-setup.md` — the lab where the top-2 MoE script in the Worked example ran on 2026-11-24 (routing balance with and without the auxiliary loss, capacity counts, parameter counts). [^4]
 
 ## Related

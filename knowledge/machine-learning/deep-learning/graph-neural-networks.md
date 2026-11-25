@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0 (lab, plain torch without a graph library)", "any"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, graph-neural-networks, gnn, message-passing, gcn, graphsage, gat, gin, permutation-equivariance, readout, over-smoothing, weisfeiler-lehman]
 ---
 
@@ -43,7 +43,7 @@ H_next = relu(A_hat @ H @ W)
 ### GCN: fixed, degree-normalized weights (Kipf and Welling)
 7. **Rule:** `H' = σ(D̃^-1/2 · Ã · D̃^-1/2 · H · W)` with `Ã = A + I` (each node also keeps its own vector, a self-loop) and `D̃` the diagonal matrix of `Ã`'s row sums ✅[^2]. Example from the lab: node 0 has 3 neighbours, so `D̃₀₀ = 4`; a neighbour with one link has `D̃ = 2`, giving the weight `1/√(4·2) = 0.3536`, and node 0's own weight is `1/√(4·4) = 0.25` ✅[^7].
 8. **Why this normalization ("renormalization trick"):** the earlier operator `I + D^-1/2 A D^-1/2` has eigenvalues in `[0, 2]`, so applying it repeatedly can cause numerical instability and exploding or vanishing gradients ✅[^2]. In the lab the renormalized matrix has largest eigenvalue `1.0` ✅[^7].
-9. **Scale and depth:** the cost grows linearly with the number of edges ✅[^2]. The paper's model has two layers, `Z = softmax(Â·ReLU(Â·X·W⁰)·W¹)` (ReLU, rectified linear unit); in its depth study up to 10 layers, 2 or 3 layers were best and models beyond about 7 layers were hard to train without residual connections ✅[^2].
+9. **Scale and depth:** the cost grows linearly with the number of edges ✅[^2]. The paper's model has two layers, `Z = softmax(Â·ReLU(Â·X·W⁰)·W¹)` (ReLU, rectified linear unit); in its depth study (1 to 10 layers, 5-fold cross-validation with all labels on Cora, Citeseer and Pubmed), 2 or 3 layers were best, and beyond 7 layers training without residual connections can become difficult ✅[^2].
 
 ### GraphSAGE: sample, aggregate, concatenate
 10. **Rule:** `h_N(v) = AGGREGATE({h_u : u ∈ N(v)})`, then `h_v = σ(W · CONCAT(h_v, h_N(v)))`, then divide by the L2 norm ✅[^3]. Keeping the node's own vector separate (the concatenation) instead of mixing it into the average is the main difference from GCN; the mean aggregator is "nearly equivalent" to GCN's rule ✅[^3].
@@ -56,7 +56,7 @@ H_next = relu(A_hat @ H @ W)
 15. **Multi-head:** hidden layers concatenate `K` heads, the output layer averages them; on Cora the paper used 8 heads of 8 features, then a single output head ✅[^4]. One head costs `O(|V|·F·F' + |E|·F')`, on par with GCN ✅[^4].
 
 ### Limits: over-smoothing and the 1-WL ceiling
-16. **Over-smoothing:** a GCN layer is a special form of Laplacian smoothing (each node moves towards its neighbours' average), and stacking many layers risks over-smoothing ✅[^6]: node vectors become indistinguishable. The Distill authors note that the best models they explored had two layers, not three or four ✅[^1].
+16. **Over-smoothing:** a GCN layer is a special form of Laplacian smoothing (each node moves towards its neighbours' average), and stacking many layers risks over-smoothing ✅[^6]: node vectors become indistinguishable. Repeated smoothing makes the features within each connected component converge to values proportional to the square root of each node's degree; the theorem needs a graph without bipartite components, which the self-loops guarantee ✅[^6]. In the Distill authors' sweep of GNN designs on a molecule-odour task (test AUC, the area under the receiver operating characteristic curve), mean performance rose with the number of layers, but the best models had two layers, not three or four, and four layers gave the lowest worst case; they link this to node representations being "diluted" over many rounds ✅[^1].
 17. **1-WL test (colour refinement):** start with every node's label; in each round, replace each label by a new one hashed from the pair (own label, multiset of neighbours' labels); if the two graphs' label collections ever differ, they are not isomorphic, otherwise the test cannot decide ✅[^5].
 18. **The ceiling:** any aggregation-based GNN is at most as powerful as the WL test at telling graphs apart; it reaches that power when the aggregation, update and readout are injective on multisets (a multiset is a set that keeps repeats) ✅[^5]. Mean captures only the proportions of a multiset, max only its underlying set; sum keeps the whole multiset ✅[^5]. GCN and GraphSAGE therefore cannot distinguish some simple structures ✅[^5].
 19. **GIN:** `h_v' = MLP((1 + ε)·h_v + Σ_{u∈N(v)} h_u)`, with `ε` learned or fixed at 0, and a readout that concatenates the pooled vectors of every layer ✅[^5]. An MLP is needed because a single-layer perceptron is not a universal approximator of multiset functions ✅[^5].
@@ -191,7 +191,7 @@ Reading it:
 | Feeding the raw adjacency matrix to an MLP | Output changes when nodes are renumbered (lab: `False`) | Many matrices encode one graph ✅[^1]; lab ✅[^7] |
 | GCN without self-loops (`A` instead of `A + I`) | A node's own features are dropped from its update | `Ã = A + I` adds the self-connection ✅[^2] |
 | Stacking 8–16 GCN layers | Node vectors converge (lab spread `0.13` → `0.006`) | Laplacian smoothing ✅[^6]; lab ✅[^7] |
-| Deeper GCN for a wider receptive field | Best at 2–3 layers; hard to train beyond ~7 without residuals | Kipf and Welling's depth study ✅[^2] |
+| Deeper GCN for a wider receptive field | Best at 2–3 layers; can become hard to train beyond 7 without residuals | Kipf and Welling's depth study ✅[^2] |
 | A high-degree "hub" node in full-neighbourhood models | Its update touches every neighbour | GraphSAGE samples a fixed number instead ✅[^3] |
 | Nodes unseen in training (new users, new molecules) | Transductive embeddings cannot embed them | GraphSAGE learns an inductive function of features ✅[^3] |
 | Regular graphs with identical features (6-cycle vs two triangles) | Same readout from GCN and GIN | Bounded by 1-WL ✅[^5]; lab ✅[^7] |
@@ -214,15 +214,15 @@ Reading it:
 - If two different graphs must be told apart and they look alike to colour refinement, add features (node identifiers, cycle counts); a different message-passing layer will not help.
 
 ## Verification status
-- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 60 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
-- [A Gentle Introduction to Graph Neural Networks](https://distill.pub/2021/gnn-intro/) — Sanchez-Lengeling, Reif, Pearce, Wiltschko, Distill, 2021. Backs: the four kinds of graph information, many adjacency matrices per graph, adjacency lists, sum/mean/max invariance, gather–aggregate–update, readout, the two-layer observation. [^1]
-- [Semi-Supervised Classification with Graph Convolutional Networks](https://ar5iv.labs.arxiv.org/html/1609.02907) — Kipf, Welling, 2016 (ICLR 2017). Backs: propagation rule, `Ã` and `D̃`, renormalization trick and its eigenvalue reason, linear cost in edges, two-layer model, depth study (up to 10 layers, residuals, ~7 layers). [^2]
+- [A Gentle Introduction to Graph Neural Networks](https://distill.pub/2021/gnn-intro/) — Sanchez-Lengeling, Reif, Pearce, Wiltschko, Distill, 2021. Backs: the four kinds of graph information, many adjacency matrices per graph, adjacency lists, sum/mean/max invariance, gather–aggregate–update, readout, the layer-count observation (mean test AUC up with depth, best models at two layers, its interactive figure checked). [^1]
+- [Semi-Supervised Classification with Graph Convolutional Networks](https://ar5iv.labs.arxiv.org/html/1609.02907) — Kipf, Welling, 2016 (ICLR 2017). Backs: propagation rule, `Ã` and `D̃`, renormalization trick and its eigenvalue reason, linear cost in edges, two-layer model, depth study (1 to 10 layers, 5-fold cross-validation with all labels, residuals, beyond 7 layers; Figure 5 checked). [^2]
 - [Inductive Representation Learning on Large Graphs](https://ar5iv.labs.arxiv.org/html/1706.02216) — Hamilton, Ying, Leskovec, 2017. Backs: GraphSAGE algorithm, concatenation and L2 normalization, mean ≈ GCN, aggregators, fixed-size sampling (`K = 2`, 25 and 10), inductive embeddings. [^3]
 - [Graph Attention Networks](https://ar5iv.labs.arxiv.org/html/1710.10903) — Veličković et al., 2017 (ICLR 2018). Backs: attention scores, LeakyReLU 0.2, masked attention including self, softmax weights, multi-head concatenation and averaging, Cora heads, time complexity. [^4]
 - [How Powerful are Graph Neural Networks?](https://ar5iv.labs.arxiv.org/html/1810.00826) — Xu, Hu, Leskovec, Jegelka, 2018 (ICLR 2019). Backs: AGGREGATE/COMBINE, READOUT, the WL test, Lemma 2 and the injectivity condition, mean/max/sum, GCN and GraphSAGE limits, GIN update and readout, 1-layer perceptron note. [^5]
-- [Deeper Insights into Graph Convolutional Networks for Semi-Supervised Learning](https://arxiv.org/abs/1801.07606) — Li, Han, Wu, 2018 (AAAI 2018). Backs: GCN as Laplacian smoothing, over-smoothing with many layers. [^6]
+- [Deeper Insights into Graph Convolutional Networks for Semi-Supervised Learning](https://arxiv.org/abs/1801.07606) — Li, Han, Wu, 2018 (AAAI 2018; full text read on ar5iv). Backs: GCN as symmetric Laplacian smoothing, over-smoothing with many layers, convergence to values proportional to the square root of the degree in each connected component (no bipartite components). [^6]
 - `machine-learning/lab-setup.md` — the lab where the script in the Worked example ran on 2026-11-24 (GCN normalization, equivariance, over-smoothing, 1-WL blind spot, GAT weights). [^7]
 
 ## Related

@@ -58,7 +58,7 @@ Adagrad divides by the square root of a sum of all past squared gradients, `s_t 
 1. **Two leaky averages:** `v_t = β1·v_{t−1} + (1 − β1)·g_t` (the mean, like momentum) and `s_t = β2·s_{t−1} + (1 − β2)·g_t²` (the second moment, like RMSprop); common choices are `β1 = 0.9`, `β2 = 0.999` ✅[^2].
 2. **Bias correction:** both start at 0, so early values are too small; dividing gives `v̂_t = v_t/(1 − β1^t)` and `ŝ_t = s_t/(1 − β2^t)` ✅[^2]. Example at `t = 1`: `v_1 = 0.1·g`, `v̂_1 = 0.1·g/0.1 = g`, and `ŝ_1 = g²`, so the first step is `η·g/|g|`: size `η` in every coordinate, whatever the gradient's scale.
 3. **Update:** `θ_t = θ_{t−1} − η·v̂_t/(√ŝ_t + ε)` ✅[^2]; PyTorch defaults `lr=1e-3`, `betas=(0.9, 0.999)`, `eps=1e-8`, `weight_decay=0` ✅[^6].
-4. **What its authors claim:** Adam is invariant to a diagonal rescaling of the gradients, and its hyperparameters typically need little tuning ✅[^7]. Reddi et al. showed cases where Adam diverges ✅[^2].
+4. **What its authors claim:** Adam is invariant to a diagonal rescaling of the gradients; their derivation sets `ε = 0`, so that multiplying the gradients by `c` multiplies `v̂_t` by `c` and `ŝ_t` by `c²`, which cancel in the step ✅[^7]. Its hyperparameters typically need little tuning, though the paper's own experiments still searched the learning rate and momentum over a dense grid for every comparison ✅[^7]. Reddi et al. showed cases where Adam diverges ✅[^2].
 
 ### Weight decay: L2 in the gradient vs decoupled (AdamW)
 1. **`SGD` and `Adam` in PyTorch:** `weight_decay=λ` adds `λ·θ` to the gradient before anything else, which is the gradient of an L2 term `λ/2·‖θ‖²` in the loss ✅[^3] ✅[^6].
@@ -68,7 +68,7 @@ Adagrad divides by the square root of a sum of all past squared gradients, `s_t 
 ### Learning-rate schedules
 1. **Why schedule:** too large a rate diverges, too small is slow; the rate should decay; and early large steps may not help while the parameters are still random ✅[^11].
 2. **Cosine decay:** `η_t = η_T + (η_0 − η_T)/2 · (1 + cos(π·t/T))` for `t` in `[0, T]`, from the initial rate `η_0` to the final `η_T` ✅[^11], proposed by Loshchilov and Hutter ✅[^11]. PyTorch's `CosineAnnealingLR(T_max, eta_min)` implements this closed form recursively and, unlike SGDR (SGD with warm restarts), never restarts ✅[^12].
-3. **Gradual warmup:** Goyal et al., training with a batch `k` times larger than a baseline that uses rate `η`, raise the rate by a constant amount each iteration from `η` to `k·η` over the first 5 epochs; with a large `k`, a constant low-rate warmup followed by a jump could make the training error spike ✅[^13]. PyTorch's `LinearLR(start_factor, total_iters)` multiplies the base rate by a factor that moves linearly to `end_factor` ✅[^14], and `SequentialLR` hands over between schedulers at `milestones` ✅[^15].
+3. **Gradual warmup:** Goyal et al., training with a batch `k` times larger than a baseline that uses rate `η`, raise the rate by a constant amount each iteration from `η` to `k·η` over the first 5 epochs; with a large `k`, a constant low-rate warmup followed by a jump could make the training error spike ✅[^13]. In their ImageNet runs with batches of 8,192 images, the error did spike right after constant warmup and never fully recovered (validation error 25.88 %, worse than no warmup's 24.84 %), while gradual warmup reached 23.74 % against 23.60 % for the 256-image baseline ✅[^13]. PyTorch's `LinearLR(start_factor, total_iters)` multiplies the base rate by a factor that moves linearly to `end_factor` ✅[^14], and `SequentialLR` hands over between schedulers at `milestones` ✅[^15].
 4. **Call order:** call `scheduler.step()` after `optimizer.step()`; the other order skips the first value of the schedule ✅[^16].
 
 Warmup then cosine, peak rate 1.0, from the same lab run ✅[^9]:
@@ -197,7 +197,7 @@ Reading it, line by line:
 - Print the schedule's learning rates for the whole run before training; the lab printout makes an off-by-one or a wrong `T_max` visible.
 
 ## Verification status
-- Verified: 70 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 72 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Momentum (Dive into Deep Learning, 12.6)](https://d2l.ai/chapter_optimization/momentum.html) — Zhang, Lipton, Li, Smola, living. Backs: the ill-conditioned quadratic and its traces at 0.4 and 0.6, heavy-ball update, `η/(1−β)`, narrow canyon, Polyak 1964. [^1]
@@ -206,13 +206,13 @@ Reading it, line by line:
 - [RMSProp (Dive into Deep Learning, 12.8)](https://d2l.ai/chapter_optimization/rmsprop.html) — Zhang, Lipton, Li, Smola, living. Backs: Adagrad's growing sum, RMSprop's leaky average and update, Tieleman and Hinton. [^4]
 - [torch.optim.RMSprop](https://docs.pytorch.org/docs/2.15/generated/torch.optim.RMSprop.html) — PyTorch, 2026 (2.15). Backs: defaults. [^5]
 - [torch.optim.Adam](https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html) — PyTorch, 2026 (2.15). Backs: defaults, `weight_decay` as L2, `decoupled_weight_decay`. [^6]
-- [Adam: A Method for Stochastic Optimization (abstract)](https://arxiv.org/abs/1412.6980) — Kingma, Ba, 2014 (v9, 2017). Backs: invariance to diagonal rescaling, little tuning. [^7]
+- [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980) — Kingma, Ba, 2014 (v9, 2017; full text read, PDF). Backs: invariance to diagonal rescaling and its `ε = 0` derivation (§2.1), little tuning, grid-searched hyperparameters in its experiments (§6). [^7]
 - [torch.optim.AdamW](https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html) — PyTorch, 2026 (2.15). Backs: decoupled decay step, default `weight_decay=1e-2`. [^8]
 - `machine-learning/lab-setup.md` — the lab where the six optimizers on the quadratic, the L2-vs-AdamW fits and the warmup-cosine schedule ran on 2026-11-24 (re-run 2026-11-25, same output), and `CosineAnnealingLR` past `T_max` was checked on 2026-11-25. [^9]
-- [Decoupled Weight Decay Regularization](https://arxiv.org/html/1711.05101v3) — Loshchilov, Hutter, 2019 (v3). Backs: L2 and weight decay equivalent for SGD, not for Adam; large-gradient weights regularized less; decoupled hyperparameters; 15 % relative improvement. [^10]
+- [Decoupled Weight Decay Regularization](https://arxiv.org/html/1711.05101v3) — Loshchilov, Hutter, 2019 (v3; full text read on ar5iv). Backs: L2 and weight decay equivalent for SGD, not for Adam; large-gradient weights regularized less; decoupled hyperparameters; 15 % relative improvement. [^10]
 - [Learning Rate Scheduling (Dive into Deep Learning, 12.11)](https://d2l.ai/chapter_optimization/lr-scheduler.html) — Zhang, Lipton, Li, Smola, living. Backs: why schedule, cosine formula, Loshchilov and Hutter, warmup motivation. [^11]
 - [torch.optim.lr_scheduler.CosineAnnealingLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html) — PyTorch, 2026 (2.15). Backs: recursive closed form, no restarts, `T_max`. [^12]
-- [Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour](https://arxiv.org/html/1706.02677v2) — Goyal et al., 2017 (v2). Backs: gradual warmup over 5 epochs, constant-warmup error spike, linear scaling rule. [^13]
+- [Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour](https://arxiv.org/html/1706.02677v2) — Goyal et al., 2017 (v2; full text read on ar5iv). Backs: gradual warmup over 5 epochs, constant-warmup error spike (§2.2; §5.2, Figure 2 and Table 1), linear scaling rule. [^13]
 - [torch.optim.lr_scheduler.LinearLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.LinearLR.html) — PyTorch, 2026 (2.15). Backs: `start_factor`, `end_factor`, `total_iters`. [^14]
 - [torch.optim.lr_scheduler.SequentialLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.SequentialLR.html) — PyTorch, 2026 (2.15). Backs: chaining schedulers at milestones. [^15]
 - [torch.optim](https://docs.pytorch.org/docs/2.15/optim.html) — PyTorch, 2026 (2.15). Backs: scheduler after optimizer; the 1.1.0 order change. [^16]

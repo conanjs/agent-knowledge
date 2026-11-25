@@ -48,7 +48,7 @@ sample std: xavier_normal_ 0.0623  kaiming_normal_(relu) 0.0884  calculate_gain(
 
 ### Why the gradient vanishes or explodes
 1. **A product of layers:** the gradient with respect to layer `l`'s weights is a product of `L − l` per-layer Jacobian matrices (the matrices of partial derivatives of one layer's output with respect to its input) and one vector, so it can become very large or very small ✅[^2]. In Dive into Deep Learning's run, multiplying 100 random Gaussian 4 × 4 matrices with variance 1 gave entries around `10^23` to `10^25` ✅[^2].
-2. **Saturating activations:** a sigmoid's gradient vanishes when its input is large in either direction, and through many layers the overall product is likely to be cut off at some layer ✅[^2]. Glorot and Bengio found the sigmoid unsuited to deep networks with random initialization, because its mean value can drive the top hidden layer into saturation ✅[^4].
+2. **Saturating activations:** a sigmoid's gradient vanishes when its input is large in either direction, and through many layers the overall product is likely to be cut off at some layer ✅[^2]. Glorot and Bengio found the sigmoid unsuited to deep networks with random initialization, because its mean value can drive the top hidden layer into saturation ✅[^4]. In their four-hidden-layer sigmoid network the top layer's outputs were pushed to the sigmoid's lower limit, 0, early in training and escaped only slowly, around epoch 100; a five-hidden-layer network never escaped, and they put forward the cause as a hypothesis ✅[^4].
 3. **Large updates or none:** exploding gradients give updates large enough to destroy the model; vanishing ones give updates too small to learn ✅[^2].
 
 ### Variance-preserving initialization
@@ -150,7 +150,7 @@ Reading it, row by row:
 | All weights of a layer set to the same constant | Hidden units stay identical; the layer acts as one unit | Same inputs and same gradient for every unit ✅[^2] |
 | Sigmoid in every hidden layer of a deep net | First-layer gradient norm `1e-33` (Xavier) to `3e-27` (He) in the lab | Derivative ≤ 0.25 ✅[^1]; its mean value can drive the top hidden layer into saturation ✅[^4]; lab ✅[^7] |
 | Gradient norm taken with float32 `.norm()` | Prints `0.00e+00` or `inf` for gradients whose float64 norm is `1.2e-33` or `7.3e20` (lab) | The norm squares the elements, and the squares underflow or overflow float32; call `.double()` before `.norm()` ✅[^7] |
-| Xavier with ReLU, very deep | A 30-layer ReLU model stalls with Xavier and converges with He | Variance halves per layer ✅[^6]; lab std `1.5e-8` at layer 50 ✅[^7] |
+| Xavier with ReLU, very deep | A 30-layer ReLU model stalls with Xavier and converges with He, though it ends less accurate than the paper's 14-layer model ✅[^6] | Variance halves per layer ✅[^6]; lab std `1.5e-8` at layer 50 ✅[^7] |
 | Xavier with ReLU, 22 layers | Both converge; He starts reducing the error earlier | The `1/√2^L` loss is not yet fatal ✅[^6] |
 | Your code computes `x @ w` with `w.shape = [fan_in, fan_out]` | `nn.init` computes fan-in and fan-out swapped | It assumes `x @ w.T` with `w.shape = [fan_out, fan_in]`; pass `w.T` ✅[^5] |
 | SELU self-normalizing network | Use `nonlinearity='linear'`, not `'selu'` | The SELU gain trades the normalization for gradient flow ✅[^5] |
@@ -165,7 +165,7 @@ Reading it, row by row:
 | ReLU | Derivative 0 or 1; mitigated vanishing gradients ✅[^1] | Zero gradient for negative inputs ✅[^1]; needs He scaling ✅[^6] |
 | GELU | Matched or exceeded ReLU and ELU (exponential linear unit) across the vision, language and speech recognition tasks in its paper ✅[^3] | Needs `Φ` or a close approximation, which the authors call important ✅[^3] |
 | Xavier init | Balances forward and backward variance for near-linear activations ✅[^2] | Shrinks ReLU signals by `1/√2` per layer ✅[^6] |
-| He init | Keeps ReLU variance constant; trains 30-layer ReLU nets ✅[^6] | Designed for rectifiers; other activations need their own gain ✅[^5] |
+| He init | Keeps ReLU variance constant; makes a 30-layer ReLU net converge where Xavier stalls ✅[^6] | Designed for rectifiers; other activations need their own gain ✅[^5] |
 
 ## Takeaways
 - Pick the initializer for the activation: He (`kaiming_normal_`, `nonlinearity='relu'`) for ReLU-family layers, Xavier with `calculate_gain` for tanh or linear layers. [rule-candidate]
@@ -174,15 +174,15 @@ Reading it, row by row:
 - Depth multiplies small errors in scale: a factor of 0.16 or 2 per layer is fatal over 50 layers, so normalize inputs as well.
 
 ## Verification status
-- Verified: 52 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 54 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Multilayer Perceptrons (Dive into Deep Learning, 5.1)](https://d2l.ai/chapter_multilayer-perceptrons/mlp.html) — Zhang, Lipton, Li, Smola, living. Backs: sigmoid, tanh, ReLU formulas and derivatives, sigmoid's maximum derivative 0.25, ReLU mitigating vanishing gradients, sigmoid replaced in hidden layers. [^1]
 - [Numerical Stability and Initialization (Dive into Deep Learning, 5.4)](https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html) — Zhang, Lipton, Li, Smola, living. Backs: gradient as a product of matrices, 100-matrix explosion, sigmoid vanishing, `Var[o] = n_in·σ²·γ²`, Xavier normal and uniform, symmetry breaking, default init for moderate sizes. [^2]
-- [Gaussian Error Linear Units (GELUs)](https://arxiv.org/html/1606.08415v5) — Hendrycks, Gimpel, 2016 (v5, 2023). Backs: `x·Φ(x)`, weighting by value vs gating by sign, non-convex and non-monotonic, asymptotic equality with ReLU, results vs ReLU and ELU, close approximation of `Φ` matters. [^3]
-- [Understanding the difficulty of training deep feedforward neural networks](https://proceedings.mlr.press/v9/glorot10a.html) — Glorot, Bengio, 2010 (PMLR abstract page). Backs: sigmoid unsuited to deep nets with random init because of its mean value. [^4]
+- [Gaussian Error Linear Units (GELUs)](https://arxiv.org/html/1606.08415v5) — Hendrycks, Gimpel, 2016 (v5, 2023; full text read, arXiv HTML). Backs: `x·Φ(x)`, weighting by value vs gating by sign, non-convex and non-monotonic, asymptotic equality with ReLU, results vs ReLU and ELU, close approximation of `Φ` matters. [^3]
+- [Understanding the difficulty of training deep feedforward neural networks](https://proceedings.mlr.press/v9/glorot10a.html) — Glorot, Bengio, 2010 (full text read, PDF). Backs: sigmoid unsuited to deep nets with random init because of its mean value; the top hidden layer's early saturation and slow escape in their four- and five-layer sigmoid networks (§3.1, Figure 2). [^4]
 - [torch.nn.init](https://docs.pytorch.org/docs/2.15/nn.init.html) — PyTorch, 2026 (2.15). Backs: `calculate_gain` values, Xavier and Kaiming formulas, `fan_in` vs `fan_out`, transposed-weight note, SELU warning. [^5]
-- [Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification](https://arxiv.org/html/1502.01852v1) — He, Zhang, Ren, Sun, 2015. Backs: ReLU variance condition and `√(2/n_l)`, Xavier's `1/√2^L` shrink, 22-layer and 30-layer comparisons, unnormalized input overflow. [^6]
+- [Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification](https://arxiv.org/html/1502.01852v1) — He, Zhang, Ren, Sun, 2015 (full text read, PDF). Backs: ReLU variance condition and `√(2/n_l)`, Xavier's `1/√2^L` shrink, 22-layer and 30-layer comparisons (§2.2, Figures 2 and 3), the 30-layer model's accuracy, unnormalized input overflow. [^6]
 - `machine-learning/lab-setup.md` — the lab where the 50-layer activation/initialization sweep, the GELU values and the `nn.init` samples ran on 2026-11-24. [^7]
 - [torch.nn.GELU](https://docs.pytorch.org/docs/2.15/generated/torch.nn.GELU.html) — PyTorch, 2026 (2.15). Backs: exact and tanh-approximate formulas. [^8]
 - [torch.nn.Linear](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Linear.html) — PyTorch, 2026 (2.15). Backs: default weight init `U(−√k, √k)`, `k = 1/in_features`. [^9]

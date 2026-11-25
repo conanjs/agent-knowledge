@@ -71,11 +71,12 @@ model.train()
 ### 6. Reading loss curves
 | Pattern | Diagnosis | First fix |
 |---|---|---|
-| Train and validation loss both high, close together | Underfitting: capacity too low ✅[^9]. Lab linear model: train 1.001, val 0.923 after 100 epochs ✅[^10] | Bigger model ✅[^9] |
-| Train loss keeps falling, validation loss turns up | Overfitting; the gap measures it ✅[^9]. Lab MLP: val lowest at epoch 12 (0.540), 1.399 at epoch 300 while train reaches 0.000 ✅[^10] | More regularization or more data ✅[^9]; early stopping (below) |
-| Loss barely moves, roughly linear | Learning rate too low ✅[^9]. Lab SGD `lr=1e-4`: 1.396 → 1.393 in 30 epochs ✅[^10] | Raise the learning rate |
-| Loss drops fast then stalls at a poor value, or jumps around | Learning rate too high ✅[^9]. Lab SGD `lr=3`: 1.549 → 1.259, accuracy 0.450 vs 0.698 at `lr=0.1` ✅[^10] | Lower it |
-| Loss becomes huge, `inf` or `nan` | Divergence; some settings explode immediately ✅[^9]. Lab SGD `lr=1000`: `nan` from epoch 1 ✅[^10] | Lower the learning rate |
+| Train and validation loss both high, close together | Underfitting: capacity too low, CS231n's reading of a validation curve that tracks the training curve closely ✅[^9]. Lab linear model: train 1.001, val 0.923 after 100 epochs ✅[^10] | Bigger model ✅[^9] |
+| Train loss keeps falling, validation loss turns up | Overfitting: the gap between training and validation accuracy measures it, and validation accuracy can even start to fall ✅[^9]. Lab MLP: val lowest at epoch 12 (0.540), 1.399 at epoch 300 while train reaches 0.000 ✅[^10] | More regularization or more data ✅[^9]; early stopping (below) |
+| Loss falls slowly, in a roughly straight line | Learning rate too low: the improvements are linear ✅[^9]. Lab SGD `lr=1e-4`: 1.396 → 1.393 in 30 epochs, barely moving ✅[^10] | Raise the learning rate |
+| Loss drops fast, then stalls at a poor value | Learning rate too high: the parameters bounce around and cannot settle ✅[^9]. Lab SGD `lr=3`: 1.549 → 1.259, accuracy 0.450 vs 0.698 at `lr=0.1` ✅[^10] | Lower it |
+| Loss very noisy from one batch to the next | Batch size small: the amount of wiggle in the loss depends on the batch size ✅[^9] | A larger batch |
+| Loss becomes huge, `inf` or `nan` | Divergence: in CS231n's cartoon a very high learning rate makes the loss climb, and some settings explode immediately with infinite cost ✅[^9]. Lab SGD `lr=1000`: `nan` from epoch 1 ✅[^10] | Lower the learning rate |
 
 **Early stopping** keeps the parameters from the best validation epoch, not the last: save a checkpoint whenever validation loss improves and stop after `patience` epochs without improvement. With patience 20, the lab run stops at epoch 32 and keeps epoch 12 ✅[^10].
 
@@ -253,7 +254,7 @@ for keep_opt in (True, False):
 Reading it:
 - **Sections 1–2** pass the two sanity checks: the first loss is within 0.02 of `ln 4`, and the model memorizes 16 examples, so the model, loss and optimizer are wired correctly.
 - **Section 3** shows both failure shapes: the linear model cannot represent the sign product, so both losses stay near 1; the 256-unit MLP overfits after epoch 12. The reloaded checkpoint gives the same validation loss, 0.540, as the epoch it was saved at.
-- **Section 4:** only `lr=0.1` learns well in 30 epochs; `1e-4` is too slow to see, `3` is unstable, `1000` is `nan` at once.
+- **Section 4:** only `lr=0.1` learns well in 30 epochs; `1e-4` is too slow to see, `3` stalls at a poor value, `1000` is `nan` at once.
 - **Section 5, softmax before the loss:** the loss then applies a second softmax to values in `[0, 1]`, so even a perfect prediction `(1, 0, 0, 0)` costs `−ln(e/(e+3)) = 0.7437`; the training loss 0.844 can never go below that floor. Accuracy, 0.828, is higher than the correct loop's 0.746 here: the squashed gradients learn slowly and overfit less in 50 epochs. The loss value, not accuracy, exposes the bug.
 - **Section 5, shuffled labels:** the network still fits its training set partly (0.807), but validation accuracy is chance (0.232); a network can memorize labels that carry no signal.
 - **Section 5, dropout:** two validation passes in train mode disagree (0.7994, 0.8079) and are worse than eval mode, which repeats exactly (0.6683).
@@ -281,7 +282,7 @@ Reading it:
 - Keep the best-validation checkpoint and stop after a patience window instead of using the last epoch.
 
 ## Verification status
-- Verified: 57 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 58 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [torch.optim](https://docs.pytorch.org/docs/2.15/optim.html) — PyTorch, 2026 (2.15). Backs: the five-call training loop, `step()`. [^1]
@@ -292,7 +293,7 @@ Reading it:
 - [torch.no_grad](https://docs.pytorch.org/docs/2.15/generated/torch.no_grad.html) — PyTorch, 2026 (2.15). Backs: disables gradient calculation, memory, `requires_grad=False` results. [^6]
 - [Saving and Loading Models](https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html) — PyTorch tutorials, living. Backs: `state_dict`, optimizer `state_dict`, recommended save, general checkpoint keys, file extensions, dict not path, `eval()`/`train()` after loading. [^7]
 - [torch.load](https://docs.pytorch.org/docs/2.15/generated/torch.load.html) — PyTorch, 2026 (2.15). Backs: `weights_only=True` default, untrusted-source warning, `map_location`. [^8]
-- [CS231n: Neural Networks Part 3 (Learning and Evaluation)](https://cs231n.github.io/neural-networks-3/) — Stanford CS231n course notes, living. Backs: initial loss 2.302 for 10 classes, overfit ~20 examples, centred differences in double precision, loss-curve shapes for learning rates, train/val gap, explosion. [^9]
+- [CS231n: Neural Networks Part 3 (Learning and Evaluation)](https://cs231n.github.io/neural-networks-3/) — Stanford CS231n course notes, living. Backs: initial loss 2.302 for 10 classes, overfit ~20 examples, centred differences in double precision, loss-curve shapes for learning rates (the `learningrates.jpeg` cartoon), train/validation accuracy gap and underfitting (`accuracies.jpeg` and its text), noise vs batch size, explosion. [^9]
 - `machine-learning/lab-setup.md` — the lab where the training-loop script ran on 2026-11-25 (PyTorch 2.15.0, CPU); script at `mllab/training-loop-and-debugging/lab.py`. [^10]
 
 ## Related
