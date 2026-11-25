@@ -365,3 +365,4 @@ Reading it line by line ✅[^8]:
 - `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — particle filters, a sequential Monte Carlo method.
 - `machine-learning/probabilistic-ml/gaussian-processes.md` — a Bayesian model whose regression posterior needs no sampling.
 - `machine-learning/foundations/gradient-descent.md` — the gradients HMC reuses, and step-size divergence in optimization.
+- `machine-learning/generative-models/energy-based-models.md` — Langevin dynamics for sampling energy-based models.

@@ -236,3 +236,4 @@ for x0 in (-2.0, 0.0, 0.2, 3.0):
 - `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — EM for sequences: Baum–Welch for hidden Markov models.
 - `machine-learning/probabilistic-ml/variational-inference.md` — variational inference, the general form of EM's E-step bound.
 - `machine-learning/foundations/information-theory.md` — KL divergence and the ELBO's gap.
+- `machine-learning/unsupervised-learning/factor-analysis-and-ica.md` — factor analysis, another latent-variable model fitted by EM.

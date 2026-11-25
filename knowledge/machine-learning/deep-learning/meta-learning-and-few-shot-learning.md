@@ -343,3 +343,4 @@ Reading it:
 - `machine-learning/supervised-learning/k-nearest-neighbors.md` — nearest-neighbour classification and why the distance decides everything.
 - `machine-learning/deep-learning/continual-learning.md` — learning tasks in sequence without forgetting the old ones.
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — the autograd machinery MAML differentiates through twice.
+- `machine-learning/deep-learning/metric-learning.md` — learning a distance that transfers to unseen classes.

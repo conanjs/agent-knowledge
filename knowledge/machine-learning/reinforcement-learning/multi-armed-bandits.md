@@ -172,3 +172,4 @@ Reading it:
 - `machine-learning/reinforcement-learning/markov-decision-processes.md` — the general case, where actions change the state.
 - `machine-learning/reinforcement-learning/temporal-difference-and-q-learning.md` — ε-greedy reused as the behaviour policy of Q-learning and SARSA.
 - `machine-learning/probabilistic-ml/bayesian-inference.md` — Beta–Binomial conjugacy behind the Thompson update.
+- `machine-learning/learning-theory/online-learning.md` — regret with full information: online gradient descent, FTRL and Hedge.

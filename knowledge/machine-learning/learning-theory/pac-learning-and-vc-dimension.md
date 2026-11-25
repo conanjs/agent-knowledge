@@ -213,3 +213,4 @@ Reading it:
 - `machine-learning/learning-theory/no-free-lunch-and-inductive-bias.md` — why every guarantee rests on an assumption about the problem.
 - `machine-learning/supervised-learning/support-vector-machines.md` — the maximum-margin classifier behind margin bounds.
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — estimating generalization from data instead of bounds.
+- `machine-learning/learning-theory/online-learning.md` — regret bounds for data that arrive one at a time, with no i.i.d. assumption.

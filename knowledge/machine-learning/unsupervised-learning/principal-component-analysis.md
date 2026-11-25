@@ -181,3 +181,4 @@ print("std of whitened components:", Z.std(axis=0, ddof=1).round(3),
 - `machine-learning/foundations/math-notation-reference.md` — vectors, matrices, dot products and norms used above.
 - `machine-learning/supervised-learning/linear-regression.md` — the other least-squares method in this knowledge base.
 - `machine-learning/supervised-learning/discriminant-analysis.md` — LDA, the supervised projection.
+- `machine-learning/unsupervised-learning/factor-analysis-and-ica.md` — factor analysis (per-feature noise) and ICA (independent, non-Gaussian sources).

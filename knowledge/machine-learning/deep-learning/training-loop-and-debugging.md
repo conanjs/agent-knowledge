@@ -306,3 +306,4 @@ Reading it:
 - `machine-learning/ml-systems/reproducibility-and-determinism.md` — seeding the `DataLoader` and its workers.
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — choosing the learning rate and patience on validation data.
 - `machine-learning/deep-learning/data-augmentation-and-transfer-learning.md` — the next fixes once the loop is correct and the model overfits.
+- `machine-learning/data-and-features/weak-supervision.md` — label noise and its effect on training.

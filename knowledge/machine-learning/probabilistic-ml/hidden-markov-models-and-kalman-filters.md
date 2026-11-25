@@ -382,3 +382,4 @@ Reading it, part by part:
 - `machine-learning/probabilistic-ml/markov-chain-monte-carlo.md` — the other family of Monte Carlo inference methods.
 - `machine-learning/deep-learning/recurrent-networks.md` — learned sequence models whose state update resembles the forward recursion.
 - `machine-learning/transformers/efficient-attention-and-state-space-models.md` — S4 and Mamba, which share the name but not the probabilistic model.
+- `machine-learning/reinforcement-learning/optimal-control-and-lqr.md` — LQR, the Kalman filter's dual, and LQG.

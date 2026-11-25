@@ -218,3 +218,4 @@ Reading it:
 - `machine-learning/reinforcement-learning/policy-gradients-and-ppo.md` — optimizing the policy directly, using the advantage.
 - `machine-learning/foundations/what-is-machine-learning.md` — where reinforcement learning sits among the learning paradigms.
 - `machine-learning/reinforcement-learning/model-based-reinforcement-learning.md` — learning the MDP's model and planning with it.
+- `machine-learning/reinforcement-learning/optimal-control-and-lqr.md` — LQR: value iteration with quadratic value functions over continuous states.

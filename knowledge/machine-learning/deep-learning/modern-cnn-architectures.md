@@ -244,3 +244,4 @@ Reading it, block by block:
 - `machine-learning/deep-learning/data-augmentation-and-transfer-learning.md` — fine-tuning these backbones.
 - `machine-learning/learning-theory/no-free-lunch-and-inductive-bias.md` — the locality assumption every CNN makes.
 - `machine-learning/ml-systems/model-compression-and-quantization.md` — making a chosen backbone smaller still.
+- `machine-learning/deep-learning/neural-architecture-search-and-automl.md` — architectures found by search.

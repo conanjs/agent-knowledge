@@ -7,7 +7,7 @@ last-updated: 2026-11-25
 
 # Unsupervised learning
 
-Finding structure without labels: k-means, Gaussian mixtures and the EM algorithm, density-based and hierarchical clustering, principal component analysis, t-SNE/UMAP embeddings for visualization, anomaly detection, semi-supervised learning from a few labels plus many unlabelled rows, and active learning, which chooses which unlabelled rows to send for labeling. Not covered: generative models that sample new data (see `machine-learning/generative-models/`).
+Finding structure without labels: k-means, Gaussian mixtures and the EM algorithm, density-based and hierarchical clustering, principal component analysis, t-SNE/UMAP embeddings for visualization, anomaly detection, semi-supervised learning from a few labels plus many unlabelled rows, active learning, which chooses which unlabelled rows to send for labeling, and factor analysis and independent component analysis (ICA). Not covered: generative models that sample new data (see `machine-learning/generative-models/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -20,6 +20,7 @@ Finding structure without labels: k-means, Gaussian mixtures and the EM algorith
 | [anomaly-detection.md](anomaly-detection.md) | concept | Outlier vs novelty detection; isolation-forest path lengths and LOF (local outlier factor) by hand, one-class SVM (support vector machine), elliptic envelope; `contamination` moves the threshold, not the ranking (ROC-AUC, area under the receiver operating characteristic curve, 0.9284 at four settings) | verified |
 | [semi-supervised-learning.md](semi-supervised-learning.md) | concept | Cluster and manifold assumptions, self-training and its confirmation bias (digits 0.750 → 0.246), label propagation and spreading on a graph, FixMatch-style pseudo-labels, when unlabelled data hurts | verified |
 | [active-learning.md](active-learning.md) | concept | Pool-based active learning: least-confident, margin and entropy sampling, query by committee, BALD (Bayesian active learning by disagreement) in outline, core-set (k-center) batches against near-duplicates, cold start, sampling bias, and learning curves against random labels (digits: margin 0.853 vs random 0.780 at 50 labels) | verified |
+| [factor-analysis-and-ica.md](factor-analysis-and-ica.md) | concept | Factor analysis (loadings plus per-feature noise) vs PCA, the rotation ambiguity and varimax; ICA: why non-Gaussianity identifies sources, kurtosis and negentropy, whitening and the FastICA fixed point (cocktail party: FastICA ≥ 0.997 correlation, PCA ≤ 0.78) | verified |
 
 ## References
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope.

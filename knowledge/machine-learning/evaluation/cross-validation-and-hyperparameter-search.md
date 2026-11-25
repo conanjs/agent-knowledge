@@ -222,3 +222,4 @@ Reading it:
 - `machine-learning/evaluation/classification-metrics.md` — what to pass as `scoring=`.
 - `machine-learning/data-and-features/preprocessing-and-pipelines.md` — searching over a whole pipeline.
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — the bandit view behind successive halving and Hyperband.
+- `machine-learning/deep-learning/neural-architecture-search-and-automl.md` — searching over architectures and whole pipelines.

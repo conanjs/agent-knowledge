@@ -225,3 +225,4 @@ Reading it:
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — how the gradient of a deep network is computed.
 - `machine-learning/data-and-features/preprocessing-and-pipelines.md` — scaling inside a `Pipeline`, fitted on training data only.
 - `machine-learning/supervised-learning/linear-regression.md` — the closed-form alternative for least squares.
+- `machine-learning/learning-theory/online-learning.md` — online gradient descent and its regret bound.

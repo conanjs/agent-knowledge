@@ -270,3 +270,4 @@ Reading it, block by block:
 - `machine-learning/unsupervised-learning/principal-component-analysis.md` — a linear, closed-form way to get low-dimensional representations.
 - `machine-learning/transformers/tokenization.md` — where the ids that `nn.Embedding` looks up come from.
 - `machine-learning/transformers/multimodal-models.md` — CLIP-style encoders inside multimodal language models.
+- `machine-learning/deep-learning/metric-learning.md` — supervised contrastive and triplet losses for retrieval.

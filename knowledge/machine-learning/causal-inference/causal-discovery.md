@@ -386,3 +386,4 @@ Reading it:
 - `machine-learning/causal-inference/potential-outcomes-and-experiments.md` — randomized experiments, which settle direction without discovery's assumptions.
 - `machine-learning/supervised-learning/linear-regression.md` — the least-squares fits behind the residual tests and the BIC.
 - `machine-learning/foundations/regularization.md` — the L1 penalty that NOTEARS uses for sparsity.
+- `machine-learning/unsupervised-learning/factor-analysis-and-ica.md` — ICA, which LiNGAM uses to orient edges.

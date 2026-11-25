@@ -308,3 +308,4 @@ Reading it (just-learned is the mean of the task-incremental diagonal, the accur
 - `machine-learning/generative-models/generative-model-families.md` — the generators generative replay relies on.
 - `machine-learning/ml-systems/pruning-and-knowledge-distillation.md` — distillation, the mechanism behind LwF.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — noticing that the data has moved on.
+- `machine-learning/learning-theory/online-learning.md` — the regret view of learning from a stream.

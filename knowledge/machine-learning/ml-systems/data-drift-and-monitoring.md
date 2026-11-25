@@ -194,3 +194,4 @@ Reading it line by line:
 - `machine-learning/evaluation/conformal-prediction.md` — coverage under shift, and weighted conformal prediction.
 - `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — model uncertainty on shifted and out-of-distribution inputs.
 - `machine-learning/reinforcement-learning/offline-reinforcement-learning.md` — distribution shift when learning a policy from logged data.
+- `machine-learning/learning-theory/online-learning.md` — online learners that track a drifting stream.
