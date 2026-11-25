@@ -7,12 +7,12 @@ last-updated: 2026-11-25
 
 # Machine learning
 
-Machine learning from the basics to advanced use, written in our own words: what learning from data means and the core training loop, the classical supervised and unsupervised models, preparing data and evaluating models honestly, deep learning, transformers and large language models (pretraining, fine-tuning, alignment, decoding), generative models, reinforcement learning, probabilistic models, learning theory, and running models in production. Every mechanism is explained with an analogy, a concrete artifact, the step-by-step mechanism and an edge-case table, with claims checked against official library docs, the originators' papers and free textbooks, and behaviours run in the Python lab described in `lab-setup.md` (scikit-learn 1.9.1, PyTorch 2.15.0). Start with `learning-path.md`. Not covered: specific cloud ML platforms, data engineering pipelines, and building agents on top of LLMs (see `ai-agents/`).
+Machine learning from the basics to advanced use, written in our own words: what learning from data means and the core training loop, the classical supervised and unsupervised models, preparing data and evaluating models honestly, deep learning, transformers and large language models (pretraining, fine-tuning, alignment, decoding), generative models, reinforcement learning, probabilistic models, learning theory, running models in production, and the applied problem families: time-series forecasting, recommender systems, causal inference, and privacy-preserving machine learning. Every mechanism is explained with an analogy, a concrete artifact, the step-by-step mechanism and an edge-case table, with claims checked against official library docs, the originators' papers and free textbooks, and behaviours run in the Python lab described in `lab-setup.md` (scikit-learn 1.9.1, PyTorch 2.15.0). Start with `learning-path.md`. Not covered: specific cloud ML platforms, data engineering pipelines, and building agents on top of LLMs (see `ai-agents/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
 |---|---|---|---|
-| [learning-path.md](learning-path.md) | reference | Ten stages from foundations to LLMs, generative models and theory, plus production alongside; docs to read in order, a lab exercise and a self-check per stage, free resources, and topics not covered yet | verified |
+| [learning-path.md](learning-path.md) | reference | Eleven stages from foundations to LLMs, generative models, theory and applied problem families (time series, recommenders, causal inference, privacy), plus production alongside; docs to read in order, a lab exercise and a self-check per stage, free resources, and topics not covered yet | verified |
 | [lab-setup.md](lab-setup.md) | how-to | A uv virtual environment with pinned numpy, scipy, scikit-learn, PyTorch (CPU) and pandas; seeded, download-free experiments; the source of every lab output | verified |
 
 ## Subtopics
@@ -30,6 +30,10 @@ Machine learning from the basics to advanced use, written in our own words: what
 | [probabilistic-ml/](probabilistic-ml/index.md) | Bayesian inference (MLE, MAP, posteriors), naive Bayes, Gaussian processes |
 | [learning-theory/](learning-theory/index.md) | PAC learning and VC dimension, double descent, no-free-lunch and inductive bias |
 | [ml-systems/](ml-systems/index.md) | Hidden technical debt, data drift and monitoring, reproducibility and determinism, compression and quantization |
+| [recommender-systems/](recommender-systems/index.md) | Collaborative filtering and matrix factorization, implicit feedback and ranking losses, ranking metrics, two-stage retrieval and ranking, cold start and feedback loops |
+| [time-series/](time-series/index.md) | Trend, seasonality, stationarity and autocorrelation; naive baselines, exponential smoothing and ARIMA; lag-feature forecasters, multi-step strategies, backtesting and prediction intervals |
+| [causal-inference/](causal-inference/index.md) | Potential outcomes and A/B tests, causal graphs and confounding, propensity scores, doubly robust and double machine learning, heterogeneous effects and uplift |
+| [privacy-preserving-ml/](privacy-preserving-ml/index.md) | Differential privacy and its mechanisms, DP-SGD, federated learning, membership inference and memorization |
 
 ## References
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope (classical ML).
