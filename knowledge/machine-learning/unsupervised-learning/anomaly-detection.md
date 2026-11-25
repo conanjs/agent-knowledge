@@ -273,3 +273,4 @@ Reading it, line by line:
 - `machine-learning/evaluation/class-imbalance.md` — the rare-positive regime every anomaly evaluation is in.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — when the whole distribution moves, not single points.
 - `machine-learning/unsupervised-learning/semi-supervised-learning.md` — using a few labels together with unlabelled data.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — out-of-distribution inputs seen through a model's uncertainty.

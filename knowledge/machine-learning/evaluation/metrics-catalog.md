@@ -196,3 +196,5 @@ print(len(names), "scorer names;", [n for n in ("matthews_corrcoef", "neg_log_lo
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — the same quantities as training losses.
 - `machine-learning/unsupervised-learning/k-means-clustering.md` — clustering scores in use.
 - `algorithms/vector-search-evaluation.md` — recall and latency for nearest-neighbour retrieval.
+- `machine-learning/supervised-learning/generalized-linear-models.md` — deviance for Poisson, Gamma and Tweedie models.
+- `machine-learning/foundations/information-theory.md` — mutual information and log loss as cross-entropy.

@@ -224,3 +224,5 @@ The interval column is scipy's `interval(0.95)`, the range with equal probabilit
 - `machine-learning/probabilistic-ml/gaussian-processes.md` — a prior over functions with an exact posterior.
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — Thompson sampling draws from Beta posteriors like these.
 - `machine-learning/foundations/math-notation-reference.md` — notation for argmax, expectations and integrals.
+- `machine-learning/probabilistic-ml/markov-chain-monte-carlo.md` — sampling a posterior with no closed form.
+- `machine-learning/probabilistic-ml/variational-inference.md` — approximating a posterior with no closed form by optimization.

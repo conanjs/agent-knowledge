@@ -194,3 +194,4 @@ Reading it line by line:
 - `machine-learning/supervised-learning/logistic-regression.md` — the reward-model loss is logistic regression on reward differences.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — log loss as maximum likelihood.
 - `machine-learning/transformers/decoding-and-kv-cache.md` — how the tuned policy is sampled.
+- `machine-learning/foundations/information-theory.md` — the KL divergence in the RLHF penalty.

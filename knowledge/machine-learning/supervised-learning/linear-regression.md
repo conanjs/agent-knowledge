@@ -205,3 +205,4 @@ Reading it line by line:
 - `machine-learning/foundations/generalization-and-overfitting.md` — why R² must be measured on held-out data.
 - `machine-learning/supervised-learning/logistic-regression.md` — the same linear score, turned into a probability for classification.
 - `machine-learning/evaluation/metrics-catalog.md` — R² next to the other regression metrics.
+- `machine-learning/supervised-learning/generalized-linear-models.md` — the family linear regression belongs to.

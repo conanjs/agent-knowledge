@@ -177,3 +177,4 @@ Reading it:
 - `machine-learning/evaluation/data-leakage.md` — resampling inside the training folds only.
 - `machine-learning/supervised-learning/logistic-regression.md` — the model used here and its `class_weight`.
 - `machine-learning/supervised-learning/k-nearest-neighbors.md` — the neighbour search SMOTE relies on.
+- `machine-learning/ml-systems/domain-adaptation.md` — label shift: when class priors differ between training and deployment.

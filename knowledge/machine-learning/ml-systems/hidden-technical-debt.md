@@ -5,7 +5,7 @@ topic: machine-learning/ml-systems
 status: verified
 applies-to: ["any"]
 last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-updated: 2026-11-25
 tags: [machine-learning, ml-systems, technical-debt, cace, entanglement, glue-code, pipeline-jungles, feedback-loops, undeclared-consumers, data-dependencies, ml-test-score]
 ---
 
@@ -180,3 +180,4 @@ Reading it line by line:
 - `machine-learning/evaluation/data-leakage.md` — features that only exist because the label leaked into them.
 - `machine-learning/data-and-features/preprocessing-and-pipelines.md` — one pipeline object for training and serving transforms.
 - `machine-learning/data-and-features/feature-importance-and-selection.md` — measuring whether a feature earns its place, and why correlated features confuse importance.
+- `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md` — the feedback loop in a recommender, simulated: homogenized users, concentrated exposure and what helps.

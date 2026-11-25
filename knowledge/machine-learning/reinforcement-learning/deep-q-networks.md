@@ -263,3 +263,4 @@ Reading it:
 - `machine-learning/deep-learning/optimizers-and-learning-rate-schedules.md` — Adam and RMSprop, the optimizers used here and in the original DQN.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — Huber loss among the regression losses.
 - `machine-learning/foundations/gradient-descent.md` — the update each regression step performs.
+- `machine-learning/reinforcement-learning/offline-reinforcement-learning.md` — over-estimated values on actions a dataset never took.

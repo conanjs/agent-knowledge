@@ -256,3 +256,4 @@ Reading it, line by line:
 - `machine-learning/time-series/forecasting-with-machine-learning.md` — lag-feature models, backtesting, MASE and quantile intervals; how classical methods fared in the M4 competition.
 - `machine-learning/supervised-learning/linear-regression.md` — the least squares used to fit the AR(2).
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — maximum likelihood, used to fit ETS and ARIMA.
+- `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — the Kalman filter, whose steady state is exponential smoothing.

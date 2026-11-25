@@ -7,7 +7,7 @@ last-updated: 2026-11-24
 
 # Machine learning fundamentals
 
-What learning from data means and the core training loop that every later doc builds on: the kinds of learning and the end-to-end workflow, why training error is not test error (overfitting, the bias–variance decomposition, train/validation/test splits), what a loss function measures and why MSE and cross-entropy are maximum-likelihood losses, how gradient descent fits parameters (learning rate, batches, conditioning), how ridge, lasso, elastic net and early stopping regularize, and a reference card for the notation. Written for a programmer with no ML background; each doc has a lab experiment with its full script. Not covered: specific model families (see `machine-learning/supervised-learning/` and later subtopics), evaluation metrics and cross-validation schemes (see `machine-learning/evaluation/`), and optimizers beyond plain gradient descent (see `machine-learning/deep-learning/`).
+What learning from data means and the core training loop that every later doc builds on: the kinds of learning and the end-to-end workflow, why training error is not test error (overfitting, the bias–variance decomposition, train/validation/test splits), what a loss function measures and why MSE and cross-entropy are maximum-likelihood losses, how gradient descent fits parameters (learning rate, batches, conditioning), how ridge, lasso, elastic net and early stopping regularize, the information theory behind cross-entropy and KL divergence, and a reference card for the notation. Written for a programmer with no ML background; each doc has a lab experiment with its full script. Not covered: specific model families (see `machine-learning/supervised-learning/` and later subtopics), evaluation metrics and cross-validation schemes (see `machine-learning/evaluation/`), and optimizers beyond plain gradient descent (see `machine-learning/deep-learning/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -18,6 +18,7 @@ What learning from data means and the core training loop that every later doc bu
 | [gradient-descent.md](gradient-descent.md) | concept | Gradient and update rule, learning rate (converge, oscillate, diverge), batch vs stochastic vs mini-batch, convergence, condition number and feature scaling | verified |
 | [regularization.md](regularization.md) | concept | L2/ridge and weight decay, L1/lasso and exact zeros, elastic net with correlated features, early stopping, choosing the strength | verified |
 | [math-notation-reference.md](math-notation-reference.md) | reference | Every symbol the ML docs use (vectors, norms, Σ, ∇, argmin, E[·], variance, log/exp, sigmoid, softmax, log-sum-exp) with one lab-checked number and the numpy call | verified |
+| [information-theory.md](information-theory.md) | concept | Surprise and entropy in bits and nats, cross-entropy = entropy + KL, KL's asymmetry and infinite case, mutual information, log loss as cross-entropy; Huffman code and PyTorch kl_div reductions in the lab | verified |
 
 ## References
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope.

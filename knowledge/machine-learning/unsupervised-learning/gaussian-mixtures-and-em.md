@@ -233,3 +233,6 @@ for x0 in (-2.0, 0.0, 0.2, 3.0):
 - `machine-learning/generative-models/variational-autoencoders.md` — the same ELBO, optimized by gradient descent instead of closed-form steps.
 - `machine-learning/unsupervised-learning/density-and-hierarchical-clustering.md` — when clusters are not Gaussian at all.
 - `machine-learning/foundations/math-notation-reference.md` — log-sum-exp, Σ and E[·] used above.
+- `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — EM for sequences: Baum–Welch for hidden Markov models.
+- `machine-learning/probabilistic-ml/variational-inference.md` — variational inference, the general form of EM's E-step bound.
+- `machine-learning/foundations/information-theory.md` — KL divergence and the ELBO's gap.

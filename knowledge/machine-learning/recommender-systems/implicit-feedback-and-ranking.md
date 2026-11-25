@@ -222,7 +222,7 @@ Reading it:
 | Large `α` with heavy-tailed counts | Heavily replayed cells get far more weight than the rest; lab R@10 drops from 0.231 to 0.186 | Confidence grows linearly with the count ✅[^4]; lab ✅[^14] |
 | A "watched" item the user disliked | Counted as a positive | Implicit feedback is noisy ✅[^1] |
 | Uniform negatives include real positives | Some triples teach the wrong order | Lab samples from all items: 2.1 % positives for the average user (density 0.021) ✅[^14]; d2l samples from non-interacted items only ✅[^9] |
-| Training on positives without negatives in a softmax/DNN (deep neural network) model | Folding: unrelated groups end up close in embedding space | Explained with the two-tower model in `machine-learning/recommender-systems/retrieval-and-ranking-pipelines.md` (How it works, step 5) |
+| Training on positives without negatives in a softmax/DNN (deep neural network) model | Folding: unrelated groups end up close in embedding space | Explained with the two-tower model in `machine-learning/recommender-systems/retrieval-and-ranking-pipelines.md` (How it works, "In-batch negatives and the logQ correction", step 5) |
 | Result reported on "1 + 100 sampled negatives" | Inflated values; model order can flip | Sampled metrics are biased and inconsistent ✅[^12]; lab: BPR A and B swap ✅[^14] |
 | Two papers sample a different `m` | Not comparable; the order can change with `m` | The bias depends on the recommender and the sample size ✅[^12] |
 | Training items left in the ranking | Already-seen items, which the model fits to score high, crowd out the held-out one | The lab sets their scores to `−∞` before ranking ✅[^14] |
@@ -270,3 +270,4 @@ Reading it:
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — tuning `α`, `λ` and the rank on a validation split.
 - `machine-learning/evaluation/data-leakage.md` — holding out by time when timestamps exist.
 - `machine-learning/foundations/loss-functions-and-maximum-likelihood.md` — the log loss inside BPR and MAP (maximum a posteriori) estimation as a penalized likelihood.
+- `machine-learning/recommender-systems/sequential-recommendation.md` — ranking the next item from the order of past interactions.

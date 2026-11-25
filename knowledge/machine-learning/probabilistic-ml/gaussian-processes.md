@@ -222,3 +222,4 @@ for ell_try in [0.1, fit["k1__k2__length_scale"], 10.0]:
 - `machine-learning/supervised-learning/support-vector-machines.md` — the kernel trick and the RBF kernel in another model.
 - `machine-learning/supervised-learning/linear-regression.md` — the weight-space model a GP generalizes.
 - `machine-learning/foundations/regularization.md` — scikit-learn's `alpha` noise term acts like a Tikhonov (ridge) penalty.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — uncertainty for neural networks: ensembles, MC dropout, Laplace.

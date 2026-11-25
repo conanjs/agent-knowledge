@@ -189,3 +189,5 @@ print("GaussianNB by hand:", np.exp(logp - np.logaddexp.reduce(logp)).round(6).t
 - `machine-learning/evaluation/probability-calibration.md` — reliability curves and calibrating over-confident models.
 - `machine-learning/supervised-learning/logistic-regression.md` — the discriminative counterpart.
 - `machine-learning/evaluation/classification-metrics.md` — log loss and the metrics used above.
+- `machine-learning/probabilistic-ml/probabilistic-graphical-models.md` — naive Bayes as the simplest Bayesian network.
+- `machine-learning/supervised-learning/discriminant-analysis.md` — Gaussian class models with shared or separate covariances.

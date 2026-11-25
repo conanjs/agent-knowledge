@@ -214,3 +214,5 @@ Reading it:
 - `machine-learning/probabilistic-ml/bayesian-inference.md` — MLE vs MAP vs the full posterior.
 - `machine-learning/evaluation/probability-calibration.md` — whether predicted probabilities can be trusted.
 - `machine-learning/transformers/pretraining-and-scaling-laws.md` — next-token cross-entropy and perplexity.
+- `machine-learning/foundations/information-theory.md` — why log loss is cross-entropy, and KL divergence.
+- `machine-learning/supervised-learning/generalized-linear-models.md` — maximum likelihood for Poisson, Gamma and Tweedie targets.

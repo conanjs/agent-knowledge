@@ -244,3 +244,5 @@ Reading it:
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — ε-greedy and exploration in the one-state case.
 - `machine-learning/reinforcement-learning/deep-q-networks.md` — Q-learning with a neural network, and why off-policy bootstrapping can diverge.
 - `machine-learning/reinforcement-learning/policy-gradients-and-ppo.md` — actor-critic methods reuse the TD error as their learning signal.
+- `machine-learning/reinforcement-learning/model-based-reinforcement-learning.md` — planning with a learned model (Dyna).
+- `machine-learning/reinforcement-learning/offline-reinforcement-learning.md` — Q-learning from a fixed dataset, and why it fails naively.

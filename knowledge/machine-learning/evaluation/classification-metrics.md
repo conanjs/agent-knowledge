@@ -179,3 +179,4 @@ Reading it:
 - `machine-learning/evaluation/probability-calibration.md` — when a score of 0.8 really means 80%.
 - `machine-learning/supervised-learning/logistic-regression.md` — where the probability scores come from.
 - `machine-learning/foundations/generalization-and-overfitting.md` — why metrics are measured on held-out data.
+- `machine-learning/evaluation/algorithmic-fairness.md` — the same metrics computed per group, and why group criteria conflict.

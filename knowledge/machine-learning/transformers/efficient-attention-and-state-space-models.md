@@ -272,3 +272,4 @@ Reading it:
 - `machine-learning/deep-learning/recurrent-networks.md` — RNNs, the recurrence that linear attention and SSMs bring back in a parallelizable form.
 - `machine-learning/transformers/mixture-of-experts.md` — making the feed-forward half of the block cheaper instead.
 - `performance/hardware/memory-hierarchy-and-caches.md` — why moving data between memory levels, not arithmetic, sets the speed.
+- `machine-learning/probabilistic-ml/hidden-markov-models-and-kalman-filters.md` — hidden Markov models and Kalman filters, the older probabilistic meaning of "state-space model".

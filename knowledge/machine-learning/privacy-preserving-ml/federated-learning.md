@@ -288,3 +288,4 @@ Reading it:
 - `machine-learning/privacy-preserving-ml/differentially-private-training.md` — clipping and noise per example instead of per client.
 - `machine-learning/privacy-preserving-ml/membership-inference-and-memorization.md` — attacks on the final model, which federated training alone does not stop.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — label (prior) shift, the same phenomenon as label distribution skew across clients.
+- `machine-learning/privacy-preserving-ml/secure-computation.md` — homomorphic encryption and general secret-sharing MPC (multi-party computation), of which secure aggregation is a special case.

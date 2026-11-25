@@ -232,3 +232,4 @@ Reading it, line by line:
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — how the input gradient is computed.
 - `machine-learning/deep-learning/convolutional-networks.md` — the feature maps Grad-CAM weights.
 - `machine-learning/transformers/attention-and-the-transformer.md` — the MLP layer inside the transformer block that the sparse autoencoder decomposes.
+- `machine-learning/transformers/in-context-learning-and-prompting.md` — induction heads, a circuit found by mechanistic interpretability.

@@ -175,3 +175,4 @@ print(f"input: centre gap / tight radius={100 / rms_radius(tight):.1f}")
 - `machine-learning/foundations/gradient-descent.md` — the optimizer behind both maps; learning rate and divergence.
 - `machine-learning/supervised-learning/k-nearest-neighbors.md` — neighbourhoods and the curse of dimensionality.
 - `algorithms/vector-search-evaluation.md` — evaluating nearest-neighbour results, the input both methods depend on.
+- `machine-learning/foundations/information-theory.md` — the KL divergence t-SNE minimizes.

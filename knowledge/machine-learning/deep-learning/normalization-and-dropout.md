@@ -183,3 +183,4 @@ Reading it, line by line:
 - `machine-learning/deep-learning/recurrent-networks.md` — why per-time-step normalization matters for RNNs.
 - `machine-learning/transformers/attention-and-the-transformer.md` — residual + LayerNorm and pre-LN in the transformer block.
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — `eval()` vs `no_grad()`: modes vs gradient recording.
+- `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — MC dropout: dropout kept on at prediction time to estimate uncertainty.
