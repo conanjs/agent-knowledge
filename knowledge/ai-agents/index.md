@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: ai-agents
-last-updated: 2026-11-21
+last-updated: 2026-11-25
 ---
 
 # Ai Agents
@@ -18,6 +18,7 @@ Agent and workflow coordination: prompt, context and harness engineering, feedba
 | [Prompt engineering, end to end](prompt-engineering-deep-dive.md) | deep-dive | Prompt parts, message roles, techniques with evidence, reasoning models, evals, prompt injection, failure matrix | verified |
 | [Context engineering, end to end](context-engineering-deep-dive.md) | deep-dive | Why long contexts fail; write/select/compress/isolate; caching, memory, compaction, sub-agents; interaction and failure matrices | verified |
 | [Harness engineering, end to end](harness-engineering-deep-dive.md) | deep-dive | Agent = model + harness; guides and sensors; the five disciplines compared; Anthropic, OpenAI and LangChain cases; failure matrix | verified |
+| [Efficient coding agents, end to end](efficient-coding-agents-deep-dive.md) | deep-dive | Cost model (requests × request size), evidence on context length, instruction count, personas, self-grading, hallucination and multi-agent scaling; a nine-role framework measured; levers mapped to Claude Code settings; a ten-technique list checked; failure matrix; measurement script | verified |
 | [Model Context Protocol (MCP)](model-context-protocol.md) | deep-dive | Roles, the 2026-07-28 and 2025-11-25 revisions, primitives, transports, OAuth, security; written from a plain prompt and kept for comparison, with 3 known errors listed in its Summary | draft |
 | [Agent Skills portability](agent-skills-portability.md) | reference | Portable format versus host discovery, invocation and execution controls; acceptance cases | verified |
 | [Subagent execution boundaries](subagent-execution-boundaries.md) | reference | Claude forked skills, custom agents, Codex inheritance, permissions and delegation tickets | verified |
@@ -39,6 +40,11 @@ Agent and workflow coordination: prompt, context and harness engineering, feedba
 | [Tools and techniques that cut agent tokens](token-saving-tools.md) | reference | Third-party tools (ccusage, RTK, Serena, code-review-graph, Context7, Repomix, TOON, claude-mem, routers) and vendor techniques, with activity and evidence | draft |
 | [Loop Engineering](loop-engineering.md) | legacy | Existing explanation of agent feedback loops | — |
 | [Loop Engineering playbook](loop-engineering-playbook.md) | legacy | Existing implementation-oriented playbook | — |
+
+## Subtopics
+| Subtopic | Summary |
+|---|---|
+| [harness-lab](harness-lab/index.md) | Dated experiments from building a coding-agent harness on Claude Code: setup, exact commands, measured results, conclusions |
 
 ## References
 

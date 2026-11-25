@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents
 status: verified
-applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30"]
+applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30; the 2026-03-24 Anthropic post 2026-11-24"]
 last-verified: 2026-10-30
-last-updated: 2026-10-30
+last-updated: 2026-11-24
 synthesized-into: []
 tags: [harness-engineering, agent-harness, guides, sensors, hooks, agents-md, long-running-agents, feedback-loops]
 ---
@@ -50,6 +50,7 @@ Harness engineering is designing that layer so the agent's work can be trusted. 
 | 2026-02-11 | OpenAI, *Harness engineering: leveraging Codex in an agent-first world* | A product built with no manually-written code. The engineer's job becomes designing environments, stating intent and building feedback loops (§6.2) ✅[^openai] |
 | 2026-02-17 | LangChain, *Improving Deep Agents with harness engineering* | Harness-only changes, model fixed: Terminal Bench 2.0 from 52.8 to 66.5 (§6.3) ✅[^lc_improve] |
 | 2026-03-10 | LangChain, *The Anatomy of an Agent Harness* | "Agent = Model + Harness", and a component list (§4) ✅[^lc_anatomy] |
+| 2026-03-24 | Anthropic, *Harness design for long-running application development* | A planner, a generator and a separate evaluator that clicks through the running app. Agents "reliably skew positive" when grading their own work, and tuning a separate evaluator to be skeptical is "far more tractable". "Every component in a harness encodes an assumption about what the model can't do on its own", so parts are removed as models improve: the sprint construct was dropped for Opus 4.6. Cost: a solo run took 20 minutes and 9 USD, the full harness 6 hours and 200 USD ✅[^ant_harness2] |
 | 2026-04-02 | Birgitta Böckeler (Thoughtworks), on martinfowler.com | Guides and sensors, computational and inferential; the user harness; harness engineering as "a specific form of context engineering" ✅[^fowler] |
 
 None of the primary sources above says who coined the term; the martinfowler.com article credits no one ✅[^fowler]. This doc does not settle it.
@@ -106,7 +107,7 @@ A hook at session start can put state in front of the model before the first pro
   - a non-managed hook runs only after the user reviews and trusts it in `/hooks` ✅[^codex_hooks].
   - **tested 2026-10-31** (Codex CLI 0.164.0-alpha bundled in the ChatGPT desktop app): with the hook linked but not trusted, `codex exec` skipped it without printing any warning, and the model reported no tracker items. Claude Code's auto mode refused the documented one-off flag `--dangerously-bypass-hook-trust` as a safety bypass, so trusting the hook stays the user's review. Trusting and enabling are two separate switches in `/hooks`: Codex records them as `trusted_hash` and `enabled` under `[hooks.state."<file>:session_start:…"]` in `~/.codex/config.toml`. A trusted hook with `enabled = false` still does not run (seen 2026-10-31). Once it was enabled, `codex exec` logged "hook: SessionStart Completed", and the model listed the tracker's open items.
 
-**Tested 2026-10-30** with this repo's tracker (`copilot/tracker/`, `specs/015-tracker/`):
+**Tested 2026-10-30** with agent-config's tracker (`copilot/tracker/`, `specs/015-tracker/`):
 - **Minimal `PATH`.** A hook may start without the login shell's `PATH`. Its launcher found nvm's Node under `env -i PATH=/usr/bin:/bin`, and both outputs were valid JSON.
 - **Global settings.** Claude Code's auto mode refused an agent's edit to `~/.claude/settings.json` that adds a hook, as self-modification. Wiring a global hook is therefore the user's step.
 - **Live session (2026-10-31).** After the user merged the hook, a headless session (`claude -p --output-format stream-json`) logged the hook's `hook_response`. Asked for the ids of the open items it had been given, the model listed all four.
@@ -241,7 +242,7 @@ The three cases share one cycle ✅[^hashimoto] ✅[^openai] ✅[^lc_improve]:
 5. **Check the fix generalises:** rerun the eval or the benchmark. Guard against overfitting to one task ✅[^lc_improve].
 6. **Garbage-collect** on a schedule: drift scans, stale-doc sweeps, quality grades ✅[^openai].
 
-**Worked flow in this repo** (local artifacts; the mechanism is documented in `scripts/claude-doc-hook.sh`):
+**Worked flow in the `conanjs/agent-config` repo**, where this knowledge base lived until it was split out on 2026-11-19 (the mechanism is documented in that repo's `scripts/claude-doc-hook.sh`):
 1. An agent edits a knowledge doc and forgets an index row.
 2. The `PostToolUse` hook in `.claude/settings.json` runs `scripts/check-docs.sh`.
 3. That script runs the validators (`validate-knowledge.mjs`, `atlas.mjs` and others) and the Cucumber scenarios.
@@ -263,7 +264,7 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 | Lower the merge gates | Throughput | Safe only with strong sensors and cheap reverts; irresponsible at low throughput ✅[^openai] |
 | Raise reasoning effort everywhere | Better steps | Time-outs and over 2× tokens; a split budget scored better ✅[^lc_improve] |
 | Train a model in its harness (vendor side) | Model gets better at that harness's primitives | May overfit: it can struggle when a tool's logic changes, and the best harness for a task is not always the trained one ✅[^lc_anatomy] |
-| Model gets stronger | Some harness parts become unnecessary ✅[^lc_anatomy] ✅[^lc_improve] | Planning and self-verification may move into the model; environment and tools stay useful ✅[^lc_anatomy] |
+| Model gets stronger | Some harness parts become unnecessary ✅[^lc_anatomy] ✅[^lc_improve]; the evaluator is worth its cost only when the task "sits beyond what the current model does reliably solo" ✅[^ant_harness2] | Planning and self-verification may move into the model; environment and tools stay useful ✅[^lc_anatomy] |
 
 ---
 
@@ -275,6 +276,7 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 | Next session finds a broken build | No progress record, no start check | Progress file + git + smoke test at session start ✅[^ant_harness] |
 | Tests pass but the app does not work | Only code-level sensors | End-to-end checks through a browser ✅[^ant_harness]; app legible to the agent ✅[^openai] |
 | Agent edits the tests to pass | Tests not protected | Forbid editing tests ✅[^ant_harness]; ask for general solutions, not test-specific ones ✅[^ant_bp] |
+| The agent grades its own work as good, and the work is not | Self-evaluation only: agents "reliably skew positive" on their own output ✅[^ant_harness2] | A separate evaluator tuned to be skeptical, with criteria agreed before the work starts (a "sprint contract"); tune its prompt from log reviews, since out of the box it talked itself into approving issues it had found ✅[^ant_harness2] |
 | Same file edited ten times | No loop sensor | Loop detection middleware ✅[^lc_improve] |
 | Architecture drifts | Rules only in prose | Layer rules as structural tests and custom lints ✅[^openai] ✅[^fowler] |
 | Codebase fills with near-duplicates and "slop" | The agent copies existing patterns, good or bad ✅[^openai] | Golden principles, background clean-up agents ✅[^openai] |
@@ -282,6 +284,8 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 | Huge instruction file, worse results | Context crowding ✅[^openai] | Short map plus indexed docs, checked by CI ✅[^openai] |
 | Harness tuned for one benchmark | Overfitting ✅[^lc_improve] | Evaluate on varied tasks; review the traces |
 | Behaviour wrong though every check is green | Weak behavioural sensors ✅[^fowler] | Human acceptance criteria, real-user checks ✅[^openai] |
+| The agent never reacts to a checker's violations, or tries to "fix" the checker's own crash | The checker's exit codes are passed straight through as the hook's. Linters such as ESLint exit 1 for rule violations and 2 for a configuration problem or internal error ✅[^eslint_exit]. Claude Code reads a hook's exit codes differently: 2 is a blocking error whose stderr a `PostToolUse` hook shows to Claude; any other non-zero code is a non-blocking error that shows the user a notice and lets the action go ahead ✅[^cc_hooks_ref] | Translate in the hook script: violations → exit 2, with a short message on stderr; checker failure → exit 1, so a person sees it and the model does not ✅[^cc_hooks_ref] |
+| A `PostToolUse` checker prints its findings to stdout and exits 0, and the model never sees them | On exit 0, plain stdout reaches Claude only on events such as `UserPromptSubmit` and `SessionStart`, not on `PostToolUse` ✅[^cc_hooks_ref] | Exit 2 with the findings on stderr, or exit 0 with JSON `decision: "block"` and a `reason`. Keep the text short: a hook's plain stdout and its context strings are capped at 10,000 characters ✅[^cc_hooks_ref] |
 
 ---
 
@@ -289,7 +293,7 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 
 - How does architectural coherence evolve over *years* in a fully agent-written system? ✅[^openai]
 - How do you keep a growing harness coherent, with guides and sensors in sync rather than contradicting each other? How do you measure a harness's coverage? ✅[^fowler]
-- One general agent, or specialised testing and QA agents? ✅[^ant_harness]
+- One general agent, or specialised testing and QA agents? ✅[^ant_harness] The 2026 follow-up adds a separate evaluator, but treats it as a cost decision for each task and model, not a fixed part ✅[^ant_harness2].
 - Which harness parts will future models absorb? ✅[^lc_anatomy]
 
 ---
@@ -297,11 +301,13 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 ## 11. Verification
 
 - **Verified on 2026-10-30:** every ✅ claim, against the sources in References. They were read live, the OpenAI post through a browser because automated fetch is refused there.
+- **Verified on 2026-11-24:** every ✅[^ant_harness2] claim, against the Anthropic post read live.
+- **Verified on 2026-11-23:** the two exit-code rows at the end of §9, against the Claude Code hooks reference and the ESLint command-line docs.
 - **Synthesis, not a sourced claim:**
   - the five-discipline comparison and "views at different scopes" in §3;
   - "prefer a computational sensor" in §5;
   - the shared cycle in §7, which combines three sources.
-- **Local and inspectable:** the hook flow in §7. The mechanism is in `.claude/settings.json` and `scripts/claude-doc-hook.sh`, and the exit-2 behaviour is documented by Claude Code ✅[^cc_hooks].
+- **Local and inspectable:** the hook flow in §7. The mechanism is in `conanjs/agent-config`'s `.claude/settings.json` and `scripts/claude-doc-hook.sh`, and the exit-2 behaviour is documented by Claude Code ✅[^cc_hooks].
 - **Diagnostic guidance:** in §9 every fix is sourced; the pairing of symptom and harness gap is this doc's reading.
 - **Not settled:** who coined "harness engineering".
 
@@ -309,13 +315,15 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 
 - [Anthropic: Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic (Erik S., Barry Zhang), 2024. Backs: §1 agent, ACI; §2; §3 workflows. [^bea]
 - [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Justin Young, 2025. Backs: §2; §4; §6.1; §8; §9; §10. [^ant_harness]
+- [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, 2026-03-24, read 2026-11-24. Backs: §2; §8 stronger models; §9 self-evaluation; §10. [^ant_harness2]
 - [Mitchell Hashimoto: My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — 2026. Backs: §2 definition; §4, §5, §7. [^hashimoto]
 - [OpenAI: Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/) — Ryan Lopopolo, 2026. Backs: §2; §3 Ralph loop; §4; §5; §6.2; §7; §8; §9; §10. [^openai]
 - [LangChain: Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering) — Vivek Trivedy, 2026. Backs: §2; §4; §6.3; §7; §8; §9. [^lc_improve]
 - [LangChain: The Anatomy of an Agent Harness](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness) — Vivek Trivedy, 2026. Backs: §1; §2; §3; §4 component list; §8; §10. [^lc_anatomy]
 - [Birgitta Böckeler: Harness engineering for coding agent users](https://martinfowler.com/articles/harness-engineering.html) — martinfowler.com, 2026. Backs: §1 guides, sensors, controls, user harness; §2; §3; §5; §9; §10. [^fowler]
 - [Claude Code: Automate actions with hooks](https://code.claude.com/docs/en/hooks-guide) — Anthropic, living. Backs: §1 hook; §4; §7 exit 2 feedback; §8; §9. [^cc_hooks]
-- [Claude Code: Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living; read 2026-10-30. Backs: §4 SessionStart stdout and `additionalContext` reach the model, `systemMessage` is shown to the user. [^cc_hooks_ref]
+- [Claude Code: Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living; read 2026-10-30 and 2026-11-23. Backs: §4 SessionStart stdout and `additionalContext` reach the model, `systemMessage` is shown to the user; §9 exit-code meanings per event, stdout on exit 0, JSON `decision` and `reason`, the 10,000-character cap. [^cc_hooks_ref]
+- [ESLint: command line interface, exit codes](https://eslint.org/docs/latest/use/command-line-interface#exit-codes) — OpenJS Foundation, living, read 2026-11-23. Backs: §9 exit 1 for violations, 2 for configuration or internal errors. [^eslint_exit]
 - [Codex: hooks](https://learn.chatgpt.com/docs/hooks) — OpenAI, living; read 2026-10-31. Backs: §4 Codex `SessionStart` output, `~/.codex/hooks.json`, trust review. [^codex_hooks]
 - [GitHub Copilot CLI: hooks reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-hooks-reference) — GitHub, living; read 2026-10-30. Backs: §4 `sessionStart` consumes only `additionalContext`; `~/.copilot/hooks/`. [^copilot_hooks]
 - [Claude Code: How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living. Backs: §4 memory; §8 and §9 context vs. enforcement, 200 lines. [^cc_memory]
@@ -324,9 +332,9 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 - [Anthropic: Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) — Ken Aizawa, 2025. Backs: §8 tools. [^ant_tools]
 - [OpenAI: Prompt engineering guide](https://developers.openai.com/api/docs/guides/prompt-engineering) — OpenAI, living. Backs: §3 prompt row. [^oai_prompt]
 - [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Anthropic, living. Backs: §9 test-specific solutions. [^ant_bp]
-- `.claude/settings.json`, `scripts/claude-doc-hook.sh`, `scripts/check-docs.sh` — this repo's computational sensor: validators and scenarios after every doc edit, exit 2 on failure.
-- `copilot/atlas/`, `copilot/frameworks/knowledge/tools/validate-knowledge.mjs` — this repo's map and doc checks (guide and sensor).
-- `copilot/tracker/`, `specs/015-tracker/` — this repo's tracker: an instruction (guide) plus session-start hooks (sensor), tested as described in §4.
+- `.claude/settings.json`, `scripts/claude-doc-hook.sh`, `scripts/check-docs.sh` — in `conanjs/agent-config`: its computational sensor: validators and scenarios after every doc edit, exit 2 on failure.
+- `copilot/atlas/`, `copilot/frameworks/knowledge/tools/validate-knowledge.mjs` — in `conanjs/agent-config` before the split: its map and doc checks (guide and sensor).
+- `copilot/tracker/`, `specs/015-tracker/` — in `conanjs/agent-config`: its tracker: an instruction (guide) plus session-start hooks (sensor), tested as described in §4.
 
 ## Related
 

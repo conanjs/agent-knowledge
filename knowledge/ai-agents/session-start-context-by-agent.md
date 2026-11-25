@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: ai-agents
 status: draft
-applies-to: ["Claude Code 2.1.319", "Copilot CLI 1.0.107", "VS Code Copilot (docs read 2026-11-11)", "Codex CLI 0.166", "Official documentation read 2026-11-11"]
-last-verified: 2026-11-21
-last-updated: 2026-11-21
+applies-to: ["Claude Code 2.1.319 (docs rows); 2.1.330–2.1.332 (rows marked measured, 2026-11-24 and 2026-11-25)", "Copilot CLI 1.0.107", "VS Code Copilot (docs read 2026-11-11)", "Codex CLI 0.166", "Official documentation read 2026-11-11"]
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [context, skills, subagents, mcp, memory, instructions, token-cost]
 ---
 
@@ -30,6 +30,9 @@ The four surfaces agent-config installs into: Claude Code, GitHub Copilot CLI, G
 | `AGENTS.md` | Read only when no `CLAUDE.md` or `CLAUDE.local.md` is in the working folder or above (default; v2.1.277+) | Always read | Read | Native | ✅[^ccmem][^ghinst] |
 | A folder outside the working folder (a sibling repo, another drive) | Not loaded: discovery covers the working folder, the folders above it and subfolders under it. A folder added with `--add-dir` has its `CLAUDE.md` loaded only with `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`; editing a file elsewhere is not described as loading anything | Not loaded from a folder outside the repository and working folder; `COPILOT_CUSTOM_INSTRUCTIONS_DIRS` adds folders. The docs also name "any directories nested in the path of a file it is working on" without saying whether that reaches outside the repository | — | Not loaded: the chain stops at the working folder | ✅[^ccmem][^ghinst]; Codex and Copilot CLI tested, see Measured on this machine |
 | `@path` imports | Expanded, at most four hops; imports do not reduce the cost, the imported text loads too | Expanded in `copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`; only paths inside the repository; `~/` and absolute paths are not loaded | — | No import syntax | ✅[^ccmem][^ghinst] |
+| Which memory files load, by session kind (measured) | **Main session**, default or run as an agent with `--agent`: the user files (`~/.claude/CLAUDE.md` and its imports, from any working folder), plus the project files from the working folder upward. `omitClaudeMd` is ignored there. **Subagent**: `omitClaudeMd: true` loads none of them; otherwise as the main session | — | — | — | ✅[^lab] |
+| `--setting-sources` without `user` (measured) | The user files do not load as user files. Under the home folder the upward walk from the working folder still finds `~/.claude/CLAUDE.md` and loads it as a **project** file; its imports then follow the project rule below. Started in a repository under the home folder, `~/.agent-config/…` is outside the working folder and is not loaded (headless) or needs approval (interactive). Started in the home folder itself, the import is inside the working folder and loads without asking. Outside the home folder the file does not load at all | — | — | — | ✅[^lab] |
+| An `@` import in a project file that points outside the project (measured) | Needs the user's approval for that project. An interactive start shows "Allow external CLAUDE.md file imports?", whatever the settings sources. It does not ask only when that exact file is already loaded through the user layer. Being inside the home folder, or beside a file the user imports, is no exemption. Headless `-p` runs never show the prompt and skip the import. `~/.claude.json` keeps the answer per project (`hasClaudeMdExternalIncludesApproved`). The same import in the user's `~/.claude/CLAUDE.md` loads without asking | — | — | — | ✅[^lab] |
 | Size limit | Whole file up to 4 MiB; skipped entirely above it | Not stated | Not stated | 32 KiB project-doc limit ([Codex usage reference](codex-usage-reference.md)) | ✅[^ccmem] |
 | After compaction | Project-root `CLAUDE.md` is re-read from disk; nested files and path rules reload on demand | Not stated | Not stated | See [Codex usage reference](codex-usage-reference.md) | ✅[^ccmem] |
 
@@ -68,6 +71,7 @@ The four surfaces agent-config installs into: Claude Code, GitHub Copilot CLI, G
 | `AGENTS.md` of a sibling repo while working there from another folder | Not loaded by Codex 0.166.0-alpha.6 or Copilot CLI 1.0.114 (both with `gpt-6-luna`), also not by Copilot with `--add-dir` on that repo. Control: started inside that repo, both followed it | A sibling repo whose `AGENTS.md` says every reply starts with `PINEAPPLE-7`; from the other folder the agent ran `cat` on a file in that repo and replied without the word; the same prompt started in that repo replied with it. 2026-11-21. Claude Code not run (spends V's own limits); a cheaper model may behave differently from V's daily models | ✅ |
 | Claude Code skill list | 9,900 tokens: Postman plugin 19 skills ≈ 2,870; built-in 16 ≈ 2,580; synced from claude.ai 28 ≈ 1,860; agent-config `skills/` 20 ≈ 1,670; product-management plugin 9 ≈ 900; cowork plugin-management 2 ≈ 240 | `/context all`, Claude Code, 2026-11-10 | ✅ |
 | Of which the 13 `sdlc-*` skills | ≈ 824 tokens | Same run | ✅ |
+| Claude Code subagent start size, by tool set (2026-11-24) | Median size of each subagent's first request: `web-fetch` (WebFetch only) 4,324 tokens; `research-worker` (7 tools) 11,632; `research-orchestrator` (7 tools) 13,219; `general-purpose` (all tools) 52,120; `knowledge-judge` (all but 3) 54,938; the agentic-sdlc roles, which only remove `Agent`, 55,832 to 57,191. The parts that make up the gap of about 40,000 tokens (tool schemas, skill list, deferred-tool list, instructions) were not separated | The script in [efficient-coding-agents-deep-dive.md](efficient-coding-agents-deep-dive.md) §9 over every `subagents/agent-*.jsonl` transcript under `~/.claude/projects/`, agent type from the matching `.meta.json`; request size = input + cache-creation + cache-read tokens | ✅ |
 | Tracker session-start hook | 1,952 → 615 tokens after TR-11 capped the brief at 5 items | Hook output counted with `o200k_base`, 2026-11-10 | ✅ |
 | claude.ai connectors (Claude Code) | Present in some runs and missing in others; moved the first request by about 4,000 tokens until `--strict-mcp-config` was used | Level-1 runs, 2026-11-09 (`proposals/instruction-loading.md`) | ✅ |
 | Synced claude.ai skills outside Claude Code | Listed in Copilot CLI 1.0.107 (2026-11-10), in a VS Code Copilot session (2026-11-10) and in Codex `exec` runs (0.166.0-alpha.6, 2026-11-09) | Session logs searched for a synced skill's name. Cause: agent-config links both `~/.claude/skills` and `~/.agents/skills` to the repo's `skills/`, and Claude Code downloads synced skills into `skills/synced/`; `~/.agents/skills` is a personal skill folder for Copilot CLI and Codex | ✅ |
@@ -87,9 +91,10 @@ The four surfaces agent-config installs into: Claude Code, GitHub Copilot CLI, G
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 25 claims (✅) · Unverified: 1 claim (⚠️) · Last verified: 2026-11-21
+- Verified: 29 claims (✅) · Unverified: 1 claim (⚠️) · Last verified: 2026-11-25
 
 ## References
+- [Harness lab notebook](harness-lab/lab-notebook.md) — local experiments with Claude Code 2.1.330–2.1.332, 2026-11-25: `/context` memory listings and real replies by working folder, settings layer and session kind (entries E7, E12, E13, E15–E18). Backs: the three measured Instructions rows. [^lab]
 - [How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living, read 2026-11-11. Backs: instruction loading, imports, `AGENTS.md`, size limit, compaction, `MEMORY.md` limit. [^ccmem]
 - [Extend Claude with skills](https://code.claude.com/docs/en/skills) — Anthropic, living, read 2026-11-11. Backs: skill-list budget, cut order, per-entry cap, `skillOverrides`. [^ccsk]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-11. Backs: 15,000-token description warning. [^ccsub]
