@@ -38,7 +38,7 @@ From the initialization (`a = 0`) to the trained weights (`a = 1`) the loss only
 ## How it works
 ### Critical points in high dimension
 1. **Saddles outnumber bad minima.** Dauphin et al. argue the main difficulty is the proliferation of saddle points, not local minima, and that saddles are surrounded by high-error plateaus that slow learning ✅[^2].
-2. **Why:** for random Gaussian error functions, critical points with error much above the global minimum are exponentially likely to be saddles, the fraction of downhill directions grows with the error, and local minima have error close to the global minimum ✅[^2]. Their experiments suggest the same for small networks ✅[^2].
+2. **Why:** for random Gaussian error functions, critical points with error much above the global minimum are exponentially likely to be saddles, the fraction of downhill directions grows with the error, and local minima have error close to the global minimum; this is Bray and Dean's 2007 result, which Dauphin et al. build on ✅[^2]. Their experiment with a small MLP on down-sampled MNIST and CIFAR-10 confirms it qualitatively for neural networks ✅[^2].
 3. **Straight-line probes.** Goodfellow, Vinyals and Saxe interpolate between initialization and solution and find that a variety of state-of-the-art networks never meet significant obstacles on that line ✅[^3]. The lab line above is one such run.
 
 ### Flat vs sharp minima and batch size

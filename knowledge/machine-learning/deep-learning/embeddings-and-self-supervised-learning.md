@@ -4,7 +4,7 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
+last-verified: 2026-11-25
 last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, embeddings, nn-embedding, cosine-similarity, representation-learning, self-supervised-learning, contrastive-learning, infonce, nt-xent, temperature, simclr, clip, byol, simsiam, collapse, stop-gradient]
 ---
@@ -246,7 +246,7 @@ Reading it, block by block:
 - The augmentations decide what the embedding becomes invariant to; choose them as deliberately as a label.
 
 ## Verification status
-- Verified: 70 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 70 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [torch.nn.Embedding](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Embedding.html) — PyTorch, 2026 (2.15). Backs: lookup table, weight shape and `N(0, 1)` init, input/output shapes, `padding_idx`, `max_norm` in place, `sparse` and its optimizers. [^1]
@@ -255,7 +255,7 @@ Reading it, block by block:
 - [Representation Learning with Contrastive Predictive Coding](https://ar5iv.labs.arxiv.org/html/1807.03748) — van den Oord, Li, Vinyals, 2018. Backs: InfoNCE definition and name, mutual-information bound tightening with `N`, prediction in latent space, negative sampling. [^4]
 - [A Simple Framework for Contrastive Learning of Visual Representations (SimCLR)](https://ar5iv.labs.arxiv.org/html/2002.05709) — Chen, Kornblith, Norouzi, Hinton, 2020. Backs: NT-Xent with `2(N − 1)` negatives, augmentations, projection head and its gains, normalization and temperature table, batch sizes and LARS, 76.5 %. [^5]
 - [Learning Transferable Visual Models From Natural Language Supervision (CLIP)](https://ar5iv.labs.arxiv.org/html/2103.00020) — Radford et al., 2021. Backs: 400 M pairs, `N × N` symmetric objective, linear projection, learned temperature 0.07 clipped at 100, batch 32,768, prompt template, 76.2 % zero-shot, 4× efficiency. [^6]
-- [Understanding the Behaviour of Contrastive Loss](https://ar5iv.labs.arxiv.org/html/2012.09740) — Wang, Liu, 2021. Backs: hardness-aware loss, temperature controls the penalty on hard negatives, uniformity-tolerance dilemma and its direction (small `τ`: more uniform, less tolerant; large `τ`: more tolerant, less uniform). [^7]
+- [Understanding the Behaviour of Contrastive Loss](https://ar5iv.labs.arxiv.org/html/2012.09740) — Wang, Liu, 2020 (arXiv:2012.09740, December 2020; later at CVPR 2021). Backs: hardness-aware loss, temperature controls the penalty on hard negatives, uniformity-tolerance dilemma and its direction (small `τ`: more uniform, less tolerant; large `τ`: more tolerant, less uniform). [^7]
 - [Understanding Contrastive Representation Learning through Alignment and Uniformity on the Hypersphere](https://arxiv.org/abs/2005.10242) — Wang, Isola, 2020. Backs: alignment and uniformity, asymptotic optimization by the contrastive loss. [^8]
 - [Bootstrap Your Own Latent (BYOL)](https://ar5iv.labs.arxiv.org/html/2006.07733) — Grill et al., 2020. Backs: online/target networks, moving average `τ_base = 0.996`, normalized MSE, stop-gradient, no negatives, 74.3 %, constant-representation collapse, predictor's role, robustness to batch size and augmentations. [^9]
 - [Exploring Simple Siamese Representation Learning (SimSiam)](https://ar5iv.labs.arxiv.org/html/2011.10566) — Chen, He, 2020. Backs: architecture, symmetric negative cosine, collapsing solutions exist, stop-gradient essential (0.1 % without), predictor needed, `1/√d` std, BYOL without momentum encoder. [^10]

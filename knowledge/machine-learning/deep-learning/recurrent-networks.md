@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, rnn, recurrent-neural-network, backpropagation-through-time, bptt, vanishing-gradients, exploding-gradients, lstm, gru, gates, gradient-clipping, clip-grad-norm, sequence-models]
 ---
 
@@ -147,7 +147,7 @@ Reading it, row by row:
 - **RNN, default init:** the dependence falls by about 400 times in the last 10 steps (`1.2` → `3.0e-3`) and reaches `3.4e-14` at 50 steps back and `2.9e-27` at step 1: the loss at step 100 gives training practically no signal about the first input. The norms are taken in float64 on purpose: with float32's `.norm()` the squares of such small elements underflow, and the step-1 value prints as `0.0e+00` ✅[^9].
 - **RNN, `W_hh × 3`:** larger recurrent weights stop the decay (`8.6e-2` at 50 steps back) and multiply the total parameter gradient by 6 (18 → 110), but the per-input gradient does not explode, consistent with a large `W_hh` being only a necessary condition for explosion ✅[^4].
 - **LSTM, default init:** it vanishes as fast as the RNN (`4.3e-12` at 50 steps), because a forget gate near 0.5 halves the cell's gradient at every step.
-- **LSTM, forget bias +5:** with `σ(5) = 0.993`, the dependence on the input 99 steps back is `1.6`, as large as on the last input. This bias was set by hand here to show what a trained LSTM can learn to do; the gates are learned parameters.
+- **LSTM, forget bias +5:** with `σ(5) = 0.993`, the dependence on the input 99 steps back is `1.6`, larger than on the last input (`0.29`). This bias was set by hand here to show what a trained LSTM can learn to do; the gates are learned parameters.
 - **Clipping:** `clip_grad_norm_` returns the norm before clipping (114.53), leaves a norm of exactly 1.0, and keeps the direction (cosine 1.000000).
 
 ## Edge cases
@@ -179,7 +179,7 @@ Reading it, row by row:
 - For new sequence work, start from attention; use recurrent layers when step-by-step state is the point (streaming, small memory).
 
 ## Verification status
-- Verified: 54 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 54 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Backpropagation Through Time (Dive into Deep Learning, 9.7)](https://d2l.ai/chapter_recurrent-neural-networks/bptt.html) — Zhang, Lipton, Li, Smola, living. Backs: clipping is vital, unrolling with shared parameters, summed gradients, powers of `W_hh` and eigenvalues, truncated BPTT, 1,000 matrix products. [^1]
@@ -187,9 +187,9 @@ Reading it, row by row:
 - [Recurrent Neural Networks (Dive into Deep Learning, 9.4)](https://d2l.ai/chapter_recurrent-neural-networks/rnn.html) — Zhang, Lipton, Li, Smola, living. Backs: same parameters at every step, parameter cost independent of length. [^3]
 - [On the difficulty of training Recurrent Neural Networks](https://arxiv.org/html/1211.5063v2) — Pascanu, Mikolov, Bengio, 2013 (v2). Backs: eigenvalue conditions (sufficient, necessary), norm clipping rule, threshold heuristic, Mikolov's element-wise clipping. [^4]
 - [torch.nn.LSTM](https://docs.pytorch.org/docs/2.15/generated/torch.nn.LSTM.html) — PyTorch, 2026 (2.15). Backs: gate equations, gate order and weight shape, `batch_first` and hidden-state layout. [^5]
-- [Long Short-Term Memory (Dive into Deep Learning, 10.1)](https://d2l.ai/chapter_recurrent-modern/lstm.html) — Zhang, Lipton, Li, Smola, living. Backs: constant cell with forget 1 and input 0, alleviates vanishing gradients, clipping vs vanishing, Hochreiter and Schmidhuber. [^6]
+- [Long Short-Term Memory (LSTM) (Dive into Deep Learning, 10.1)](https://d2l.ai/chapter_recurrent-modern/lstm.html) — Zhang, Lipton, Li, Smola, living. Backs: constant cell with forget 1 and input 0, alleviates vanishing gradients, clipping vs vanishing, Hochreiter and Schmidhuber. [^6]
 - [torch.nn.GRU](https://docs.pytorch.org/docs/2.15/generated/torch.nn.GRU.html) — PyTorch, 2026 (2.15). Backs: GRU equations, `(3·hidden_size, …)` weights. [^7]
-- [Gated Recurrent Units (Dive into Deep Learning, 10.2)](https://d2l.ai/chapter_recurrent-modern/gru.html) — Zhang, Lipton, Li, Smola, living. Backs: streamlined LSTM, comparable performance, faster to compute. [^8]
+- [Gated Recurrent Units (GRU) (Dive into Deep Learning, 10.2)](https://d2l.ai/chapter_recurrent-modern/gru.html) — Zhang, Lipton, Li, Smola, living. Backs: streamlined LSTM, comparable performance, faster to compute. [^8]
 - `machine-learning/lab-setup.md` — the lab where the hand LSTM step, the gradient-through-time measurements, the clipping check and the parameter counts ran on 2026-11-24. [^9]
 - [Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling](https://arxiv.org/html/1412.3555v1) — Chung, Gulcehre, Cho, Bengio, 2014. Backs: gated units better than tanh units; GRU comparable to LSTM. [^10]
 - [torch.nn.utils.clip_grad_norm_](https://docs.pytorch.org/docs/2.15/generated/torch.nn.utils.clip_grad_norm_.html) — PyTorch, 2026 (2.15). Backs: total norm over all gradients, in-place, return value. [^11]

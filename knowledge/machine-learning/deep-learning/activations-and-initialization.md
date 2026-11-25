@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, activation-functions, sigmoid, tanh, relu, gelu, saturation, vanishing-gradients, exploding-gradients, initialization, xavier, glorot, kaiming, he-init, calculate-gain]
 ---
 
@@ -71,7 +71,7 @@ for W in Ws:
 (h ** 2).mean().backward()
 ```
 
-Lab run (`machine-learning/lab-setup.md`), 2026-11-24, PyTorch 2.15.0, two runs identical; the first 13 lines of the output (the last 5 are the Mental model artifact) ✅[^7]:
+Lab run (`machine-learning/lab-setup.md`), 2026-11-24, PyTorch 2.15.0, two runs identical, re-run 2026-11-25 with the same output; the first 13 lines of the output (the last 5 are the Mental model artifact) ✅[^7]:
 
 ```text
 act     init            std@1    std@10    std@50  |grad W1| |grad W50|
@@ -84,7 +84,7 @@ tanh    Xavier*5/3   7.60e-01  6.47e-01  6.49e-01   2.14e+00   3.96e-02
 relu    N(0,1)       9.40e+00  2.44e+10       nan        nan        nan
 relu    Xavier       5.87e-01  2.22e-02  1.51e-08   3.84e-16   8.79e-16
 relu    He           8.31e-01  7.11e-01  5.08e-01   3.06e-01   7.00e-01
-same |grad W1| as a float32 .norm(): sigmoid Xavier 0.00e+00  tanh N(0,1) inf
+same |grad W1| as a float32 .norm(): sigmoid Xavier 0.00e+00  sigmoid He 0.00e+00  tanh N(0,1) inf
 largest sigmoid'(z) = 0.25 at z=0; 0.25**50 = 7.9e-31
 (1/sqrt(2))**49 = 4.2e-08
 ```
@@ -118,7 +118,7 @@ for a, i in runs:
     (h ** 2).mean().backward()
     print(f"{a:7} {i:11} {stds[0]:9.2e} {stds[9]:9.2e} {stds[49]:9.2e} "
           f"{Ws[0].grad.double().norm().item():10.2e} {Ws[-1].grad.double().norm().item():10.2e}")
-    if (a, i) in [("sigmoid", "Xavier"), ("tanh", "N(0,1)")]: f32[f"{a} {i}"] = Ws[0].grad.norm().item()
+    if (a, i) in [("sigmoid", "Xavier"), ("sigmoid", "He"), ("tanh", "N(0,1)")]: f32[f"{a} {i}"] = Ws[0].grad.norm().item()
 print("same |grad W1| as a float32 .norm():", "  ".join(f"{k} {v:.2e}" for k, v in f32.items()))
 s = torch.sigmoid(torch.tensor(0.0))
 print(f"largest sigmoid'(z) = {(s * (1 - s)).item()} at z=0; 0.25**50 = {0.25 ** 50:.1e}")
@@ -142,7 +142,7 @@ Reading it, row by row:
 - **tanh, Xavier vs Xavier × 5/3:** plain Xavier still loses signal slowly (0.63 → 0.094), because tanh's slope is below 1 away from 0; the tanh gain of 5/3 holds the std at 0.65 from layer 10 to layer 50.
 - **ReLU, `N(0, 1)`:** the std is 9.4 after one layer and `2.4e10` after ten, then overflows to NaN.
 - **ReLU, Xavier vs He:** Xavier halves the variance at every layer (std `1.5e-8` at layer 50, gradients near `1e-16`); He keeps the std between 0.83 and 0.51 and both gradients near 0.3–0.7.
-- **Sigmoid, Xavier or He:** the activations look fine (std 0.1–0.26), but the first layer's gradient norm is `1.2e-33` with Xavier and `2.7e-27` with He; float32's `.norm()` prints the first as `0.00e+00`, because the squares of such small elements underflow. Each layer multiplies the backward signal by `σ'(z) ≤ 0.25`, and `0.25^50 = 7.9e-31` shows how fast that compounds.
+- **Sigmoid, Xavier or He:** the activations look fine (std 0.1–0.26), but the first layer's gradient norm is `1.2e-33` with Xavier and `2.7e-27` with He; float32's `.norm()` prints both as `0.00e+00`, because the squares of such small elements underflow. Each layer multiplies the backward signal by `σ'(z) ≤ 0.25`, and `0.25^50 = 7.9e-31` shows how fast that compounds.
 
 ## Edge cases
 | Case | What happens | Why |
@@ -174,12 +174,12 @@ Reading it, row by row:
 - Depth multiplies small errors in scale: a factor of 0.16 or 2 per layer is fatal over 50 layers, so normalize inputs as well.
 
 ## Verification status
-- Verified: 52 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 52 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Multilayer Perceptrons (Dive into Deep Learning, 5.1)](https://d2l.ai/chapter_multilayer-perceptrons/mlp.html) — Zhang, Lipton, Li, Smola, living. Backs: sigmoid, tanh, ReLU formulas and derivatives, sigmoid's maximum derivative 0.25, ReLU mitigating vanishing gradients, sigmoid replaced in hidden layers. [^1]
 - [Numerical Stability and Initialization (Dive into Deep Learning, 5.4)](https://d2l.ai/chapter_multilayer-perceptrons/numerical-stability-and-init.html) — Zhang, Lipton, Li, Smola, living. Backs: gradient as a product of matrices, 100-matrix explosion, sigmoid vanishing, `Var[o] = n_in·σ²·γ²`, Xavier normal and uniform, symmetry breaking, default init for moderate sizes. [^2]
-- [Gaussian Error Linear Units (GELUs)](https://arxiv.org/html/1606.08415v5) — Hendrycks, Gimpel, 2016 (v5). Backs: `x·Φ(x)`, weighting by value vs gating by sign, non-convex and non-monotonic, asymptotic equality with ReLU, results vs ReLU and ELU, close approximation of `Φ` matters. [^3]
+- [Gaussian Error Linear Units (GELUs)](https://arxiv.org/html/1606.08415v5) — Hendrycks, Gimpel, 2016 (v5, 2023). Backs: `x·Φ(x)`, weighting by value vs gating by sign, non-convex and non-monotonic, asymptotic equality with ReLU, results vs ReLU and ELU, close approximation of `Φ` matters. [^3]
 - [Understanding the difficulty of training deep feedforward neural networks](https://proceedings.mlr.press/v9/glorot10a.html) — Glorot, Bengio, 2010 (PMLR abstract page). Backs: sigmoid unsuited to deep nets with random init because of its mean value. [^4]
 - [torch.nn.init](https://docs.pytorch.org/docs/2.15/nn.init.html) — PyTorch, 2026 (2.15). Backs: `calculate_gain` values, Xavier and Kaiming formulas, `fan_in` vs `fan_out`, transposed-weight note, SELU warning. [^5]
 - [Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification](https://arxiv.org/html/1502.01852v1) — He, Zhang, Ren, Sun, 2015. Backs: ReLU variance condition and `√(2/n_l)`, Xavier's `1/√2^L` shrink, 22-layer and 30-layer comparisons, unnormalized input overflow. [^6]

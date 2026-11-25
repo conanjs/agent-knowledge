@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, batch-normalization, batchnorm, layer-normalization, layernorm, running-statistics, dropout, inverted-dropout, train-mode, eval-mode, regularization]
 ---
 
@@ -145,7 +145,7 @@ Reading it, line by line:
 | `momentum=None` in BatchNorm | Cumulative (simple) average instead of exponential | Documented option ✅[^2] |
 | Dropout at test time on purpose | Several stochastic predictions; agreement read as confidence | A heuristic some researchers use ✅[^9] |
 | Dropout `p = 1` | Every element is 0 | d2l's own example output ✅[^9] |
-| "BN works by reducing internal covariate shift" | Disputed | Its paper proposed it ✅[^4]; d2l calls the explanation under-specified and the name a misnomer, cites Santurkar et al. for an opposite finding, and attributes the benefit to noise, rescaling and preprocessing ✅[^3] |
+| "BN works by reducing internal covariate shift" | Disputed | Its paper proposed it ✅[^4]; d2l calls the explanation under-specified and the name a misnomer, cites Santurkar et al. for an opposite finding, and conjectures that regularization through noise, acceleration through rescaling and preprocessing are the guiding principles ✅[^3] |
 
 ## Trade-offs
 | Option | Gains | Costs |
@@ -162,7 +162,7 @@ Reading it, line by line:
 - Dropout in PyTorch is inverted: its training outputs are already scaled by `1/(1 − p)`, so never rescale at test time.
 
 ## Verification status
-- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Autograd mechanics: Evaluation Mode](https://docs.pytorch.org/docs/2.15/notes/autograd.html) — PyTorch, 2026 (2.15). Backs: `train()`/`eval()` are the user's responsibility, running statistics and validation data. [^1]

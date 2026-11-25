@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, cnn, convolution, cross-correlation, conv2d, padding, stride, output-shape, pooling, max-pooling, parameter-sharing, receptive-field, residual-connections, resnet]
 ---
 
@@ -60,7 +60,7 @@ The receptive field of an element is every element, in all previous layers, that
 ### Residual connections
 1. **The degradation problem:** beyond some depth, adding layers to a plain network raises the **training** error, so it is not overfitting ✅[^9].
 2. **Learn the residual:** a block outputs `F(x) + x`, so its layers learn `F(x) = f(x) − x`; if the best mapping is the identity, pushing `F`'s weights to zero is enough ✅[^10] ✅[^9].
-3. **Free shortcut:** identity shortcuts add no parameters and no computation; when shapes differ, a projection (a 1 × 1 convolution) matches them ✅[^9].
+3. **Free shortcut:** identity shortcuts add no parameters and no computation; when shapes differ, the paper either pads the identity with zeros (no parameters) or uses a projection (a 1 × 1 convolution) to match them ✅[^9].
 4. **The ResNet (residual network) block:** two 3 × 3 convolutions with the same number of channels, each followed by batch norm, with a ReLU (rectified linear unit) after the first and the input added before the final ReLU ✅[^10]. With residual blocks, ResNet went up to 152 layers, 8 times deeper than the earlier VGG (Visual Geometry Group) networks ✅[^9]; its 50- to 152-layer models use a "bottleneck" block of 1 × 1, 3 × 3 and 1 × 1 convolutions instead of two 3 × 3 ones ✅[^9].
 
 ## Worked example
@@ -162,7 +162,7 @@ Reading it, block by block:
 | Even kernel size | Cannot pad the same amount on both sides; d2l pads `ceil(p_h/2)` on top, `floor(p_h/2)` at the bottom | Odd kernels allow symmetric padding ✅[^5] |
 | A hand-designed filter from signal processing | Applied flipped compared with its textbook definition | `Conv2d` computes cross-correlation ✅[^3]; true convolution flips the kernel ✅[^2] |
 | `MaxPool2d(..., ceil_mode=True)` | Output size rounds up instead of down | Documented option ✅[^7] |
-| Residual add when channels or size change | Shape mismatch error | Needs a projection shortcut, a 1 × 1 convolution ✅[^9] |
+| Residual add when channels or size change | Shape mismatch error | Needs a projection shortcut (a 1 × 1 convolution) or a zero-padded identity ✅[^9] |
 | Data without translation structure | The convolution's built-in assumption can make even fitting the training set hard | Inductive bias ✅[^1] |
 | Very deep plain network | Higher training error than a shallower one | Degradation ✅[^9]; lab gradient `4e-17` after 30 layers ✅[^8] |
 
@@ -173,7 +173,7 @@ Reading it, block by block:
 | Two stacked 3 × 3 layers vs one 5 × 5 | Same 5 × 5 receptive field ✅[^8] with `2·9 = 18` instead of 25 weights per channel pair, and a nonlinearity between | One more layer of activations to store ✅[^11] |
 | Stride or pooling early | Receptive field grows faster ✅[^6] ✅[^8]; smaller maps | Coarser maps ✅[^6]; a stride that does not fit the size skips edge pixels ✅[^3] |
 | Max vs average pooling | Average combines adjacent pixels for a better signal-to-noise ratio ✅[^6] | d2l finds max pooling preferable in almost all cases, for its invariance ✅[^6] |
-| Residual connections | Train 152-layer networks; no extra parameters for identity shortcuts ✅[^9] | Shapes must match, or a projection is needed ✅[^9] |
+| Residual connections | Train 152-layer networks; no extra parameters for identity shortcuts ✅[^9] | Shapes must match, or a projection or zero-padded shortcut is needed ✅[^9] |
 
 ## Takeaways
 - Compute every layer's output size with `floor((n + 2p − k)/s) + 1` (PyTorch padding is per side) before writing the model, and check it with one dummy forward pass. [rule-candidate]
@@ -182,7 +182,7 @@ Reading it, block by block:
 - For networks deeper than a few tens of layers, add residual connections (with normalization) instead of stacking plain layers. [rule-candidate]
 
 ## Verification status
-- Verified: 62 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 62 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [From Fully Connected Layers to Convolutions (Dive into Deep Learning, 7.1)](https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html) — Zhang, Lipton, Li, Smola, living. Backs: `10^9` parameters for a dense layer, translation invariance, locality and `4·Δ²`, the inductive-bias price. [^1]
@@ -193,7 +193,7 @@ Reading it, block by block:
 - [Pooling (Dive into Deep Learning, 7.5)](https://d2l.ai/chapter_convolutional-neural-networks/pooling.html) — Zhang, Lipton, Li, Smola, living. Backs: no parameters, max and average, per-channel pooling, default stride equals window, shift invariance, faster receptive-field growth. [^6]
 - [torch.nn.MaxPool2d](https://docs.pytorch.org/docs/2.15/generated/torch.nn.MaxPool2d.html) — PyTorch, 2026 (2.15). Backs: `stride` defaults to `kernel_size`, `ceil_mode`. [^7]
 - `machine-learning/lab-setup.md` — the lab where the cross-correlation, output sizes, parameter counts, receptive fields and plain-vs-residual gradients ran on 2026-11-24. [^8]
-- [Deep Residual Learning for Image Recognition](https://arxiv.org/html/1512.03385v1) — He, Zhang, Ren, Sun, 2015. Backs: degradation problem, residual formulation, parameter-free identity shortcuts, projection shortcuts, 152 layers, bottleneck blocks for ResNet-50/101/152. [^9]
+- [Deep Residual Learning for Image Recognition](https://arxiv.org/html/1512.03385v1) — He, Zhang, Ren, Sun, 2015. Backs: degradation problem, residual formulation, parameter-free identity shortcuts, zero-padding and projection shortcuts, 152 layers, bottleneck blocks for ResNet-50/101/152. [^9]
 - [Residual Networks (ResNet) and ResNeXt (Dive into Deep Learning, 8.6)](https://d2l.ai/chapter_convolutional-modern/resnet.html) — Zhang, Lipton, Li, Smola, living. Backs: residual mapping `f(x) − x`, identity by zero weights, ResNet block layout with batch norm. [^10]
 - [Forward Propagation, Backward Propagation, and Computational Graphs (Dive into Deep Learning, 5.3)](https://d2l.ai/chapter_multilayer-perceptrons/backprop.html) — Zhang, Lipton, Li, Smola, living. Backs: stored intermediates grow with the number of layers. [^11]
 

@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, optimizers, sgd, momentum, nesterov, rmsprop, adam, adamw, weight-decay, l2-regularization, learning-rate, warmup, cosine-annealing, lr-scheduler]
 ---
 
@@ -177,7 +177,7 @@ Reading it, line by line:
 | Nesterov at the momentum run's settings (`lr=0.6`, `μ=0.5`) | Diverges (`x2 = −8.1e7` after 20 steps) while plain momentum converges | A different step, `g + μ·b` instead of `b` ✅[^3], overshoots on the steep axis at this rate ✅[^9] |
 | `scheduler.step()` before `optimizer.step()` | The first value of the schedule is skipped | Order changed in PyTorch 1.1.0 ✅[^16] |
 | Momentum hyperparameters copied from another framework | Same steps at a constant `lr` without `dampening`; different ones once a schedule changes `lr` or `dampening` is set | PyTorch multiplies the buffer, not each gradient, by `lr`, and starts the buffer at the first gradient, so the first step escapes `dampening` ✅[^3] |
-| `CosineAnnealingLR` stepped past `T_max` | No jump back to the peak, but no stop at `eta_min` either: the rate climbs back along the cosine | No SGDR restarts, and `T_cur = t` keeps growing, so `cos(π·T_cur/T_max)` rises again after `T_max` ✅[^12] |
+| `CosineAnnealingLR` stepped past `T_max` | No stop at `eta_min`: the rate climbs back along the cosine and is at the peak again at `2·T_max` (lab, `T_max=4`, `eta_min=0.1`: 1.0, 0.868, 0.55, 0.232, 0.1, 0.232, 0.55, 0.868, 1.0) ✅[^9] | No SGDR restarts, and `T_cur = t` keeps growing, so `cos(π·T_cur/T_max)` rises again after `T_max` ✅[^12] |
 | Batch size multiplied by `k` | Multiply the rate by `k` (linear scaling rule) and warm up | Goyal et al.'s rule and gradual warmup ✅[^13] |
 | Adam on some problems | Can fail to converge | Reddi et al.'s counter-examples ✅[^2] |
 
@@ -197,7 +197,7 @@ Reading it, line by line:
 - Print the schedule's learning rates for the whole run before training; the lab printout makes an off-by-one or a wrong `T_max` visible.
 
 ## Verification status
-- Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 70 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Momentum (Dive into Deep Learning, 12.6)](https://d2l.ai/chapter_optimization/momentum.html) — Zhang, Lipton, Li, Smola, living. Backs: the ill-conditioned quadratic and its traces at 0.4 and 0.6, heavy-ball update, `η/(1−β)`, narrow canyon, Polyak 1964. [^1]
@@ -208,7 +208,7 @@ Reading it, line by line:
 - [torch.optim.Adam](https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html) — PyTorch, 2026 (2.15). Backs: defaults, `weight_decay` as L2, `decoupled_weight_decay`. [^6]
 - [Adam: A Method for Stochastic Optimization (abstract)](https://arxiv.org/abs/1412.6980) — Kingma, Ba, 2014 (v9, 2017). Backs: invariance to diagonal rescaling, little tuning. [^7]
 - [torch.optim.AdamW](https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html) — PyTorch, 2026 (2.15). Backs: decoupled decay step, default `weight_decay=1e-2`. [^8]
-- `machine-learning/lab-setup.md` — the lab where the six optimizers on the quadratic, the L2-vs-AdamW fits and the warmup-cosine schedule ran on 2026-11-24. [^9]
+- `machine-learning/lab-setup.md` — the lab where the six optimizers on the quadratic, the L2-vs-AdamW fits and the warmup-cosine schedule ran on 2026-11-24 (re-run 2026-11-25, same output), and `CosineAnnealingLR` past `T_max` was checked on 2026-11-25. [^9]
 - [Decoupled Weight Decay Regularization](https://arxiv.org/html/1711.05101v3) — Loshchilov, Hutter, 2019 (v3). Backs: L2 and weight decay equivalent for SGD, not for Adam; large-gradient weights regularized less; decoupled hyperparameters; 15 % relative improvement. [^10]
 - [Learning Rate Scheduling (Dive into Deep Learning, 12.11)](https://d2l.ai/chapter_optimization/lr-scheduler.html) — Zhang, Lipton, Li, Smola, living. Backs: why schedule, cosine formula, Loshchilov and Hutter, warmup motivation. [^11]
 - [torch.optim.lr_scheduler.CosineAnnealingLR](https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html) — PyTorch, 2026 (2.15). Backs: recursive closed form, no restarts, `T_max`. [^12]

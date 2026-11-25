@@ -17,7 +17,7 @@ tags: [machine-learning, transformers, attention, efficient-attention, flashatte
 **Not this doc:** the attention formula, masks and heads → `machine-learning/transformers/attention-and-the-transformer.md`; the KV (key–value) cache and per-step cost during generation → `machine-learning/transformers/decoding-and-kv-cache.md`; why RNNs lost to attention → `machine-learning/deep-learning/recurrent-networks.md`; why moving data costs more than computing on it → `performance/hardware/memory-hierarchy-and-caches.md`.
 
 ## Problem
-Standard attention needs memory quadratic in the sequence length, and FlashAttention's authors trace the slowness to reads and writes between GPU (graphics processing unit) high-bandwidth memory (HBM) and on-chip SRAM (static random-access memory), not to arithmetic ✅[^1]. In the lab, on one head of width 64 on a CPU, the naive formula's peak memory grew from 252 MiB (mebibytes) at 2,048 tokens to 2,118 MiB at 16,384 tokens, while `F.scaled_dot_product_attention` stayed between 221 and 236 MiB ✅[^9]. Approximate fixes (windows, linear attention) change what the model computes, and state-space models change the architecture; choosing among them needs to know which are exact and which trade quality for length.
+Standard attention needs memory quadratic in the sequence length, and FlashAttention's authors trace the slowness to reads and writes between GPU (graphics processing unit) high-bandwidth memory (HBM) and on-chip SRAM (static random-access memory), not to arithmetic ✅[^1]. In the lab, on one head of width 64 on a CPU, the naive formula's peak memory grew from 233 MiB (mebibytes) at 2,048 tokens to 2,120 MiB at 16,384 tokens, while `F.scaled_dot_product_attention` stayed between 202 and 217 MiB ✅[^9]. Approximate fixes (windows, linear attention) change what the model computes, and state-space models change the architecture; choosing among them needs to know which are exact and which trade quality for length.
 
 ## Mental model
 **Analogy:** marking an exam with a running leaderboard. The naive way pins every candidate's score on a huge wall (the `N × N` matrix), then reads the wall to normalize. The tiled way reads one stack of papers at a time and keeps only three numbers per question: the best score so far, the running total of `exp(score − best)`, and a running weighted answer. When a new stack has a higher best score, everything kept so far is shrunk by `exp(old best − new best)`. At the end the result is identical, and the wall was never needed.
@@ -37,7 +37,7 @@ out = acc / l                                              # exact softmax(q k�
 
 ## How it works
 ### The quadratic cost
-1. Attention computes `softmax(Q·Kᵀ/√d)·V` (`machine-learning/transformers/attention-and-the-transformer.md`); the scores `Q·Kᵀ` form an `N × N` matrix per head, and standard implementations need memory quadratic in `N` ✅[^1]. Example: `N = 16,384` in float32 is `16,384² × 4` bytes = 1 GiB per head; the lab's naive run peaked at 2,118 MiB, about 1.85 GiB above the 1,024-token run's 226 MiB: the scores plus the softmax output ✅[^9].
+1. Attention computes `softmax(Q·Kᵀ/√d)·V` (`machine-learning/transformers/attention-and-the-transformer.md`); the scores `Q·Kᵀ` form an `N × N` matrix per head, and standard implementations need memory quadratic in `N` ✅[^1]. Example: `N = 16,384` in float32 is `16,384² × 4` bytes = 1 GiB per head; the lab's naive run peaked at 2,120 MiB, about 1.9 GiB above the 1,024-token run's 207 MiB: the scores plus the softmax output ✅[^9].
 
 ### FlashAttention: tiling and online softmax, exact
 2. **Online softmax:** the softmax normalizer can be computed in one pass instead of two, which needs fewer memory accesses; its paper measured up to 1.3× faster softmax ✅[^2]. Each block keeps a running maximum `m` and a running sum `l`, and blocks are merged by rescaling with `exp` of the difference of maxima ✅[^1].
@@ -65,7 +65,7 @@ out = acc / l                                              # exact softmax(q k�
 18. **Reported results:** linear scaling in sequence length, about 5× the inference throughput of transformers, and Mamba-3B matching transformers twice its size in language modelling; the block drops attention and MLP (multilayer perceptron) blocks entirely ✅[^8].
 
 ## Worked example
-Six checks on a CPU: tiled online-softmax attention against the naive formula (non-causal and causal, plus scores large enough to overflow `exp`), SDPA against the manual formula with each backend forced, naive attention vs SDPA time and peak memory (resident set size, RSS, of a fresh process per run) from 1,024 to 16,384 tokens, a sliding-window mask, causal linear attention in both forms, and a diagonal SSM in both forms. Lab run (`machine-learning/lab-setup.md`), 2026-11-25, PyTorch 2.15.0, Apple M2, 4 threads; two runs identical except the timings (a second run gave 401.5 ms and 154.5 ms at `N = 16,384`) ✅[^9]:
+Six checks on a CPU: tiled online-softmax attention against the naive formula (non-causal and causal, plus scores large enough to overflow `exp`), SDPA against the manual formula with each backend forced, naive attention vs SDPA time and peak memory (resident set size, RSS, of a fresh process per run) from 1,024 to 16,384 tokens, a sliding-window mask, causal linear attention in both forms, and a diagonal SSM in both forms. Lab run (`machine-learning/lab-setup.md`), 2026-11-25, PyTorch 2.15.0, Apple M2, 4 threads; two runs identical except the timings and the naive formula's peak RSS at 8,192 and 16,384 tokens, which varied by up to 7 % ✅[^9]:
 
 ```text
 == 1. tiled online-softmax attention vs naive (N=1000, d=64, blocks 64) ==
@@ -79,11 +79,11 @@ FLASH_ATTENTION      runs  | causal, max |diff| vs manual 4.2e-07
 EFFICIENT_ATTENTION  fails | No viable backend for scaled_dot_product_attention was fou
 CUDNN_ATTENTION      fails | No viable backend for scaled_dot_product_attention was fou
 == 3. naive attention cost vs sequence length (one head, d=64, float32, CPU) ==
-N= 1024: score matrix      4 MiB | naive      2.0 ms, peak RSS    226 MiB | sdpa      1.2 ms, peak RSS    221 MiB
-N= 2048: score matrix     16 MiB | naive      8.4 ms, peak RSS    252 MiB | sdpa      3.5 ms, peak RSS    221 MiB
-N= 4096: score matrix     64 MiB | naive     38.0 ms, peak RSS    351 MiB | sdpa     14.1 ms, peak RSS    225 MiB
-N= 8192: score matrix    256 MiB | naive    150.1 ms, peak RSS    740 MiB | sdpa     50.6 ms, peak RSS    229 MiB
-N=16384: score matrix   1024 MiB | naive    499.9 ms, peak RSS   2118 MiB | sdpa    166.7 ms, peak RSS    236 MiB
+N= 1024: score matrix      4 MiB | naive      1.2 ms, peak RSS    207 MiB | sdpa      0.9 ms, peak RSS    202 MiB
+N= 2048: score matrix     16 MiB | naive      4.9 ms, peak RSS    233 MiB | sdpa      2.3 ms, peak RSS    203 MiB
+N= 4096: score matrix     64 MiB | naive     17.8 ms, peak RSS    332 MiB | sdpa      8.3 ms, peak RSS    205 MiB
+N= 8192: score matrix    256 MiB | naive     69.6 ms, peak RSS    670 MiB | sdpa     33.2 ms, peak RSS    209 MiB
+N=16384: score matrix   1024 MiB | naive    300.1 ms, peak RSS   2120 MiB | sdpa    128.1 ms, peak RSS    217 MiB
 == 4. sliding-window attention (window 4 back, N=16) ==
 allowed pairs 58 of 256 | SDPA with band mask vs manual: 1.8e-07
 == 5. causal linear attention: parallel form == recurrent form (phi = elu + 1) ==
@@ -219,14 +219,14 @@ print("selective (step from the input): output differs from the fixed-kernel out
 Reading it:
 - **Tiled = naive:** the block-by-block result differs from the full softmax only by float32 rounding (`4.0e-07`), causal or not, which is what "exact" means. With scores up to 12,733, `exp` alone overflows to infinity; subtracting the running maximum keeps every exponent at or below 0.
 - **SDPA = formula:** the default call and the forced `MATH` and `FLASH_ATTENTION` backends all agree with the manual formula. On this CPU the memory-efficient and cuDNN (CUDA Deep Neural Network library) kernels are not available, so forcing either one leaves no backend.
-- **Quadratic growth:** from 2,048 to 16,384 tokens (8× longer) the naive time grew about 60× (8.4 → 499.9 ms; about 69× in the second run) and its peak memory by about 1.8 GiB (252 → 2,118 MiB), close to two 1 GiB `N × N` matrices; SDPA's peak memory barely moved (221 → 236 MiB) and it ran 2.4–3.0× faster than the naive formula from 2,048 tokens on (1.8–2.6× in the second run).
+- **Quadratic growth:** from 2,048 to 16,384 tokens (8× longer) the naive time grew about 60× (4.9 → 300.1 ms) and its peak memory by about 1.8 GiB (233 → 2,120 MiB), close to two 1 GiB `N × N` matrices; SDPA's peak memory barely moved (203 → 217 MiB) and it ran 2.1–2.3× faster than the naive formula from 2,048 tokens on. Timings vary from run to run, most at small `N`.
 - **Window:** 58 of 256 pairs (16 + 15 + 14 + 13: each token sees itself and up to 3 earlier tokens) grows as `N·w`, not `N²`.
 - **Linear attention and SSM:** both run as a recurrence with a fixed-size state and give the same numbers as their parallel form, as long as the SSM's parameters do not depend on the input; Mamba's selective step removes the single kernel, which is why it needs a scan.
 
 ## Edge cases
 | Case | What happens | Why |
 |---|---|---|
-| Long sequence with naive attention | Memory grows with `N²` (lab: 2,118 MiB at 16,384 tokens) | Standard attention is quadratic in memory ✅[^1]; lab ✅[^9] |
+| Long sequence with naive attention | Memory grows with `N²` (lab: 2,120 MiB at 16,384 tokens) | Standard attention is quadratic in memory ✅[^1]; lab ✅[^9] |
 | Hand-written softmax over huge scores | `exp` overflows to `inf` | Online softmax subtracts the running max ✅[^1]; lab ✅[^9] |
 | Forcing `EFFICIENT_ATTENTION` on CPU | `RuntimeError: No viable backend …` | Lab, PyTorch 2.15.0 ✅[^9] |
 | Passing both `attn_mask` and `is_causal=True` | Error | SDPA documentation ✅[^3] |

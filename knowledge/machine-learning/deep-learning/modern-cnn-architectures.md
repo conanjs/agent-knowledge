@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0", "torchvision model table (living page, read 2026-11-24)"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, cnn, architectures, lenet, alexnet, vgg, googlenet, inception, resnet, bottleneck, densenet, mobilenet, depthwise-separable, efficientnet, compound-scaling, convnext, flops, multiply-adds, parameter-count]
 ---
 
@@ -54,7 +54,7 @@ For a convolution with kernel `D_K × D_K`, `M` input and `N` output channels on
 ### What each step means in detail
 1. **AlexNet's cost sits in the dense layers:** its two big fully connected layers need nearly 1 GB of parameters ✅[^2]. VGG-16 has the same problem: 89.4 % of its 138,357,544 parameters are in the three `Linear` layers (lab) ✅[^16].
 2. **VGG's 3 × 3 rule:** two stacked 3 × 3 convolutions touch the same pixels as one 5 × 5 ✅[^3], and three 3 × 3 layers (`3·9·c²`) cost about as much as one 5 × 5 (`25·c²`) ✅[^3].
-3. **1 × 1 convolutions as reducers:** GoogLeNet uses them mainly as dimension-reduction modules to remove computational bottlenecks ✅[^6], placed before the 3 × 3 and 5 × 5 branches ✅[^5]; the result uses 12 times fewer parameters than AlexNet ✅[^6]. It also popularized the stem (first convolutions on the raw image), body (the blocks) and head (task output) layout ✅[^5].
+3. **1 × 1 convolutions as reducers:** GoogLeNet uses them mainly as dimension-reduction modules to remove computational bottlenecks ✅[^6], placed before the 3 × 3 and 5 × 5 branches ✅[^5]; the result uses 12 times fewer parameters than AlexNet ✅[^6]. It was arguably the first network with a clear split into stem (first convolutions on the raw image), body (the blocks) and head (task output), a layout that has persisted since ✅[^5].
 4. **ResNet's bottleneck:** the first 1 × 1 layer reduces the channels, the 3 × 3 works on the reduced width, the last 1 × 1 restores them; it has a time complexity similar to the two-layer basic block ✅[^7]. ResNet-50 has 3.8 billion FLOPs (multiply-adds), and even ResNet-152 (11.3 billion) is cheaper than VGG-16/19 (15.3/19.6 billion) ✅[^7].
 5. **DenseNet's growth rate `k`:** layer `ℓ` receives `k_0 + k·(ℓ − 1)` channels ✅[^9]; each block adds channels, so transition layers (1 × 1 convolution plus stride-2 average pooling) shrink the channels and halve the height and width ✅[^8]. DenseNet-B puts a 1 × 1 producing `4k` maps before each 3 × 3, and DenseNet-BC compresses by `θ = 0.5` in the transitions ✅[^9].
 6. **Depthwise-separable cost:** `D_K·D_K·M·D_F·D_F + M·N·D_F·D_F`, a ratio of `1/N + 1/D_K²` to the standard layer ✅[^10]. MobileNet puts batch norm and ReLU after both parts ✅[^10], and offers a width multiplier `α` that thins every layer and a resolution multiplier `ρ` that cuts the cost by about `ρ²` ✅[^10]. MobileNet 1.0-224 reached 70.6 % with 569 M multiply-adds and 4.2 M parameters, against VGG-16's 71.5 % at 15,300 M and 138 M ✅[^10]. In PyTorch, `groups=in_channels` gives each input channel its own filters, a depthwise convolution ✅[^17].
@@ -216,7 +216,7 @@ Reading it, block by block:
 - Benchmark latency on the target device: multiply-adds are only a proxy. [rule-candidate]
 
 ## Verification status
-- Verified: 84 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 84 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [LeNet (Dive into Deep Learning, 7.6)](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html) — Zhang, Lipton, Li, Smola, living. Backs: LeNet-5 layout, handwritten digits, ATM use. [^1]

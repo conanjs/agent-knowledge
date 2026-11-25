@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/transformers
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, transformers, vision-transformer, vit, patch-embedding, class-token, position-embeddings, inductive-bias, deit, distillation, swin, windowed-attention, hybrid, unfold]
 ---
 
@@ -178,7 +178,7 @@ for side in [224, 448, 896]:
 
 Reading it, block by block:
 - **Tokens grow with area:** doubling the side from 512 to 1024 quadruples the patches (1,024 → 4,096) and multiplies the attention scores per head by about 16 (1.05 M → 16.8 M). Halving the patch from 16 to 8 quadruples the tokens (196 → 784).
-- **Sizes that do not divide:** 230 × 230 with patch 16 silently gives a 14 × 14 grid, like a 224 × 224 image: the convolution's output size rounds down ✅[^5], and 6 rows and columns of pixels are never seen.
+- **Sizes that do not divide:** 230 × 230 with patch 16 silently gives a 14 × 14 grid, like a 224 × 224 image: `Unfold`'s block count, which the equivalent stride-16 convolution shares, rounds down (`⌊(230 − 16)/16⌋ + 1 = 14`) ✅[^5], and 6 rows and columns of pixels are never seen.
 - **Parameter bill:** of ViT-B/16's 86,567,656 parameters, 85.1 M are the 12 encoder blocks (7,087,872 each), the patch embedding is only 590,592 and the 197 position vectors 151,296; the total matches torchvision's 86.6 M ✅[^6].
 - **Shuffle test:** without position embeddings the class-token logits are unchanged by shuffling the 16 patches of a small model (difference at float-rounding level); with them they change. Position embeddings are the only place a ViT learns where a patch was.
 - **Swin's formulas:** at 224 × 224 (56 × 56 tokens of 4 × 4 pixels, `C = 96`), windowed attention is 13.8× cheaper than global; each doubling of the side makes the global cost about 16× larger and the windowed cost about 4× larger, so the ratio keeps growing.
@@ -186,7 +186,7 @@ Reading it, block by block:
 ## Edge cases
 | Case | What happens | Why |
 |---|---|---|
-| Image side not divisible by the patch size | Border pixels are dropped silently (lab: 230 → 14 × 14 grid) | The output size rounds down ✅[^5]; lab ✅[^7] |
+| Image side not divisible by the patch size | Border pixels are dropped silently (lab: 230 → 14 × 14 grid) | `Unfold`'s block count rounds down ✅[^5]; lab ✅[^7] |
 | Pretrained ViT fed a larger image | Position embeddings no longer match the token count | Interpolate them in 2-D ✅[^1]; lab 197 → 577 ✅[^7] |
 | Position embeddings left out | Shuffled patches give the same class output | Attention is order-blind; lab ✅[^7] |
 | ViT trained from scratch on a mid-sized dataset | A few points below a comparable ResNet | Weaker inductive bias ✅[^1] |
@@ -211,7 +211,7 @@ Reading it, block by block:
 - With little data and no large pretrained checkpoint, prefer a CNN or a DeiT-style recipe (strong augmentation, distillation) over training a plain ViT from scratch.
 
 ## Verification status
-- Verified: 65 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 65 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale](https://ar5iv.labs.arxiv.org/html/2010.11929) — Dosovitskiy et al., 2020. Backs: patches and `N = HW/P²`, linear projection, class token and head, 1-D position embeddings, sizes and naming, patch size vs sequence length, 2-D interpolation, inductive bias, data scale, ViT-L vs ViT-B on ImageNet, hybrid. [^1]

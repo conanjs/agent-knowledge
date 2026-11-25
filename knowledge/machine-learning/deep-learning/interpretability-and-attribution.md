@@ -81,7 +81,7 @@ random model: share on feature 0: gradient 0.126 | IG 0.126
 rank correlation trained vs random |attr|: gradient 0.010 | IG 0.345
 rank correlation of |attr| with |input| alone: random-model gradient x input 0.655 | random-model gradient 0.057
 == linear probe on the first hidden layer (after ReLU): can it read feature 5, which the label ignores? ==
-trained net, probe for sign(x0): test accuracy 0.993
+trained net, probe for sign(x0): test accuracy 0.991
 trained net, probe for sign(x5): test accuracy 0.920
 random  net, probe for sign(x0): test accuracy 0.932
 random  net, probe for sign(x5): test accuracy 0.926
