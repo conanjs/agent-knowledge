@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: ai-agents
 status: verified
-applies-to: ["Claude Code 2.1.318 with Claude Opus 5.5", "GitHub Copilot CLI 1.0.105 with Claude Sonnet 5.5", "Codex CLI 0.166.0-alpha.6 with gpt-6.1-sol and gpt-6-luna", "runs of 2026-11-07 and 2026-11-09", "knowledge-judge prompt runs of 2026-11-22 (Claude Code subagents, Claude Opus 5.5)"]
+applies-to: ["Claude Code 2.1.318 with Claude Opus 5.5", "GitHub Copilot CLI 1.0.105 with Claude Sonnet 5.5", "Codex CLI 0.166.0-alpha.6 with gpt-6.1-sol and gpt-6-luna", "runs of 2026-11-07 and 2026-11-09", "knowledge-judge prompt runs of 2026-11-22 (Claude Code subagents, Claude Opus 5.5)", "doc-writer and reviewer subagent runs of 2026-11-24 and 2026-11-25 (Claude Code, Claude Opus 5.5)"]
 last-verified: 2026-11-10
-last-updated: 2026-11-22
+last-updated: 2026-11-25
 tags: [instructions, wording, compliance, triggers, agents-md, claude-md, copilot-instructions, measurement]
 ---
 
@@ -24,7 +24,7 @@ Covered: wordings in this repo's global instructions (`copilot/instructions/`) a
 
 The runs were scripted (`claude -p`, `copilot -p`, `codex exec`), in a small test project, two runs per prompt and wording. Copilot Chat in VS Code and other models are not covered yet. Each count is "runs that complied / runs".
 
-IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowledge (the knowledge-judge), run as Claude Code subagents on Claude Opus 5.5, one run per prompt version and test doc.
+IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowledge (the knowledge-judge), run as Claude Code subagents on Claude Opus 5.5, one run per prompt version and test doc. IW-19 to IW-21 are briefs given to doc-writing subagents in two builds of the knowledge base (Claude Code, Claude Opus 5.5).
 
 **Analogy:** a recipe card in a busy kitchen. "When the order says *vegan*, use the blue binder" works, because the cook sees the word on the order. "When the pantry has saffron, use the red binder" makes the cook walk to the pantry to check. "The default plate has four sides" gets ignored when the order is a quick snack.
 
@@ -52,6 +52,9 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 | IW-16 | A judge prompt (agent-knowledge `frameworks/knowledge/agents/knowledge-judge/body.md`) that grades a doc's claims against saved page text. v2 added: "**A plain statement of behaviour is a requirement.** … If the page says SHOULD or MAY, the claim `overstates`. A modal verb at the start of a sentence or list item (\"Server must …; …; …\") covers every clause after it." Test item: a step reading "Server must validate the token …; insufficient scope gives `403`", where the spec has SHOULD for the 403 | Without the rule (v1), the judge read the 403 clause as having no modal and passed it. With it (v2), the judge flagged it. But v2's example sentence was the test item itself, and v1's example of a dropped qualifier was the other test item. v3 replaced both with examples from topics no test doc covers (DNS resolvers, a full disk), and the judge still flagged both | Flagged 0/1 (v1), 1/1 (v2, the example was the test item), 1/1 (v3, neutral example) | — | — | ✅[^7] |
 | IW-17 | Judge v3 severity rule: "`CRITICAL_FAIL`: `contradicted` …; `unsupported`; a gap in a number, version, date or name …; a modal raised to MUST level in the claim's own words … `WARN`, for every other `overstates`" | The judge applied the three levels as written. 5 planted errors kept the severity they were planted for. An unchanged doc's 2 findings (a dropped condition and a wider scope) came out `WARN`, and the doc passed. Of the two known errors, the MUST-for-SHOULD one came out `CRITICAL_FAIL` and the dropped qualifier `WARN` | 3 docs, 1 run each: as written 3/3 | — | — | ✅[^7] |
 | IW-18 | Judge v5 tier B order: "Apply these in order; the first one that fits decides: 1. **Originator.** … The evidence must be in the input … 2. **The project's own home.** … Rules 1–3 never rest on what you know but the input does not show: without the evidence, go on to the next rule." Re-judged 3 docs that v4 had failed on originators' pages | The judge raised a source to Rank 1 only where a saved page showed the originator role or the project's own repository (3 sources), and kept Rank 6 where no saved page showed it (4 sources), saying so in each `rank_basis`. It never used its own knowledge of who coined a term | Followed as written in 3/3 docs (7 of 7 sources) | — | — | ✅[^8] |
+| IW-19 | Writer brief for parallel doc writers (Claude Code subagents): "Save scripts to `$LAB/experiments/<subtopic>/<doc-slug>.py` … Put the script (trimmed to its essence, ideally ≤ 40 lines) and its **real, unedited** output … in the doc's Worked example". Then an addendum: "never cite `experiments/<subtopic>/<slug>.py` or any `$LAB` path in a doc … put the **full** script that printed the quoted output in a collapsible block" | The first finished doc showed only the script's core loop and cited the scratch path the brief had named, so a reader could not reproduce its output: the brief's own path became the doc's citation. After the addendum, every doc embedded its full script and none cited a scratch path | 10 writers, 57 docs, 2026-11-24: scratch path cited in 1 of 1 doc finished before the addendum; 0 of 57 at the end; the embedded scripts, re-run, printed every quoted output line in 57 of 57 docs (one wall-clock timing block excluded) | — | — | ✅[^9] |
+| IW-20 | Same brief: "its **real, unedited** output (trim long output with `…`, never change numbers)". Then: "**Quoted output is byte-for-byte what the script printed.** No labels typed into the block … if a label helps, make the script print it … The lead re-runs every embedded script and diffs each quoted line against its stdout" | "Unedited" was read as "numbers unchanged": no number was ever changed, but 2 of 10 writers typed notes into output blocks (labels such as `<- overfit`, a trailing `slow`, a `… (5 more lines: …)` line). After the byte-for-byte wording, which also named the check that would catch it, the writers diffed their own blocks against stdout and moved the notes into the script or the prose | 10 writers, 57 docs, 2026-11-24: changed numbers 0 of 57 docs; typed notes in 6 of 57 docs before the second wording; 0 of 57 after | — | — | ✅[^9] |
+| IW-21 | IW-19's and IW-20's final wordings put in a new brief from the start, for 5 new writers: "the **full** script sits in a `<details>` block after the output it printed; quoted output is byte-for-byte what the script printed (no typed labels or notes inside output blocks — make the script print a label if you need one)", plus "the lead re-runs every embedded script" | Followed as written. No doc cited a scratch path and no output block held a typed note. The one slip was in the prose: a caption called a hand-drawn graph "printed by the full script" | 5 writers, 17 docs, 2026-11-25: scratch path cited 0 of 17; typed notes in output blocks 0 of 17; every quoted output line printed by the re-run script in 16 of 17 docs, the 17th being the hand-drawn graph's caption (fixed in review) | — | — | ✅[^10] |
 
 ## Lookup notes
 - **The pattern behind the findings.**
@@ -64,6 +67,7 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - **Key a condition to the session, and say what not to do.** IW-7 asked about a fact the agent had to check (an indexed graph), and agents read the guide to find out. IW-12 asks about the session (tools available) and adds "do not read that guide": 0 reads in 6 runs.
 - **A pointer is a command to Codex.** Codex executes "read these files" on every task (IW-6). Each read costs a model request that sends the whole context again (`agent-token-accounting.md`).
 - **An example in a prompt can be the answer to the test.** A judge prompt that illustrates a rule with the very sentence it will be tested on measures recall of the example, not the rule (IW-16). Take examples from topics no test case covers.
+- **A writer's own verified mark is not a check; a second agent's is.** In the run behind IW-19 and IW-20, each writer marked every claim verified against pages it had fetched. A separate reviewer agent per subtopic then re-fetched the cited pages and checked about 1,540 of the 3,480 claims. It changed about 140 of them (about 9 %), mostly dropped conditions and widened scope ("the guide recommends" for "the guide cites a recommendation"), plus a few outright errors: a formula copied with a paper's own typo, a comparison read the wrong way round, and float32 underflow reported as a gradient of exactly 0 ✅[^9]. In the next round (IW-21: 17 docs), the same set-up checked about 550 claims and changed about 70 (about 13 %), again including outright errors, such as a privacy bound applied to the wrong neighbour definition and a Qini curve read at twice its meaning ✅[^10]. Pair a writer prompt with an independent checker when the claims matter.
 - **The counts are small.** Two runs per prompt, wording and agent, in one test project, on one day per wording. Treat a 2/2 as "works in this setup", not as a rate.
 - **How these were measured:** the agents ran without the user's own global instructions, and each variant was swapped in:
   - Claude Code: `claudeMdExcludes`, with the variant as the project `CLAUDE.md`.
@@ -83,7 +87,7 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 18 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 23 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
 
 ## References
 - Local measurement, 2026-11-09:
@@ -103,6 +107,10 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - Local measurement, 2026-11-22: the knowledge-judge prompt v1 (`cded4d1`), v2 (`9ae51f8`) and v3 (`f166f98`), each run as a Claude Code subagent on Claude Opus 5.5 against saved page text, on a deep dive with 2 known errors, a verified doc, and a copy of it with 5 planted errors; one run per prompt and doc; details in agent-knowledge `research/_calibration/REPORT.md`. [^7]
 
 - Local measurement, 2026-11-22: the knowledge-judge prompt v5 (`2b066f6`), run as the linked `knowledge-judge` Claude Code agent on Claude Opus 5.5, on 3 verified docs re-judged after v4; one run each; details in agent-knowledge `research/_audit/REPORT.md`. [^8]
+
+- Local measurement, 2026-11-24: one knowledge-base build of `knowledge/machine-learning/` by 10 writer subagents and 10 reviewer subagents (Claude Code, Claude Opus 5.5, `general-purpose` agents), 57 docs. Scratch-path citations counted by `grep`; quoted outputs checked by a script that re-runs every embedded full script in the lab (`machine-learning/lab-setup.md`) and looks up each quoted line in its stdout; review counts from each reviewer's report. [^9]
+
+- Local measurement, 2026-11-25: the next build of `knowledge/machine-learning/` (17 docs in 7 topics) by 5 writer and 5 reviewer subagents (Claude Code, Claude Opus 5.5), with the same output check; counts from the check script and each reviewer's report. [^10]
 
 ## Related
 - `ai-agents/agent-token-accounting.md` — why each file read adds a full model request.
