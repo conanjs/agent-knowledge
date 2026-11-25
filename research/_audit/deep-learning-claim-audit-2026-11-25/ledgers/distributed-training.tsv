@@ -1,0 +1,86 @@
+n	label	kind	verdict	evidence	source
+1	6	source	OK	§1 + §5.1/Fig. 1: 7.5B model "requiring 120 GB with standard DP"; DP replicates all model states	https://arxiv.org/pdf/1910.02054
+2	2	source	OK	Class note: "DistributedDataParallel does not chunk or otherwise shard the input across participating GPUs"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+3	15	source	FIXED	Description: "calculated per-dimension over all mini-batches of the same process groups"; convert BatchNorm*D layers before wrapping in DDP	https://docs.pytorch.org/docs/2.15/generated/torch.nn.SyncBatchNorm.html
+4	13	lab	LAB-OK	Artifact lines equal Worked example output section 1 (all_reduce, all_gather, reduce_scatter per rank); re-run 2026-11-25 identical	lab
+5	5	source	OK	AllReduce, Reduce, Broadcast sections; AllReduce "stores the result in the receive buffer of every rank"	https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html
+6	5	source	OK	AllGather, ReduceScatter, AlltoAll sections; AlltoAll: "the i-th chunk of N values comes from source rank i"	https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html
+7	5	source	OK	ReduceScatter section: "Executing ReduceScatter, followed by AllGather, is equivalent to the AllReduce operation"	https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/collectives.html
+8	6	source	OK	§7.1: "the standard DP incurs 2Ψ data movement during each training step"	https://arxiv.org/pdf/1910.02054
+9	4	source	OK	Backends, rule of thumb: "Use the NCCL backend for distributed training with CUDA GPU"; Gloo for CPU	https://docs.pytorch.org/docs/2.15/distributed.html
+10	4	source	OK	Backend support table: gloo reduce_scatter CPU tick; gloo all_to_all cross on CPU and GPU	https://docs.pytorch.org/docs/2.15/distributed.html
+11	4	source	OK	ReduceOp: "AVG is only available with the NCCL backend", NCCL 2.10 or later	https://docs.pytorch.org/docs/2.15/distributed.html
+12	14	source	OK	Environment Variables section lists LOCAL_RANK, RANK, WORLD_SIZE, MASTER_ADDR, MASTER_PORT for each worker	https://docs.pytorch.org/docs/2.15/elastic/run.html
+13	4	source	FIXED	Environment variable initialization reads MASTER_PORT, MASTER_ADDR, WORLD_SIZE, RANK (not LOCAL_RANK); "init_method is assumed to be env://"	https://docs.pytorch.org/docs/2.15/distributed.html
+14	1	source	OK	Internal design: "broadcasts state_dict() from the process with rank 0 to all other processes"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+15	13	lab	LAB-OK	Script seeds 1+rank; output "grads identical across ranks: True | params identical after step: True"	lab
+16	2	source	OK	Class note: "the user is responsible for defining how to do so, for example ... DistributedSampler"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+17	3	source	OK	DistributedSampler: "load a subset of the original dataset that is exclusive to it"	https://docs.pytorch.org/docs/2.15/data.html
+18	3	source	OK	shuffle default True; set_epoch warning: "Otherwise, the same ordering will be always used"	https://docs.pytorch.org/docs/2.15/data.html
+19	3	source	OK	drop_last default False: "the sampler will add extra indices to make the data evenly divisible"	https://docs.pytorch.org/docs/2.15/data.html
+20	1	source	OK	Reducer: one hook per parameter; "allocated into buckets in (roughly) the reverse order of Model.parameters()"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+21	1	source	OK	"When gradients in one bucket are all ready, the Reducer kicks off an asynchronous allreduce"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+22	1	source	OK	"DDP's performance advantage comes from overlapping allreduce collectives with computations during backwards"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+23	2	source	OK	bucket_cap_mb: "If None, a default size of 25 MiB will be used"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+24	1	source	OK	"grad field on the same corresponding parameter across different DDP processes should be the same"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+25	2	source	OK	Note: "the gradient will be M times smaller" than single node batch=M*N with summed loss; gradients averaged	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+26	2	source	OK	"Buffers (e.g. BatchNorm stats) are broadcast from the module in process of rank 0" in every iteration	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+27	15	source	FIXED	Description: "over all mini-batches of the same process groups"; convert_sync_batchnorm replaces BatchNorm*D before DDP	https://docs.pytorch.org/docs/2.15/generated/torch.nn.SyncBatchNorm.html
+28	15	source	OK	"Currently SyncBatchNorm only supports DistributedDataParallel (DDP) with single GPU per process"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.SyncBatchNorm.html
+29	2	source	OK	no_sync: "Context manager to disable gradient synchronizations across DDP processes"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+30	6	source	OK	§1, §5.1-5.3, Table 1 (Nd=64: 120/31.4/16.6/1.88 GB), §7.2: "total volume is therefore 3Ψ which is 1.5x"	https://arxiv.org/pdf/1910.02054
+31	7	source	OK	"FSDP shards module parameters, gradients, and optimizer states across data parallel workers"; DTensor sharded on dim-0	https://docs.pytorch.org/docs/2.15/distributed.fsdp.fully_shard.html
+32	7	source	OK	"Before forward, FSDP all-gathers the sharded parameters"; after gradients it frees them and reduce-scatters gradients	https://docs.pytorch.org/docs/2.15/distributed.fsdp.fully_shard.html
+33	7	source	OK	reshard_after_forward True/False behaviour; "For best performance, we usually set False for the root module"	https://docs.pytorch.org/docs/2.15/distributed.fsdp.fully_shard.html
+34	8	source	OK	§3, Eq. 3: "This partitioning allows the GeLU nonlinearity to be independently applied"	https://arxiv.org/pdf/1909.08053
+35	8	source	OK	§3: "split the second GEMM along its rows"; output reduced across GPUs before dropout	https://arxiv.org/pdf/1909.08053
+36	8	source	OK	Fig. 3 caption: "f is an identity operator in the forward pass and all reduce in the backward"	https://arxiv.org/pdf/1909.08053
+37	8	source	OK	§3: "using only two all-reduces in the forward path and two in the backward path"	https://arxiv.org/pdf/1909.08053
+38	8	source	OK	§3: "split per attention head parameters and workload across the GPUs"	https://arxiv.org/pdf/1909.08053
+39	13	lab	LAB-OK	Split-check output: "row split of A, GeLU before summing: max diff 4.049" and column-then-row 4.77e-07	lab
+40	10	source	OK	§3.2 Takeaway #1: "tensor model parallelism should generally be used up to degree g when using g-GPU servers"	https://arxiv.org/pdf/2104.04473
+41	8	source	OK	Appendix B: "for the 8.3 billion parameter model we use 8 GPUs per model parallel group"	https://arxiv.org/pdf/1909.08053
+42	9	source	OK	§2.2: "gradients from all M micro-batches are accumulated and applied to update the model parameters"	https://arxiv.org/pdf/1811.06965
+43	9	source	FIXED	§2.3 (re-materialization): "each accelerator only stores output activations at the partition boundaries"	https://arxiv.org/pdf/1811.06965
+44	10	source	OK	§2.2.1: "fraction of ideal computation time spent in the pipeline bubble" = (p−1)/m	https://arxiv.org/pdf/2104.04473
+45	9	source	FIXED	§2.3: "This bubble time is O(K−1/M+K−1) amortized over the number of micro-steps M"	https://arxiv.org/pdf/1811.06965
+46	9	source	OK	§2.3: "we found the bubble overhead to be negligible when M ≥ 4 × K"	https://arxiv.org/pdf/1811.06965
+47	10	source	OK	§2.2.1: same bubble; "requires activations to be stashed for p or fewer microbatches"	https://arxiv.org/pdf/2104.04473
+48	10	source	OK	§2.2.2: bubble fraction (1/v)·(p−1)/m; "the amount of communication also increases by v"	https://arxiv.org/pdf/2104.04473
+49	11	source	OK	§4.2.2: layer-norm and dropout regions split along s; "sequence parallelism does not introduce any communication overhead"	https://arxiv.org/pdf/2205.05198
+50	11	source	OK	§6.1: sequence parallelism and selective recomputation "combined provide a 5x reduction"	https://arxiv.org/pdf/2205.05198
+51	16	source	OK	§3: "If the computation time exceeds the time required for transferring key-value blocks"; c ≥ F/B; abstract device-count times longer	https://arxiv.org/pdf/2310.01889
+52	12	source	OK	Fig. 2 caption: "the MoE layer is sharded across devices, while all other layers are replicated"; Fig. 8 AllToAll	https://arxiv.org/pdf/2006.16668
+53	12	source	OK	§1: "The 600B parameters model ... was trained with 2048 TPU v3 cores for 4 days"	https://arxiv.org/pdf/2006.16668
+54	13	lab	LAB-OK	Full Worked example output block reproduced by re-run 2026-11-25 with the documented torchrun command, 37 s	lab
+55	13	lab	LAB-OK	Split check and bubble table output; re-run 2026-11-25 identical; 3/4=0.7500, 3/7=0.4286, 7/71=0.0986	lab
+56	2	source	OK	Class note: "does not chunk or otherwise shard the input across participating GPUs"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+57	3	source	OK	set_epoch warning: "Otherwise, the same ordering will be always used"	https://docs.pytorch.org/docs/2.15/data.html
+58	3	source	OK	drop_last: "drop the tail of the data to make it evenly divisible"; False adds extra indices	https://docs.pytorch.org/docs/2.15/data.html
+59	1	source	OK	"broadcasts state_dict() from the process with rank 0 to all other processes"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+60	13	lab	LAB-OK	Script seeds 1+rank before DDP(); output "params identical after step: True"	lab
+61	1	source	OK	find_unused_parameters marks unused parameters ready; "traversing the autograd graph introduces extra overheads"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+62	2	source	OK	"Buffers (e.g. BatchNorm stats) are broadcast from the module in process of rank 0"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+63	15	source	OK	"The mean and standard-deviation are calculated per-dimension over all mini-batches of the same process groups"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.SyncBatchNorm.html
+64	4	source	OK	ReduceOp: "AVG is only available with the NCCL backend"	https://docs.pytorch.org/docs/2.15/distributed.html
+65	4	source	OK	Backend support table: gloo all_to_all cross on CPU and GPU	https://docs.pytorch.org/docs/2.15/distributed.html
+66	13	lab	LAB-OK	Run note and command header; re-run 2026-11-25: --standalone no output in 75 s, repeated "IPv6 network addresses ... cannot be retrieved"	lab
+67	10	source	OK	§2.2.1: bubble fraction (p−1)/m; "For the bubble time fraction to be small, we thus need m≫p"	https://arxiv.org/pdf/2104.04473
+68	13	lab	LAB-OK	Bubble table row "4 4 1 | 0.7500 | 0.4286"	lab
+69	10	source	OK	§3.2: "tensor model parallelism across slower inter-node links can be impractical"; Takeaway #1	https://arxiv.org/pdf/2104.04473
+70	1	source	OK	"overlapping allreduce collectives with computations during backwards"	https://docs.pytorch.org/docs/2.15/notes/ddp.html
+71	6	source	OK	§1: "DP replicates the entire model states across all data parallel process"	https://arxiv.org/pdf/1910.02054
+72	6	source	OK	§1: "Optimizer State Partitioning (Pos): 4x memory reduction, same communication volume as DP"; Pos+g 8x	https://arxiv.org/pdf/1910.02054
+73	6	source	OK	§5.2: Pos+g memory 2Ψ + 14Ψ/Nd ≈ 2Ψ, the fp16 parameters (§3.1); parameters partitioned only in Pp (§5.3)	https://arxiv.org/pdf/1910.02054
+74	6	source	OK	§1: "Memory reduction is linear with DP degree Nd"	https://arxiv.org/pdf/1910.02054
+75	7	source	OK	"Before forward, FSDP all-gathers the sharded parameters"; frees the unsharded parameters after use	https://docs.pytorch.org/docs/2.15/distributed.fsdp.fully_shard.html
+76	6	source	OK	§1: "There is a modest 50% increase in communication volume"	https://arxiv.org/pdf/1910.02054
+77	7	source	OK	reshard_after_forward: "If True, then this reshards parameters after forward and re-all-gathers in backward"	https://docs.pytorch.org/docs/2.15/distributed.fsdp.fully_shard.html
+78	8	source	FIXED	Abstract and §1: "intra-layer model parallel approach"; models "exceed the memory limit of modern processors"	https://arxiv.org/pdf/1909.08053
+79	8	source	OK	§3: two all-reduces in the forward path and two in the backward path, four per layer	https://arxiv.org/pdf/1909.08053
+80	10	source	OK	§1: tensor-parallel all-reduce over inter-server links "slower than the high-bandwidth NVLink"	https://arxiv.org/pdf/2104.04473
+81	10	source	OK	Takeaway #1: "pipeline model parallelism can be used to scale up to larger models across servers"	https://arxiv.org/pdf/2104.04473
+82	10	source	OK	§2.2.1: bubble time fraction = (p−1)/m	https://arxiv.org/pdf/2104.04473
+83	10	source	OK	§2.2.2: "the new schedule reduces the bubble time by v"; communication also increases by v	https://arxiv.org/pdf/2104.04473
+84	12	source	OK	§2: "experts in the MoE layer are infeasible to be replicated in all the devices"	https://arxiv.org/pdf/2006.16668
+85	12	source	OK	Fig. 8 caption: "MoE dispatch and combine represents cross-partition communication with AllToAll"	https://arxiv.org/pdf/2006.16668

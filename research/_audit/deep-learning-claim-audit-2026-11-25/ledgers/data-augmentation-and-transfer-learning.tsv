@@ -1,0 +1,67 @@
+n	label	kind	verdict	evidence	source
+1	16	lab	LAB-OK	Output section 2, row none: train acc 1.000 test acc 0.347 (4 classes x 8 images)	lab
+2	1	source	OK	14.1 intro: 'generates similar but distinct training examples'; 'rely less on certain attributes'	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+3	1	source	OK	14.1.1: left-right flip 'usually does not change the category'; crops shift position; four colour aspects	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+4	1	source	OK	14.1.1.1: 'Flipping up and down is not as common'; 'does not hinder recognition'	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+5	16	lab	LAB-OK	Script: tgt_T[3] = tgt_T[2].flip(-1), hflip p=0.5 mixes both; output: classes 2 vs 3 0.356 -> 0.264	lab
+6	1	source	OK	14.1.2: 'In order to obtain definitive results during prediction'; test_augs holds only ToTensor()	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+7	2	source	OK	Section 2 equations x~ and y~; 'where y_i, y_j are one-hot label encodings'; lambda ~ Beta(alpha, alpha)	https://ar5iv.labs.arxiv.org/html/1710.09412
+8	2	source	OK	Abstract: 'reduces the memorization of corrupt labels'; Intro: 'implemented in a few lines of code'	https://ar5iv.labs.arxiv.org/html/1710.09412
+9	14	source	OK	Target: 'Probabilities for each class' e.g. blended labels; Shape: 'the target must be the same shape input'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html
+10	3	source	OK	Abstract: 'patches are cut and pasted'; labels 'mixed proportionally to the area of the patches'	https://ar5iv.labs.arxiv.org/html/1905.04899
+11	3	source	FIXED	3.1: crop ratio r_w r_h/(WH) = 1 - lambda; 'In our all experiments, we set alpha to 1'	https://ar5iv.labs.arxiv.org/html/1905.04899
+12	3	source	OK	Table 1 (PDF page 1 render): CutMix image is a dog photo with a cat patch, label 'Dog 0.6 Cat 0.4'	https://arxiv.org/pdf/1905.04899
+13	3	source	OK	Abstract: regional dropout 'remove informative pixels'; 'retaining the regularization effect of regional dropout'	https://ar5iv.labs.arxiv.org/html/1905.04899
+14	4	source	FIXED	6 Testing: '144 crops per image'; averaged 'over all the individual classifiers'; 'may not be necessary in real applications'	https://ar5iv.labs.arxiv.org/html/1409.4842
+15	5	source	OK	'We recommend using the torchvision.transforms.v2 transforms instead'; 'bounding boxes, masks, videos and keypoints'	https://docs.pytorch.org/vision/stable/transforms.html
+16	5	source	OK	Classification example code: 'v2.RandomResizedCrop(size=(224, 224), antialias=True)', 'v2.RandomHorizontalFlip(p=0.5)'	https://docs.pytorch.org/vision/stable/transforms.html
+17	5	source	FIXED	CutMix/MixUp: 'used after the dataloader (once the samples are batched), or part of a collation function'	https://docs.pytorch.org/vision/stable/transforms.html
+18	6	source	OK	Signature 'alpha: float = 1.0'; 'hyperparameter of the Beta distribution'; labels (batch_size,) -> (batch_size, num_classes)	https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.v2.MixUp.html
+19	7	source	OK	14.2: 'Transfer learning transfers knowledge learned from the source dataset to the target dataset'	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+20	7	source	FIXED	14.2: ImageNet 'more than 10 million images and 1000 objects', most widely used; step 1 e.g. ImageNet	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+21	11	source	OK	Abstract: 'first layer they learn features similar to Gabor filters and color blobs'; general to specific	https://ar5iv.labs.arxiv.org/html/1411.1792
+22	11	source	FIXED	4.3 + Fig. 3 bottom (base subtracted): 'drop by the final layer for similar tasks of only 8% vs. 25%'; 449 vs 551 classes	https://arxiv.org/pdf/1411.1792
+23	7	source	OK	14.2.1 steps: copy all parameters 'except the output layer', which is 'closely related to the labels'	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+24	8	source	OK	'we initialize the network with a pretrained network'; freeze all 'except that of the final fully connected layer'	https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+25	9	source	OK	Setting requires_grad: apply .requires_grad_(False); 'they won't be part of the backward graph'	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+26	8	source	OK	optimizer_conv = optim.SGD(model_conv.fc.parameters(), ...): 'only parameters of final layer are being optimized'	https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+27	8	source	OK	'On CPU this will take about half the time compared to previous scenario.'	https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+28	7	source	FIXED	14.2.2: parameters 'are effective. Therefore, we can only use a small learning rate'; output layer 10x	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+29	10	source	OK	Per-parameter options: dicts 'define a separate parameter group'; classifier 'will stick to the default learning rate'	https://docs.pytorch.org/docs/2.15/optim.html
+30	11	source	OK	Abstract: boost 'that lingers even after fine-tuning'; 4.1: 'average boost across layers 1 to 7 is 1.6%'; Fig. 2	https://arxiv.org/pdf/1411.1792
+31	7	source	FIXED	PyTorch outputs: fine-tuned 'test acc 0.940', scratch 'test acc 0.850' (MXNet outputs 0.944 and 0.860)	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+32	12	source	OK	Abstract: 'widely thought that catastrophic forgetting is an inevitable feature'; 'selectively slowing down learning'	https://ar5iv.labs.arxiv.org/html/1612.00796
+33	16	lab	LAB-OK	Output section 4: frozen 0.941 (before 0.941); 1e-4/1e-3 0.654; all 1e-3 0.370	lab
+34	13	source	OK	4.7.1.1: labeling function P(y|x) unchanged; 'training set consists of photos, while the test set contains only cartoons'	https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html
+35	13	source	FIXED	4.7.1.2: P(y) 'can change but the class-conditional distribution remains fixed'; 4.7.1.3 labels' definitions change	https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html
+36	16	lab	LAB-OK	Output section 5: fine-tune clean 0.502 noisy 0.312; scratch clean 0.347 noisy 0.284	lab
+37	16	lab	FIXED	Re-run 2026-11-25, PyTorch 2.15.0: two runs identical to the doc block, 36 s and 37 s; setup matches script	lab
+38	16	lab	LAB-OK	Output section 2: classes 2 vs 3 test acc 0.356 (none) vs 0.264 (horizontal flip)	lab
+39	1	source	OK	14.1.1.1: 'Flipping the image left and right usually does not change the category'	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+40	1	source	OK	14.1.2: 'we usually only apply image augmentation to training examples'	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+41	15	source	OK	'Elements that are shifted beyond the last position are re-introduced at the first position.'	https://docs.pytorch.org/docs/2.15/generated/torch.roll.html
+42	2	source	OK	Section 2: 'where y_i, y_j are one-hot label encodings'	https://ar5iv.labs.arxiv.org/html/1710.09412
+43	14	source	OK	Target: 'Probabilities for each class; useful when labels beyond a single class' are required	https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html
+44	5	source	FIXED	'meant to be used on batches rather than on individual images'; after the dataloader or in collation	https://docs.pytorch.org/vision/stable/transforms.html
+45	9	source	FIXED	Setting requires_grad: 'they won't have their .grad fields updated in the backward pass'	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+46	8	source	OK	Code: optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)	https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+47	7	source	OK	14.2.2: 'we can only use a small learning rate to fine-tune such pretrained parameters'	https://d2l.ai/chapter_computer-vision/fine-tuning.html
+48	16	lab	LAB-OK	Output section 4: source acc 0.370 vs 0.654; section 3 means 0.489 vs 0.502	lab
+49	11	source	OK	Abstract: 'transferability of features decreases as the distance between the base task and target task increases'	https://ar5iv.labs.arxiv.org/html/1411.1792
+50	13	source	OK	4.7.1.1 covariate shift: input distribution may change, labeling function P(y|x) does not	https://d2l.ai/chapter_linear-classification/environment-and-distribution-shift.html
+51	16	lab	LAB-OK	Output section 5: fine-tune, 1e-4/1e-3 clean test 0.502 | noisy test 0.312	lab
+52	17	source	OK	'during training this layer keeps running estimates of its computed mean and variance'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.BatchNorm2d.html
+53	8	source	OK	'On CPU this will take about half the time compared to previous scenario.'	https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+54	16	lab	LAB-OK	Output section 3: frozen trainable params 1156 vs 5956; section 4 frozen source acc 0.941 = before	lab
+55	11	source	OK	4.3: frozen-feature transferability gap 'grows more quickly as n increases for dissimilar tasks'	https://ar5iv.labs.arxiv.org/html/1411.1792
+56	16	lab	LAB-OK	Output section 3: fine-tune 1e-4/1e-3 + shift mean 0.684, highest mean	lab
+57	16	lab	LAB-OK	Output section 4: fine-tune, 1e-4/1e-3 source test acc 0.654 (before transfer 0.941)	lab
+58	16	lab	LAB-OK	Output section 3: from scratch mean 0.344, lowest of the six rows	lab
+59	16	lab	LAB-OK	Output section 2: none test acc 0.347, shift +-2 px test acc 0.609	lab
+60	1	source	FIXED	14.1.1.1: 'Flipping the image left and right usually does not change the category'	https://d2l.ai/chapter_computer-vision/image-augmentation.html
+61	2	source	OK	Abstract: 'mixup regularizes the neural network to favor simple linear behavior'	https://ar5iv.labs.arxiv.org/html/1710.09412
+62	3	source	OK	Title 'Regularization Strategy'; abstract 'retaining the regularization effect of regional dropout'	https://ar5iv.labs.arxiv.org/html/1905.04899
+63	16	lab	LAB-OK	Output section 2: shift +-2 px 0.609, shift + mixup 0.635 (seed 1 only)	lab
+64	4	source	FIXED	Table 3: 1 model, 1 crop top-5 error 10.07%; 1 model, 144 crops 7.89% (-2.18%)	https://ar5iv.labs.arxiv.org/html/1409.4842
+65	16	lab	FIXED	Output section 2: shift +-2 px test acc 0.609, with TTA 0.638	lab
+66	4	source	FIXED	Table 3 cost = crops x models (144 for 144 crops); 'benefit of more crops becomes marginal'	https://ar5iv.labs.arxiv.org/html/1409.4842

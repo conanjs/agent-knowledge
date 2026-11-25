@@ -1,0 +1,46 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	Abstract: "greater than 1000x improvements in model capacity with only minor losses in computational efficiency"	https://arxiv.org/pdf/1701.06538
+2	1	source	OK	§4: "This imbalance is self-reinforcing, as the favored experts are trained more rapidly"	https://arxiv.org/pdf/1701.06538
+3	4	lab	LAB-OK	Output alpha=0.0: shares 0.485 + 0.439 = 92 %; "dropped at capacity factor 1.25: 5006/8192 (61.1 %)"	lab
+4	1	source	OK	§2, Eq. 1: y = Σ G(x)i Ei(x); "Wherever G(x)i = 0, we need not compute Ei(x)"	https://arxiv.org/pdf/1701.06538
+5	1	source	OK	§2.1, Eqs. 3-5: G(x) = Softmax(KeepTopK(H(x), k)), H(x) with StandardNormal()·Softplus noise, −∞ outside top k	https://arxiv.org/pdf/1701.06538
+6	1	source	FIXED	§5.1 (1-billion-word benchmark): "For all the MoE layers, 4 experts were active per input"; abstract: 137B, thousands	https://arxiv.org/pdf/1701.06538
+7	1	source	OK	§3.1: "each expert receives a much smaller batch of approximately kb/n ≪ b examples"; mixing data and model parallelism	https://arxiv.org/pdf/1701.06538
+8	1	source	OK	§4 Eq. 7 and Appendix A: "experts may still receive very different numbers of examples"; smooth estimator Load(X)	https://arxiv.org/pdf/1701.06538
+9	2	source	OK	§2.1: "We show this simplification preserves model quality, reduces routing computation"; communication costs reduced	https://arxiv.org/pdf/2101.03961
+10	2	source	OK	§2.2 Eq. 3: "A capacity factor greater than 1.0 creates additional buffer"	https://arxiv.org/pdf/2101.03961
+11	2	source	OK	§2.3 finding 3: "Switch Transformers perform better at lower capacity factors (1.0, 1.25)"	https://arxiv.org/pdf/2101.03961
+12	2	source	OK	§2.2: "the token representation is passed directly to the next layer through the residual connection"	https://arxiv.org/pdf/2101.03961
+13	2	source	OK	§2.2 Eqs. 4-6 define f, P, N; "throughout this work we use an α = 10−2"	https://arxiv.org/pdf/2101.03961
+14	2	source	OK	§2.2: "encourages uniform routing since it is minimized under a uniform distribution"	https://arxiv.org/pdf/2101.03961
+15	2	source	OK	§2.4 selective precision: "we cast the router input to float32 precision"; outputs recast to bfloat16	https://arxiv.org/pdf/2101.03961
+16	2	source	OK	Abstract: "up to 7x increases in pre-training speed with the same computational resources"; §5.6 Switch-C 1.6T, 2048 experts	https://arxiv.org/pdf/2101.03961
+17	3	source	OK	Abstract 8 feedforward blocks, 2 per token per layer; §2.1 MoE "replaces the feed-forward (FFN) sub-block"; SwiGLU	https://arxiv.org/pdf/2401.04088
+18	3	source	OK	§2.1: "G(x) := Softmax(TopK(x· Wg))" with K = 2	https://arxiv.org/pdf/2401.04088
+19	3	source	OK	Abstract: "each token has access to 47B parameters, but only uses 13B active parameters"	https://arxiv.org/pdf/2401.04088
+20	4	lab	LAB-OK	Output: "active per token: router 128 + 2 x 2128 = 4384 (25.6 % of total)"	lab
+21	3	source	OK	§5, Fig. 7, Table 5: no obvious topic patterns; DM Mathematics differs; repetitions near random at layer 0, higher at 15 and 31	https://arxiv.org/pdf/2401.04088
+22	3	source	OK	§2.1: "tokens meant to be processed by a specific expert are routed to the corresponding GPU"	https://arxiv.org/pdf/2401.04088
+23	2	source	OK	§5.4: "Because each core has its own expert, we do an all-to-all communication"	https://arxiv.org/pdf/2101.03961
+24	3	source	OK	§2.1: "EP introduces challenges in load balancing"	https://arxiv.org/pdf/2401.04088
+25	4	lab	LAB-OK	Full output block consistent with the script; shares sum to 1.0; 1305/8192 = 15.9 %; 17152 = 128 + 8 x 2128	lab
+26	1	source	OK	§4: "This imbalance is self-reinforcing"	https://arxiv.org/pdf/1701.06538
+27	4	lab	LAB-OK	Output alpha=0.0: experts 0 and 6 at 0.485 and 0.439, 92 % together	lab
+28	2	source	OK	§2.2: "computation is skipped and the token representation is passed directly to the next layer"	https://arxiv.org/pdf/2101.03961
+29	2	source	OK	Fig. 3 caption: "also increases computation and communication costs (depicted by padded white/empty slots)"; §2.2 memory	https://arxiv.org/pdf/2101.03961
+30	2	source	OK	§2.2: α = 10−2 "small enough to not to overwhelm the primary cross-entropy objective"	https://arxiv.org/pdf/2101.03961
+31	2	source	OK	§2.4: bfloat16 "can exacerbate issues in the softmax computation for our router"; router cast to float32	https://arxiv.org/pdf/2101.03961
+32	1	source	OK	§3.1 shrinking batch problem: "approximately kb/n ≪ b examples"	https://arxiv.org/pdf/1701.06538
+33	3	source	OK	§3: active count "directly proportional to the inference compute cost"; memory proportional to sparse count, 47B	https://arxiv.org/pdf/2401.04088
+34	3	source	OK	§5: "we do not observe obvious patterns in the assignment of experts based on the topic"	https://arxiv.org/pdf/2401.04088
+35	2	source	OK	§2.2: "the P-vector is differentiable, but the f-vector is not"	https://arxiv.org/pdf/2101.03961
+36	1	source	OK	§5.1: "a series of MoE models all with roughly equal computational costs" for 4 to 4096 experts	https://arxiv.org/pdf/1701.06538
+37	3	source	OK	§3: "The memory costs for serving Mixtral are proportional to its sparse parameter count"	https://arxiv.org/pdf/2401.04088
+38	2	source	OK	§2.2: α swept "from 10−1 to 10−5"; capacity factors 1.0-2.0 compared in Table 1	https://arxiv.org/pdf/2101.03961
+39	2	source	OK	§2.1: "The router computation is reduced"; routing simplified and communication costs reduced	https://arxiv.org/pdf/2101.03961
+40	3	source	OK	Fig. 1 caption: "the weighted sum of the outputs of the two selected experts"	https://arxiv.org/pdf/2401.04088
+41	2	source	OK	§2.3 finding 3: "Switch Transformers perform better at lower capacity factors (1.0, 1.25)"	https://arxiv.org/pdf/2101.03961
+42	2	source	OK	Fig. 3 caption: "If the tokens are unevenly dispatched then certain experts will overflow"	https://arxiv.org/pdf/2101.03961
+43	2	source	OK	Fig. 3 terminology: "Experts: Split across devices, each having their own unique parameters"	https://arxiv.org/pdf/2101.03961
+44	2	source	FIXED	New marker (moved from [^3]): §5.4 "we do an all-to-all communication" to shard the expert dimension	https://arxiv.org/pdf/2101.03961
+45	3	source	FIXED	§2.1: "EP introduces challenges in load balancing"; Mixtral never mentions all-to-all, so that part now cites [^2]	https://arxiv.org/pdf/2401.04088

@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, neural-networks, mlp, multilayer-perceptron, forward-pass, backpropagation, chain-rule, automatic-differentiation, autograd, gradcheck, pytorch]
 ---
 
@@ -58,13 +58,13 @@ for name, m in models.items():
 
 </details>
 
-The linear model can do no better than 0.5 everywhere, the same answer the Deep Learning book gets for XOR with the normal equations ✅[^3]. Two stacked linear layers do no better, because a linear function of a linear function is still linear ✅[^2]. One `tanh` (hyperbolic tangent) between them is enough to fit XOR exactly.
+The linear model can do no better than 0.5 everywhere, the same answer the Deep Learning book gets for XOR with the normal equations ✅[^3]. Two stacked linear layers do no better, because an affine function (a linear map plus a bias) of an affine function is still affine ✅[^2]. One `tanh` (hyperbolic tangent) between them is enough to fit XOR exactly.
 
 ## How it works
 ### Neurons, layers and the MLP
 - **A layer** computes `h = φ(x·W + b)`: `x` is the input row (one value per feature), `W` the weight matrix (one column per unit), `b` the bias vector (one per unit), `φ` an activation applied to each element ✅[^2]. Example: `x = (1, 2)`, `W = [[0.5, −1], [0.25, 0.2]]`, `b = (0, 0)` gives `x·W = (1·0.5 + 2·0.25, 1·(−1) + 2·0.2) = (1.0, −0.6)`; with `φ` = ReLU (rectified linear unit), `ReLU(z) = max(z, 0)`, the layer outputs `(1.0, 0)`.
 - **An MLP** stacks fully connected layers, `H1 = φ1(X·W1 + b1)`, `H2 = φ2(H1·W2 + b2)`, … ✅[^2]. Without `φ`, two layers collapse into one: `(X·W1 + b1)·W2 + b2 = X·(W1·W2) + (b1·W2 + b2)` ✅[^2], which is why the second XOR model failed ✅[^6].
-- **Expressive power:** one hidden layer with enough units can in principle represent any function; finding the weights is the hard part, and deeper networks can represent many functions more compactly than wider ones ✅[^2].
+- **Expressive power:** one hidden layer with enough units (possibly absurdly many) and the right weights can model any function; learning those weights is the hard part, and deeper (rather than wider) networks can approximate many functions much more compactly ✅[^2].
 
 ### Forward pass and computational graph
 The forward pass computes and **stores** every intermediate value, in order from the input layer to the output ✅[^1]. Drawn as a computational graph, variables and operators are nodes and the arrows show the data flow, from the input `x` to the scalar objective ✅[^1].
@@ -81,10 +81,10 @@ L = mean((O − y)²)               dZ  = dH ⊙ (1 − H²)               tanh'
                                  dW1 = Xᵀ·dZ      db1 = Σrows dZ   dL/dW1, dL/db1
 ```
 
-1. **Start at the loss:** `dL/dL = 1`; the first step is the loss's own derivative, `dO` ✅[^1].
+1. **Start at the loss:** the first step is `dL/dL = 1`; the next is the gradient with respect to the output, `dO = dL/dO` ✅[^1].
 2. **Matrix product:** a gradient passes back through `H·W2` as `dO·W2ᵀ` to the input and `Hᵀ·dO` to the weight; Dive into Deep Learning (d2l) writes the same rules in column form (`∂J/∂W2 = ∂J/∂o·hᵀ`, plus a term from d2l's L2 (squared-norm) weight penalty, which this network does not have, and `∂J/∂h = W2ᵀ·∂J/∂o`) ✅[^1].
 3. **Element-wise activation:** multiply element-wise by the activation's derivative, `dH ⊙ φ'(Z)` ✅[^1]; for `tanh` that is `1 − tanh²` ✅[^2], for ReLU it is 0 for negative inputs and 1 for positive ones ✅[^2].
-4. **Shared values add up:** a value used in several places gets the sum of the gradients from each use ✅[^7]. The bias `b1` is added to every row of the batch, so `db1` sums `dZ` over rows; the lab confirms this equals autograd's result ✅[^6].
+4. **Shared parameters add up:** a parameter used in several places gets the sum of the gradients from all those places ✅[^7]. The bias `b1` is added to every row of the batch, so `db1` sums `dZ` over rows; the lab confirms this equals autograd's result ✅[^6].
 5. **Reuse, and its memory price:** each step reuses values saved by the forward pass (`H` in `dW2`, `X` in `dW1`), so they must be kept until the backward pass finishes. That is why training needs much more memory than prediction, roughly in proportion to depth and batch size ✅[^1].
 6. **Cost:** with one scalar output and constant-cost local derivatives, backpropagation does work of the same order as the forward pass ✅[^3]. This is reverse mode; when a graph has more outputs than inputs, forward-mode differentiation is sometimes the better choice ✅[^3].
 
@@ -93,7 +93,7 @@ L = mean((O − y)²)               dZ  = dH ⊙ (1 − H²)               tanh'
 - The graph is rebuilt from scratch on every iteration, so ordinary Python `if` and `for` can change the model from one step to the next ✅[^4].
 - Operations save what their backward step needs; `x.pow(2)` saves `x` ✅[^4].
 - `requires_grad` defaults to `False` except for tensors wrapped in `nn.Parameter`; an operation is recorded only if one of its inputs requires grad, and `.backward()` **accumulates** into `.grad` only on leaf tensors with `requires_grad=True` ✅[^4]. Setting `requires_grad_(False)` on parameters freezes them ✅[^4].
-- `torch.no_grad()` stops recording, for example during an optimizer's in-place update; inference mode also skips extra tracking, for data processing and evaluation ✅[^4].
+- `torch.no_grad()` stops recording, for example during an optimizer's in-place update; inference mode, the extreme version of no-grad mode, can speed the model up further and is recommended where no autograd tracking is needed, such as data processing and model evaluation ✅[^4].
 
 ## Worked example
 The network above, 4 examples × 3 features, 5 `tanh` hidden units, 1 output, in float64. The backward pass by hand, line for line the `text` block above:
@@ -180,7 +180,7 @@ Reading it, line by line:
 |---|---|---|
 | Gradients derived by hand | No framework; full control | Re-derived on every model change ✅[^1] |
 | Finite differences | Works on any black box | Two loss evaluations per weight, and only approximate (9 matching decimals at `ε = 1e-6` in the lab) ✅[^6]; for checking, not training |
-| Reverse-mode autodiff (autograd) | Every gradient for work of the order of one forward pass ✅[^3] | Stores intermediates until backward ends ✅[^1] |
+| Reverse-mode autodiff (autograd) | Every gradient of one scalar loss for work of the order of one forward pass, given constant-cost local derivatives ✅[^3] | Stores intermediates until backward ends ✅[^1] |
 | Forward-mode autodiff | Sometimes preferable when there are more outputs than inputs ✅[^3] | Expensive for one scalar loss over many weights ✅[^3] |
 
 ## Takeaways
@@ -190,14 +190,14 @@ Reading it, line by line:
 - Training memory is dominated by saved activations: smaller batches or fewer layers are the first levers.
 
 ## Verification status
-- Verified: 48 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 48 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Forward Propagation, Backward Propagation, and Computational Graphs (Dive into Deep Learning, 5.3)](https://d2l.ai/chapter_multilayer-perceptrons/backprop.html) — Zhang, Lipton, Li, Smola, living. Backs: hand derivation before autodiff, forward pass stores intermediates, backward pass in reverse order, the gradient formulas, memory proportional to depth and batch. [^1]
 - [Multilayer Perceptrons (Dive into Deep Learning, 5.1)](https://d2l.ai/chapter_multilayer-perceptrons/mlp.html) — Zhang, Lipton, Li, Smola, living. Backs: layer formula, collapse of linear layers, universal approximation, ReLU and tanh derivatives, ReLU at 0. [^2]
 - [Deep Feedforward Networks (Deep Learning, chapter 6)](https://www.deeplearningbook.org/contents/mlp.html) — Goodfellow, Bengio, Courville, 2016. Backs: linear model outputs 0.5 on XOR, backprop cost of the order of the forward pass, forward vs reverse mode. [^3]
 - [Autograd mechanics](https://docs.pytorch.org/docs/2.15/notes/autograd.html) — PyTorch, 2026 (2.15). Backs: reverse-mode graph, `grad_fn`, graph rebuilt each iteration, saved tensors, `requires_grad` and accumulation, no-grad and inference mode, non-differentiable points, masked division, `eval()` is not no-grad. [^4]
-- [torch.autograd.gradcheck](https://docs.pytorch.org/docs/2.15/generated/torch.autograd.gradcheck.gradcheck.html) — PyTorch, 2026 (2.15). Backs: finite differences vs analytical gradients, double-precision defaults, failures at non-differentiable points. [^5]
+- [torch.autograd.gradcheck.gradcheck](https://docs.pytorch.org/docs/2.15/generated/torch.autograd.gradcheck.gradcheck.html) — PyTorch, 2026 (2.15). Backs: finite differences vs analytical gradients, double-precision defaults, failures at non-differentiable points. [^5]
 - `machine-learning/lab-setup.md` — the lab where the XOR fits and the hand-vs-autograd-vs-finite-difference gradient check ran on 2026-11-24. [^6]
 - [Backpropagation Through Time (Dive into Deep Learning, 9.7)](https://d2l.ai/chapter_recurrent-neural-networks/bptt.html) — Zhang, Lipton, Li, Smola, living. Backs: the gradient of a shared parameter is the sum over every place it occurs. [^7]
 

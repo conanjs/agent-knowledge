@@ -1,0 +1,63 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	7.1.1, 1-megapixel image: 'Even an aggressive reduction to one thousand hidden dimensions would require' 10^6 x 10^3 = 10^9 parameters	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+2	1	source	OK	7.1.1 translation invariance: 'our network should respond similarly to the same patch, regardless of where it appears'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+3	8	lab	LAB-OK	Mental model artifact = full-script output lines 1-2 and 12-13: hand and F.conv2d both [[19,25],[37,43]]; Conv2d 1,792 vs Linear 201,392,128	lab
+4	2	source	OK	7.2.1 example X = 0..8 as 3x3, K = [[0,1],[2,3]]: '0x0+1x1+3x2+4x3=19'	https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+5	1	source	OK	7.1.2.1 Translation Invariance: 'V and U do not actually depend on (i, j)... This is a convolution!'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+6	1	source	OK	7.1.2.2 Locality, 1000x1000 image: 'This reduces the number of parameters from 4 x 10^6 to 4 Delta^2'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+7	1	source	OK	7.1.2 end, inductive bias: 'our models might struggle even to fit our training data'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+8	2	source	OK	7.2.1: window starts at the upper-left corner; 'slide it across the input tensor, both from left to right and top to bottom'	https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+9	2	source	OK	7.2.3: flipped or not, 'the outputs of convolutional layers remain unaffected' since kernels are learned	https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+10	3	source	OK	Conv2d description: 'where ⋆ is the valid 2D cross-correlation operator'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+11	3	source	OK	Conv2d formula: out(N_i, C_out_j) = bias(C_out_j) + sum_k weight(C_out_j, k) ⋆ input(N_i, k)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+12	3	source	OK	Conv2d Variables, weight: 'learnable weights of the module of shape (out_channels, in_channels/groups, kernel_size[0], kernel_size[1])'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+13	8	lab	LAB-OK	Output line 13: 'Conv2d(3, 64, 3): 1,792 = 64*3*3*3 + 64'	lab
+14	4	source	OK	7.4.3: 'a fully connected layer applied at every single pixel location'; 'requires c_o x c_i weights (plus the bias)'	https://d2l.ai/chapter_convolutional-neural-networks/channels.html
+15	5	source	OK	7.3.1: no padding gives output shape (n_h - k_h + 1) x (n_w - k_w + 1)	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+16	5	source	OK	7.3.1: 'ten layers of 5 x 5 convolutions reduce the image to 200 x 200 pixels' (from 240 x 240)	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+17	3	source	OK	Conv2d Shape: H_out = floor((H_in + 2 x padding[0] - dilation[0] x (kernel_size[0] - 1) - 1)/stride[0] + 1)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+18	5	source	OK	7.3.1: p_h = k_h - 1 keeps size; 'Assuming that k_h is odd here, we will pad p_h/2 rows on both sides'	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+19	3	source	OK	Conv2d padding note: padding='same' 'doesn't support any stride values other than 1'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+20	5	source	OK	7.3.1 'add a total of p_h rows of padding'; 7.3.2 output floor((n_h - k_h + p_h + s_h)/s_h)	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+21	3	source	OK	Conv2d padding argument: 'giving the amount of implicit padding applied on both sides'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+22	6	source	OK	7.5.1: 'the pooling layer contains no parameters (there is no kernel)'; maximum or average of the window	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+23	6	source	OK	7.5.3: 'the pooling layer pools each input channel separately'; output channels equal input channels	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+24	6	source	OK	7.5.2: 'deep learning frameworks default to matching pooling window sizes and stride'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+25	7	source	OK	MaxPool2d stride: 'the stride of the window. Default value is kernel_size'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.MaxPool2d.html
+26	6	source	FIXED	7.5 intro + 7.5.1: 2x2 max-pooling still detects a pattern that 'moves no more than one element in height or width'; kernels 'cover a larger effective area'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+27	2	source	OK	7.2.6: receptive field = all elements from all previous layers affecting x; 'the receptive field may be larger than the actual size of the input'; deeper network for larger field	https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+28	8	lab	LAB-OK	Output lines 15-20: 3x3/s1 fields 3, 5, 7, 11 (+2 per layer); 3x3/s2 -> 3x3/s1 field 7x7; s2 -> s2 -> s1 field 15x15	lab
+29	9	source	OK	Introduction: degradation 'is not caused by overfitting'; 'adding more layers to a suitably deep model leads to higher training error'	https://arxiv.org/html/1512.03385v1
+30	10	source	OK	8.6.2: residual mapping g(x) = f(x) - x; 'we only need to push the weights and biases of the upper weight layer' to zero	https://d2l.ai/chapter_convolutional-modern/resnet.html
+31	9	source	OK	Introduction: F(x) := H(x) - x recast as F(x) + x; 'it would be easier to push the residual to zero'	https://arxiv.org/html/1512.03385v1
+32	9	source	OK	Introduction: 'Identity shortcut connections add neither extra parameter nor computational complexity'; 3.3 option (A) zero-padding, (B) projection by 1x1 convolutions	https://arxiv.org/html/1512.03385v1
+33	10	source	OK	8.6.2: 'two 3x3 convolutional layers with the same number of output channels'; BN + ReLU each; input added before final ReLU	https://d2l.ai/chapter_convolutional-modern/resnet.html
+34	9	source	OK	Abstract: 'with a depth of up to 152 layers - 8x deeper than VGG nets'	https://arxiv.org/html/1512.03385v1
+35	9	source	OK	4.1 Deeper Bottleneck Architectures: 'The three layers are 1x1, 3x3, and 1x1 convolutions'; used in 50/101/152-layer nets	https://arxiv.org/html/1512.03385v1
+36	8	lab	LAB-OK	Worked-example block = full-script output lines 3-11 and 14-23 (sections 2, 4, 5); line numbering checked against the script's print order	lab
+37	10	source	OK	8.6.2: 'Each convolutional layer is followed by a batch normalization layer and a ReLU activation function'	https://d2l.ai/chapter_convolutional-modern/resnet.html
+38	3	source	OK	Conv2d Shape: H_out formula is wrapped in floor brackets	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+39	8	lab	LAB-OK	Output line 10: 'n= 8 k=3 p=0 s=3: Conv2d ->  2   formula ->  2'	lab
+40	3	source	OK	Conv2d padding note: padding='same' 'doesn't support any stride values other than 1'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+41	5	source	OK	7.3.1: 'add a total of p_h rows of padding (roughly half on top and half on bottom)'	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+42	3	source	OK	Conv2d padding argument: 'the amount of implicit padding applied on both sides'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+43	5	source	OK	7.3.1: odd kernels preserve size 'while padding with the same number of rows on top and bottom'; even k_h: ceil(p_h/2) top, floor(p_h/2) bottom	https://d2l.ai/chapter_convolutional-neural-networks/padding-and-strides.html
+44	3	source	OK	Conv2d description: 'where ⋆ is the valid 2D cross-correlation operator'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+45	2	source	OK	7.2.3: for strict convolution 'flip the two-dimensional kernel tensor both horizontally and vertically'	https://d2l.ai/chapter_convolutional-neural-networks/conv-layer.html
+46	7	source	OK	MaxPool2d ceil_mode: 'when True, will use ceil instead of floor to compute the output shape'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.MaxPool2d.html
+47	9	source	OK	3.3/4.1: (A) identity 'with extra zero entries padded for increasing dimensions'; (B) projection 'done by 1x1 convolutions'	https://arxiv.org/html/1512.03385v1
+48	1	source	OK	7.1.2 end: if images are not translation invariant 'our models might struggle even to fit our training data'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+49	9	source	OK	Introduction: 'adding more layers to a suitably deep model leads to higher training error'	https://arxiv.org/html/1512.03385v1
+50	8	lab	LAB-OK	Output line 22: 'plain    h = relu(conv(h))    : ... |grad wrt input| 4.05e-17'	lab
+51	8	lab	LAB-OK	Output line 13: Conv2d 1,792 | Linear(3072, 65536): 201,392,128	lab
+52	1	source	OK	7.1.2: layer derived from translation invariance and locality; 'All learning depends on imposing inductive bias'	https://d2l.ai/chapter_convolutional-neural-networks/why-conv.html
+53	8	lab	LAB-OK	Output line 16: '3x3/s1 -> 3x3/s1   field 5x5'	lab
+54	11	source	OK	5.3.4: 'the size of such intermediate values is roughly proportional to the number of network layers'	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+55	6	source	OK	7.5 intro, receptive field grows with depth: 'Reducing spatial resolution accelerates this process'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+56	8	lab	LAB-OK	Output lines 16 and 19: two s1 layers field 5x5; s2 then s1 field 7x7	lab
+57	6	source	OK	7.5 intro: 'By gradually aggregating information, yielding coarser and coarser maps'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+58	8	lab	FIXED	Output line 10: n=8 k=3 s=3 gives 2 windows (columns 0-5), so columns 6-7 are unread; moved from [^3], whose page has no such note	lab
+59	6	source	OK	7.5.1: average adjacent pixels 'to obtain an image with better signal-to-noise ratio'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+60	6	source	OK	7.5.1 'In almost all cases' max-pooling preferable; 7.5.4: 'as it confers some degree of invariance to output'	https://d2l.ai/chapter_convolutional-neural-networks/pooling.html
+61	9	source	OK	Abstract: up to 152 layers; Introduction: 'Identity shortcut connections add neither extra parameter nor computational complexity'	https://arxiv.org/html/1512.03385v1
+62	9	source	OK	3.2: 'The dimensions of x and F must be equal in Eqn.(1)'; else projection, or (A) zero-padding	https://arxiv.org/html/1512.03385v1

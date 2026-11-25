@@ -1,0 +1,59 @@
+n	label	kind	verdict	evidence	source
+1	10	lab	LAB-OK	§5 output: correct loop train 0.327; no zero_grad train 0.898; labels shuffled acc 0.232	lab
+2	1	source	OK	Taking an optimization step: loop zero_grad(), output = model(input), loss_fn, loss.backward(), optimizer.step()	https://docs.pytorch.org/docs/2.15/optim.html
+3	3	source	OK	“A map-style dataset is one that implements the __getitem__() and __len__() protocols”	https://docs.pytorch.org/docs/2.15/data.html
+4	3	source	OK	batch_size “(default: 1)”; default collate “always prepends a new dimension as the batch dimension”	https://docs.pytorch.org/docs/2.15/data.html
+5	3	source	OK	shuffle “set to True to have the data reshuffled at every epoch (default: False)”	https://docs.pytorch.org/docs/2.15/data.html
+6	3	source	FIXED	generator “this RNG will be used by RandomSampler to generate random indexes”	https://docs.pytorch.org/docs/2.15/data.html
+7	3	source	OK	drop_last “drop the last incomplete batch, if the dataset size is not divisible by the batch size”; default False	https://docs.pytorch.org/docs/2.15/data.html
+8	2	source	FIXED	set_to_none default True; “will in general have lower memory footprint”; 0 takes the step, None skips it	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Optimizer.zero_grad.html
+9	4	source	OK	“unnormalized logits for each class”; class-index case “equivalent to applying LogSoftmax … followed by NLLLoss”; indices in [0,C)	https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html
+10	4	source	OK	Signature reduction='mean'; “Default: 'mean'”	https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html
+11	10	lab	LAB-OK	§5 output: backward x1/x2/x3 grad norm 0.0958, 0.1916, 0.2874	lab
+12	1	source	OK	“All optimizers implement a step() method, that updates the parameters”	https://docs.pytorch.org/docs/2.15/optim.html
+13	5	source	OK	eval(): “effect only on certain modules”, “e.g. Dropout, BatchNorm, etc.”, “equivalent with self.train(False)”	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Module.html
+14	6	source	OK	“useful for inference, when you are sure that you will not call Tensor.backward()”; requires_grad=False results; less memory	https://docs.pytorch.org/docs/2.15/generated/torch.no_grad.html
+15	11	source	FIXED	Evaluation Mode (nn.Module.eval()): eval “completely orthogonal to no-grad mode”; use model.train() when training, model.eval() when evaluating	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+16	7	source	OK	What is a state_dict?: “a Python dictionary object that maps each layer to its parameter tensor”; optimizer state, hyperparameters	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+17	7	source	OK	Save/Load state_dict (Recommended): “which is why it is the recommended method for saving models”	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+18	7	source	OK	General Checkpoint section code keys: epoch, model_state_dict, optimizer_state_dict, loss	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+19	7	source	OK	“either a .pt or .pth file extension”; checkpoints “using the .tar file extension”	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+20	7	source	OK	Note: “load_state_dict() function takes a dictionary object, NOT a path to a saved object”	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+21	5	source	OK	load_state_dict(state_dict, strict=True): keys “must exactly match”; returns missing_keys and unexpected_keys	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Module.html
+22	8	source	OK	Signature weights_only=True; “only tensors, primitive types, dictionaries”; “Never load data from an untrusted source”; map_location remaps	https://docs.pytorch.org/docs/2.15/generated/torch.load.html
+23	7	source	OK	“you must call model.eval() to set dropout and batch normalization layers to evaluation mode”; model.train() to resume	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+24	9	source	OK	Sanity checks: “we would expect the initial loss to be 2.302”, “-ln(0.1) = 2.302”	https://cs231n.github.io/neural-networks-3/
+25	10	lab	LAB-OK	§1 output: log(4) = 1.3863, untrained 1.4062; last layer x30 4.7630	lab
+26	9	source	OK	“tiny portion (e.g. 20 examples) … achieve zero cost”; regularization zero; “not worth proceeding to the full dataset”	https://cs231n.github.io/neural-networks-3/
+27	10	lab	LAB-OK	§2 output: “step 50: loss 0.0000”	lab
+28	9	source	OK	Gradient Checks: “Use the centered formula”; “Use double precision”	https://cs231n.github.io/neural-networks-3/
+29	9	source	FIXED	Train/Val accuracy: “validation accuracy tracks the training accuracy fairly well” = capacity “not high enough”	https://cs231n.github.io/neural-networks-3/
+30	10	lab	LAB-OK	§3 output: “linear epoch 100: train 1.001 val 0.923”	lab
+31	9	source	OK	“make the model larger by increasing the number of parameters”	https://cs231n.github.io/neural-networks-3/
+32	9	source	OK	“The gap between the training and validation accuracy indicates the amount of overfitting”; val accuracy may go down	https://cs231n.github.io/neural-networks-3/
+33	10	lab	LAB-OK	§3 output: best epoch 12, val 0.540; MLP-256 epoch 300 train 0.000 val 1.399	lab
+34	9	source	OK	“increase regularization (stronger L2 weight penalty, more dropout, etc.) or collect more data”	https://cs231n.github.io/neural-networks-3/
+35	9	source	OK	learningrates.jpeg caption: “With low learning rates the improvements will be linear”	https://cs231n.github.io/neural-networks-3/
+36	10	lab	LAB-OK	§4 output: lr 0.0001 epoch 1 1.396, epoch 30 1.393	lab
+37	9	source	OK	Caption: higher rates “get stuck at worse values of loss”; parameters “bouncing around chaotically, unable to settle”	https://cs231n.github.io/neural-networks-3/
+38	10	lab	LAB-OK	§4 output: lr 3 epoch 1 1.549, epoch 30 1.259, val acc 0.450; lr 0.1 val acc 0.698	lab
+39	9	source	OK	“The amount of wiggle in the loss is related to the batch size”	https://cs231n.github.io/neural-networks-3/
+40	9	source	OK	learningrates.jpeg: “very high learning rate” curve climbs; settings “immediately explode with infinite cost”	https://cs231n.github.io/neural-networks-3/
+41	10	lab	LAB-OK	§4 output: lr 1000 nan at epochs 1, 10 and 30	lab
+42	10	lab	LAB-OK	§3 output: “would stop at epoch 32; best epoch 12”	lab
+43	10	lab	LAB-OK	Worked example output block, sections 1–6 as printed	lab
+44	10	lab	LAB-OK	§5 output: no zero_grad 0.898 vs 0.327; grad norms 0.0958, 0.1916, 0.2874	lab
+45	4	source	OK	“unnormalized logits for each class”; “equivalent to applying LogSoftmax on an input, followed by NLLLoss”	https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html
+46	10	lab	LAB-OK	§5 output: softmax + CE train 0.844; loss floor -log(e/(e+3)) = 0.7437	lab
+47	11	source	FIXED	Evaluation Mode: user calls model.eval()/model.train() “to avoid updating your BatchNorm running statistics on validation data”	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+48	10	lab	LAB-OK	§5 output: train mode twice 0.7994 0.8079; eval mode twice 0.6683 0.6683	lab
+49	10	lab	LAB-OK	§5 output: labels shuffled train 0.807 val 1.727 acc 0.232	lab
+50	3	source	OK	Map-style example: dataset[idx] “could read the idx-th image and its corresponding label”	https://docs.pytorch.org/docs/2.15/data.html
+51	7	source	OK	Optimizer state_dict holds “information about the optimizer's state, as well as the hyperparameters used”	https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html
+52	10	lab	LAB-OK	§6 output: optimizer state=True diff 0.00e+00; state=False diff 1.04e-01	lab
+53	5	source	FIXED	strict keys “must exactly match”; post-hook note: “an error being thrown when strict=True”; returned key lists	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Module.html
+54	8	source	OK	weights_only: unpickler “restricted to loading only tensors, primitive types, dictionaries” plus add_safe_globals types	https://docs.pytorch.org/docs/2.15/generated/torch.load.html
+55	3	source	OK	drop_last: “If False … then the last batch will be smaller”	https://docs.pytorch.org/docs/2.15/data.html
+56	10	lab	LAB-OK	§4 output: lr 1000 nan at epochs 1, 10, 30; val acc 0.234	lab
+57	9	source	FIXED	learningrates.jpeg very high learning rate curve climbs; “immediately explode with infinite cost”	https://cs231n.github.io/neural-networks-3/
+58	10	lab	LAB-OK	§5 output: softmax + CE acc 0.828 vs correct loop acc 0.746	lab

@@ -1,0 +1,65 @@
+n	label	kind	verdict	evidence	source
+1	9	lab	LAB-OK	section 1: "parameters 1025024 | param bytes 4100096 | grad bytes 4100096 | Adam state bytes 8200192"	lab
+2	3	source	OK	§3.1 "2Ψ+2Ψ+KΨ=16Ψ bytes of memory requirement"; §5.3 7.5B model "while requiring 120 GB with standard DP"	https://arxiv.org/html/1910.02054
+3	3	source	FIXED	§3.1 GPT-2 1.5B "memory requirement of at least 24 GB"; §3.2 "sequence length of 1K and batch size of 32 requires about 60 GB"	https://arxiv.org/html/1910.02054
+4	9	lab	LAB-OK	artifact lines equal worked-example output sections 1 and 5 (param/grad/state bytes; saved tensors 24 vs 8)	lab
+5	9	lab	LAB-OK	"param bytes 4100096 | grad bytes 4100096"; section 2 "weight grad torch.float32"	lab
+6	7	source	OK	Algorithm: "initialize: m0←0 (first moment), v0←0 (second moment)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+7	7	source	OK	state_dict: "state is saved per parameter, and the parameter itself is NOT saved"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+8	9	lab	LAB-OK	"state keys ['exp_avg', 'exp_avg_sq', 'step']"	lab
+9	3	source	OK	§3.1 "an fp16 copy of the parameters and the gradients, with memory requirements of 2Ψ and 2Ψ"; 12Ψ fp32 copy, momentum, variance	https://arxiv.org/html/1910.02054
+10	9	lab	LAB-OK	4100096 / 1025024 = 4 bytes and 8200192 / 1025024 = 8 bytes per parameter (section 1 line)	lab
+11	6	source	OK	Hooks for saved tensors: hooks apply to "all saved tensors that are created in that context"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+12	6	source	OK	Saved tensors: _saved_self "refers to the same Tensor object as x"; hooks example "(no copy performed)"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+13	1	source	OK	CPU bfloat16 list has linear, matmul, mm, bmm, conv1d/2d/3d, scaled_dot_product_attention; CPU float32 list has mse_loss, nll_loss, cross_entropy_loss, prod, fft_*, linalg_solve	https://docs.pytorch.org/docs/2.15/amp.html
+14	1	source	OK	CPU Op-Specific Behavior: "float16 shares the lists of bfloat16."	https://docs.pytorch.org/docs/2.15/amp.html
+15	1	source	OK	"Ops not listed below do not go through autocasting. They run in the type defined by their inputs."	https://docs.pytorch.org/docs/2.15/amp.html
+16	9	lab	LAB-OK	section 2: "linear out torch.bfloat16 | relu out torch.bfloat16 | mse_loss out torch.float32"	lab
+17	1	source	OK	softmax listed under CUDA "Ops that can autocast to float32"; absent from both CPU lists	https://docs.pytorch.org/docs/2.15/amp.html
+18	9	lab	LAB-OK	section 2: "weight torch.float32 | linear out torch.bfloat16"; "weight grad torch.float32"	lab
+19	1	source	OK	"autocast should wrap only the forward pass(es) of your network, including the loss computation(s)"; backward under autocast "not recommended"	https://docs.pytorch.org/docs/2.15/amp.html
+20	1	source	FIXED	"on CPU with datatype of torch.bfloat16 only uses torch.autocast"; "Ordinarily" float16 uses autocast and GradScaler together	https://docs.pytorch.org/docs/2.15/amp.html
+21	1	source	OK	"Gradient values with small magnitudes may not be representable in float16"; flush to zero, update lost	https://docs.pytorch.org/docs/2.15/amp.html
+22	9	lab	LAB-OK	section 3: "true grad 9.54e-09 | fp16 grad, no scaling: 0.0"	lab
+23	1	source	OK	"multiplies the network's loss(es) by a scale factor and invokes a backward pass on the scaled loss(es)"	https://docs.pytorch.org/docs/2.15/amp.html
+24	9	lab	LAB-OK	section 3: "fp16 grad with loss x65536: 0.0006251 | unscaled in fp32: 9.54e-09"	lab
+25	9	lab	LAB-OK	"GradScaler step 1: grad inf -> param 0.90 -> 0.90, next scale 32768"; step 3 "next scale 65536"	lab
+26	2	source	OK	"Calling scaler.unscale_(optimizer) before clipping enables you to clip unscaled gradients as usual"	https://docs.pytorch.org/docs/2.15/notes/amp_examples.html
+27	2	source	OK	"call unscale_ just before step"; "only call update at the end of iterations where you called step for a full effective batch"	https://docs.pytorch.org/docs/2.15/notes/amp_examples.html
+28	2	source	OK	"Gradient accumulation adds gradients over an effective batch of size batch_per_iter * iters_to_accumulate"	https://docs.pytorch.org/docs/2.15/notes/amp_examples.html
+29	9	lab	FIXED	section 4: "max |full - accumulated| weight grad: 1.19e-07"; "without / k: ratio accumulated/full = 4.0" (mean ratio)	lab
+30	9	lab	LAB-OK	section 4: "with BatchNorm: max |full - accumulated| first-layer grad: 0.2273"	lab
+31	10	source	OK	no_sync: "Context manager to disable gradient synchronizations across DDP processes"; synced "in the first forward-backward pass exiting the context"	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+32	4	source	OK	"tensors produced in the passed function are not kept alive until the backward pass"; recomputed by re-invoking function	https://docs.pytorch.org/docs/2.15/checkpoint.html
+33	4	source	OK	"Activation checkpointing is a technique that trades compute for memory."	https://docs.pytorch.org/docs/2.15/checkpoint.html
+34	9	lab	FIXED	section 5: "saved tensors 24 | activation bytes 1048576 | block forwards 8" vs "8 | 524288 | 16"; "same gradients: True" (allclose)	lab
+35	5	source	OK	§4.3 equal segments, "Setting k= √n, we get the cost of O(2√n)"; abstract extra forward pass; §5.4 "costs 30% additional runtime"	https://arxiv.org/pdf/1604.06174
+36	5	source	OK	Figure 5(a) sharing curve about 45-50 GB (32-64 band) at about 1,000 layers; §5.2 "only possible to train a 200 layer ResNet"; Fig 5(b) sublinear total under 7 GB	https://arxiv.org/pdf/1604.06174
+37	3	source	OK	§3.2: "This would reduce the activation memory consumption of this model to about 8 GB."	https://arxiv.org/html/1910.02054
+38	11	source	OK	Abstract "reducing execution time overhead from activation recomputation by over 90%"; conclusion compares with full activation recomputation	https://arxiv.org/html/2205.05198
+39	4	source	OK	"The use_reentrant parameter should be passed explicitly"; future release will raise; "It is recommended that you use use_reentrant=False"	https://docs.pytorch.org/docs/2.15/checkpoint.html
+40	4	source	OK	"By default, checkpointing includes logic to juggle the RNG state" (dropout deterministic); preserve_rng_state=False omits it	https://docs.pytorch.org/docs/2.15/checkpoint.html
+41	8	source	OK	"Optimizes given model/function using TorchDynamo and specified backend"; backend default 'inductor'	https://docs.pytorch.org/docs/2.15/generated/torch.compile.html
+42	8	source	FIXED	mode: default "good balance between performance and overhead"; reduce-overhead uses CUDA graphs, "at the cost of more memory usage"; max-autotune Triton matmuls	https://docs.pytorch.org/docs/2.15/generated/torch.compile.html
+43	9	lab	LAB-OK	worked-example output block, sections 1-5, 20 lines	lab
+44	1	source	OK	"autocast should wrap only the forward pass(es) of your network, including the loss computation(s)"	https://docs.pytorch.org/docs/2.15/amp.html
+45	1	source	OK	"These values will flush to zero ("underflow"), so the update for the corresponding parameters will be lost"	https://docs.pytorch.org/docs/2.15/amp.html
+46	9	lab	LAB-OK	section 3: "fp16 grad, no scaling: 0.0"	lab
+47	2	source	OK	"If you attempted to clip without unscaling, the gradients' norm/maximum magnitude would also be scaled"	https://docs.pytorch.org/docs/2.15/notes/amp_examples.html
+48	9	lab	LAB-OK	section 4: "without / k: ratio accumulated/full = 4.0"	lab
+49	9	lab	LAB-OK	section 4: "with BatchNorm: max |full - accumulated| first-layer grad: 0.2273"	lab
+50	10	source	OK	no_sync disables synchronization; example comment "# no synchronization, accumulate grads", next backward synchronizes	https://docs.pytorch.org/docs/2.15/generated/torch.nn.parallel.DistributedDataParallel.html
+51	4	source	FIXED	"differs from the forward pass, e.g., due to a global variable"; "causing an error being raised or leading to silently incorrect gradients"	https://docs.pytorch.org/docs/2.15/checkpoint.html
+52	4	source	OK	RNG juggling so passes using RNG "(through dropout for example) have deterministic output"	https://docs.pytorch.org/docs/2.15/checkpoint.html
+53	9	lab	LAB-OK	not in printed block; re-ran 8 checkpointed blocks with register_forward_hook, torch 2.15.0: "forward-hook count with checkpointing: 8"	lab
+54	1	source	OK	"on CPU with datatype of torch.bfloat16 only uses torch.autocast"; CPU bfloat16 list includes linear, matmul	https://docs.pytorch.org/docs/2.15/amp.html
+55	9	lab	LAB-OK	section 2: "max |bf16 - fp32| of linear out 0.0068"	lab
+56	1	source	FIXED	marker now on underflow only: "These values will flush to zero ("underflow")"; skipped steps carried by the lab marker	https://docs.pytorch.org/docs/2.15/amp.html
+57	9	lab	LAB-OK	section 3: "GradScaler step 1: grad inf -> param 0.90 -> 0.90"	lab
+58	2	source	FIXED	"Gradient accumulation adds gradients over an effective batch of size batch_per_iter * iters_to_accumulate"	https://docs.pytorch.org/docs/2.15/notes/amp_examples.html
+59	9	lab	LAB-OK	section 4: BatchNorm "first-layer grad: 0.2273"; script runs the k=4 micro-batches one after another	lab
+60	9	lab	LAB-OK	section 5: "activation bytes 524288" vs "activation bytes 1048576"	lab
+61	5	source	OK	§5.2: "we can train a 1000 layer ResNet using less than 7GB of GPU memory"	https://arxiv.org/pdf/1604.06174
+62	5	source	OK	§6: "paying nothing more than one extra forward computation per mini-batch"	https://arxiv.org/pdf/1604.06174
+63	9	lab	LAB-OK	section 5: "block forwards 8" without and "block forwards 16" with checkpointing	lab
+64	3	source	OK	§5: ZeRO-DP partitions "optimizer states, gradients and parameters" across data-parallel processes	https://arxiv.org/html/1910.02054

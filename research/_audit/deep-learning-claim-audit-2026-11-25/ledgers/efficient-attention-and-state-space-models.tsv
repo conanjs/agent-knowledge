@@ -1,0 +1,66 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	Section 1: 'time and memory complexity quadratic in sequence length'; IO-awareness; Fig. 2: 'HBM access is the primary factor affecting runtime'	https://ar5iv.labs.arxiv.org/html/2205.14135
+2	1	source	OK	Figure 2 left table: GFLOPs 66.6 vs 75.2, HBM R/W 40.3 vs 4.4 GB, runtime 41.7 vs 7.3 ms; GPT-2 medium 'on A100 GPU'	https://ar5iv.labs.arxiv.org/html/2205.14135
+3	9	lab	LAB-OK	Output lines 83 and 86: naive peak RSS 233 MiB (N=2048), 2120 MiB (N=16384); sdpa 202-217 MiB in lines 82-86	lab
+4	1	source	OK	2.2: 'Standard attention implementations materialize the matrices S and P to HBM, which takes O(N^2) memory'	https://ar5iv.labs.arxiv.org/html/2205.14135
+5	9	lab	LAB-OK	Output line 86: score matrix 1024 MiB, naive peak 2120 MiB; line 82: N=1024 naive 207 MiB (difference 1913 MiB, about 1.9 GiB)	lab
+6	2	source	OK	Abstract/3: normalizer 'in a single pass'; 'It reduces memory accesses from 4 down to 3 per vector element'; about 1.3x at V=4000, Tesla V100	https://ar5iv.labs.arxiv.org/html/1805.02867
+7	1	source	OK	3.1 Tiling: running m(x), l(x) merged with e^(m(x1) - m(x)); 'we can compute softmax one block at a time'	https://ar5iv.labs.arxiv.org/html/2205.14135
+8	1	source	OK	3.1: 'we split the inputs Q, K, V into blocks, load them from slow HBM to fast SRAM'	https://ar5iv.labs.arxiv.org/html/2205.14135
+9	1	source	OK	Abstract: 'an IO-aware exact attention algorithm'; Theorem 1 returns softmax(QK^T)V	https://ar5iv.labs.arxiv.org/html/2205.14135
+10	1	source	OK	3.1 Recomputation: 'by storing the output O and the softmax normalization statistics (m, l), we can recompute' S, P in SRAM	https://ar5iv.labs.arxiv.org/html/2205.14135
+11	1	source	OK	Section 1: 'uses less memory - linear in sequence length - than standard attention'	https://ar5iv.labs.arxiv.org/html/2205.14135
+12	1	source	OK	Theorem 2: standard Theta(Nd + N^2) HBM accesses; FlashAttention Theta(N^2 d^2 M^-1)	https://ar5iv.labs.arxiv.org/html/2205.14135
+13	1	source	OK	2.1: A100 has 40-80GB HBM and '192KB of on-chip SRAM per each of 108 streaming multiprocessors'	https://ar5iv.labs.arxiv.org/html/2205.14135
+14	1	source	OK	Abstract: 15% vs MLPerf 1.1 BERT-large, 3x GPT-2, 2.4x LRA; Section 1: block-sparse '2-4x faster than even FlashAttention, scaling up to sequence length of 64k'	https://ar5iv.labs.arxiv.org/html/2205.14135
+15	3	source	OK	Three implementations listed; 'All implementations are enabled by default.'; 'attempts to automatically select the most optimal implementation'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+16	3	source	OK	Code block introduced by '# Efficient implementation equivalent to the following:'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+17	3	source	OK	scale: 'Scaling factor applied prior to softmax', default 1/sqrt(E); code: scale_factor = 1 / math.sqrt(query.size(-1))	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+18	3	source	OK	Warning: 'This function is beta and subject to change.'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+19	4	source	OK	Signature sdpa_kernel(backends, set_priority=False); 'A backend or list of backends'; 'the previous state of the flags will be restored'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.attention.sdpa_kernel.html
+20	3	source	OK	Disable the C++ implementation to force a fused one; 'a warning will be raised with the reasons why the fused implementation cannot run'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+21	9	lab	FIXED	Output lines 77-80: MATH 2.7e-07, FLASH_ATTENTION 4.2e-07 run; EFFICIENT/CUDNN fail 'No viable backend for scaled_dot_product_attention was fou' (cut at 58 chars)	lab
+22	5	source	OK	3.1: complexity 'O(n x w), which scales linearly'; 'the receptive field size at the top layer is l x w'; dilation; symmetric global attention	https://ar5iv.labs.arxiv.org/html/2004.05150
+23	9	lab	LAB-OK	Output line 88: 'allowed pairs 58 of 256 | SDPA with band mask vs manual: 1.8e-07'	lab
+24	6	source	OK	3.2: V'_i = phi(Q_i)^T sum_j phi(K_j)V_j^T / phi(Q_i)^T sum_j phi(K_j), sums computed once and reused; 3.2.1 phi(x) = elu(x) + 1; linear time and memory	https://ar5iv.labs.arxiv.org/html/2006.16236
+25	6	source	OK	Abstract: 'up to 4000x faster on autoregressive prediction of very long sequences'; 3.4: S_i, Z_i from S_(i-1), Z_(i-1) in constant time	https://ar5iv.labs.arxiv.org/html/2006.16236
+26	6	source	FIXED	Table 2: 0.004 vs 17.85 images/sec; App. C.2 Table 5, batch size 1: GPU 300.1 s (4.9x), CPU 8651.4 s (191.8x); paper never gives CIFAR-10's image size	https://ar5iv.labs.arxiv.org/html/2006.16236
+27	9	lab	LAB-OK	Output line 90: 'max |parallel - recurrent| = 2.4e-07 | state size 272 numbers, independent of N'	lab
+28	8	source	OK	Section 2 eq. (1a) h'(t) = A h(t) + B x(t), (1b) y(t) = C h(t)	https://ar5iv.labs.arxiv.org/html/2312.00752
+29	8	source	OK	Section 2 eq. (4) zero-order hold A_bar = exp(Delta A); eq. (2a) h_t = A_bar h_(t-1) + B_bar x_t, (2b) y_t = C h_t	https://ar5iv.labs.arxiv.org/html/2312.00752
+30	8	source	OK	Section 2 eq. (3a) K_bar = (C B_bar, C A_bar B_bar, ..., C A_bar^k B_bar, ...), (3b) y = x * K_bar; LTI: 'fixed for all time-steps'	https://ar5iv.labs.arxiv.org/html/2312.00752
+31	7	source	OK	2.4 'Training SSMs: The Convolutional Representation', recurrence 'not practical for training'; Section 1: 'Like RNNs, S4 can use its latent state' to generate	https://ar5iv.labs.arxiv.org/html/2111.00396
+32	9	lab	LAB-OK	Output line 92: 'LTI: max |recurrent - convolution| = 1.9e-06'	lab
+33	7	source	OK	2.4: computing K_bar 'is the focus of our technical contributions'; 3.4 A initialized to the HiPPO matrix; HiPPO lets the state 'memorize the history of the input'	https://ar5iv.labs.arxiv.org/html/2111.00396
+34	7	source	OK	Abstract: 'Path-X task of length 16k that all prior work fails on'; 4.3: S4 around 60x faster than a vanilla Transformer	https://ar5iv.labs.arxiv.org/html/2111.00396
+35	8	source	OK	Section 2: LTI dynamics constant through time; Section 1: 'less effective at modeling discrete and information-dense data such as text'	https://ar5iv.labs.arxiv.org/html/2312.00752
+36	8	source	OK	Abstract: input-dependent parameters let the model 'selectively propagate or forget information along the sequence length dimension depending on the current token'	https://ar5iv.labs.arxiv.org/html/2312.00752
+37	9	lab	LAB-OK	Output line 93: 'selective (step from the input): output differs from the fixed-kernel output by up to 21.79'	lab
+38	8	source	OK	3.3.2: 'kernel fusion, parallel scan, and recomputation'; state materialized 'only in more efficient levels of the memory hierarchy'	https://ar5iv.labs.arxiv.org/html/2312.00752
+39	8	source	OK	4.5: 'Mamba achieves 4-5x higher inference throughput than a Transformer of similar size'; abstract: Mamba-3B matches Transformers twice its size; no attention or MLP blocks	https://ar5iv.labs.arxiv.org/html/2312.00752
+40	9	lab	FIXED	Coordinator re-ran the script twice: all non-table lines identical to the doc; naive RSS at 8192 tokens 717 and 719 MiB vs 670 in the doc, other sizes within 2 MiB	lab
+41	1	source	OK	2.2: standard attention materializes S and P, 'which takes O(N^2) memory'	https://ar5iv.labs.arxiv.org/html/2205.14135
+42	9	lab	LAB-OK	Output line 86: 'N=16384: ... naive    300.1 ms, peak RSS   2120 MiB'	lab
+43	1	source	OK	3.1: 'For numerical stability, the softmax of vector x' subtracts m(x) = max_i x_i; blocks keep the running max	https://ar5iv.labs.arxiv.org/html/2205.14135
+44	9	lab	LAB-OK	Output line 74: 'scores up to 12733 | exp overflows: True | tiled finite: True'	lab
+45	9	lab	LAB-OK	Output line 79: 'EFFICIENT_ATTENTION  fails | No viable backend for scaled_dot_product_attention was fou'	lab
+46	3	source	OK	is_causal: 'An error is thrown if both attn_mask and is_causal are set.'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+47	3	source	OK	Note: 'Due to the nature of fusing floating point operations, the output of this function may be different'	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+48	9	lab	LAB-OK	Output lines 77-78: MATH 2.7e-07 and FLASH_ATTENTION 4.2e-07 vs the manual formula	lab
+49	3	source	OK	'This function always applies dropout according to the specified dropout_p argument'; pass 0.0 when evaluating	https://docs.pytorch.org/docs/2.15/generated/torch.nn.functional.scaled_dot_product_attention.html
+50	5	source	OK	3.1: 'the receptive field size at the top layer is l x w'	https://ar5iv.labs.arxiv.org/html/2004.05150
+51	6	source	OK	3.2: softmax similarity replaced by a kernel feature map phi(x) = elu(x) + 1	https://ar5iv.labs.arxiv.org/html/2006.16236
+52	8	source	OK	Section 3: 'The resulting time-varying SSMs cannot use convolutions'; 3.2: loses 'the equivalence to convolutions'	https://ar5iv.labs.arxiv.org/html/2312.00752
+53	9	lab	LAB-OK	Output line 93: selective output differs from the fixed-kernel output by up to 21.79	lab
+54	8	source	OK	3.1: LTI 'constant dynamics ... cannot let them select the correct information from their context'	https://ar5iv.labs.arxiv.org/html/2312.00752
+55	1	source	OK	Abstract: 'IO-aware exact attention algorithm'; Section 1 memory 'linear in sequence length'; Theorem 2 fewer HBM accesses	https://ar5iv.labs.arxiv.org/html/2205.14135
+56	9	lab	LAB-OK	Output lines 77-80: MATH and FLASH_ATTENTION run, EFFICIENT_ATTENTION and CUDNN_ATTENTION fail (2 of 4)	lab
+57	5	source	OK	3.1: 'The computation complexity of this pattern is O(n x w), which scales linearly'	https://ar5iv.labs.arxiv.org/html/2004.05150
+58	5	source	FIXED	3.1: 'the receptive field size at the top layer is l x w'; global tokens attend to all and all attend to them, so condition added	https://ar5iv.labs.arxiv.org/html/2004.05150
+59	6	source	OK	Abstract: complexity O(N^2) to O(N); 3.4: S_i, Z_i updated from S_(i-1), Z_(i-1) at constant cost per step	https://ar5iv.labs.arxiv.org/html/2006.16236
+60	6	source	OK	Abstract: self-attention expressed 'as a linear dot-product of kernel feature maps' instead of softmax	https://ar5iv.labs.arxiv.org/html/2006.16236
+61	7	source	OK	2.4: convolution for training (recurrence 'not practical for training'); 4.3: recurrent view needs 'constant memory and computation' per step	https://ar5iv.labs.arxiv.org/html/2111.00396
+62	7	source	OK	Abstract: 'SoTA on every task from the Long Range Arena benchmark', including Path-X	https://ar5iv.labs.arxiv.org/html/2111.00396
+63	8	source	OK	3.1: LTI 'constant dynamics' block input-dependent selection; abstract: 'inability to perform content-based reasoning'	https://ar5iv.labs.arxiv.org/html/2312.00752
+64	8	source	OK	Abstract: 'linear scaling in sequence length'; 4.5: '4-5x higher inference throughput than a Transformer of similar size'	https://ar5iv.labs.arxiv.org/html/2312.00752
+65	8	source	OK	Section 3: 'time-varying SSMs cannot use convolutions'; 3.3.2 hardware-aware selective scan	https://ar5iv.labs.arxiv.org/html/2312.00752

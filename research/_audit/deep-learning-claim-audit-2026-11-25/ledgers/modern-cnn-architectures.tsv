@@ -1,0 +1,87 @@
+n	label	kind	verdict	evidence	source
+1	14	source	OK	ImageNet table rows: VGG16_Weights.IMAGENET1K_V1 Acc@1 71.592, 138.4M, 15.47; ResNet50 V1 76.13, 25.6M, 4.09	https://docs.pytorch.org/vision/stable/models.html
+2	16	lab	LAB-OK	Worked example output line 13: "VGG-16 : params 138,357,544 (89.4 % in Linear layers)"	lab
+3	16	lab	LAB-OK	Artifact MACs 462,422,016 vs 54,992,896 (8.4x); timings 32.22/5.87 ms (5.5x) and second run 32.78/4.35 ms (7.5x)	lab
+4	7	source	OK	Sec 3.3 Plain Network: "Our 34-layer baseline has 3.6 billion FLOPs (multiply-adds)"	https://ar5iv.labs.arxiv.org/html/1512.03385
+5	16	lab	LAB-OK	Mental model output lines 1-5: params 147,456 vs 17,536, MACs ratio 0.1189 = 1/N + 1/DK^2, same output shape	lab
+6	10	source	FIXED	Sec 3.1 Eq. 2 cost DK·DK·M·N·DF·DF, kernel DK×DK×M×N; output computed "assuming stride one and padding"	https://ar5iv.labs.arxiv.org/html/1704.04861
+7	16	lab	LAB-OK	Output: formula line equals MACs line (462,422,016); VGG-16 15.47 G and ResNet-50 4.09 G equal the table GFLOPS	lab
+8	14	source	OK	Table: AlexNet 61.1M/0.71, VGG16 138.4M/15.47, GoogLeNet 6.6M/1.5, ResNet50 25.6M/4.09, DenseNet121 8.0M/2.83, MobileNet_V2 3.5M/0.3, EfficientNet_B0 5.3M/0.39, B7 66.3M/37.75, ConvNeXt_Tiny 28.6M/4.46	https://docs.pytorch.org/vision/stable/models.html
+9	1	source	OK	Sec 7.6: two conv layers, 5×5 kernel, sigmoid, average pooling; "three fully connected layers, with 120, 84, and 10 outputs"	https://d2l.ai/chapter_convolutional-neural-networks/lenet.html
+10	1	source	OK	Sec 7.6: handwritten digits; "adapted to recognize digits for processing deposits in ATM machines"	https://d2l.ai/chapter_convolutional-neural-networks/lenet.html
+11	2	source	OK	Sec 8.1.2: "eight layers: five convolutional layers, two fully connected hidden layers"; code kernel_size=11, stride=4; ReLU, dropout, augmentation, two GPUs in 8.1.2.1-8.1.2.3	https://d2l.ai/chapter_convolutional-modern/alexnet.html
+12	2	source	OK	Sec 8.1.2: "won the ImageNet Large Scale Visual Recognition Challenge 2012 by a large margin"	https://d2l.ai/chapter_convolutional-modern/alexnet.html
+13	3	source	FIXED	Sec 8.2.1: "3×3 kernels with padding of 1 (keeping height and width) followed by a 2×2 max-pooling" (marker moved off the 16-19 depth)	https://d2l.ai/chapter_convolutional-modern/vgg.html
+14	4	source	OK	Abstract: "pushing the depth to 16–19 weight layers"; Sec 2.1 stride 1, padding 1, 2×2 max-pooling stride 2	https://ar5iv.labs.arxiv.org/html/1409.1556
+15	4	source	OK	Sec 2.2: "from 11 weight layers in the network A ... to 19 weight layers"; Table 1 C (16 layers) has three 1×1 conv	https://ar5iv.labs.arxiv.org/html/1409.1556
+16	3	source	OK	Sec 8.2.1: "deep and narrow networks significantly outperform their shallow counterparts"	https://d2l.ai/chapter_convolutional-modern/vgg.html
+17	4	source	OK	Sec 4.1: "a deep net with small filters outperforms a shallow net with larger filters" (B vs five 5×5)	https://ar5iv.labs.arxiv.org/html/1409.1556
+18	5	source	OK	Sec 8.4.1-8.4.2: four branches concatenated on channels; "a stack of a total of 9 inception blocks"; global average pooling head	https://d2l.ai/chapter_convolutional-modern/googlenet.html
+19	6	source	OK	Sec 1: "designed to keep a computational budget of 1.5 billion multiply-adds at inference time"; abstract: depth and width at constant budget	https://ar5iv.labs.arxiv.org/html/1409.4842
+20	7	source	OK	Sec 4.1 Deeper Bottleneck Architectures: "The three layers are 1×1, 3×3, and 1×1 convolutions" for 50/101/152 layers	https://ar5iv.labs.arxiv.org/html/1512.03385
+21	9	source	OK	Abstract: "L(L+1)/2 direct connections"; feature-maps of all preceding layers used as inputs; Sec 1 concatenation	https://ar5iv.labs.arxiv.org/html/1608.06993
+22	9	source	OK	Abstract: vanishing-gradient, "encourage feature reuse, and substantially reduce the number of parameters"; Sec 1 improved gradient flow	https://ar5iv.labs.arxiv.org/html/1608.06993
+23	10	source	OK	Sec 3.1: "Depthwise convolution with one filter per input channel"; pointwise is a simple 1×1 convolution	https://ar5iv.labs.arxiv.org/html/1704.04861
+24	10	source	OK	Sec 3.1: "between 8 to 9 times less computation" than standard, "at only a small reduction in accuracy"	https://ar5iv.labs.arxiv.org/html/1704.04861
+25	12	source	OK	Sec 4: "Our search produces an efficient network, which we name EfficientNet-B0"; MBConv block; Eq. 3 single coefficient phi	https://ar5iv.labs.arxiv.org/html/1905.11946
+26	12	source	OK	Sec 3.3 Observation 2: "critical to balance all dimensions of network width, depth, and resolution"	https://ar5iv.labs.arxiv.org/html/1905.11946
+27	13	source	OK	Sec 1: "We gradually modernize a standard ResNet toward the design of a vision Transformer"	https://ar5iv.labs.arxiv.org/html/2201.03545
+28	13	source	OK	Sec 2.6: "improve the accuracy to 82.0%, significantly exceeding Swin-T's 81.3%"	https://ar5iv.labs.arxiv.org/html/2201.03545
+29	2	source	OK	Sec 8.1.4: matrices of size 6400×4096 and 4096×4096; "This corresponds to 164 MB of memory"	https://d2l.ai/chapter_convolutional-modern/alexnet.html
+30	16	lab	LAB-OK	Worked example output line 13: params 138,357,544, 89.4 % in Linear layers	lab
+31	3	source	OK	Sec 8.2.1: "two 3×3 convolutions touches the same pixels as a single 5×5 convolution does"	https://d2l.ai/chapter_convolutional-modern/vgg.html
+32	3	source	FIXED	Sec 8.2.1: "approximately as many parameters (25·c²) as three 3×3 convolutions do (3·9·c²)" (was "cost")	https://d2l.ai/chapter_convolutional-modern/vgg.html
+33	6	source	OK	Sec 2: "used mainly as dimension reduction modules to remove computational bottlenecks"	https://ar5iv.labs.arxiv.org/html/1409.4842
+34	5	source	FIXED	Sec 8.4.1: "The middle two branches also add a 1×1 convolution of the input" (was "before the branches")	https://d2l.ai/chapter_convolutional-modern/googlenet.html
+35	6	source	OK	Sec 1: "uses 12× fewer parameters than the winning architecture of Krizhevsky et al"	https://ar5iv.labs.arxiv.org/html/1409.4842
+36	5	source	OK	Intro: first network with "a clear distinction among the stem"... body, head; "This design pattern has persisted ever since"	https://d2l.ai/chapter_convolutional-modern/googlenet.html
+37	7	source	OK	Sec 4.1: 1×1 layers reduce then restore dimensions; "both designs have similar time complexity"	https://ar5iv.labs.arxiv.org/html/1512.03385
+38	7	source	OK	Sec 4.1: 50-layer has 3.8 billion FLOPs; "152-layer ResNet (11.3 billion FLOPs) still has lower complexity than VGG-16/19"	https://ar5iv.labs.arxiv.org/html/1512.03385
+39	9	source	OK	Sec 3 Growth rate: "the l-th layer has k0 + k×(l−1) input feature-maps"	https://ar5iv.labs.arxiv.org/html/1608.06993
+40	8	source	OK	Sec 8.7.3: 1×1 convolution reduces channels; "halves the height and width via average pooling with a stride of 2"	https://d2l.ai/chapter_convolutional-modern/densenet.html
+41	9	source	OK	Sec 3: "let each 1×1 convolution produce 4k feature-maps"; Compression: θ=0.5, DenseNet-BC	https://ar5iv.labs.arxiv.org/html/1608.06993
+42	10	source	OK	Sec 3.1 Eq. 5 cost DK·DK·M·DF·DF + M·N·DF·DF and reduction ratio 1/N + 1/DK²	https://ar5iv.labs.arxiv.org/html/1704.04861
+43	10	source	OK	Sec 3.1: "MobileNets use both batchnorm and ReLU nonlinearities for both layers"; Fig. 3	https://ar5iv.labs.arxiv.org/html/1704.04861
+44	10	source	OK	Sec 3.3: "thin a network uniformly at each layer"; Sec 3.4: reducing computational cost by ρ²	https://ar5iv.labs.arxiv.org/html/1704.04861
+45	10	source	OK	Table 8: 1.0 MobileNet-224 70.6%, 569 M Mult-Adds, 4.2 M params; VGG 16 71.5%, 15300, 138	https://ar5iv.labs.arxiv.org/html/1704.04861
+46	17	source	OK	Parameters: "At groups= in_channels, each input channel is convolved with its own set of filters"; note: depthwise convolution	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+47	11	source	OK	Table 1: 1x1 conv2d ReLU6, 3x3 dwise, linear 1x1 conv2d; Sec 4 expansion factor of 6; Sec 3.3 "shortcuts directly between the bottlenecks"	https://ar5iv.labs.arxiv.org/html/1801.04381
+48	11	source	FIXED	Sec 3.2: "using linear layers is crucial as it prevents non-linearities from destroying too much information"	https://ar5iv.labs.arxiv.org/html/1801.04381
+49	12	source	OK	Sec 4 Step 1: "best values for EfficientNet-B0 are α=1.2, β=1.1, γ=1.15"; Eq. 3 constraint, FLOPS about 2^φ	https://ar5iv.labs.arxiv.org/html/1905.11946
+50	12	source	OK	Table 2: B0 77.1%, 5.3M, 0.39B; abstract B7 84.3% "8.4x smaller and 6.1x faster on inference"	https://ar5iv.labs.arxiv.org/html/1905.11946
+51	15	source	OK	Sec 8.8 intro: "EfficientNets are a notable outcome of this search" (NAS)	https://d2l.ai/chapter_convolutional-modern/cnn-design.html
+52	13	source	OK	Sec 2.1: 300 epochs, AdamW, augmentation; "from 76.1% to 78.8% (+2.7%)"	https://ar5iv.labs.arxiv.org/html/2201.03545
+53	13	source	OK	Sec 2.2-2.6: (3,4,6,3) to (3,3,9,3); "a patchify layer implemented using a 4 × 4, stride 4"; depthwise 96; 4× MLP; moved-up 7×7; GELU; fewer act/norm; LN; separate downsampling	https://ar5iv.labs.arxiv.org/html/2201.03545
+54	13	source	OK	Abstract: "Constructed entirely from standard ConvNet modules"	https://ar5iv.labs.arxiv.org/html/2201.03545
+55	16	lab	LAB-OK	Worked example block: 10 lines (timing, residual blocks, whole networks) following the 5 artifact lines	lab
+56	7	source	OK	Fig. 5 shows a 64-d basic block (3x3,64 twice) and a 256-d bottleneck (1x1,64; 3x3,64; 1x1,256); Sec 4.1 similar time complexity	https://ar5iv.labs.arxiv.org/html/1512.03385
+57	14	source	OK	Table: VGG16 138.4M / 15.47 GFLOPS; ResNet50 25.6M / 4.09 GFLOPS	https://docs.pytorch.org/vision/stable/models.html
+58	10	source	OK	Table 8: 1.0 MobileNet-224, 569 Million Mult-Adds, 4.2 Million Parameters	https://ar5iv.labs.arxiv.org/html/1704.04861
+59	7	source	OK	Sec 4.1 50-layer ResNet: "This model has 3.8 billion FLOPs"	https://ar5iv.labs.arxiv.org/html/1512.03385
+60	7	source	OK	Sec 3.3: "3.6 billion FLOPs (multiply-adds)"	https://ar5iv.labs.arxiv.org/html/1512.03385
+61	16	lab	LAB-OK	Output lines 13-14: MACs 15.47 G and 4.09 G equal torchvision GFLOPS 15.47 and 4.09	lab
+62	16	lab	LAB-OK	Output: MACs 462,422,016 vs 54,992,896; timings 32.22/5.87 ms and 32.78/4.35 ms	lab
+63	14	source	OK	Table: ResNet50_Weights.IMAGENET1K_V1 Acc@1 76.13; IMAGENET1K_V2 Acc@1 80.858	https://docs.pytorch.org/vision/stable/models.html
+64	13	source	OK	Sec 2.1: "increased the performance of the ResNet-50 model from 76.1% to 78.8% (+2.7%)"	https://ar5iv.labs.arxiv.org/html/2201.03545
+65	17	source	OK	Note: "When groups == in_channels and out_channels == K * in_channels" ... depthwise convolution	https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html
+66	16	lab	LAB-OK	Output line 13: VGG-16 89.4 % in Linear layers	lab
+67	2	source	OK	Sec 8.1.4: "This corresponds to 164 MB of memory and 81 MFLOPs of computation"	https://d2l.ai/chapter_convolutional-modern/alexnet.html
+68	5	source	FIXED	Sec 8.4.2: "global average pooling layer to change the height and width of each channel to 1" (was "avoids it")	https://d2l.ai/chapter_convolutional-modern/googlenet.html
+69	8	source	OK	Sec 8.7.3: "each dense block will increase the number of channels"	https://d2l.ai/chapter_convolutional-modern/densenet.html
+70	9	source	OK	Sec 3 Growth rate: "if each function H_l produces k feature-maps"	https://ar5iv.labs.arxiv.org/html/1608.06993
+71	11	source	OK	Sec 3.2: "when ReLU collapses the channel, it inevitably loses information in that channel"	https://ar5iv.labs.arxiv.org/html/1801.04381
+72	12	source	OK	Sec 3.3 Observation 2: "critical to balance all dimensions of network width, depth, and resolution"	https://ar5iv.labs.arxiv.org/html/1905.11946
+73	15	source	OK	Sec 8.8.3: "a bottleneck ratio of k = 1 performs best"; advised not to use bottlenecks	https://d2l.ai/chapter_convolutional-modern/cnn-design.html
+74	3	source	FIXED	Sec 8.2.4: "the first network that is actually an entire family of similarly parametrized models" (was "Simple, uniform")	https://d2l.ai/chapter_convolutional-modern/vgg.html
+75	14	source	OK	Table: VGG16_Weights.IMAGENET1K_V1 138.4M, 15.47 GFLOPS	https://docs.pytorch.org/vision/stable/models.html
+76	7	source	OK	Sec 4.1 and Fig. 5 (256-d bottleneck vs 64-d basic): "both designs have similar time complexity"	https://ar5iv.labs.arxiv.org/html/1512.03385
+77	16	lab	LAB-OK	Output: bottleneck 256 ch 69,632 params / 218,365,952 MACs vs basic 64 ch 73,728 / 231,211,008	lab
+78	10	source	OK	Sec 3.1 Eq. 5-6: depthwise separable cost ratio 1/N + 1/DK² of standard	https://ar5iv.labs.arxiv.org/html/1704.04861
+79	10	source	OK	Sec 3.1: "at only a small reduction in accuracy"	https://ar5iv.labs.arxiv.org/html/1704.04861
+80	16	lab	LAB-OK	Output: 8.4x fewer MACs; CPU 32.22/5.87 ms (5.5x), second run 7.5x	lab
+81	9	source	OK	Abstract: "encourage feature reuse, and substantially reduce the number of parameters"	https://ar5iv.labs.arxiv.org/html/1608.06993
+82	8	source	OK	Sec 8.7.3: "each dense block will increase the number of channels"; transition layers control it	https://d2l.ai/chapter_convolutional-modern/densenet.html
+83	12	source	OK	Sec 5.2: "84.3% top1 accuracy with 66M parameters" ... "8.4x smaller than the previous best GPipe"	https://ar5iv.labs.arxiv.org/html/1905.11946
+84	14	source	OK	Table: EfficientNet_B7_Weights.IMAGENET1K_V1 66.3M, 37.75 GFLOPS	https://docs.pytorch.org/vision/stable/models.html
+85	13	source	OK	Abstract standard ConvNet modules; Sec 2.6 "82.0%, significantly exceeding Swin-T's 81.3%"	https://ar5iv.labs.arxiv.org/html/2201.03545
+86	15	source	OK	Sec 8.8.5: backported into CNNs (Liu et al., 2022), "only possible at a higher computational cost"	https://d2l.ai/chapter_convolutional-modern/cnn-design.html

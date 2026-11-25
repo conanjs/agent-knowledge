@@ -1,0 +1,73 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	§12.6.1.2 GD traces at lr 0.4 and 0.6: "epoch 20, x1: -0.387814, x2: -1673.365109"; lr 0.4 gives "x1: -0.943467"	https://d2l.ai/chapter_optimization/momentum.html
+2	9	lab	LAB-OK	block (1): "SGD lr=0.4 steps= 20 x=(-0.943467, ...)" and "SGD lr=0.6 steps= 20 x=(-0.387814, -1673.37)"	lab
+3	9	lab	LAB-OK	block (2): "Adam, weight_decay=0.1 w = (0.999054, 0.090663)" vs "AdamW ... (0.991854, 0.991854)"	lab
+4	1	source	OK	§12.6.1.3: "aggregate well-aligned gradients, thus increasing the distance we cover with every step"; x2 oscillations cancel	https://d2l.ai/chapter_optimization/momentum.html
+5	9	lab	LAB-OK	block (1): 12 rows, six torch.optim configs (SGD x2, momentum, nesterov, RMSprop, Adam) at 20 and 100 steps	lab
+6	1	source	OK	§12.6.1.2 printed traces "epoch 20, x1: -0.943467, x2: -0.000073" and "x2: -1673.365109"; lab digits agree	https://d2l.ai/chapter_optimization/momentum.html
+7	1	source	OK	§12.6.1.3 (beta 0.5, eta 0.6): "even with the same learning rate that we used before, momentum still converges well"	https://d2l.ai/chapter_optimization/momentum.html
+8	9	lab	LAB-OK	"SGD lr=0.6 momentum=0.5 steps=100 ... f=1.17e-29" vs "SGD lr=0.6 steps=100 ... f=1.34e+30"	lab
+9	9	lab	FIXED	"RMSprop lr=0.1 steps=100 x=(-1.84784e-06, ...)" vs "SGD lr=0.4 steps=100 x=(-0.00119606, ...)"; Adam f=2.94e-04 largest of converging runs	lab
+10	3	source	OK	Algorithm block: "θt←θt−1−γgt"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+11	3	source	OK	signature "lr=0.001"; parameter: "learning rate (default: 1e-3)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+12	1	source	OK	§12.6.1.3 v_t ← βv_{t−1} + g, x_t ← x_{t−1} − η_t v_t; "for β = 0 we recover regular gradient descent"	https://d2l.ai/chapter_optimization/momentum.html
+13	1	source	OK	§12.6.1.4 sum of β^τ = 1/(1−β), step η/(1−β); §12.6.2.1 "effective sample size of 1/(1 − 0.9) = 10"	https://d2l.ai/chapter_optimization/momentum.html
+14	1	source	OK	§12.6.1.1 (accelerated methods such as momentum): "much more effective in cases where the optimization problem is ill-conditioned" ... "narrow canyon"	https://d2l.ai/chapter_optimization/momentum.html
+15	1	source	OK	§12.6.1.1: "It was proposed by Polyak", citing Polyak (1964)	https://d2l.ai/chapter_optimization/momentum.html
+16	3	source	FIXED	Note: "subtly differs from Sutskever et al. and implementations in some other frameworks"; buffer starts at first gradient; dampening from step 2	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+17	3	source	OK	Algorithm block: "if nesterov gt←gt+μbt else gt←bt"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+18	4	source	OK	§12.8 Adagrad "accumulates the squares of the gradient" and "keeps on growing without bound"	https://d2l.ai/chapter_optimization/rmsprop.html
+19	4	source	OK	§12.8 s_t ← γs_{t−1} + (1−γ)g_t², x_t ← x_{t−1} − η/√(s_t+ε) ⊙ g_t; "Tieleman and Hinton" (2012)	https://d2l.ai/chapter_optimization/rmsprop.html
+20	5	source	OK	signature "lr=0.01, alpha=0.99, eps=1e-08"; alpha: "smoothing constant (default: 0.99)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.RMSprop.html
+21	2	source	OK	eq. 12.10.1 two leaky averages; "Common choices for them are β1 = 0.9 and β2 = 0.999"	https://d2l.ai/chapter_optimization/adam.html
+22	2	source	OK	"we have a significant amount of bias initially towards smaller values"; eq. 12.10.2 v̂_t = v_t/(1−β1^t)	https://d2l.ai/chapter_optimization/adam.html
+23	2	source	OK	eq. 12.10.3: g'_t = η v̂_t / (√ŝ_t + ε)	https://d2l.ai/chapter_optimization/adam.html
+24	6	source	OK	signature: "lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+25	7	source	OK	Abstract "invariant to diagonal rescaling of the gradients"; §2.1 "Assuming ϵ= 0"; gradients times c scale m̂ by c, v̂ by c²	https://arxiv.org/pdf/1412.6980v9
+26	7	source	FIXED	Abstract "typically require little tuning"; §6 "searched over a dense grid and the results are reported using the best hyper-parameter setting"	https://arxiv.org/pdf/1412.6980v9
+27	2	source	OK	"(Reddi et al., 2019) show that there are situations where Adam can diverge"	https://d2l.ai/chapter_optimization/adam.html
+28	3	source	OK	Algorithm block: "if λ≠0: gt←gt+λθt−1", first line after the gradient	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+29	6	source	OK	Algorithm "gt←gt+λθt−1"; weight_decay: "weight decay (L2 penalty) (default: 0)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+30	8	source	OK	Algorithm "θt←θt−1−γλθt−1" before m_t, v_t; "weight decay does not accumulate in the momentum nor variance"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html
+31	8	source	OK	signature "weight_decay=0.01"; "weight decay coefficient (default: 1e-2)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html
+32	6	source	OK	decoupled_weight_decay: "if True, this optimizer is equivalent to AdamW"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+33	10	source	OK	Abstract "equivalent for standard stochastic gradient descent (when rescaled by the learning rate)"; §2 large-gradient weights "regularized by a smaller relative amount"	https://arxiv.org/html/1711.05101v3
+34	10	source	OK	§1: "renders the optimal settings of the learning rate and the weight decay factor much more independent"	https://arxiv.org/html/1711.05101v3
+35	11	source	OK	§12.11: "If it is too large, optimization diverges"; "Large steps in the beginning might not be beneficial"; rate should decay	https://d2l.ai/chapter_optimization/lr-scheduler.html
+36	11	source	OK	§12.11.3 cosine: η_t = η_T + (η_0 − η_T)/2 (1 + cos(πt/T)) for "t ∈ [0, T]"	https://d2l.ai/chapter_optimization/lr-scheduler.html
+37	11	source	OK	"A rather perplexing heuristic was proposed by Loshchilov and Hutter (2016)"	https://d2l.ai/chapter_optimization/lr-scheduler.html
+38	12	source	FIXED	"implements a recursive approximation of the closed-form schedule proposed in SGDR"; "cosine annealing without restarts"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
+39	13	source	OK	§2.2 gradual: "start from a learning rate of η and increment it by a constant amount"; kη after 5 epochs; constant warmup "can cause the training error to spike"	https://arxiv.org/html/1706.02677v2
+40	13	source	FIXED	§5.2 training error: "the error spikes immediately after and training never fully recovers"; Table 1: 23.60, 24.84, 25.88, 23.74	https://arxiv.org/html/1706.02677v2
+41	14	source	OK	"Decays the learning rate of each parameter group by linearly changing small multiplicative factor"; start_factor "changes towards end_factor"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.LinearLR.html
+42	15	source	OK	"schedulers will be called according to the milestone points"; milestones: "List of integers that reflects milestone points"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.SequentialLR.html
+43	16	source	OK	How to adjust learning rate: scheduler before optimizer update "will skip the first value of the learning rate schedule"	https://docs.pytorch.org/docs/2.15/optim.html
+44	9	lab	LAB-OK	block (3): "lr per step: 0.200 0.360 0.520 0.680 0.840 1.000 0.989 ..." equals closed-form line from 1.000	lab
+45	9	lab	LAB-OK	block (2): seven lines; "closed-form minimum of loss + L2 w = (0.999054, 0.090663)" equals the Adam L2 rows	lab
+46	10	source	OK	§2: "decoupled weight decay regularizes all weights with the same rate"	https://arxiv.org/html/1711.05101v3
+47	6	source	OK	Algorithm block (coupled branch only): "gt←gt+λθt−1"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+48	8	source	OK	Algorithm decay step "θt←θt−1−γλθt−1" outside m_t/v_t; "does not accumulate in the momentum nor variance"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html
+49	9	lab	LAB-OK	"Adam, weight_decay=0.1 w = (0.999054, 0.090663)" vs "AdamW, weight_decay=0.1 w = (0.991854, 0.991854)"	lab
+50	6	source	OK	signature "weight_decay=0"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+51	8	source	OK	signature "weight_decay=0.01"; "weight decay coefficient (default: 1e-2)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html
+52	3	source	OK	Algorithm block: "if nesterov gt←gt+μbt else gt←bt"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+53	9	lab	LAB-OK	"SGD lr=0.6 nesterov 0.5 steps= 20 x=(-0.00240798, -8.14043e+07)" while momentum row f=1.82e-05	lab
+54	16	source	OK	"Prior to PyTorch 1.1.0, the learning rate scheduler was expected to be called before"; "1.1.0 changed this behavior"	https://docs.pytorch.org/docs/2.15/optim.html
+55	3	source	OK	Note: "vt+1=μ∗vt+gt+1, pt+1=pt−lr∗vt+1" vs Sutskever "vt+1=μ∗vt+lr∗gt+1"; "Dampening will be applied starting at the second step"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+56	9	lab	LAB-OK	not in printed block; re-ran CosineAnnealingLR(T_max=4, eta_min=0.1), 9 steps, torch 2.15.0: "1 0.868 0.55 0.232 0.1 0.232 0.55 0.868 1"	lab
+57	12	source	OK	"without restarts, so Tcur=t and increases monotonically with each call to step()"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
+58	13	source	OK	§2.1: "When the minibatch size is multiplied by k, multiply the learning rate by k"; §2.2 gradual warmup	https://arxiv.org/html/1706.02677v2
+59	2	source	OK	"there are situations where Adam can diverge"; Yogi: "it can fail to converge even in convex settings"	https://d2l.ai/chapter_optimization/adam.html
+60	3	source	OK	Algorithm block: one momentum buffer "bt←μbt−1+(1−τ)gt"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.SGD.html
+61	1	source	OK	§12.6.1.3 at η=0.6: "momentum still converges well", where the GD trace reached x2: -1673.365109	https://d2l.ai/chapter_optimization/momentum.html
+62	9	lab	LAB-OK	"SGD lr=0.6 momentum=0.5 steps=100 ... f=1.17e-29" vs "SGD lr=0.6 steps=100 ... f=1.34e+30"	lab
+63	11	source	FIXED	"Most obviously the magnitude of the learning rate matters"; too large diverges, too small "takes too long to train"	https://d2l.ai/chapter_optimization/lr-scheduler.html
+64	7	source	OK	Abstract: "invariant to diagonal rescaling of the gradients" and "typically require little tuning"; per-parameter moment estimates (Algorithm 1)	https://arxiv.org/pdf/1412.6980v9
+65	6	source	OK	Algorithm: "initialize: m0←0 (first moment), v0←0 (second moment)"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html
+66	10	source	OK	§1: "weights with large historic parameter and/or gradient amplitudes being regularized less"	https://arxiv.org/html/1711.05101v3
+67	2	source	OK	"there are situations where Adam can diverge due to poor variance control"	https://d2l.ai/chapter_optimization/adam.html
+68	10	source	OK	§1: "Adam generalizes substantially better with decoupled weight decay"; "15% relative improvement in test error" (CIFAR-10, ImageNet32x32)	https://arxiv.org/html/1711.05101v3
+69	8	source	OK	signature "weight_decay=0.01"	https://docs.pytorch.org/docs/2.15/generated/torch.optim.AdamW.html
+70	13	source	OK	§2.2: "This ramp avoids a sudden increase of the learning rate"	https://arxiv.org/html/1706.02677v2
+71	11	source	OK	§12.11.3 cosine formula with parameters η_0, η_T and T	https://d2l.ai/chapter_optimization/lr-scheduler.html
+72	12	source	FIXED	signature "CosineAnnealingLR(optimizer, T_max, eta_min=0.0, last_epoch=-1)", T_max without default; "Maximum number of iterations."	https://docs.pytorch.org/docs/2.15/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html

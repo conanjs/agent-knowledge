@@ -37,7 +37,7 @@ for e in range(E):                                 # expert e sees only its toke
 ### The sparse MoE layer (Shazeer et al., 2017)
 1. **Output:** `y = Σᵢ G(x)ᵢ · Eᵢ(x)` over the `n` experts, where `G(x)` is the gate (router) output and `Eᵢ` the `i`-th expert network ✅[^1]. When `G(x)ᵢ = 0`, expert `i` is not computed at all; that is what makes the layer sparse.
 2. **Noisy top-k gating:** `H(x)ᵢ = (x·W_g)ᵢ + StandardNormal() · Softplus((x·W_noise)ᵢ)`, then `KeepTopK` sets every score outside the top `k` to `−∞`, then `G(x) = Softmax(KeepTopK(H(x), k))` ✅[^1]. The `−∞` scores get probability exactly 0. Example: scores `(2.0, 0.5, 1.0, −1.0)` with `k = 2` keep experts 1 and 3, `softmax(2.0, 1.0) = (0.73, 0.27)`.
-3. **Scale in the paper:** up to thousands of experts, and an MoE with up to 137 billion parameters placed between stacked LSTM (long short-term memory) layers; 4 experts were active per input in its language-model experiments ✅[^1].
+3. **Scale in the paper:** up to thousands of experts, and an MoE with up to 137 billion parameters placed between stacked LSTM (long short-term memory) layers; 4 experts were active per input in its 1-billion-word language-model comparison ✅[^1].
 4. **Shrinking batch:** with `k` of `n` experts per example, each expert sees only about `k·b/n` of a batch of `b` examples, too few for efficient GPU (graphics processing unit) work; the paper grows the expert batches by combining data and model parallelism ✅[^1].
 5. **Balancing in the original paper:** an importance loss, a tuned weight times the squared coefficient of variation (standard deviation ÷ mean) of each expert's summed gate values over the batch, plus a load loss on a smooth estimate of how many examples each expert receives, because equal importance does not guarantee equal load ✅[^1].
 
@@ -170,7 +170,7 @@ Reading it:
 | Top-1 (Switch) | Less router compute and communication ✅[^2] | Each token gets one expert's view |
 | Top-2 (Mixtral) | Two experts combined per token ✅[^3] | Twice the expert compute of top-1 |
 | Capacity factor 1.0–1.25 | Better results in Switch's experiments ✅[^2] | More dropped tokens if routing is uneven ✅[^2] |
-| Expert parallelism | Experts spread over devices ✅[^2] | All-to-all traffic and device-level imbalance ✅[^3] |
+| Expert parallelism | Experts spread over devices ✅[^2] | All-to-all traffic ✅[^2] and device-level imbalance ✅[^3] |
 
 ## Takeaways
 - Log the per-expert token share and the dropped-token fraction every few hundred steps; a share far above `1/N` or rising drops mean the router is collapsing. [rule-candidate]
@@ -179,11 +179,11 @@ Reading it:
 - When implementing top-k gating, take the softmax over the selected logits (or renormalize the selected probabilities) so the `k` weights sum to 1.
 
 ## Verification status
-- Verified: 44 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 45 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer](https://ar5iv.labs.arxiv.org/html/1701.06538) — Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton, Dean, 2017 (full text read, PDF). Backs: MoE output, noisy top-k gating, 1000× capacity, thousands of experts, 137B parameters, 4 active experts, self-reinforcing imbalance, importance and load losses, shrinking batch. [^1]
-- [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://ar5iv.labs.arxiv.org/html/2101.03961) — Fedus, Zoph, Shazeer, 2021 (full text read, PDF). Backs: top-1 routing, capacity formula and factors, dropped tokens via the residual, auxiliary loss and `α`, uniform minimum, float32 router, cost of a large capacity factor (Figure 3), 7× speed-up, 1.6T parameters and 2,048 experts, expert parallelism with all-to-all. [^2]
+- [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://ar5iv.labs.arxiv.org/html/2101.03961) — Fedus, Zoph, Shazeer, 2021 (arXiv; JMLR 23, 2022; full text read, PDF). Backs: top-1 routing, capacity formula and factors, dropped tokens via the residual, auxiliary loss and `α`, uniform minimum, float32 router, cost of a large capacity factor (Figure 3), 7× speed-up, 1.6T parameters and 2,048 experts, expert parallelism with all-to-all. [^2]
 - [Mixtral of Experts](https://ar5iv.labs.arxiv.org/html/2401.04088) — Jiang et al., 2024 (full text read, PDF). Backs: 8 SwiGLU experts, top-2, MoE replaces the FFN sub-block, softmax over top-2 logits, 47B total vs 13B active, expert parallelism and load balance, routing analysis (Figure 7, Figure 8, Table 5). [^3]
 - `machine-learning/lab-setup.md` — the lab where the top-2 MoE script in the Worked example ran on 2026-11-24 (routing balance with and without the auxiliary loss, capacity counts, parameter counts). [^4]
 

@@ -34,7 +34,7 @@ About half the elements are zeroed, every survivor is `1/(1 − 0.5) = 2.0`, so 
 
 ## How it works
 ### Batch normalization (BN)
-1. **Normalize per feature over the batch:** `y = (x − E[x]) / √(Var[x] + ε) · γ + β`, with mean and variance computed per feature over the mini-batch, and `γ`, `β` learnable vectors initialized to 1 and 0 ✅[^2]. In training mode the variance is the biased one (`correction=0`); the default `ε` is `1e-5` ✅[^2]. After the shift and scale the batch has mean 0 and variance 1, and `γ`, `β` give back the lost degrees of freedom ✅[^3].
+1. **Normalize per feature over the batch:** `y = (x − E[x]) / √(Var[x] + ε) · γ + β`, with mean and variance computed per feature over the mini-batch, and `γ`, `β` learnable vectors initialized to 1 and 0 ✅[^2]. In training mode the variance is the biased one (`correction=0`); the default `ε` is `1e-5` ✅[^2]. After standardization, and before `γ` and `β` are applied, the batch has mean 0 and variance 1; `γ` and `β` give back the degree of freedom that standardization removed ✅[^3].
 2. **For convolutions:** one mean and variance per channel, over all `m·p·q` values of a batch of `m` images of `p × q` positions, and one scalar `γ`, `β` per channel ✅[^3].
 3. **Running statistics:** in training mode the layer also updates `running = (1 − momentum)·running + momentum·batch_value`, default `momentum = 0.1`; the stored variance is the unbiased one (`correction=1`) ✅[^2]. This `momentum` is not an optimizer's momentum ✅[^2]. Example from the lab: a fresh layer (`running_mean = 0`, `running_var = 1`) sees a batch with mean `1.9517` and unbiased variance `0.8275` in feature 1, and stores `0.1952` and `0.9 + 0.08275 = 0.9827` ✅[^7].
 4. **Eval mode:** normalization uses the running estimates instead of the batch ✅[^2]. Ioffe and Szegedy's reason: at inference the output should depend only on the input, deterministically, so the layer uses population statistics and becomes one fixed linear transform per activation ✅[^4]. With `track_running_stats=False` there are no running estimates and batch statistics are used in both modes ✅[^2].
@@ -145,7 +145,7 @@ Reading it, line by line:
 | `momentum=None` in BatchNorm | Cumulative (simple) average instead of exponential | Documented option ✅[^2] |
 | Dropout at test time on purpose | Several stochastic predictions; agreement read as confidence | A heuristic some researchers use ✅[^9] |
 | Dropout `p = 1` | Every element is 0 | d2l's own example output ✅[^9] |
-| "BN works by reducing internal covariate shift" | Disputed | Its paper proposed it ✅[^4]; d2l calls the explanation under-specified and the name a misnomer, cites Santurkar et al. for an opposite finding, and conjectures that regularization through noise, acceleration through rescaling and preprocessing are the guiding principles ✅[^3] |
+| "BN works by reducing internal covariate shift" | Disputed | Its paper proposed it ✅[^4]; d2l calls the explanation under-specified and the name a misnomer, cites Santurkar et al. for behaviour in some ways opposite to the original paper's claims, and conjectures that the guiding principles of regularization through noise injection, acceleration through rescaling and preprocessing may lead to further layers and techniques ✅[^3] |
 
 ## Trade-offs
 | Option | Gains | Costs |

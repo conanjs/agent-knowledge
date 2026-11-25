@@ -36,14 +36,14 @@ MACs are multiply-accumulates (multiply-adds). Same output shape, 8.4 times fewe
 
 ## How it works
 ### Counting cost
-For a convolution with kernel `D_K × D_K`, `M` input and `N` output channels on a `D_F × D_F` output map, a standard layer costs `D_K·D_K·M·N·D_F·D_F` multiply-adds and its weight has `D_K·D_K·M·N` entries ✅[^10]. The lab's counter (output elements × kernel area × input channels per group) reproduces the formula exactly and the full-network counts in the torchvision table ✅[^16]. Parameter counting and the output-size formula are in `machine-learning/deep-learning/convolutional-networks.md`.
+For a convolution with kernel `D_K × D_K`, `M` input and `N` output channels on a `D_F × D_F` map (stride 1 with padding, so the output map is also `D_F × D_F`), a standard layer costs `D_K·D_K·M·N·D_F·D_F` multiply-adds and its weight has `D_K·D_K·M·N` entries ✅[^10]. The lab's counter (output elements × kernel area × input channels per group) reproduces the formula exactly and the full-network counts in the torchvision table ✅[^16]. Parameter counting and the output-size formula are in `machine-learning/deep-learning/convolutional-networks.md`.
 
 ### The lineage
 | Model (arXiv year) | What changed | Why | Params / GFLOPS (torchvision) ✅[^14] |
 |---|---|---|---|
 | LeNet-5 | Two 5 × 5 conv layers with sigmoid and average pooling, then dense 120–84–10 ✅[^1] | Read handwritten digits; later used for ATM deposits ✅[^1] | — |
 | AlexNet (2012) | 5 conv + 3 dense layers, 11 × 11 stride-4 first conv, ReLU instead of sigmoid, dropout, heavy augmentation, split over two GPUs ✅[^2] | Won ImageNet 2012 by a large margin ✅[^2] | 61.1 M / 0.71 |
-| VGG (2014) | Only 3 × 3 convolutions (stride 1, padding 1) in blocks ending in 2 × 2 max pooling, depth 16–19 weight layers ✅[^3] ✅[^4]; the paper's configurations span 11 to 19 weight layers, and one 16-layer variant also uses 1 × 1 convolutions ✅[^4] | Deep and narrow beat shallow ✅[^3]: a deep net of 3 × 3 filters beat a shallow one of 5 × 5 filters ✅[^4] | VGG-16: 138.4 M / 15.47 |
+| VGG (2014) | Only 3 × 3 convolutions (stride 1, padding 1) in blocks ending in 2 × 2 max pooling ✅[^3], depth 16–19 weight layers ✅[^4]; the paper's configurations span 11 to 19 weight layers, and one 16-layer variant also uses 1 × 1 convolutions ✅[^4] | Deep and narrow beat shallow ✅[^3]: a deep net of 3 × 3 filters beat a shallow one of 5 × 5 filters ✅[^4] | VGG-16: 138.4 M / 15.47 |
 | GoogLeNet / Inception (2014) | Four parallel branches (1 × 1; 1 × 1→3 × 3; 1 × 1→5 × 5; pool→1 × 1) concatenated on channels; 9 blocks; global average pooling head ✅[^5] | Grow depth and width at a fixed compute budget (1.5 billion multiply-adds) ✅[^6] | 6.6 M / 1.5 |
 | ResNet (2015) | Identity shortcuts; for 50+ layers, a 1 × 1 → 3 × 3 → 1 × 1 bottleneck ✅[^7] | Train much deeper networks (basics in the convolutional-networks doc) | ResNet-50: 25.6 M / 4.09 |
 | DenseNet (2016) | Each layer gets all earlier feature maps, concatenated: `L(L+1)/2` connections ✅[^9] | Feature reuse, fewer parameters, better gradient flow ✅[^9] | DenseNet-121: 8.0 M / 2.83 |
@@ -53,12 +53,12 @@ For a convolution with kernel `D_K × D_K`, `M` input and `N` output channels on
 
 ### What each step means in detail
 1. **AlexNet's cost sits in the dense layers:** in d2l's version, its last two hidden layers alone are a 6400 × 4096 and a 4096 × 4096 weight matrix, 164 MB of memory ✅[^2]. VGG-16 has the same problem: 89.4 % of its 138,357,544 parameters are in the three `Linear` layers (lab) ✅[^16].
-2. **VGG's 3 × 3 rule:** two stacked 3 × 3 convolutions touch the same pixels as one 5 × 5 ✅[^3], and three 3 × 3 layers (`3·9·c²`) cost about as much as one 5 × 5 (`25·c²`) ✅[^3].
-3. **1 × 1 convolutions as reducers:** GoogLeNet uses them mainly as dimension-reduction modules to remove computational bottlenecks ✅[^6], placed before the 3 × 3 and 5 × 5 branches ✅[^5]; the result uses 12 times fewer parameters than AlexNet ✅[^6]. It was arguably the first network with a clear split into stem (first convolutions on the raw image), body (the blocks) and head (task output), a layout that has persisted since ✅[^5].
+2. **VGG's 3 × 3 rule:** two stacked 3 × 3 convolutions touch the same pixels as one 5 × 5 ✅[^3], and three 3 × 3 layers (`3·9·c²` parameters) have about as many parameters as one 5 × 5 (`25·c²`) ✅[^3].
+3. **1 × 1 convolutions as reducers:** GoogLeNet uses them mainly as dimension-reduction modules to remove computational bottlenecks ✅[^6], applied to the input in the 3 × 3 and 5 × 5 branches, before the larger convolutions ✅[^5]; the result uses 12 times fewer parameters than AlexNet ✅[^6]. It was arguably the first network with a clear split into stem (first convolutions on the raw image), body (the blocks) and head (task output), a layout that has persisted since ✅[^5].
 4. **ResNet's bottleneck:** the first 1 × 1 layer reduces the channels, the 3 × 3 works on the reduced width, the last 1 × 1 restores them; it has a time complexity similar to the two-layer basic block ✅[^7]. ResNet-50 has 3.8 billion FLOPs (multiply-adds), and even ResNet-152 (11.3 billion) is cheaper than VGG-16/19 (15.3/19.6 billion) ✅[^7].
 5. **DenseNet's growth rate `k`:** layer `ℓ` receives `k_0 + k·(ℓ − 1)` channels ✅[^9]; each block adds channels, so transition layers (1 × 1 convolution plus stride-2 average pooling) shrink the channels and halve the height and width ✅[^8]. DenseNet-B puts a 1 × 1 producing `4k` maps before each 3 × 3, and DenseNet-BC compresses by `θ = 0.5` in the transitions ✅[^9].
 6. **Depthwise-separable cost:** `D_K·D_K·M·D_F·D_F + M·N·D_F·D_F`, a ratio of `1/N + 1/D_K²` to the standard layer ✅[^10]. MobileNet puts batch norm and ReLU after both parts ✅[^10], and offers a width multiplier `α` that thins every layer and a resolution multiplier `ρ` that cuts the cost by about `ρ²` ✅[^10]. MobileNet 1.0-224 reached 70.6 % with 569 M multiply-adds and 4.2 M parameters, against VGG-16's 71.5 % at 15,300 M and 138 M ✅[^10]. In PyTorch, `groups=in_channels` gives each input channel its own filters, a depthwise convolution ✅[^17].
-7. **MobileNetV2's inverted residual:** expand with a 1 × 1 (factor 6), filter with a 3 × 3 depthwise, project back with a *linear* 1 × 1; the shortcut joins the thin ends ✅[^11]. The last layer is linear because a ReLU in a low-dimensional space destroys information ✅[^11].
+7. **MobileNetV2's inverted residual:** expand with a 1 × 1 (factor 6), filter with a 3 × 3 depthwise, project back with a *linear* 1 × 1; the shortcut joins the thin ends ✅[^11]. The block's last layer is linear because, when the features of interest lie in a low-dimensional subspace, a non-linearity in the narrow layer destroys too much information ✅[^11].
 8. **EfficientNet's compound scaling:** depth `d = α^φ`, width `w = β^φ`, resolution `r = γ^φ` with `α·β²·γ² ≈ 2`, so total FLOPs grow by about `2^φ`; a grid search on B0 found `α = 1.2`, `β = 1.1`, `γ = 1.15` ✅[^12]. B0 has 5.3 M parameters and 0.39 B FLOPs at 77.1 % top-1; B7 reached 84.3 %, 8.4× smaller and 6.1× faster at inference than the best earlier ConvNet ✅[^12]. EfficientNets came out of a neural architecture search ✅[^15].
 9. **ConvNeXt's recipe:** a modern training recipe alone (AdamW, 300 instead of 90 epochs, augmentation) raised ResNet-50 from 76.1 % to 78.8 % ✅[^13]; then stage block counts (3, 4, 6, 3) → (3, 3, 9, 3), a 4 × 4 stride-4 "patchify" stem, depthwise convolution with width 96, an inverted bottleneck four times wider, a 7 × 7 depthwise kernel moved up, GELU (Gaussian error linear unit) instead of ReLU, fewer activations and norms, LayerNorm instead of BatchNorm, and separate downsampling layers ✅[^13]. It is built entirely from standard ConvNet modules ✅[^13].
 
@@ -193,7 +193,7 @@ Reading it, block by block:
 | Fewer multiply-adds, not proportionally faster | 8.4× fewer MACs, 5.5–7.5× faster on CPU | Lab, two runs ✅[^16] |
 | Same architecture, new training recipe | ResNet-50 76.13 % (V1 weights) vs 80.858 % (V2) | torchvision table ✅[^14]; ConvNeXt's +2.7 points from the recipe alone ✅[^13] |
 | `groups=in_channels` with `out_channels = K·in_channels` | Depthwise convolution with multiplier `K` | Documented ✅[^17] |
-| Dense head on a big feature map | Most parameters end up there (VGG-16: 89.4 %) | Lab ✅[^16]; AlexNet's last two dense layers 164 MB ✅[^2]; global average pooling avoids it ✅[^5] |
+| Dense head on a big feature map | Most parameters end up there (VGG-16: 89.4 %) | Lab ✅[^16]; AlexNet's last two dense layers 164 MB ✅[^2]; GoogLeNet's head instead uses global average pooling, shrinking each channel to 1 × 1 before one dense layer ✅[^5] |
 | DenseNet without transition layers | Channel count keeps growing | Every block adds `k` per layer ✅[^8] ✅[^9] |
 | ReLU after the narrow projection in an inverted residual | Information is lost | Hence the linear bottleneck ✅[^11] |
 | Scaling only depth, or only width | Not what EfficientNet recommends | Compound scaling ties the three ✅[^12] |
@@ -202,7 +202,7 @@ Reading it, block by block:
 ## Trade-offs
 | Option | Gains | Costs |
 |---|---|---|
-| VGG-style plain 3 × 3 stacks | Simple, uniform blocks ✅[^3] | 138.4 M params, 15.47 GFLOPS ✅[^14] |
+| VGG-style plain 3 × 3 stacks | Reusable blocks; a whole family of similarly parametrized models ✅[^3] | 138.4 M params, 15.47 GFLOPS ✅[^14] |
 | Bottleneck blocks | Wide features at basic-block cost ✅[^7]; lab ✅[^16] | More layers per block |
 | Depthwise-separable convolutions | `1/N + 1/D_K²` of the cost ✅[^10] | Small accuracy loss ✅[^10]; speedup below the MAC ratio on CPU ✅[^16] |
 | DenseNet concatenation | Feature reuse, fewer parameters ✅[^9] | Channels grow; needs transitions ✅[^8] |
@@ -219,11 +219,11 @@ Reading it, block by block:
 - Verified: 86 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
-- [LeNet (Dive into Deep Learning, 7.6)](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html) — Zhang, Lipton, Li, Smola, living. Backs: LeNet-5 layout, handwritten digits, ATM use. [^1]
-- [AlexNet (Dive into Deep Learning, 8.1)](https://d2l.ai/chapter_convolutional-modern/alexnet.html) — Zhang, Lipton, Li, Smola, living. Backs: ImageNet 2012 win, 8 layers, 11 × 11 stride 4, ReLU, dropout, augmentation, two GPUs, 164 MB in the last two hidden layers. [^2]
-- [Networks Using Blocks (VGG) (Dive into Deep Learning, 8.2)](https://d2l.ai/chapter_convolutional-modern/vgg.html) — Zhang, Lipton, Li, Smola, living. Backs: VGG block, deep and narrow, two 3 × 3 vs one 5 × 5, parameter comparison. [^3]
+- [Convolutional Neural Networks (LeNet) (Dive into Deep Learning, 7.6)](https://d2l.ai/chapter_convolutional-neural-networks/lenet.html) — Zhang, Lipton, Li, Smola, living. Backs: LeNet-5 layout, handwritten digits, ATM use. [^1]
+- [Deep Convolutional Neural Networks (AlexNet) (Dive into Deep Learning, 8.1)](https://d2l.ai/chapter_convolutional-modern/alexnet.html) — Zhang, Lipton, Li, Smola, living. Backs: ImageNet 2012 win, 8 layers, 11 × 11 stride 4, ReLU, dropout, augmentation, two GPUs, 164 MB in the last two hidden layers. [^2]
+- [Networks Using Blocks (VGG) (Dive into Deep Learning, 8.2)](https://d2l.ai/chapter_convolutional-modern/vgg.html) — Zhang, Lipton, Li, Smola, living. Backs: VGG block, deep and narrow, two 3 × 3 vs one 5 × 5, parameter comparison, a family of similarly parametrized models. [^3]
 - [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/abs/1409.1556) — Simonyan, Zisserman, 2014 (full text read on ar5iv). Backs: 3 × 3 filters with stride 1 and padding 1, 2 × 2 max pooling, configurations of 11–19 weight layers (C with 1 × 1 layers), 16–19 layers best, deep 3 × 3 net beating a shallow 5 × 5 one. [^4]
-- [Multi-Branch Networks (GoogLeNet) (Dive into Deep Learning, 8.4)](https://d2l.ai/chapter_convolutional-modern/googlenet.html) — Zhang, Lipton, Li, Smola, living. Backs: Inception branches, channel concatenation, 9 blocks, global average pooling, stem/body/head. [^5]
+- [Multi-Branch Networks (GoogLeNet) (Dive into Deep Learning, 8.4)](https://d2l.ai/chapter_convolutional-modern/googlenet.html) — Zhang, Lipton, Li, Smola, living. Backs: Inception branches, channel concatenation, 9 blocks, global average pooling to 1 × 1 per channel before the dense output layer, stem/body/head. [^5]
 - [Going Deeper with Convolutions](https://ar5iv.labs.arxiv.org/html/1409.4842) — Szegedy et al., 2014. Backs: 1 × 1 convolutions as dimension reduction, 1.5 billion multiply-adds budget, 12 times fewer parameters than AlexNet. [^6]
 - [Deep Residual Learning for Image Recognition](https://ar5iv.labs.arxiv.org/html/1512.03385) — He, Zhang, Ren, Sun, 2015. Backs: bottleneck design and its similar complexity, ResNet-50 3.8 billion and ResNet-152 11.3 billion FLOPs vs VGG, FLOPs as multiply-adds. [^7]
 - [Densely Connected Networks (DenseNet) (Dive into Deep Learning, 8.7)](https://d2l.ai/chapter_convolutional-modern/densenet.html) — Zhang, Lipton, Li, Smola, living. Backs: concatenation, dense blocks, transition layers, growing channels. [^8]
@@ -235,7 +235,7 @@ Reading it, block by block:
 - [Models and pre-trained weights (torchvision)](https://docs.pytorch.org/vision/stable/models.html) — PyTorch, living (read 2026-11-24). Backs: Acc@1, Params and GFLOPS of every model in the lineage table, ResNet-50 V1 vs V2 weights. [^14]
 - [Designing Convolution Network Architectures (Dive into Deep Learning, 8.8)](https://d2l.ai/chapter_convolutional-modern/cnn-design.html) — Zhang, Lipton, Li, Smola, living. Backs: EfficientNet from architecture search, RegNet bottleneck ratio 1, ViT ideas backported at higher cost. [^15]
 - `machine-learning/lab-setup.md` — the lab where the standard vs depthwise-separable layer, the residual blocks and the VGG-16 / ResNet-50 / MobileNet v1 counts ran on 2026-11-24 (script: `mllab/modern-cnn-architectures/lab.py`). [^16]
-- [torch.nn.Conv2d](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html) — PyTorch, 2026 (2.15). Backs: `groups=in_channels` and depthwise convolution with multiplier `K`. [^17]
+- [Conv2d](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Conv2d.html) — PyTorch, 2026 (2.15). Backs: `groups=in_channels` and depthwise convolution with multiplier `K`. [^17]
 
 ## Related
 - `machine-learning/deep-learning/convolutional-networks.md` — convolution, output sizes, pooling, receptive field and the basic residual block this lineage builds on.

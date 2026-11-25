@@ -40,7 +40,7 @@ sample std: xavier_normal_ 0.0623  kaiming_normal_(relu) 0.0884  calculate_gain(
 |---|---|---|---|
 | Sigmoid | `σ(z) = 1/(1 + e^(−z))`, range (0, 1) | `σ(z)·(1 − σ(z))`, at most 0.25 at `z = 0` | Gradient vanishes for large positive and negative inputs ✅[^1] |
 | tanh | `(1 − e^(−2z))/(1 + e^(−2z))`, range (−1, 1) | `1 − tanh²(z)` | Symmetric about the origin; derivative → 0 away from 0 ✅[^1] |
-| ReLU (rectified linear unit) | `max(z, 0)` | 0 for `z < 0`, 1 for `z > 0` | Derivatives "vanish or let the argument through", which mitigated vanishing gradients ✅[^1] |
+| ReLU (rectified linear unit) | `max(z, 0)` | 0 for `z < 0`, 1 for `z > 0` | Derivatives either vanish or let the argument through, which mitigated vanishing gradients ✅[^1] |
 | GELU (Gaussian error linear unit) | `z·Φ(z)`, `Φ` = standard normal CDF (cumulative distribution function) | smooth everywhere | Weights inputs by their value instead of gating by sign; non-convex, non-monotonic, equal to ReLU asymptotically ✅[^3] |
 
 - Sigmoid has largely been replaced by ReLU in hidden layers; it is still widely used on output units that are read as a binary probability ✅[^1].
@@ -161,8 +161,8 @@ Reading it, row by row:
 ## Trade-offs
 | Option | Gains | Costs |
 |---|---|---|
-| Sigmoid / tanh hidden layers | Bounded outputs; tanh is symmetric about the origin ✅[^1] | Saturate; gradients vanish in deep stacks ✅[^2] |
-| ReLU | Derivative 0 or 1; mitigated vanishing gradients ✅[^1] | Zero gradient for negative inputs ✅[^1]; needs He scaling ✅[^6] |
+| Sigmoid / tanh hidden layers | Bounded outputs; tanh is symmetric about the origin ✅[^1] | Saturate: derivatives near 0 for large inputs ✅[^1]; sigmoid gradients vanish in deep stacks ✅[^2] |
+| ReLU | Derivative 0 or 1; mitigated vanishing gradients ✅[^1] | Zero gradient for negative inputs ✅[^1]; a 30-layer ReLU stack stalls with Xavier and converges with He ✅[^6] |
 | GELU | Matched or exceeded ReLU and ELU (exponential linear unit) across the vision, language and speech recognition tasks in its paper ✅[^3] | Needs `Φ` or a close approximation, which the authors call important ✅[^3] |
 | Xavier init | Balances forward and backward variance for near-linear activations ✅[^2] | Shrinks ReLU signals by `1/√2` per layer ✅[^6] |
 | He init | Keeps ReLU variance constant; makes a 30-layer ReLU net converge where Xavier stalls ✅[^6] | Designed for rectifiers; other activations need their own gain ✅[^5] |
@@ -174,7 +174,7 @@ Reading it, row by row:
 - Depth multiplies small errors in scale: a factor of 0.16 or 2 per layer is fatal over 50 layers, so normalize inputs as well.
 
 ## Verification status
-- Verified: 54 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 55 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Multilayer Perceptrons (Dive into Deep Learning, 5.1)](https://d2l.ai/chapter_multilayer-perceptrons/mlp.html) — Zhang, Lipton, Li, Smola, living. Backs: sigmoid, tanh, ReLU formulas and derivatives, sigmoid's maximum derivative 0.25, ReLU mitigating vanishing gradients, sigmoid replaced in hidden layers. [^1]

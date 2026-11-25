@@ -40,11 +40,11 @@ model.train()
 ### 1. Data: `Dataset` and `DataLoader`
 1. A map-style dataset is any object with `__getitem__()` and `__len__()` ✅[^3]: `dataset[i]` returns one `(input, label)` pair. Example: `TableDataset(X, y)[5]` returns `(X[5], y[5])`, so input and label can never drift apart.
 2. `DataLoader` groups samples into batches; its default `batch_size` is 1, and the default collate function adds a new first dimension, the batch dimension ✅[^3]. Example: 32 samples of shape `(10,)` become one tensor `(32, 10)`.
-3. `shuffle` defaults to `False`; with `True` the data is reshuffled every epoch ✅[^3]. Shuffle the training loader, not the validation loader (its order does not matter for an average). Passing a seeded `generator` fixes the order the sampler draws ✅[^3].
+3. `shuffle` defaults to `False`; with `True` the data is reshuffled every epoch ✅[^3]. Shuffle the training loader, not the validation loader (its order does not matter for an average). The `generator` argument is the random number generator the `RandomSampler` draws its indexes from, so a seeded one fixes the shuffle order ✅[^3].
 4. `drop_last=True` drops the last, smaller batch when the dataset size is not divisible by the batch size; the default is `False` ✅[^3].
 
 ### 2. One training step
-1. **`optimizer.zero_grad()`** resets the gradients. Its default `set_to_none=True` sets each `.grad` to `None` rather than to zeros, which uses less memory; a parameter whose `.grad` is `None` is skipped by the optimizer, while a zero gradient still takes a step ✅[^2].
+1. **`optimizer.zero_grad()`** resets the gradients. Its default `set_to_none=True` sets each `.grad` to `None` rather than to zeros, which in general has a lower memory footprint; a parameter whose `.grad` is `None` is skipped by the optimizer, while a zero gradient still takes a step ✅[^2].
 2. **Forward and loss.** `CrossEntropyLoss` expects unnormalized logits for each class, and for class-index targets it equals `LogSoftmax` followed by `NLLLoss`; targets are class indices in `[0, C)` ✅[^4]. Its default `reduction` is `'mean'` ✅[^4], so the printed loss is a batch average.
 3. **`loss.backward()`** adds the new gradients into `.grad`; without step 1 they pile up. In the lab, three `backward()` calls on the same batch give gradient norms 0.0958, 0.1916, 0.2874, exactly 1×, 2× and 3× ✅[^10].
 4. **`optimizer.step()`** updates the weights from `.grad` ✅[^1].
@@ -52,7 +52,7 @@ model.train()
 ### 3. Modes: `train()`, `eval()` and `no_grad()`
 1. `model.eval()` is the same as `model.train(False)` and only changes modules that behave differently in the two modes, such as `Dropout` and `BatchNorm` ✅[^5].
 2. `torch.no_grad()` stops gradient recording: every result has `requires_grad=False`, which saves memory, and it is meant for inference when you will not call `backward()` ✅[^6].
-3. They are independent: `eval()` does not stop gradient recording, and `no_grad()` does not switch dropout off. Validation needs both, and training must switch back with `model.train()` ✅[^7].
+3. They are independent: `eval()` does not stop gradient recording, and `no_grad()` does not switch dropout off. Validation needs both, and training must switch back with `model.train()` ✅[^11].
 
 ### 4. Saving and loading
 1. A `state_dict` is a Python dictionary from each layer to its parameter tensors; optimizers have one too, holding their state and hyperparameters ✅[^7]. Saving the model's `state_dict` is the recommended way to save a model for inference ✅[^7].
@@ -71,7 +71,7 @@ model.train()
 ### 6. Reading loss curves
 | Pattern | Diagnosis | First fix |
 |---|---|---|
-| Train and validation loss both high, close together | Underfitting: capacity too low, CS231n's reading of a validation curve that tracks the training curve closely ✅[^9]. Lab linear model: train 1.001, val 0.923 after 100 epochs ✅[^10] | Bigger model ✅[^9] |
+| Train and validation loss both high, close together | Underfitting: capacity too low, CS231n's reading when validation accuracy tracks training accuracy fairly well ✅[^9]. Lab linear model: train 1.001, val 0.923 after 100 epochs ✅[^10] | Bigger model ✅[^9] |
 | Train loss keeps falling, validation loss turns up | Overfitting: the gap between training and validation accuracy measures it, and validation accuracy can even start to fall ✅[^9]. Lab MLP: val lowest at epoch 12 (0.540), 1.399 at epoch 300 while train reaches 0.000 ✅[^10] | More regularization or more data ✅[^9]; early stopping (below) |
 | Loss falls slowly, in a roughly straight line | Learning rate too low: the improvements are linear ✅[^9]. Lab SGD `lr=1e-4`: 1.396 → 1.393 in 30 epochs, barely moving ✅[^10] | Raise the learning rate |
 | Loss drops fast, then stalls at a poor value | Learning rate too high: the parameters bounce around and cannot settle ✅[^9]. Lab SGD `lr=3`: 1.549 → 1.259, accuracy 0.450 vs 0.698 at `lr=0.1` ✅[^10] | Lower it |
@@ -265,13 +265,13 @@ Reading it:
 |---|---|---|
 | `zero_grad()` forgotten | Training loss 0.898 instead of 0.327 in the lab; gradient norm grows 1×, 2×, 3× on repeated `backward()` | `.grad` accumulates ✅[^10] |
 | Softmax (or `LogSoftmax`) before `CrossEntropyLoss` | Loss floor 0.7437 for 4 classes; slow learning | The loss expects logits and applies log-softmax itself ✅[^4]; lab ✅[^10] |
-| Validation in train mode | Noisy, worse validation loss; batch norm statistics updated with validation data | Modes are manual ✅[^5]; lab ✅[^10] |
+| Validation in train mode | Noisy, worse validation loss; batch norm statistics updated with validation data | Modes are manual: calling `eval()` is what avoids updating BatchNorm running statistics on validation data ✅[^11]; lab ✅[^10] |
 | Inputs shuffled without labels | Validation accuracy at chance (0.232) | Labels no longer match inputs; lab ✅[^10]. Shuffle with a `Dataset` that returns `(x[i], y[i])` together ✅[^3] |
 | Resume without optimizer state | Different weights than an uninterrupted run | Optimizer `state_dict` holds its state ✅[^7]; lab ✅[^10] |
-| `load_state_dict` after renaming layers | Loading fails with `strict=True`; keys silently skipped with `strict=False` (listed in the returned `missing_keys` / `unexpected_keys`) | `strict=True` requires an exact key match; the returned key lists ✅[^5] |
+| `load_state_dict` after renaming layers | Loading fails with `strict=True`; with `strict=False` the mismatched keys are not loaded and come back in the returned `missing_keys` / `unexpected_keys` | `strict=True` requires an exact key match and throws an error when either key list is non-empty; the returned key lists ✅[^5] |
 | `torch.load` of a checkpoint with custom Python objects | Fails under `weights_only=True` | Unpickler restricted by default ✅[^8] |
 | Last batch smaller than the others | Batch-mean losses averaged per batch over-weight it | Use `drop_last=True` ✅[^3], or weight by batch size as the lab does |
-| Loss is `nan` | Every later step is `nan` too, and accuracy is meaningless | Lab ✅[^10]; lower the learning rate first ✅[^9] |
+| Loss is `nan` | Every later step is `nan` too, and accuracy is meaningless | Lab ✅[^10]; suspect the learning rate first: in CS231n's cartoon a very high one makes the loss climb, and some settings explode with infinite cost ✅[^9] |
 | Accuracy improves but loss is odd | A bug can hide behind a fine accuracy (softmax case) | Lab ✅[^10]; always compare the loss with `ln C` and its floor |
 
 ## Takeaways
@@ -289,12 +289,13 @@ Reading it:
 - [torch.optim.Optimizer.zero_grad](https://docs.pytorch.org/docs/2.15/generated/torch.optim.Optimizer.zero_grad.html) — PyTorch, 2026 (2.15). Backs: `set_to_none=True` default, `None` vs zero gradients. [^2]
 - [torch.utils.data](https://docs.pytorch.org/docs/2.15/data.html) — PyTorch, 2026 (2.15). Backs: map-style dataset, `batch_size`, `shuffle`, `drop_last`, `generator`, default collate. [^3]
 - [torch.nn.CrossEntropyLoss](https://docs.pytorch.org/docs/2.15/generated/torch.nn.CrossEntropyLoss.html) — PyTorch, 2026 (2.15). Backs: unnormalized logits, `LogSoftmax` + `NLLLoss`, class-index targets, `reduction='mean'`. [^4]
-- [torch.nn.Module](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Module.html) — PyTorch, 2026 (2.15). Backs: `eval()` = `train(False)` and which modules it affects, `load_state_dict` `strict` and returned keys. [^5]
+- [torch.nn.Module](https://docs.pytorch.org/docs/2.15/generated/torch.nn.Module.html) — PyTorch, 2026 (2.15). Backs: `eval()` = `train(False)` and which modules it affects, `load_state_dict` `strict`, the error on non-empty key lists and the returned keys. [^5]
 - [torch.no_grad](https://docs.pytorch.org/docs/2.15/generated/torch.no_grad.html) — PyTorch, 2026 (2.15). Backs: disables gradient calculation, memory, `requires_grad=False` results. [^6]
-- [Saving and Loading Models](https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html) — PyTorch tutorials, living. Backs: `state_dict`, optimizer `state_dict`, recommended save, general checkpoint keys, file extensions, dict not path, `eval()`/`train()` after loading. [^7]
+- [Saving and Loading Models](https://docs.pytorch.org/tutorials/beginner/saving_loading_models.html) — Matthew Inkawhich, PyTorch tutorials, living. Backs: `state_dict`, optimizer `state_dict`, recommended save, general checkpoint keys, file extensions, dict not path, `eval()`/`train()` after loading. [^7]
 - [torch.load](https://docs.pytorch.org/docs/2.15/generated/torch.load.html) — PyTorch, 2026 (2.15). Backs: `weights_only=True` default, untrusted-source warning, `map_location`. [^8]
 - [CS231n: Neural Networks Part 3 (Learning and Evaluation)](https://cs231n.github.io/neural-networks-3/) — Stanford CS231n course notes, living. Backs: initial loss 2.302 for 10 classes, overfit ~20 examples, centred differences in double precision, loss-curve shapes for learning rates (the `learningrates.jpeg` cartoon), train/validation accuracy gap and underfitting (`accuracies.jpeg` and its text), noise vs batch size, explosion. [^9]
 - `machine-learning/lab-setup.md` — the lab where the training-loop script ran on 2026-11-25 (PyTorch 2.15.0, CPU); script at `mllab/training-loop-and-debugging/lab.py`. [^10]
+- [Autograd mechanics](https://docs.pytorch.org/docs/2.15/notes/autograd.html) — PyTorch, 2026 (2.15). Backs: `eval()` is orthogonal to no-grad mode, calling `model.train()` / `model.eval()` is the user's job, BatchNorm running statistics on validation data. [^11]
 
 ## Related
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — what `backward()` computes; `gradcheck`.

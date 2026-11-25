@@ -1,0 +1,49 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	Sec 5.3 intro: "Before automatic differentiation, even small changes to complicated models required recalculating complicated derivatives by hand"; papers allocated numerous pages to update rules	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+2	6	lab	LAB-OK	Worked example script: num = (f(Wp) - f(Wm)) / (2*eps) with Wp = W1 + eps, Wm = W1 - eps	lab
+3	6	lab	LAB-OK	Artifact output: linear and 2-linear final MSE=0.2500, outputs 0.500; tanh MLP MSE=0.0000, outputs 0 1 1 0	lab
+4	3	source	OK	Sec 6.1: "After solving the normal equations, we obtain w=0 and b=1/2"; "outputs 0.5 everywhere"	https://www.deeplearningbook.org/contents/mlp.html
+5	2	source	FIXED	Sec 5.1.1.3: "An affine function of an affine function is itself an affine function" (was "linear")	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+6	2	source	OK	Sec 5.1.1.3: X has n examples with "d inputs (features)", W(1) d×h, b(1) 1×h; activations apply elementwise	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+7	2	source	OK	Sec 5.1.1.3: "we can continue stacking such hidden layers", H(1) = σ1(XW(1)+b(1)), H(2) = σ2(H(1)W(2)+b(2))	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+8	2	source	OK	Sec 5.1.1.3 Eq. 5.1.2: (XW(1)+b(1))W(2)+b(2) = XW(1)W(2)+b(1)W(2)+b(2) = XW+b	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+9	6	lab	LAB-OK	Artifact output line 2: "2 linear 2->8->1 (no act) final MSE=0.2500"	lab
+10	2	source	FIXED	Sec 5.1.1.4: "approximate many functions much more compactly by using deeper (rather than wider) networks" (was "represent")	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+11	1	source	OK	Sec 5.3.1: "calculation and storage of intermediate variables (including outputs)"; "in order from the input layer to the output layer"	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+12	1	source	OK	Sec 5.3.2 Fig. 5.3.1: "squares denote variables and circles denote operators"; arrows illustrate data flow, input lower-left to output	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+13	1	source	OK	Sec 5.3.3: traverses "in reverse order, from the output to the input layer"; stores partial derivatives	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+14	1	source	FIXED	Sec 5.3.3 Eq. 5.3.8-5.3.9: "The first step" is ∂J/∂L = 1; "Next" the gradient with respect to o	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+15	1	source	OK	Sec 5.3.3 Eq. 5.3.11: ∂J/∂W(2) = ∂J/∂o hᵀ + λW(2); Eq. 5.3.12: ∂J/∂h = W(2)ᵀ ∂J/∂o; Eq. 5.3.5 L2 term s	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+16	1	source	OK	Sec 5.3.3 Eq. 5.3.13: ∂J/∂z = ∂J/∂h ⊙ φ'(z), "the elementwise multiplication operator"	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+17	2	source	OK	Sec 5.1.2.3 Eq. 5.1.9: "The derivative of the tanh function is" 1 − tanh²(x)	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+18	2	source	OK	Sec 5.1.2.1: "When the input is negative, the derivative of the ReLU function is 0"; positive gives 1	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+19	7	source	FIXED	Sec 9.7 intro: "The gradient with respect to each parameter must be summed across all places" (was "value")	https://d2l.ai/chapter_recurrent-neural-networks/bptt.html
+20	6	lab	LAB-OK	Worked example output: "b1 (5,) max|hand - autograd| = 0.0e+00"	lab
+21	1	source	OK	Sec 5.3.4: "training requires significantly more memory than plain prediction"; size proportional to layers and batch size	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+22	3	source	OK	Sec 6.5.9: single output node, constant-cost partials: gradient computations "of the same order as the number of computations for the forward computation"	https://www.deeplearningbook.org/contents/mlp.html
+23	3	source	OK	Sec 6.5.9: "When the number of outputs of the graph is larger than the number of inputs"... forward mode sometimes preferable	https://www.deeplearningbook.org/contents/mlp.html
+24	4	source	OK	How autograd encodes the history: "Autograd is a reverse automatic differentiation system"; DAG leaves inputs, roots outputs; grad_fn entry point	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+25	4	source	OK	How autograd encodes the history: "the graph is recreated from scratch at every iteration"; arbitrary Python control flow	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+26	4	source	OK	Saved tensors: y = x.pow(2); "y.grad_fn._saved_self refers to the same Tensor object as x"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+27	4	source	OK	Setting requires_grad: "defaulting to false unless wrapped in a nn.Parameter"; recorded only if an input requires grad; leaf accumulation	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+28	4	source	OK	Setting requires_grad: "simply apply .requires_grad_(False) to the parameters that you don't want updated"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+29	4	source	FIXED	Grad Modes, Inference Mode: "the extreme version of no-grad mode"; "e.g., data processing and model evaluation" (was "skips extra tracking")	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+30	6	lab	LAB-OK	Worked example output block: loss 2.214582 in both, max diffs at most 1.1e-16, gradcheck True	lab
+31	5	source	OK	"Check gradients computed via small finite differences against analytical gradients"; note: "default values are designed for input of double precision"	https://docs.pytorch.org/docs/2.15/generated/torch.autograd.gradcheck.gradcheck.html
+32	4	source	OK	Setting requires_grad: "only leaf tensors with requires_grad=True will have gradients accumulated into their .grad fields"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+33	4	source	OK	Setting requires_grad: backward has gradients "accumulated into their .grad fields"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+34	2	source	OK	Sec 5.1.1.3: "An affine function of an affine function is itself an affine function"	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+35	6	lab	LAB-OK	Artifact output line 2: 2 linear (no act) outputs "0.500 0.500 0.500 0.500"	lab
+36	2	source	OK	Sec 5.1.2.1: "we default to the left-hand-side derivative and say that the derivative is 0"	https://d2l.ai/chapter_multilayer-perceptrons/mlp.html
+37	4	source	OK	Gradients for non-differentiable functions (relu at 0 named): "If the function is convex (at least locally), use a subgradient of minimum norm"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+38	4	source	OK	Division by Zero in Autograd: "print(x.grad) # [nan, 1], not [0, 1]"; advice "Mask before division"	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+39	5	source	OK	Note: "This check will likely fail if input is of less precision, e.g., FloatTensor"	https://docs.pytorch.org/docs/2.15/generated/torch.autograd.gradcheck.gradcheck.html
+40	5	source	OK	Note: "Gradcheck may fail when evaluated on non-differentiable points"; finite differencing may differ from analytical	https://docs.pytorch.org/docs/2.15/generated/torch.autograd.gradcheck.gradcheck.html
+41	4	source	OK	Evaluation Mode: "module.eval() ... are completely orthogonal to no-grad mode and inference mode"; Dropout, BatchNorm2d	https://docs.pytorch.org/docs/2.15/notes/autograd.html
+42	1	source	OK	Sec 5.3.4: "roughly proportional to the number of network layers and the batch size"	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+43	1	source	OK	Sec 5.3 intro: "required recalculating complicated derivatives by hand"	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+44	6	lab	LAB-OK	Worked example output: "dL/dW1[0,0]: hand=-0.096588350 finite-difference=-0.096588350"; script calls f twice	lab
+45	3	source	FIXED	Sec 6.5.9: "single output node" and constant-cost partials give work of the same order as forward (condition added)	https://www.deeplearningbook.org/contents/mlp.html
+46	1	source	OK	Sec 5.3.4: "we need to retain the intermediate values until backpropagation is complete"	https://d2l.ai/chapter_multilayer-perceptrons/backprop.html
+47	3	source	OK	Sec 6.5.9: "it is sometimes preferable to use another form of automatic differentiation called forward mode accumulation"	https://www.deeplearningbook.org/contents/mlp.html
+48	3	source	OK	Sec 6.5.9: single output, many inputs; multiplying from the left "makes the whole computation much more expensive"	https://www.deeplearningbook.org/contents/mlp.html

@@ -1,0 +1,68 @@
+n	label	kind	verdict	evidence	source
+1	1	source	OK	§1 and §4.1-4.2: perturbation found by optimizing input to maximize prediction error; box-constrained L-BFGS minimizing ||r||2 s.t. f(x+r)=l; MNIST split into two disjoint 30000-case sets; 'remain hard ... although their effectiveness decreases considerably'	https://arxiv.org/pdf/1312.6199
+2	7	lab	LAB-OK	Worked example output, standard-training table: eps 0.00 PGD-20 0.953; eps 0.40 random 0.944, PGD-20 0.130	lab
+3	7	lab	LAB-OK	Artifact rows 0.00/0.10/0.20/0.40 equal the same rows of the Worked example first table	lab
+4	8	source	OK	§2.2: threat model 'is an integral component of the defense itself'; 'adversary's goals, knowledge, and capabilities'	https://arxiv.org/pdf/1902.06705
+5	8	source	OK	§2.2.1: goal 'to simply cause misclassification' or a 'targeted attack' into a target class of their choice	https://arxiv.org/pdf/1902.06705
+6	8	source	FIXED	§2.2.2: 'A common choice for D, especially for ... image classification' is the lp-norm	https://arxiv.org/pdf/1902.06705
+7	8	source	FIXED	§2.2.2: l-inf constraint means adversary 'cannot modify any individual pixel by more than eps'; §4.8: 'on CIFAR-10 or ImageNet with a maximum l-inf distortion of 8/255'	https://arxiv.org/pdf/1902.06705
+8	8	source	OK	§2.2.2 comment: lp threat model 'is highly limited and does not perfectly match real-world threats'	https://arxiv.org/pdf/1902.06705
+9	8	source	FIXED	§2.2.3: white-box 'complete knowledge of the model and its parameters'; black-box 'no knowledge of the model' with queries, probabilities or training data	https://arxiv.org/pdf/1902.06705
+10	8	source	OK	§2.2.3: Kerckhoffs' principle; white-box evaluations imply 'robustness to black-box adversaries, but not the other way around'	https://arxiv.org/pdf/1902.06705
+11	8	source	FIXED	§4.5: 'transfer attacks can be performed by considering an alternative, substitute model'; examples 'then be used to attack the target model'	https://arxiv.org/pdf/1902.06705
+12	2	source	FIXED	§8: 'an example generated for one model is often misclassified by other models'; also different architectures or disjoint training sets	https://arxiv.org/pdf/1412.6572
+13	2	source	OK	Abstract: 'the primary cause of neural networks' vulnerability to adversarial perturbation is their linear nature'; §4 'too linear'	https://arxiv.org/pdf/1412.6572
+14	2	source	OK	§3: eta = sign(w), activation grows by eps*m*n; 'many infinitesimal changes to the input that add up to one large change'	https://arxiv.org/pdf/1412.6572
+15	2	source	FIXED	§6: zero-mean noise 'very inefficient'; 'expected dot product ... is zero'; 'essentially no effect rather than yielding a more difficult input'	https://arxiv.org/pdf/1412.6572
+16	7	lab	LAB-OK	Output eps 0.40 row: clean 0.953, random 0.944 (0.9 points), PGD-20 0.130 (82.3 points)	lab
+17	2	source	OK	§4: eta = eps sign(grad_x J(theta,x,y)), 'fast gradient sign method'; 'gradient can be computed efficiently using backpropagation'	https://arxiv.org/pdf/1412.6572
+18	2	source	OK	§4: eps = .25: 'a shallow softmax classifier to have an error rate of 99.9%' on MNIST	https://arxiv.org/pdf/1412.6572
+19	3	source	OK	§2.1: x^{t+1} = Proj_{x+S}(x^t + alpha sgn(grad_x L)); S is the l-inf ball around x, so projection clips each coordinate	https://arxiv.org/pdf/1706.06083
+20	3	source	OK	§5: PGD 'starting from a random perturbation around the natural example'; Table 1 evaluates with 20 restarts; §3 uses 10^5 restarts	https://arxiv.org/pdf/1706.06083
+21	3	source	OK	§1/§3.2: PGD as a universal first-order adversary; 'robustness against the PGD adversary yields robustness against all first-order adversaries' (conjecture)	https://arxiv.org/pdf/1706.06083
+22	3	source	OK	Table 1 (MNIST, eps=0.3): PGD 100 steps 20 restarts A 89.3%; Table 2 (CIFAR10, eps=8): PGD 20 A 45.8%	https://arxiv.org/pdf/1706.06083
+23	3	source	OK	Eq. 2.1: min_theta rho(theta), rho = E max_{delta in S} L(theta, x+delta, y), the saddle point problem	https://arxiv.org/pdf/1706.06083
+24	2	source	OK	§5: J~ = alpha J(theta,x,y) + (1-alpha) J(theta, x + eps sign(grad J)); 'In all of our experiments, we used alpha = 0.5'	https://arxiv.org/pdf/1412.6572
+25	3	source	OK	§4: robust classification 'requires a stronger classifier'; small-capacity PGD training 'converges to always predicting a fixed class'; Fig. 4(c) MNIST capacity 1-2 near 10%	https://arxiv.org/pdf/1706.06083
+26	4	source	OK	Abstract: 'there may exist an inherent tension between ... adversarial robustness and ... standard generalization'; robust classifiers learn 'fundamentally different feature representations'	https://arxiv.org/pdf/1805.12152
+27	4	source	OK	§2.1 eq. 3: x1=+y w.p. p, else -y; x2..xd+1 ~ N(eta y,1); favg '> 99% when eta >= 3/sqrt(d)'; eps >= 2 eta simulates the wrong class	https://arxiv.org/pdf/1805.12152
+28	4	source	OK	Theorem 2.1: accuracy at least 1-delta gives robust accuracy at most p/(1-p) delta against l-inf adversary with eps >= 2 eta	https://arxiv.org/pdf/1805.12152
+29	4	source	FIXED	§2 and Fig. 1: robust training acts as data augmentation with few samples, 'particularly on MNIST'; 'less pronounced for CIFAR-10 and restricted ImageNet'	https://arxiv.org/pdf/1805.12152
+30	5	source	OK	Abstract and §1: obfuscated gradients, 'a kind of gradient masking'; without a good gradient iterative attacks cannot succeed; defenses can be circumvented	https://arxiv.org/pdf/1802.00420
+31	5	source	OK	§1: three types: shattered (non-differentiable or numerical instability), stochastic (test-time randomness), vanishing/exploding	https://arxiv.org/pdf/1802.00420
+32	5	source	OK	§1: BPDA approximates the backward pass with a differentiable approximation; EOT for randomized defenses; 'reparameterization' for vanishing/exploding	https://arxiv.org/pdf/1802.00420
+33	5	source	OK	Abstract: ICLR 2018 non-certified white-box defenses, '7 of 9 defenses relying on obfuscated gradients'; 'circumvent 6 completely, and 1 partially'; §5 'Of the 9 accepted papers'	https://arxiv.org/pdf/1802.00420
+34	5	source	OK	§3.1: one-step better than iterative; black-box better than white-box; unbounded not 100%; random sampling finds examples; larger bound does not raise success	https://arxiv.org/pdf/1802.00420
+35	8	source	OK	§5.3: accuracy vs perturbation curves 'can help perform many of the sanity tests'; unbounded attack 'should eventually reach 100% success'	https://arxiv.org/pdf/1902.06705
+36	8	source	OK	§2.5: evaluation focuses on 'adaptive adversaries which are adapted to the specific details of the defense'	https://arxiv.org/pdf/1902.06705
+37	6	source	OK	§3 eq. 1: g returns the class f 'is most likely to return when x is perturbed by isotropic Gaussian noise' N(0, sigma^2 I)	https://arxiv.org/pdf/1902.02918
+38	6	source	OK	§3.1 Theorem 1: robust within l2 radius R = sigma/2 (Phi^-1(pA) - Phi^-1(pB)); Phi^-1 'inverse of the standard Gaussian CDF'	https://arxiv.org/pdf/1902.02918
+39	6	source	OK	§3.2: Monte Carlo PREDICT/CERTIFY; abstains otherwise; probability of a wrong answer bounded by alpha	https://arxiv.org/pdf/1902.02918
+40	6	source	OK	Abstract and Table 1: 'certified top-1 accuracy of 49%' at l2 norm less than 0.5; 'No certified defense has been shown feasible on ImageNet except for smoothing'	https://arxiv.org/pdf/1902.02918
+41	6	source	OK	§4: high sigma: 'larger radii can be certified, but smaller radii are certified at a lower accuracy'; Table 1 std acc 67/57/44 as sigma grows; Theorem 2: exactly an l2 ball	https://arxiv.org/pdf/1902.02918
+42	7	lab	LAB-OK	Worked example output block: standard-training table rows equal the Mental model artifact rows	lab
+43	4	source	OK	§2.1: training robustly leaves models 'unable to rely on such features'; Theorem 2.2: robust classifier has standard accuracy p	https://arxiv.org/pdf/1805.12152
+44	2	source	OK	§6: 'expected dot product between any reference vector and such a noise vector is zero'	https://arxiv.org/pdf/1412.6572
+45	7	lab	LAB-OK	Output eps 0.40 row: random +-eps 0.944	lab
+46	5	source	OK	§3.1: 'If single-step methods give performance superior to iterative methods' the iterative attack is likely stuck	https://arxiv.org/pdf/1802.00420
+47	5	source	FIXED	§3.1: 'With unbounded distortion, any classifier should have 0% robustness'; attack not performing optimally otherwise	https://arxiv.org/pdf/1802.00420
+48	8	source	FIXED	§5.3: 'any attack should eventually reach 100% success'; otherwise 'the attack is being applied incorrectly'	https://arxiv.org/pdf/1902.06705
+49	5	source	OK	§1: shattered gradients from non-differentiable operations; addressed with Backward Pass Differentiable Approximation	https://arxiv.org/pdf/1802.00420
+50	5	source	OK	§1: stochastic gradients depend on test-time randomness; gradients computed with Expectation Over Transformation	https://arxiv.org/pdf/1802.00420
+51	8	source	OK	§2.2.3: white-box evaluation 'implies robustness to black-box adversaries, but not the other way around'	https://arxiv.org/pdf/1902.06705
+52	8	source	OK	§2.2.2: valid adversarial example if D(x,x') <= eps; 'a suitable choice of D and eps may vary significantly based on the particular task'	https://arxiv.org/pdf/1902.06705
+53	7	lab	LAB-OK	Output line: 'one PGD perturbation at eps=0.2: max |delta| = 0.200, L2 norm = 1.414'	lab
+54	4	source	OK	§2 Fig. 1: with few samples adversarial training 'has a positive effect on model generalization (especially on MNIST)'; acts as data augmentation	https://arxiv.org/pdf/1805.12152
+55	3	source	OK	§4 'Weak models may fail to learn non-trivial classifiers': converges to a fixed class; Fig. 4(c) MNIST: all accuracies near 10% at capacity 1-2	https://arxiv.org/pdf/1706.06083
+56	6	source	OK	§4: high sigma certifies larger radii, smaller radii at lower accuracy; Table 1 std acc falls with sigma; Theorem 2 l2 ball	https://arxiv.org/pdf/1902.02918
+57	2	source	OK	§4: FGSM needs one gradient, 'computed efficiently using backpropagation'	https://arxiv.org/pdf/1412.6572
+58	7	lab	LAB-OK	Output eps 0.40 row: FGSM 0.177, PGD-20 0.130	lab
+59	3	source	OK	§3: PGD as the 'ultimate' first-order adversary; restarts find similar loss values	https://arxiv.org/pdf/1706.06083
+60	3	source	OK	Tables 1-2: adversarially trained models keep 89.3% (MNIST eps 0.3) and 45.8% (CIFAR10 eps 8) at the trained eps	https://arxiv.org/pdf/1706.06083
+61	7	lab	LAB-OK	Second table: train eps 0.00 PGD eps=0.4 0.126; train eps 0.40 PGD eps=0.4 0.899	lab
+62	4	source	OK	§2: 'after some point adversarial training actually decreases the standard accuracy'	https://arxiv.org/pdf/1805.12152
+63	3	source	OK	§4: 'capacity is crucial for robustness, as well as for the ability to successfully train'	https://arxiv.org/pdf/1706.06083
+64	2	source	OK	Abstract: 'a simple and fast method of generating adversarial examples' used for adversarial training	https://arxiv.org/pdf/1412.6572
+65	3	source	OK	§4: FGSM-trained networks 'don't exhibit any kind of robustness against PGD adversaries' (large eps); PGD is 'a more powerful adversary'	https://arxiv.org/pdf/1706.06083
+66	6	source	OK	Abstract: 'certifiably robust to adversarial perturbations under the l2 norm'; only certified defense shown feasible on ImageNet	https://arxiv.org/pdf/1902.02918
+67	6	source	OK	§3.2: PREDICT runs n noise-corrupted copies through f, abstains otherwise; §4 n = 100,000 samples; Theorem 2 l2 ball	https://arxiv.org/pdf/1902.02918
