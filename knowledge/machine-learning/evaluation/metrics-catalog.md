@@ -198,3 +198,5 @@ print(len(names), "scorer names;", [n for n in ("matthews_corrcoef", "neg_log_lo
 - `algorithms/vector-search-evaluation.md` — recall and latency for nearest-neighbour retrieval.
 - `machine-learning/supervised-learning/generalized-linear-models.md` — deviance for Poisson, Gamma and Tweedie models.
 - `machine-learning/foundations/information-theory.md` — mutual information and log loss as cross-entropy.
+- `machine-learning/supervised-learning/survival-analysis.md` — the concordance index (C-index) for censored time-to-event data.
+- `machine-learning/recommender-systems/learning-to-rank.md` — optimizing NDCG directly (LambdaRank).

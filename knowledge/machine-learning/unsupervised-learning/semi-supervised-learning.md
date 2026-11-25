@@ -265,3 +265,4 @@ Reading it, line by line:
 - `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md` — learning from unlabelled data without any labels.
 - `machine-learning/deep-learning/data-augmentation-and-transfer-learning.md` — the augmentations consistency methods need, and the transfer-learning baseline.
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — tuning with few labelled rows.
+- `machine-learning/data-and-features/weak-supervision.md` — programmatic noisy labels instead of a few clean ones.

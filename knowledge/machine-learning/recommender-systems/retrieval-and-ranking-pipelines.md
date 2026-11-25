@@ -273,3 +273,4 @@ Reading it:
 - `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md` — what retraining on the pipeline's own logs does to exposure and utility.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — monitoring what the model is shown and serves over time.
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — exploration for new and uncertain items.
+- `machine-learning/recommender-systems/learning-to-rank.md` — training the scoring model with ranking losses.

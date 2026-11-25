@@ -337,3 +337,4 @@ Reading it:
 - `machine-learning/unsupervised-learning/active-learning.md` — the same pick-the-most-informative-query loop, for labels.
 - `machine-learning/supervised-learning/support-vector-machines.md` — what `C` and `gamma` do in the lab's search.
 - `machine-learning/probabilistic-ml/bayesian-inference.md` — priors, posteriors and MAP estimates.
+- `machine-learning/deep-learning/neural-architecture-search-and-automl.md` — architecture search and AutoML systems built on these searches.

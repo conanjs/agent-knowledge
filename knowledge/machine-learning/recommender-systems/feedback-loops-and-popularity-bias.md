@@ -193,3 +193,4 @@ Reading it:
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — exploration policies that keep collecting information about uncertain items.
 - `machine-learning/causal-inference/causal-graphs-and-confounding.md` — confounders and why conditioning on the right variables matters.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — monitoring what the model serves over time.
+- `machine-learning/recommender-systems/learning-to-rank.md` — inverse propensity scoring for position-biased clicks.

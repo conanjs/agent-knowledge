@@ -204,3 +204,4 @@ Reading it:
 - `machine-learning/generative-models/generative-adversarial-networks.md` — the adversarial alternative diffusion replaced for image quality.
 - `machine-learning/transformers/attention-and-the-transformer.md` — cross-attention, used for text conditioning.
 - `machine-learning/deep-learning/optimizers-and-learning-rate-schedules.md` — the Adam optimizer used to train the denoiser.
+- `machine-learning/generative-models/energy-based-models.md` — score matching and Langevin sampling.

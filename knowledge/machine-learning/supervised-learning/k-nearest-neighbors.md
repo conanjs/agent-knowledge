@@ -204,3 +204,4 @@ Reading it line by line:
 - `machine-learning/unsupervised-learning/principal-component-analysis.md` — reducing dimensions before a distance-based model.
 - `algorithms/vector-search-evaluation.md` — nearest-neighbour search at scale and how its recall is measured.
 - `machine-learning/supervised-learning/support-vector-machines.md` — the RBF kernel, another model built on distances between points.
+- `machine-learning/deep-learning/metric-learning.md` — learning the distance that k-NN uses.

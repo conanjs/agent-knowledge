@@ -249,3 +249,4 @@ Reading it, line by line:
 - `machine-learning/foundations/regularization.md` — what the `alpha` penalty does.
 - `machine-learning/evaluation/metrics-catalog.md` — deviance and D² metrics next to the others.
 - `machine-learning/supervised-learning/tree-ensembles.md` — gradient boosting with a Poisson loss.
+- `machine-learning/supervised-learning/survival-analysis.md` — exponential survival as a Poisson fit with exposure, and the Cox model.

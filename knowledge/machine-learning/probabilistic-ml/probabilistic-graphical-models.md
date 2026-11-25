@@ -346,3 +346,5 @@ Reading it, section by section:
 - `machine-learning/probabilistic-ml/variational-inference.md` — inference as optimization, the other approximate route.
 - `machine-learning/unsupervised-learning/gaussian-mixtures-and-em.md` — fitting a model with hidden variables by EM.
 - `machine-learning/deep-learning/graph-neural-networks.md` — neural networks that pass learned messages along a graph's edges.
+- `machine-learning/data-and-features/weak-supervision.md` — a label model as a graphical model fitted by EM.
+- `machine-learning/generative-models/energy-based-models.md` — the partition function and restricted Boltzmann machines.

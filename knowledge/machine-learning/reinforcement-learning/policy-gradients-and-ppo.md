@@ -260,3 +260,4 @@ Reading it:
 - `machine-learning/deep-learning/neural-networks-and-backpropagation.md` — autograd behind `loss.backward()`.
 - `machine-learning/foundations/gradient-descent.md` — the update rule, here used as ascent.
 - `machine-learning/foundations/information-theory.md` — the KL divergence used in trust regions and penalties.
+- `machine-learning/reinforcement-learning/optimal-control-and-lqr.md` — policy gradient and random search on an LQR gain.

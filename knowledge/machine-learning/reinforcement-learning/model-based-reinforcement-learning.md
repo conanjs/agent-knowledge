@@ -316,3 +316,4 @@ Reading it, line by line:
 - `machine-learning/reinforcement-learning/offline-reinforcement-learning.md` — learning from a fixed dataset, where model exploitation and distribution shift are the central problem.
 - `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — aleatoric vs epistemic uncertainty and deep ensembles, as used by PETS and MBPO.
 - `machine-learning/generative-models/variational-autoencoders.md` — the VAE that World Models uses as its vision component.
+- `machine-learning/reinforcement-learning/optimal-control-and-lqr.md` — linear models plus the Riccati solution, and model-based vs model-free on the same system.

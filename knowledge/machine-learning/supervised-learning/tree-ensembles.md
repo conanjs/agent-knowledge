@@ -205,3 +205,4 @@ Reading it line by line:
 - `machine-learning/evaluation/cross-validation-and-hyperparameter-search.md` — tuning `learning_rate`, `n_estimators` and `max_features`.
 - `machine-learning/data-and-features/feature-importance-and-selection.md` — reading feature importances from forests and boosted models.
 - `machine-learning/data-and-features/categorical-and-missing-data.md` — native categorical and NaN support in histogram boosting.
+- `machine-learning/recommender-systems/learning-to-rank.md` — boosted trees fitted to ranking gradients (LambdaMART).

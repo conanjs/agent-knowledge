@@ -371,3 +371,4 @@ Reading it:
 - `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md` — the embeddings that typicality and k-center distances are computed in.
 - `machine-learning/deep-learning/uncertainty-in-deep-learning.md` — uncertainty estimates that query strategies rely on.
 - `machine-learning/foundations/information-theory.md` — entropy and mutual information, the quantities behind entropy sampling and BALD.
+- `machine-learning/data-and-features/weak-supervision.md` — labeling functions instead of hand labels.

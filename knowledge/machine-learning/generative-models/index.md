@@ -7,7 +7,7 @@ last-updated: 2026-11-24
 
 # Generative models
 
-Models that learn a data distribution and sample from it: how the deep families differ (explicit vs implicit densities, with normalizing flows covered in the families doc), variational autoencoders, generative adversarial networks and diffusion models. Every doc has a CPU-sized lab run on 2-D toy data or the 8×8 digits, with the full script inline. Not covered: autoregressive language models (see `machine-learning/transformers/`), and classical density models such as Gaussian mixtures (see `machine-learning/unsupervised-learning/`).
+Models that learn a data distribution and sample from it: how the deep families differ (explicit vs implicit densities, with normalizing flows covered in the families doc), variational autoencoders, generative adversarial networks, diffusion models and energy-based models. Every doc has a CPU-sized lab run on 2-D toy data or the 8×8 digits, with the full script inline. Not covered: autoregressive language models (see `machine-learning/transformers/`), and classical density models such as Gaussian mixtures (see `machine-learning/unsupervised-learning/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -16,6 +16,7 @@ Models that learn a data distribution and sample from it: how the deep families 
 | [variational-autoencoders.md](variational-autoencoders.md) | concept | Encoder/decoder with a Gaussian latent, the ELBO's reconstruction and KL terms, the reparameterization trick, posterior collapse | verified |
 | [generative-adversarial-networks.md](generative-adversarial-networks.md) | concept | The minimax game, optimal discriminator, non-saturating generator loss, non-convergence, mode collapse, Wasserstein GAN | verified |
 | [diffusion-models.md](diffusion-models.md) | concept | Forward noising in closed form, noise-prediction training, DDPM vs DDIM sampling, classifier-free guidance, latent diffusion | verified |
+| [energy-based-models.md](energy-based-models.md) | concept | exp(−E)/Z and why Z is intractable; positive and negative phase, Langevin sampling, contrastive divergence vs persistent chains (a spurious mode CD misses), score matching and denoising score matching (the diffusion link), RBMs with an exact-Z check | verified |
 
 ## References
 - [Deep Learning, chapter 20: Deep Generative Models](https://www.deeplearningbook.org/contents/generative_models.html) — Goodfellow, Bengio, Courville, 2016. Backs: topic scope.
