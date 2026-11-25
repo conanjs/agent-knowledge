@@ -1,0 +1,88 @@
+---
+schema: knowledge-doc/v1
+type: reference
+topic: machine-learning
+status: verified
+applies-to: ["the docs under knowledge/machine-learning/ as of 2026-11-24", "scikit-learn 1.9.1", "PyTorch 2.15.0"]
+last-verified: 2026-11-24
+last-updated: 2026-11-25
+tags: [machine-learning, learning-path, curriculum, roadmap, study-plan, deep-learning, llm]
+---
+
+# Machine learning learning path: from basics to large language models
+
+## Summary
+**TL;DR:** Ten stages, each built on the ones before: (1) foundations — what learning from data means, loss, gradient descent, overfitting; (2) classical supervised models; (3) data preparation and honest evaluation; (4) unsupervised learning; (5) probabilistic models; (6) deep learning; (7) reinforcement learning; (8) transformers and large language models; (9) generative models; (10) learning theory. Running models in production runs alongside from stage 3 on. Each stage lists the docs to read in order, one lab exercise that changes an experiment the docs ran, and a self-check question you should be able to answer before moving on.
+**Use this when:** you start learning machine learning, plan a study schedule, want to know which doc to read next, or need to see where one doc sits among the others.
+**Not this doc:** setting up the lab → `machine-learning/lab-setup.md`; the topic's scope → `machine-learning/index.md`.
+
+## Scope
+Covers every doc in `knowledge/machine-learning/` (70 docs in 12 subtopics, plus the lab). Order follows dependencies: a stage only uses ideas from earlier stages, except where a row says otherwise. Every doc's experiment embeds its full script, so each lab exercise starts by copying that script into the lab and changing one thing. External resources are free. Topics this knowledge base does not cover yet are listed at the end.
+
+## Catalog
+
+### Stages
+
+| # | Stage (level) | Read (in order) | Lab exercise (`machine-learning/lab-setup.md`) | Self-check: you can explain … |
+|---|---|---|---|---|
+| 1 | Foundations (basic) | `foundations/what-is-machine-learning.md` → `foundations/math-notation-reference.md` (keep open as a glossary) → `foundations/loss-functions-and-maximum-likelihood.md` → `foundations/gradient-descent.md` → `foundations/generalization-and-overfitting.md` → `foundations/regularization.md` | In the gradient-descent script, find the largest learning rate that still converges on `f(x) = x²` and explain why it is that number; in the polynomial sweep, double the training points and watch where the test-error minimum moves | … why minimizing MSE (mean squared error) is maximum likelihood under Gaussian noise, why a learning rate can make the loss grow, and why the lowest training error is not the model to ship |
+| 2 | Classical supervised models (basic → intermediate) | `supervised-learning/linear-regression.md` → `supervised-learning/logistic-regression.md` → `supervised-learning/k-nearest-neighbors.md` → `supervised-learning/decision-trees.md` → `supervised-learning/tree-ensembles.md` → `supervised-learning/support-vector-machines.md` | Fit the same tabular dataset with all six model families and rank them by held-out accuracy; then repeat with unscaled features and note which ranks change | … why k-NN (k-nearest neighbours) and SVMs (support vector machines) need scaling but trees do not, what `C` does in logistic regression and in an SVM, and why a random forest has lower variance than one tree |
+| 3 | Data and honest evaluation (intermediate) | `data-and-features/preprocessing-and-pipelines.md` → `data-and-features/categorical-and-missing-data.md` → `evaluation/classification-metrics.md` → `evaluation/metrics-catalog.md` (reference) → `evaluation/cross-validation-and-hyperparameter-search.md` → `evaluation/data-leakage.md` → `evaluation/class-imbalance.md` → `evaluation/probability-calibration.md` → `data-and-features/feature-importance-and-selection.md` | Re-run the leakage demo (feature selection before cross-validation on random data), then move the selector inside a `Pipeline` and confirm the score falls to chance | … why 99 % accuracy can be worthless, when PR-AUC (area under the precision–recall curve) tells you more than ROC-AUC (area under the receiver operating characteristic curve), and every way information from the test rows can leak into training |
+| 4 | Unsupervised learning (intermediate) | `unsupervised-learning/k-means-clustering.md` → `unsupervised-learning/gaussian-mixtures-and-em.md` → `unsupervised-learning/density-and-hierarchical-clustering.md` → `unsupervised-learning/principal-component-analysis.md` → `unsupervised-learning/t-sne-and-umap.md` | Run k-means, a Gaussian mixture and DBSCAN (density-based spatial clustering of applications with noise) on `make_moons`, score each with ARI (adjusted Rand index), and explain the winner | … what k-means assumes about cluster shape, how EM's (expectation–maximization) soft assignments differ from k-means, and why cluster sizes and gaps in a t-SNE (t-distributed stochastic neighbour embedding) plot mean little |
+| 5 | Probabilistic models (intermediate → advanced) | `probabilistic-ml/bayesian-inference.md` → `probabilistic-ml/naive-bayes.md` → `probabilistic-ml/gaussian-processes.md` | In the Beta–Binomial script, try three priors on 3/3 heads and on 300/300 heads, and see where the prior stops mattering | … MLE (maximum likelihood estimation) vs MAP (maximum a posteriori) vs the posterior mean, why naive Bayes ranks well but is over-confident, and why a Gaussian process's uncertainty grows away from the data |
+| 6 | Deep learning (basic → advanced) | Core: `deep-learning/neural-networks-and-backpropagation.md` → `deep-learning/training-loop-and-debugging.md` → `deep-learning/activations-and-initialization.md` → `deep-learning/optimizers-and-learning-rate-schedules.md` → `deep-learning/normalization-and-dropout.md` → `deep-learning/data-augmentation-and-transfer-learning.md`. Architectures: `deep-learning/convolutional-networks.md` → `deep-learning/modern-cnn-architectures.md` → `deep-learning/recurrent-networks.md` → `deep-learning/embeddings-and-self-supervised-learning.md` → `deep-learning/graph-neural-networks.md`. Scale: `deep-learning/mixed-precision-and-memory-saving.md` → `deep-learning/distributed-training.md`. Understanding: `deep-learning/interpretability-and-attribution.md` → `deep-learning/adversarial-robustness.md` → `deep-learning/loss-landscapes-and-generalization.md` (reads best after stage 10's `learning-theory/double-descent.md`) | Train the XOR (exclusive or) network with sigmoid, then ReLU (rectified linear unit), with naive and then He initialization at 20 layers; record which runs learn. Then, in the training-loop script, plant one bug at a time (no `zero_grad`, softmax before `CrossEntropyLoss`, shuffled labels) and name each from its loss curve alone | … backpropagation as the chain rule applied once per layer, why He initialization keeps ReLU activations alive, the difference between `Adam(weight_decay)` and AdamW (Adam with decoupled weight decay), what `model.eval()` changes, why fp16 gradients need loss scaling, what DDP (DistributedDataParallel) averages across processes, and why integrated gradients' attributions add up to the output change |
+| 7 | Reinforcement learning (advanced) | `reinforcement-learning/markov-decision-processes.md` → `reinforcement-learning/multi-armed-bandits.md` → `reinforcement-learning/temporal-difference-and-q-learning.md` → `reinforcement-learning/deep-q-networks.md` → `reinforcement-learning/policy-gradients-and-ppo.md` | In cliff walking, decay ε (the exploration rate) to 0 over training and check whether SARSA (state–action–reward–state–action) and Q-learning end on the same path | … the Bellman optimality equation, on- vs off-policy learning, why DQN (deep Q-network) needs replay and a target network, and what PPO's (proximal policy optimization) clip does (and does not) bound |
+| 8 | Transformers and large language models (advanced) | `transformers/tokenization.md` → `transformers/attention-and-the-transformer.md` → `transformers/pretraining-and-scaling-laws.md` → `transformers/fine-tuning-and-lora.md` → `transformers/alignment-rlhf-and-dpo.md` (RLHF, reinforcement learning from human feedback; after stage 7's PPO doc) → `transformers/decoding-and-kv-cache.md` → `transformers/vision-transformers.md` (after stage 6's CNN docs) → `transformers/mixture-of-experts.md` → `transformers/efficient-attention-and-state-space-models.md` | Compute the KV-cache (key–value cache) size for a model shape of your choice with the doc's formula, then confirm it with the cached-decoding script at a small size | … why attention scores are divided by √d_k, the Chinchilla tokens-per-parameter rule and where it comes from, why LoRA (low-rank adaptation) trains so few parameters, and how DPO (direct preference optimization) removes the reward model |
+| 9 | Generative models (advanced) | `generative-models/generative-model-families.md` → `generative-models/variational-autoencoders.md` → `generative-models/generative-adversarial-networks.md` → `generative-models/diffusion-models.md` | In the 2-D diffusion script, sample with 1000, 100, 20 and 5 DDIM (denoising diffusion implicit model) steps and plot the distance to the data against the step count | … the ELBO's (evidence lower bound) two terms, why the non-saturating GAN (generative adversarial network) loss trains when the saturating one stalls, and what a diffusion model's network predicts |
+| 10 | Learning theory (advanced) | `learning-theory/pac-learning-and-vc-dimension.md` → `learning-theory/double-descent.md` → `learning-theory/no-free-lunch-and-inductive-bias.md` | In the double-descent script, add ridge penalties of several sizes and watch the peak at features = samples shrink | … what a VC (Vapnik–Chervonenkis) bound promises and why deep networks that fit random labels escape it, where the interpolation peak comes from, and why no learner wins on all problems |
+| ↔ | Running models in production (from stage 3) | `ml-systems/hidden-technical-debt.md` → `ml-systems/data-drift-and-monitoring.md` → `ml-systems/reproducibility-and-determinism.md` → `ml-systems/model-compression-and-quantization.md` (after stage 6) | Add a concept-shift case to the drift script and show that input monitoring stays quiet while accuracy falls | … why monitoring inputs alone misses concept drift, why a seed does not guarantee equal results across machines, and why one outlier weight ruins per-tensor int8 (8-bit integer) quantization |
+
+### Free resources per stage
+
+| Stage | Resource | Why |
+|---|---|---|
+| 1–5 | [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) | The reference for every classical estimator, metric and splitter the docs use |
+| 1–3 | [Google Machine Learning Crash Course](https://developers.google.com/machine-learning/crash-course?hl=en) | Short lessons on loss, gradient descent, overfitting, classification metrics and data |
+| 1, 6, 8 | [Dive into Deep Learning](https://d2l.ai/) | A free, runnable textbook from linear regression to attention and transformers |
+| 1, 5, 6, 9 | [Deep Learning (Goodfellow, Bengio, Courville)](https://www.deeplearningbook.org/) | The theory behind capacity, maximum likelihood, optimization and generative models |
+| 6, 8 | [PyTorch documentation (2.15)](https://docs.pytorch.org/docs/2.15/) | Exact behaviour of every layer, optimizer and autograd feature in the lab |
+| 7 | [OpenAI Spinning Up](https://spinningup.openai.com/en/latest/) | A practical introduction to deep reinforcement learning and policy gradients |
+| 8 | [Hugging Face LLM Course](https://huggingface.co/learn/llm-course/chapter1/1) | Tokenizers, fine-tuning and the transformer ecosystem |
+| 4, 9 | [Distill](https://distill.pub/) | Peer-reviewed visual explanations (t-SNE pitfalls, Gaussian processes, graph networks) |
+| ↔ | [Rules of Machine Learning](https://developers.google.com/machine-learning/guides/rules-of-ml?hl=en) | Practical rules for training–serving skew, monitoring and launching models |
+
+### Not yet covered in this knowledge base
+
+| Topic | Fits under | Start with |
+|---|---|---|
+| Anomaly and outlier detection (isolation forest, local outlier factor) | `unsupervised-learning/` | [Novelty and outlier detection (scikit-learn)](https://scikit-learn.org/stable/modules/outlier_detection.html) |
+| Semi-supervised learning (self-training, label propagation) | `foundations/` or a new subtopic | [Semi-supervised learning (scikit-learn)](https://scikit-learn.org/stable/modules/semi_supervised.html) |
+| Model interpretation (partial dependence, SHAP-style (Shapley additive explanations) attributions) | `data-and-features/` | [Partial dependence and ICE plots (scikit-learn)](https://scikit-learn.org/stable/modules/partial_dependence.html) |
+| Recommender systems | a new subtopic | [Recommender systems (d2l.ai)](https://d2l.ai/chapter_recommender-systems/index.html) |
+| Time-series forecasting, causal inference, privacy-preserving machine learning | new subtopics | — |
+
+## Lookup notes
+- Every lab output comes from one machine (Apple M2, macOS 26.1) with the versions in `machine-learning/lab-setup.md`; numbers can differ in the last digits on other machines or versions, and wall-clock timings always differ.
+- Stage 8's alignment doc uses PPO from stage 7; stage 9's families doc compares against the autoregressive language models of stage 8; stage 10 reads best after stage 6, because double descent and the random-label experiment use neural networks.
+- The math-notation reference in stage 1 defines every symbol the other docs use; keep it open while reading.
+
+## Takeaways
+- Follow the stages in order; each stage only uses ideas from the earlier ones.
+- Run and change one experiment per stage, and answer the self-check, before moving on.
+
+## Verification status
+- Verified: 0 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+
+## References
+- [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: stages 1–5 resources.
+- [Dive into Deep Learning](https://d2l.ai/) — Aston Zhang, Zachary C. Lipton, Mu Li, Alexander J. Smola, living. Backs: stages 1, 6 and 8 resources.
+- [Deep Learning](https://www.deeplearningbook.org/) — Ian Goodfellow, Yoshua Bengio, Aaron Courville, 2016. Backs: theory resources for stages 1, 5, 6 and 9.
+- [OpenAI Spinning Up](https://spinningup.openai.com/en/latest/) — OpenAI, 2018. Backs: stage 7 resources.
+- [Hugging Face LLM Course](https://huggingface.co/learn/llm-course/chapter1/1) — Hugging Face, living. Backs: stage 8 resources.
+- `machine-learning/lab-setup.md` — the lab every exercise runs in.
+
+## Related
+- `machine-learning/lab-setup.md` — set up the lab before stage 1.
+- `machine-learning/index.md` — every subtopic and its scope.
+- `ai-agents/` — what comes after stage 8: agents built on large language models.
+- `algorithms/vector-search-evaluation.md` — nearest-neighbour search over embeddings, next to stages 2 and 8.
