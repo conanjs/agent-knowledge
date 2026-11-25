@@ -58,7 +58,7 @@ The hand step matches exactly, and with default initialization the forget gate i
 ### GRU: two gates
 - `r_t` (reset) and `z_t` (update) are sigmoid gates; the candidate is `n_t = tanh(W_in·x_t + b_in + r_t ⊙ (W_hn·h_{t−1} + b_hn))` and `h_t = (1 − z_t) ⊙ n_t + z_t ⊙ h_{t−1}` ✅[^7]. With `z_t` near 1 the state is copied forward, like an open forget gate.
 - PyTorch stores three blocks, `(3·hidden_size, input_size)` ✅[^7], so a GRU has 3 times the parameters of a vanilla RNN of the same size and an LSTM 4 times (1,344, 4,032 and 5,376 for 8 inputs and 32 units in the lab) ✅[^9].
-- The GRU is a streamlined LSTM cell that often performs comparably and is faster to compute ✅[^8]; Chung et al. found both gated units better than plain tanh units, and the GRU comparable to the LSTM ✅[^10].
+- The GRU is a streamlined LSTM cell that often performs comparably and is faster to compute ✅[^8]; Chung et al. found both gated units clearly better than plain tanh units on raw speech data, while on polyphonic music all three were close (tanh had the best test score on one of the four music datasets); they could not say whether the GRU or the LSTM is better, because the winner depended on the dataset ✅[^10].
 
 ### Gradient-norm clipping
 1. **Rule:** if the gradient's norm exceeds a threshold, rescale it to `threshold/‖g‖ · g` ✅[^4]; one heuristic for the threshold is the average norm over many updates, and training was not very sensitive to it in the authors' experiments ✅[^4].
@@ -161,7 +161,7 @@ Reading it, row by row:
 | Truncated BPTT with window `τ` | Dependencies longer than `τ` get no gradient | The sum stops after `τ` steps; the model favours short-term influence ✅[^1] |
 | Element-wise clipping (an older alternative) | Each entry is clipped at a threshold | Mikolov's approach, which Pascanu et al. build on ✅[^4] |
 | Batch normalization in an RNN | Statistics depend on sequence length | Layer norm computes them per time step ✅[^13]; details in `machine-learning/deep-learning/normalization-and-dropout.md` |
-| GRU or LSTM? | Often similar results | Comparable in Chung et al. ✅[^10]; GRU has 3/4 of the LSTM's parameters (lab) ✅[^9] |
+| GRU or LSTM? | Often similar results | Comparable in Chung et al., the better one depending on the dataset ✅[^10]; GRU has 3/4 of the LSTM's parameters (lab) ✅[^9] |
 
 ## Trade-offs
 | Option | Gains | Costs |
@@ -191,7 +191,7 @@ Reading it, row by row:
 - [torch.nn.GRU](https://docs.pytorch.org/docs/2.15/generated/torch.nn.GRU.html) — PyTorch, 2026 (2.15). Backs: GRU equations, `(3·hidden_size, …)` weights. [^7]
 - [Gated Recurrent Units (GRU) (Dive into Deep Learning, 10.2)](https://d2l.ai/chapter_recurrent-modern/gru.html) — Zhang, Lipton, Li, Smola, living. Backs: streamlined LSTM, comparable performance, faster to compute. [^8]
 - `machine-learning/lab-setup.md` — the lab where the hand LSTM step, the gradient-through-time measurements, the clipping check and the parameter counts ran on 2026-11-24. [^9]
-- [Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling](https://arxiv.org/html/1412.3555v1) — Chung, Gulcehre, Cho, Bengio, 2014. Backs: gated units better than tanh units; GRU comparable to LSTM. [^10]
+- [Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling](https://arxiv.org/html/1412.3555v1) — Chung, Gulcehre, Cho, Bengio, 2014 (full text read, PDF). Backs: gated units clearly better than tanh units on raw speech and close on music (Table 2, Figures 2–3); no clear winner between GRU and LSTM. [^10]
 - [torch.nn.utils.clip_grad_norm_](https://docs.pytorch.org/docs/2.15/generated/torch.nn.utils.clip_grad_norm_.html) — PyTorch, 2026 (2.15). Backs: total norm over all gradients, in-place, return value. [^11]
 - [Attention Is All You Need](https://arxiv.org/html/1706.03762v7) — Vaswani et al., 2017 (v7). Backs: sequential computation prevents parallelization, Table 1 complexity, sequential operations and path lengths, 12 hours on eight GPUs. [^12]
 - [Layer Normalization](https://arxiv.org/html/1607.06450v1) — Ba, Kiros, Hinton, 2016. Backs: batch norm is hard to apply to RNNs; per-time-step statistics. [^13]

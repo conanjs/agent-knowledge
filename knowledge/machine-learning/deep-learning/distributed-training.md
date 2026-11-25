@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, distributed-training, data-parallelism, ddp, distributedsampler, zero, fsdp, tensor-parallelism, megatron, pipeline-parallelism, pipeline-bubble, sequence-parallelism, context-parallelism, expert-parallelism, all-reduce, all-gather, reduce-scatter, gloo, torchrun]
 ---
 
@@ -73,7 +73,7 @@ PyTorch's `fully_shard` (FSDP2) shards parameters, gradients and optimizer state
 
 ### 6. Sequence, context and expert parallelism (briefly)
 1. **Sequence parallelism** partitions the layer-norm and dropout regions along the sequence dimension next to tensor parallelism, replacing each all-reduce with a reduce-scatter and an all-gather at the same communication cost ✅[^11]; with selective recomputation it cut activation memory about 5 times ✅[^11].
-2. **Context parallelism** splits long sequences across devices for attention itself: Ring Attention computes attention block-wise across devices and overlaps passing key-value blocks with computation, reaching sequences up to device-count times longer ✅[^16].
+2. **Context parallelism** splits long sequences across devices for attention itself: Ring Attention computes attention block by block, and each device sends its key-value blocks to the next device in a ring while it computes. The transfer adds no overhead as long as computing a block takes longer than sending one, which needs a block size of at least the device's FLOPS (floating-point operations per second) divided by its bandwidth; the sequence length then grows with the number of devices, up to device-count times longer than prior memory-efficient transformers ✅[^16].
 3. **Expert parallelism** shards the experts of a mixture-of-experts layer across devices while the other layers are replicated, and moves tokens with all-to-all ✅[^12]; GShard's 600B-parameter model trained on 2,048 TPU v3 cores ✅[^12]. Routing is covered in `machine-learning/transformers/mixture-of-experts.md`.
 
 ## Worked example
@@ -244,7 +244,7 @@ Worked numbers: 4 stages with 4 micro-batches idle `3/4` of the ideal time, 43 %
 - Read communication cost as all-reduce = reduce-scatter + all-gather; ZeRO-3/FSDP pays about one extra all-gather of the parameters.
 
 ## Verification status
-- Verified: 85 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 85 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Distributed Data Parallel (design notes)](https://docs.pytorch.org/docs/2.15/notes/ddp.html) — PyTorch, 2026 (2.15). Backs: rank 0 broadcast, Reducer, buckets in reverse parameter order, one hook per parameter, asynchronous all-reduce per bucket, overlap with backward, identical `.grad`, `find_unused_parameters`. [^1]
@@ -262,7 +262,7 @@ Worked numbers: 4 stages with 4 micro-batches idle `3/4` of the ideal time, 43 %
 - `machine-learning/lab-setup.md` — the lab where the 2-process gloo DDP run, the tensor-parallel check and the bubble table ran on 2026-11-24. [^13]
 - [torchrun (Elastic Launch)](https://docs.pytorch.org/docs/2.15/elastic/run.html) — PyTorch, 2026 (2.15). Backs: `--nproc-per-node`, the environment variables set for workers. [^14]
 - [torch.nn.SyncBatchNorm](https://docs.pytorch.org/docs/2.15/generated/torch.nn.SyncBatchNorm.html) — PyTorch, 2026 (2.15). Backs: statistics over the process group, `convert_sync_batchnorm`, DDP with one GPU per process only. [^15]
-- [Ring Attention with Blockwise Transformers for Near-Infinite Context](https://arxiv.org/abs/2310.01889) — Liu, Zaharia, Abbeel, 2023. Backs: block-wise attention across devices, overlapped key-value communication, device-count times longer sequences. [^16]
+- [Ring Attention with Blockwise Transformers for Near-Infinite Context](https://arxiv.org/abs/2310.01889) — Liu, Zaharia, Abbeel, 2023 (full text read on arXiv HTML, v4). Backs: block-wise attention across devices, key-value blocks passed around a ring and overlapped with computation, the block-size condition for no overhead, sequences up to device-count times longer than prior memory-efficient transformers. [^16]
 
 ## Related
 - `machine-learning/deep-learning/mixed-precision-and-memory-saving.md` — what fills one device's memory, and accumulation with `no_sync`.

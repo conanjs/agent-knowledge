@@ -4,8 +4,8 @@ type: concept
 topic: machine-learning/deep-learning
 status: verified
 applies-to: ["PyTorch 2.15.0"]
-last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-verified: 2026-11-25
+last-updated: 2026-11-25
 tags: [machine-learning, deep-learning, training-memory, mixed-precision, autocast, bfloat16, fp16, gradscaler, loss-scaling, gradient-accumulation, activation-checkpointing, gradient-checkpointing, saved-tensors-hooks, torch-compile]
 ---
 
@@ -57,7 +57,7 @@ checkpointed:  saved tensors 8 | activation bytes 524288 | block forwards 16
 ### 5. Activation checkpointing
 1. **Mechanism:** `torch.utils.checkpoint.checkpoint(fn, x, use_reentrant=False)` does not keep the tensors produced inside `fn` for backward; it re-runs `fn` during backward to recompute them ✅[^4]. It "trades compute for memory" ✅[^4].
 2. **Lab:** 8 blocks of `Linear(256, 256)` + `GELU` on a 64 × 256 input: autograd saved 24 tensors (1,048,576 bytes of activations) without checkpointing and 8 tensors (524,288 bytes, one input per block) with it; the blocks ran 16 times instead of 8, and the gradients were identical ✅[^9].
-3. **How much it can save:** Chen et al. give an `O(√n)` memory schedule for an `n`-layer network at the cost of one extra forward pass per mini-batch ✅[^5], and cut a 1,000-layer residual network from 48 GB to 7 GB ✅[^5]; ZeRO's GPT-2 example drops from about 60 GB to about 8 GB ✅[^3]. Selective recomputation, which recomputes only the memory-heavy but cheap parts of a transformer layer, combined with sequence parallelism, cut the execution-time overhead of recomputation by over 90 % compared with full recomputation ✅[^11].
+3. **How much it can save:** Chen et al. give an `O(√n)` memory schedule for the feature maps of an `n`-layer network split into equal segments, at the cost of one extra forward pass per mini-batch, which they measured as about 30 % more runtime ✅[^5]. Their abstract's 1,000-layer residual network going from 48 GB to 7 GB compares two different measures: in their Figure 5 the planned feature-map memory with all their in-place and memory-sharing optimizations but no recomputation is in the 32–64 GB band at about 1,000 layers, a plan too large to run (without recomputation only about 200 layers fit), while the measured total GPU memory with recomputation stays under 7 GB ✅[^5]; ZeRO's GPT-2 example drops from about 60 GB to about 8 GB ✅[^3]. Selective recomputation, which recomputes only the memory-heavy but cheap parts of a transformer layer, combined with sequence parallelism, cut the execution-time overhead of recomputation by over 90 % compared with full recomputation ✅[^11].
 4. **Options:** pass `use_reentrant=False`, which is recommended, and pass it explicitly because a future release will raise if it is missing ✅[^4]. RNG (random number generator) state is stashed and restored by default so that dropout recomputes the same mask; `preserve_rng_state=False` skips that ✅[^4].
 
 ### 6. `torch.compile`
@@ -219,7 +219,7 @@ Reading it, block by block:
 | bf16 autocast | Lower-precision matmuls, no loss scaling on CPU ✅[^1] | Fewer mantissa bits: `0.0068` error on one lab layer ✅[^9] |
 | fp16 autocast + `GradScaler` | 16-bit compute | Underflow handling, skipped steps on `inf` ✅[^1] ✅[^9] |
 | Gradient accumulation | Large effective batch in the memory of a small one ✅[^2] | `k` sequential passes per step; breaks with batch norm ✅[^9] |
-| Activation checkpointing | Lab: half the activation bytes ✅[^9]; 48 GB → 7 GB in Chen et al. ✅[^5] | One extra forward per checkpointed block ✅[^5] ✅[^9] |
+| Activation checkpointing | Lab: half the activation bytes ✅[^9]; a 1,000-layer network trained in under 7 GB in Chen et al. ✅[^5] | One extra forward per checkpointed block ✅[^5] ✅[^9] |
 | Sharding optimizer state, gradients and parameters (ZeRO, FSDP) | Model-state memory divided across devices ✅[^3] | Needs several devices and more communication; see `machine-learning/deep-learning/distributed-training.md` |
 
 ## Takeaways
@@ -229,14 +229,14 @@ Reading it, block by block:
 - Reach for activation checkpointing when activations, not model state, are the largest memory item; pass `use_reentrant=False`.
 
 ## Verification status
-- Verified: 64 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-24
+- Verified: 64 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Automatic Mixed Precision package - torch.amp](https://docs.pytorch.org/docs/2.15/amp.html) — PyTorch, 2026 (2.15). Backs: CPU lower-precision and float32 op lists, float16 shares the bf16 lists, unlisted ops, softmax on the CUDA list, autocast scope and backward, underflow and gradient scaling, CPU bf16 uses only autocast. [^1]
 - [Automatic Mixed Precision examples](https://docs.pytorch.org/docs/2.15/notes/amp_examples.html) — PyTorch, 2026 (2.15). Backs: `unscale_` before clipping, accumulation's effective batch size, when to call `unscale_` and `update` with accumulation. [^2]
 - [ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054) — Rajbhandari, Rasley, Ruwase, He, 2020 (full text read on ar5iv). Backs: 16 bytes per parameter and its parts, 7.5B → 120 GB, GPT-2 1.5B activations 60 GB → 8 GB with checkpointing. [^3]
 - [torch.utils.checkpoint](https://docs.pytorch.org/docs/2.15/checkpoint.html) — PyTorch, 2026 (2.15). Backs: tensors not kept and recomputed, compute-for-memory trade, `use_reentrant=False`, RNG stashing, recomputation must match. [^4]
-- [Training Deep Nets with Sublinear Memory Cost](https://arxiv.org/abs/1604.06174) — Chen, Xu, Zhang, Guestrin, 2016. Backs: `O(√n)` memory, one extra forward pass, 48 GB → 7 GB. [^5]
+- [Training Deep Nets with Sublinear Memory Cost](https://arxiv.org/abs/1604.06174) — Chen, Xu, Zhang, Guestrin, 2016 (full text read, PDF). Backs: `O(√n)` feature-map memory with equal segments (§4.3), one extra forward pass and its 30 % runtime cost (§5.4), 48 GB → 7 GB and what Figure 5 shows behind it (§5.2). [^5]
 - [Autograd mechanics: Hooks for saved tensors](https://docs.pytorch.org/docs/2.15/notes/autograd.html) — PyTorch, 2026 (2.15). Backs: `saved_tensors_hooks` applies to all tensors saved in its context, saved tensors share storage. [^6]
 - [torch.optim.Adam](https://docs.pytorch.org/docs/2.15/generated/torch.optim.Adam.html) — PyTorch, 2026 (2.15). Backs: first and second moments initialized to zero, state per parameter. [^7]
 - [torch.compile](https://docs.pytorch.org/docs/2.15/generated/torch.compile.html) — PyTorch, 2026 (2.15). Backs: TorchDynamo plus a backend, default Inductor, modes, CUDA graphs. [^8]
