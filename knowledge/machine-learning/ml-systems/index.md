@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: subtopic
 topic: machine-learning/ml-systems
-last-updated: 2026-11-24
+last-updated: 2026-11-25
 ---
 
 # Machine learning in production
@@ -15,7 +15,8 @@ What changes when a model leaves the notebook: the maintenance debt that builds 
 | [hidden-technical-debt.md](hidden-technical-debt.md) | concept | Entangled features (CACE, "changing anything changes everything"), glue code, pipeline jungles, data dependencies, undeclared consumers and feedback loops; a lab run where one feature change moves the other weights | verified |
 | [data-drift-and-monitoring.md](data-drift-and-monitoring.md) | concept | Covariate, label and concept shift, training–serving skew, per-feature Kolmogorov–Smirnov (KS) tests with Bonferroni correction and score tests; why concept shift needs labels | verified |
 | [reproducibility-and-determinism.md](reproducibility-and-determinism.md) | concept | Seeds in Python, NumPy, PyTorch and scikit-learn, float summation order, `torch.use_deterministic_algorithms`, versioning data, code and models | verified |
-| [model-compression-and-quantization.md](model-compression-and-quantization.md) | concept | Symmetric int8 by hand, per-tensor vs per-channel and outliers, post-training vs quantization-aware, pruning, distillation with temperature, fp16 vs bf16 and loss scaling | verified |
+| [model-compression-and-quantization.md](model-compression-and-quantization.md) | concept | Symmetric int8 by hand, per-tensor vs per-channel and outliers, post-training vs quantization-aware, torchao status, fp16 vs bf16 ranges and the loss-scaling recipe | verified |
+| [pruning-and-knowledge-distillation.md](pruning-and-knowledge-distillation.md) | concept | Magnitude pruning with retraining, global vs per-layer sparsity, CSR storage and when sparsity speeds inference, the PyTorch prune API; distillation with temperature-softened soft targets and the `T²` factor | verified |
 
 ## References
 - [Hidden Technical Debt in Machine Learning Systems (abstract)](https://papers.nips.cc/paper_files/paper/2015/hash/86df7dcfd896fcaf2674f757a2463eba-Abstract.html) — Sculley et al., NeurIPS 2015. Backs: topic scope (ML-specific maintenance risks).

@@ -6,18 +6,18 @@ status: verified
 applies-to: ["any"]
 last-verified: 2026-11-25
 last-updated: 2026-11-25
-tags: [machine-learning, recommender-systems, candidate-generation, retrieval, ranking, re-ranking, two-tower, in-batch-negatives, sampled-softmax, logq-correction, cold-start, feedback-loops, popularity-bias, gini]
+tags: [machine-learning, recommender-systems, candidate-generation, retrieval, ranking, re-ranking, two-tower, in-batch-negatives, sampled-softmax, logq-correction, cold-start, popularity-bias]
 ---
 
-# Retrieval and ranking pipelines: two towers, cold start and feedback loops
+# Retrieval and ranking pipelines: two towers, the logQ correction and cold start
 
 ## Summary
-**TL;DR:** A large recommender works in stages. Candidate generation (retrieval) cuts a corpus of millions or billions of items down to hundreds, using cheap embedding similarity. A scoring model ranks those few with richer features, and re-ranking applies filters, freshness and diversity. A two-tower model embeds the user with one network and the item with another, and scores the pair by a dot product. That makes retrieval a nearest-neighbour search. Training it with the other items in the batch as negatives samples negatives in proportion to popularity, so popular items get pushed down unless each logit has `log Q(item)` subtracted (the logQ correction). An item tower built on content features can score items that have no interactions yet (cold start). And because each model is retrained on clicks that the previous model caused, exposure can concentrate on fewer items than users' tastes justify, as published simulations and the lab's own simulation show.
-**Use this when:** you design or debug a retrieval stage, train a two-tower model with in-batch negatives, see popular items vanish from (or flood) the recommendations, need to recommend new items, or wonder why retraining on your own logs narrows what users see.
-**Not this doc:** matrix factorization and ALS (alternating least squares) → `machine-learning/recommender-systems/collaborative-filtering-and-matrix-factorization.md`; BPR (Bayesian personalized ranking) and ranked-list metrics → `machine-learning/recommender-systems/implicit-feedback-and-ranking.md`; approximate nearest-neighbour search → `algorithms/vector-search-evaluation.md`; contrastive losses and InfoNCE (information noise-contrastive estimation) in general → `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md`; exploration algorithms → `machine-learning/reinforcement-learning/multi-armed-bandits.md`.
+**TL;DR:** A large recommender works in stages. Candidate generation (retrieval) cuts a corpus of millions or billions of items down to hundreds, using cheap embedding similarity. A scoring model ranks those few with richer features, and re-ranking applies filters, freshness and diversity. A two-tower model embeds the user with one network and the item with another, and scores the pair by a dot product. That makes retrieval a nearest-neighbour search. Training it with the other items in the batch as negatives samples negatives in proportion to popularity, so popular items get pushed down unless each logit has `log Q(item)` subtracted (the logQ correction). An item tower built on content features can score items that have no interactions yet (cold start). The shown lists also become the next training log, a feedback loop with its own doc.
+**Use this when:** you design or debug a retrieval stage, train a two-tower model with in-batch negatives, see popular items vanish from (or flood) the recommendations, or need to recommend new items.
+**Not this doc:** matrix factorization and ALS (alternating least squares) → `machine-learning/recommender-systems/collaborative-filtering-and-matrix-factorization.md`; BPR (Bayesian personalized ranking) and ranked-list metrics → `machine-learning/recommender-systems/implicit-feedback-and-ranking.md`; approximate nearest-neighbour search → `algorithms/vector-search-evaluation.md`; contrastive losses and InfoNCE (information noise-contrastive estimation) in general → `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md`; exploration algorithms → `machine-learning/reinforcement-learning/multi-armed-bandits.md`; what retraining on the pipeline's own logs does to exposure and utility, and the Gini coefficient → `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md`.
 
 ## Problem
-No single model can score every item with every feature for every request. The candidate generator of one large video service reduces billions of videos to hundreds or thousands before anything else runs ✅[^1]. Training a softmax over a whole catalog of millions of items is infeasible too, so the loss is approximated with sampled negatives ✅[^10]. The cheapest source of negatives, the other items in the same mini-batch, follows item popularity, so popular items appear as negatives more often and are over-penalized ✅[^10]. In the lab, that bias alone halved recall@10 ✅[^16]. Two more problems come from how data arrive. A model keyed on item IDs (identifiers) cannot score an item it never saw in training ✅[^12]. And the training data come from users who were shown the previous model's recommendations. In Chaney et al.'s simulations, that feedback loop homogenized user behaviour without increasing utility ✅[^14].
+No single model can score every item with every feature for every request. The candidate generator of one large video service reduces billions of videos to hundreds or thousands before anything else runs ✅[^1]. Training a softmax over a whole catalog of millions of items is infeasible too, so the loss is approximated with sampled negatives ✅[^10]. The cheapest source of negatives, the other items in the same mini-batch, follows item popularity, so popular items appear as negatives more often and are over-penalized ✅[^10]. In the lab, that bias alone halved recall@10 ✅[^16]. Two more problems come from how data arrive. A model keyed on item IDs (identifiers) cannot score an item it never saw in training ✅[^12]. And the training data come from users who were shown the previous model's recommendations, a feedback loop that in Chaney et al.'s simulations homogenized user behaviour without increasing utility ✅[^14]; it has its own doc, `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md`.
 
 ## Mental model
 **Analogy:** hiring. A keyword filter (cheap, tuned for recall) cuts 10,000 applications to 200. Interviews (expensive, precise) rank the 200. A final pass applies constraints, such as not hiring everyone from one team. If the filter drops the best applicant, no interview can bring them back, so the retrieval stage caps the whole system. In-batch negatives are like judging each applicant against whoever else happened to apply that day. A very common profile turns up in every day's pile, so it is the competitor beaten most often, and it gets marked down unless you discount it by how often it appears.
@@ -53,7 +53,7 @@ corpus (millions) ──► candidate generators ──► ~hundreds ──► s
 2. **Retrieval inside a generator:** look up (for MF) or compute (for a neural model) the query embedding `q`, then return the `k` items with the highest similarity `s(q, V_j)`. That is a nearest-neighbour problem. For a static query embedding the top items can be precomputed, and ANN search avoids scoring every item ✅[^4]. A dot product allows efficient maximum inner product search, but an MLP (multilayer perceptron) similarity does not, and it costs `O(d²)` per pair instead of `O(d)` ✅[^11].
 3. **Scoring model:** pools all candidates and scores them with one model. Scores from different generators might not be comparable, and a small pool lets the ranker afford more features and a bigger model ✅[^5]. The objective decides what wins. Optimizing clicks can surface click-bait, and optimizing watch time can surface overly long videos ✅[^5]. Lower positions get fewer clicks, so Google's course suggests scoring every candidate as if it were in the top position ✅[^5].
 4. **Re-ranker:** removes items (a separate click-bait classifier, items the user disliked) or transforms scores (boost fresh content). It re-ranks by genre or other metadata for diversity, and tracks metrics per demographic for fairness ✅[^1] ✅[^6].
-5. **Logging and training:** the clicks on the shown items become the next training data, which closes the loop described under Feedback loops ✅[^14].
+5. **Logging and training:** the clicks on the shown items become the next training data, which closes a feedback loop ✅[^14] (its effects: `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md`).
 
 The two-stage split (deep candidate generation, then a separate deep ranking model) is how Covington et al. describe a production video recommender ✅[^2].
 
@@ -76,14 +76,11 @@ The two-stage split (deep candidate generation, then a separate deep ranking mod
 - **New users:** an "average" user, or one per cluster of user features, for MF ✅[^6]. Popular or trending items are one of the standard candidate sources ✅[^5], and they need no history of the user.
 - **Exploration:** a new item that is never shown never collects interactions. The systematic answer is an explore–exploit policy (`machine-learning/reinforcement-learning/multi-armed-bandits.md`), and Chaney et al. note the natural connection between recommendation and the explore/exploit trade-off ✅[^14].
 
-### Feedback loops and popularity bias
-1. **The loop:** models are trained and evaluated on data from users already exposed to recommendations. User preferences then confound the data: they drive both what was recommended (through past interactions) and what was clicked ✅[^14].
-2. **The effects in simulation:** Chaney et al. found that the loop homogenizes user behaviour, more so with repeated training, without a matching gain in utility. Users with lower utility tend to be more homogenized. The loop also amplifies the recommender's effect on how item consumption is distributed: matrix factorization and content filtering homogenize users about equally, but matrix factorization makes consumption more unequal ✅[^14].
-3. **Measuring concentration:** the Gini coefficient of the item distribution is 0 when all items are consumed equally and approaches 1 at maximal inequality ✅[^14]. Formula: sort the per-item counts `x₁ ≤ … ≤ x_n`, then `G = Σ_i (2i − n − 1)·x_i / (n·Σ_i x_i)`. With all exposure on one item of `n`, `G = (n−1)/n`, so 0.998 for 400 items ✅[^16].
-4. **What helps:** weighting approaches for training and offline evaluation. In the repeated-training case they raised utility and reduced homogenization in Chaney et al.'s preliminary exploration ✅[^14]. Held-out accuracy cannot capture the full effects of the loop, and held-out data collected under one recommender favour recommenders similar to it ✅[^14]. The general system view, with a book-recommender example, is in `machine-learning/ml-systems/hidden-technical-debt.md`.
+### Feedback loops
+Each retrain learns from clicks on what the previous model chose to show, so the log mixes users' preferences with the model's own choices ✅[^14]. How that homogenizes users and concentrates exposure, how to measure it with the Gini coefficient, a 30-round lab simulation and what helps are in `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md`.
 
 ## Worked example
-**Part 1, two towers.** 2,000 users and 2,000 items. The true click distribution is `p(i | u) ∝ exp(θ_u·φ_i + b_i)`, with 8 taste dimensions and a long-tail popularity `b_i`. Users and items come with 16 noisy features derived from `θ` and `φ`. Each tower is an MLP from 16 to 64 to 32 units, and each item also gets a learned score offset. Training uses 100,000 sampled clicks, 6 epochs and batches of 256, three ways: in-batch negatives, in-batch with `−log Q`, and a full softmax over every warm item. 200 items are held out of training entirely, as new items. The core of the in-batch loss:
+2,000 users and 2,000 items. The true click distribution is `p(i | u) ∝ exp(θ_u·φ_i + b_i)`, with 8 taste dimensions and a long-tail popularity `b_i`. Users and items come with 16 noisy features derived from `θ` and `φ`. Each tower is an MLP from 16 to 64 to 32 units, and each item also gets a learned score offset. Training uses 100,000 sampled clicks, 6 epochs and batches of 256, three ways: in-batch negatives, in-batch with `−log Q`, and a full softmax over every warm item. 200 items are held out of training entirely, as new items. The core of the in-batch loss:
 
 ```python
 logits = q @ it(X[items]).T + bias[items]            # B x B: row = user, column = batch item
@@ -214,97 +211,10 @@ print(f"oracle with popularity (true logits): recall@10 {new_recall(logit_true):
 
 </details>
 
-Reading Part 1:
+Reading it:
 - **Popularity bias of in-batch negatives:** without the correction, recall@10 is 0.183 against 0.363 for the true model. The learned item offsets correlate negatively with log frequency (−0.24): the model has learned "popular means negative". With `−log Q`, recall@10 is 0.348, close to the full softmax (0.346), and the offsets track popularity (+0.73).
 - **The retrieval ceiling:** recall@100 of the corrected model is 0.668. A ranker that re-orders those 100 candidates can find at most 66.8 % of the clicked items in this run.
 - **Cold start:** scored from content features alone (no item offset, no interactions), the corrected model reaches recall@10 0.448 among the 200 new items in this run. Random order gets 0.050, and an oracle that knows the true taste but not the popularity gets 0.553.
-
-**Part 2, the feedback loop.** 600 users and 400 items. The true click probability is `σ(θ_u·φ_i − 2)`. In round 0 every user is shown 10 random items. In each of 30 rounds, the policy shows 10 items per user, users click with their true probability, and the click log grows. Exposure Gini and the mean true click probability of the shown lists (utility) are printed for rounds 1, 5 and 30. Lab run (`machine-learning/lab-setup.md`), 2026-11-25, numpy 2.5.5. Two runs gave identical output ✅[^16]:
-
-```text
-mean click chance 0.166; best item per user 0.748
-gini check: equal 0.000, all on one item 0.998 = (n-1)/n
-policy               | round  1: gini items utility | round  5: gini items utility | round 30: gini items utility
-oracle               |           0.670   263   0.626 |           0.670   263   0.626 |           0.670   263   0.626
-popularity           |           0.970    14   0.172 |           0.975    10   0.178 |           0.975    10   0.178
-MF retrained         |           0.772   189   0.188 |           0.837    96   0.203 |           0.835    88   0.206
-MF + 2 random slots  |           0.659   390   0.183 |           0.734   383   0.207 |           0.724   385   0.214
-MF on random log     |           0.772   189   0.188 |           0.688   248   0.242 |           0.508   339   0.516
-```
-
-<details><summary>Full script (prints the output above)</summary>
-
-```python
-# Feedback loop: a recommender retrained each round on the clicks its own recommendations produced.
-# Exposure inequality (Gini) and true utility per round, for popularity, matrix factorization (MF),
-# MF with 2 random exploration slots, an oracle that knows the true click probabilities, and a control
-# MF trained on a log collected by random exposure (its users see random items; we report its lists).
-import numpy as np
-
-rng = np.random.default_rng(0)
-U, I, D, K, ROUNDS = 600, 400, 6, 10, 30
-theta, phi = rng.normal(0, 0.7, (U, D)), rng.normal(0, 0.7, (I, D))
-p_click = 1 / (1 + np.exp(-(theta @ phi.T - 2.0)))                   # true chance u clicks i when shown
-print(f"mean click chance {p_click.mean():.3f}; best item per user {p_click.max(1).mean():.3f}")
-
-def gini(x):                                                          # 0 = equal exposure, -> 1 = one item gets all
-    x = np.sort(x); n = len(x); r = np.arange(1, n + 1)
-    return np.sum((2 * r - n - 1) * x) / (n * x.sum())
-print(f"gini check: equal {gini(np.ones(I)):.3f}, all on one item {gini(np.eye(I)[0]):.3f} = (n-1)/n")
-
-def mf_scores(C, k=8, lam=5.0, alpha=5.0, iters=6):                  # implicit ALS on the click log
-    r_ = np.random.default_rng(1)
-    X, Y = r_.normal(0, 0.1, (U, k)), r_.normal(0, 0.1, (I, k))
-    def solve(F, Cm):
-        G = F.T @ F; out = np.empty((Cm.shape[0], k))
-        for r in range(Cm.shape[0]):
-            S = np.flatnonzero(Cm[r]); Fs = F[S]; c = 1 + alpha * Cm[r, S]
-            out[r] = np.linalg.solve(G + (Fs.T * (c - 1)) @ Fs + lam * np.eye(k), Fs.T @ c)
-        return out
-    for _ in range(iters):
-        X = solve(Y, C); Y = solve(X, C.T)
-    return X @ Y.T
-
-def run(policy, seed=1):
-    r = np.random.default_rng(seed)
-    clicks = np.zeros((U, I))
-    shown0 = np.array([r.choice(I, K, replace=False) for _ in range(U)])  # round 0: random exposure
-    clicks[np.arange(U)[:, None], shown0] += r.random((U, K)) < p_click[np.arange(U)[:, None], shown0]
-    out = []
-    for t in range(1, ROUNDS + 1):
-        if policy == "popularity":
-            S = np.tile(clicks.sum(0), (U, 1)) + 1e-6 * r.random((U, I))
-        elif policy == "oracle":
-            S = p_click.copy()
-        else:
-            S = mf_scores(clicks)
-        shown = np.argsort(-S, 1)[:, :K]
-        if policy == "MF + 2 random slots":
-            shown[:, K - 2:] = np.array([r.choice(np.setdiff1d(np.arange(I), shown[u, :K - 2]), 2, replace=False)
-                                         for u in range(U)])
-        logged = shown
-        if policy == "MF on random log":                                # control: log comes from random exposure
-            logged = np.array([r.choice(I, K, replace=False) for _ in range(U)])
-        clicked = r.random((U, K)) < p_click[np.arange(U)[:, None], logged]
-        clicks[np.arange(U)[:, None], logged] += clicked                # only shown items can be clicked
-        exposure = np.bincount(shown.ravel(), minlength=I)
-        out.append((gini(exposure), (exposure > 0).sum(), p_click[np.arange(U)[:, None], shown].mean()))
-    return out
-
-print(f"{'policy':<20}" + "".join(f" | round {t:2d}: gini items utility" for t in (1, 5, 30)))
-for policy in ("oracle", "popularity", "MF retrained", "MF + 2 random slots", "MF on random log"):
-    res = run(policy)
-    cells = (res[t - 1] for t in (1, 5, 30))
-    print(f"{policy:<20}" + "".join(f" |           {g:.3f} {n:5d} {v:7.3f}" for g, n, v in cells))
-```
-
-</details>
-
-Reading Part 2:
-- **Popularity policy:** from round 1 it shows almost the same 10 items to everyone (Gini 0.970, 14 distinct items). Utility is 0.172, barely above the 0.166 average click chance.
-- **MF retrained on its own clicks:** the number of items shown falls from 189 to 88 and the Gini rises from 0.772 to 0.835, while utility stays near 0.2. The oracle reaches 0.626 with a Gini of 0.670, so users' true tastes call for less concentrated exposure than MF ends up with.
-- **The same MF on a randomly collected log** (same number of impressions, users see random items) improves to utility 0.516 with Gini 0.508 by round 30. In this simulation, the gap between the two MF rows comes from the data alone: the same model, but one log was shaped by the model's own choices.
-- **Two random slots out of 10** keep about 385 items in circulation, and utility ends slightly higher than without exploration (0.214 vs 0.206). Too little exploration, too slowly, to undo the bias in 30 rounds here.
 
 ## Edge cases
 | Case | What happens | Why |
@@ -317,8 +227,6 @@ Reading Part 2:
 | Item listed lower on the screen | Less likely to be clicked than items higher up | Positional bias; score as if in the top position ✅[^5] |
 | Brand-new item, ID-based model | No embedding, no score (Spark: NaN) | Cold start ✅[^12] ✅[^17] |
 | Softmax/two-tower model with no negatives | Folding: spurious cross-group recommendations | Negatives push groups apart ✅[^8] |
-| Retraining only on logs of your own recommendations | Exposure concentrates; utility does not follow | Algorithmic confounding, in Chaney et al.'s simulations ✅[^14]; lab Gini 0.835 vs 0.508 with a random log ✅[^16] |
-| Offline accuracy on held-out data from the same loop | Favours models similar to the one that collected the data; the loop's other effects stay hidden | Held-out accuracy cannot capture the full effects of the loop ✅[^14] |
 | Always the closest items to the query | Monotonous lists (only owl videos) | Fixes: several candidate generators or rankers, re-ranking by genre or other metadata ✅[^6] |
 
 ## Trade-offs
@@ -329,17 +237,14 @@ Reading Part 2:
 | In-batch negatives | Free negatives, harder than uniform ones ✅[^10] | Popularity bias without logQ ✅[^10] |
 | Full softmax | Exact gradient | Infeasible for very large catalogs ✅[^10] |
 | Dot-product scoring | Fast nearest-neighbour retrieval ✅[^4] ✅[^11] | Norm-driven popularity bias ✅[^3] |
-| Exploration slots | Keeps items in circulation (lab ~385 vs 88 items) ✅[^16] | Shows items the model rates lower today |
 
 ## Takeaways
 - If you train a two-tower model with in-batch or popularity-based negatives, subtract `log Q(item)` from the logits, and check where the most popular items land in the ranking. [rule-candidate]
 - Judge the retrieval stage by recall@K at the size the ranker receives (recall@100 or more), not by recall@10. The ranker cannot recover what retrieval dropped.
 - Put item features in the item tower whenever new items arrive faster than you retrain. ID-only models cannot score them.
-- Log what was shown, not only what was clicked, and keep some randomized or explored traffic. Without it, every retrain learns from the previous model's choices. [rule-candidate]
-- Track exposure concentration (Gini, distinct items shown) next to accuracy. In the lab, MF retrained on its own clicks kept utility near 0.2 while the number of distinct items shown fell from 189 to 88.
 
 ## Verification status
-- Verified: 86 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
+- Verified: 76 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-25
 
 ## References
 - [Recommendation systems overview (Recommendation Systems course)](https://developers.google.com/machine-learning/recommendation/overview/types?hl=en) — Google for Developers, living. Backs: candidate generation, scoring and re-ranking; billions to hundreds or thousands; about 10 items shown; several generators; re-ranking for freshness, diversity, fairness. [^1]
@@ -355,9 +260,9 @@ Reading Part 2:
 - [Neural Collaborative Filtering vs. Matrix Factorization Revisited](https://ar5iv.labs.arxiv.org/html/2005.09683) — Rendle, Krichene, Zhang, Anderson, 2020 (ar5iv HTML of arXiv:2005.09683). Backs: dot product enables maximum inner product search; MLP similarity costs `O(d²)`. [^11]
 - [Collaborative filtering advantages & disadvantages (Recommendation Systems course)](https://developers.google.com/machine-learning/recommendation/collaborative/summary?hl=en) — Google for Developers, living. Backs: the cold-start problem for ID embeddings, projection in WALS, averaged embeddings for fresh items. [^12]
 - [Content-based filtering advantages & disadvantages (Recommendation Systems course)](https://developers.google.com/machine-learning/recommendation/content-based/summary?hl=en) — Google for Developers, living. Backs: no data about other users needed, niche items, dependence on hand-engineered features. [^13]
-- [How Algorithmic Confounding in Recommendation Systems Increases Homogeneity and Decreases Utility](https://ar5iv.labs.arxiv.org/html/1710.11214) — Chaney, Stewart, Engelhardt, 2018 (ar5iv HTML of arXiv:1710.11214). Backs: the feedback loop and confounding, homogenization without utility, unequal utility loss, Gini of item consumption, MF vs content filtering, weighting, held-out accuracy limits, explore/exploit connection. [^14]
+- [How Algorithmic Confounding in Recommendation Systems Increases Homogeneity and Decreases Utility](https://ar5iv.labs.arxiv.org/html/1710.11214) — Chaney, Stewart, Engelhardt, 2018 (ar5iv HTML of arXiv:1710.11214). Backs: the feedback loop and confounding, homogenization without utility, explore/exploit connection. [^14]
 - [Overview of Recommender Systems (Dive into Deep Learning, 21.1)](https://d2l.ai/chapter_recommender-systems/recsys-intro.html) — Zhang, Lipton, Li, Smola, living. Backs: the cold-start definition. [^15]
-- `machine-learning/lab-setup.md` — the lab where the two-tower (in-batch, logQ, full softmax, cold start) and feedback-loop simulations ran on 2026-11-25. [^16]
+- `machine-learning/lab-setup.md` — the lab where the two-tower simulation (in-batch, logQ, full softmax, cold start) ran on 2026-11-25. [^16]
 - [Collaborative Filtering (Spark 4.3.0 MLlib guide)](https://spark.apache.org/docs/latest/ml-collaborative-filtering.html) — Apache Spark, living (4.3.0 when read). Backs: NaN predictions for unknown users or items, used as a fallback signal. [^17]
 
 ## Related
@@ -365,6 +270,6 @@ Reading Part 2:
 - `machine-learning/recommender-systems/implicit-feedback-and-ranking.md` — negatives, BPR and how to evaluate retrieval offline.
 - `algorithms/vector-search-evaluation.md` — measuring approximate nearest-neighbour search, the serving side of two towers.
 - `machine-learning/deep-learning/embeddings-and-self-supervised-learning.md` — InfoNCE, the same in-batch softmax outside recommendation.
-- `machine-learning/ml-systems/hidden-technical-debt.md` — feedback loops as system-level debt.
+- `machine-learning/recommender-systems/feedback-loops-and-popularity-bias.md` — what retraining on the pipeline's own logs does to exposure and utility.
 - `machine-learning/ml-systems/data-drift-and-monitoring.md` — monitoring what the model is shown and serves over time.
 - `machine-learning/reinforcement-learning/multi-armed-bandits.md` — exploration for new and uncertain items.

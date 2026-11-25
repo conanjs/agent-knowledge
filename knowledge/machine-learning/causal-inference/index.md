@@ -7,7 +7,7 @@ last-updated: 2026-11-25
 
 # Causal inference
 
-Estimating what an action does, not just what it predicts: potential outcomes and randomized experiments (A/B tests), causal graphs and confounding, estimating effects from observational data (regression adjustment, propensity scores, doubly robust and double machine learning), and effects that differ between people (meta-learners, uplift). Every experiment simulates data from a known structural model, so the true effect is known; the estimators are written in numpy and scikit-learn. Not covered: causal discovery of the graph from data, instrumental variables, regression discontinuity and difference-in-differences.
+Estimating what an action does, not just what it predicts: potential outcomes and randomized experiments (A/B tests), causal graphs and confounding, estimating effects from observational data (regression adjustment, propensity scores, doubly robust and double machine learning), effects that differ between people (meta-learners, uplift), and causal discovery, learning the graph itself from data (the PC algorithm, GES, LiNGAM, NOTEARS, FCI). Every experiment simulates data from a known structural model, so the true effect or graph is known; the estimators and search algorithms are written in numpy, scipy and scikit-learn. Not covered: instrumental variables, regression discontinuity and difference-in-differences.
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -16,12 +16,14 @@ Estimating what an action does, not just what it predicts: potential outcomes an
 | [causal-graphs-and-confounding.md](causal-graphs-and-confounding.md) | concept | DAGs, confounders, mediators, colliders; d-separation and the backdoor criterion; Simpson's paradox; why "control for everything" adds mediator and collider bias | verified |
 | [estimating-effects-from-observational-data.md](estimating-effects-from-observational-data.md) | concept | Consistency, unconfoundedness, positivity; regression adjustment, IPW, matching, doubly robust AIPW; extreme propensities; double ML with cross-fitting | verified |
 | [heterogeneous-treatment-effects.md](heterogeneous-treatment-effects.md) | concept | CATE; S-, T- and X-learners; uplift modeling and the Qini curve; why the best outcome predictor can rank effects worst | verified |
+| [causal-discovery.md](causal-discovery.md) | concept | Markov and faithfulness assumptions, Markov equivalence classes and CPDAGs; the PC algorithm with Fisher-z tests, GES with BIC, LiNGAM's non-Gaussian orientation, NOTEARS's acyclicity function, FCI with hidden confounders; what discovery cannot do | verified |
 
 ## References
 - [Causal Inference: The Remix](https://mixtape.scunning.com/) — Scott Cunningham, living (free online textbook). Backs: topic scope: potential outcomes, DAGs, unconfoundedness.
 - [Double/Debiased Machine Learning for Treatment and Structural Parameters](https://ar5iv.labs.arxiv.org/html/1608.00060) — Chernozhukov et al., 2016. Backs: the machine-learning side of effect estimation.
 - [DoWhy documentation](https://www.pywhy.org/dowhy/v0.14/user_guide/index.html) — PyWhy contributors, living. Backs: vocabulary of modeling, identification, estimation and refutation.
 - [EconML documentation](https://www.pywhy.org/EconML/) — PyWhy / EconML contributors, living. Backs: vocabulary of CATE estimators.
+- [causal-learn documentation](https://causal-learn.readthedocs.io/) — causal-learn developers (CLeaR), living. Backs: vocabulary of causal discovery methods (PC, FCI, GES, LiNGAM) and independence tests.
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope (the models used as propensity, outcome and base learners).
 
 ## Related

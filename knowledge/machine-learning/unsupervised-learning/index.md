@@ -7,7 +7,7 @@ last-updated: 2026-11-25
 
 # Unsupervised learning
 
-Finding structure without labels: k-means, Gaussian mixtures and the EM algorithm, density-based and hierarchical clustering, principal component analysis, t-SNE/UMAP embeddings for visualization, anomaly detection, and semi-supervised learning from a few labels plus many unlabelled rows. Not covered: generative models that sample new data (see `machine-learning/generative-models/`).
+Finding structure without labels: k-means, Gaussian mixtures and the EM algorithm, density-based and hierarchical clustering, principal component analysis, t-SNE/UMAP embeddings for visualization, anomaly detection, semi-supervised learning from a few labels plus many unlabelled rows, and active learning, which chooses which unlabelled rows to send for labeling. Not covered: generative models that sample new data (see `machine-learning/generative-models/`).
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -19,6 +19,7 @@ Finding structure without labels: k-means, Gaussian mixtures and the EM algorith
 | [t-sne-and-umap.md](t-sne-and-umap.md) | concept | Neighbour embeddings for plots: perplexity and `n_neighbors`, how t-SNE and UMAP optimize, and what their maps do not show | verified |
 | [anomaly-detection.md](anomaly-detection.md) | concept | Outlier vs novelty detection; isolation-forest path lengths and LOF (local outlier factor) by hand, one-class SVM (support vector machine), elliptic envelope; `contamination` moves the threshold, not the ranking (ROC-AUC, area under the receiver operating characteristic curve, 0.9284 at four settings) | verified |
 | [semi-supervised-learning.md](semi-supervised-learning.md) | concept | Cluster and manifold assumptions, self-training and its confirmation bias (digits 0.750 → 0.246), label propagation and spreading on a graph, FixMatch-style pseudo-labels, when unlabelled data hurts | verified |
+| [active-learning.md](active-learning.md) | concept | Pool-based active learning: least-confident, margin and entropy sampling, query by committee, BALD (Bayesian active learning by disagreement) in outline, core-set (k-center) batches against near-duplicates, cold start, sampling bias, and learning curves against random labels (digits: margin 0.853 vs random 0.780 at 50 labels) | verified |
 
 ## References
 - [scikit-learn User Guide](https://scikit-learn.org/stable/user_guide.html) — scikit-learn developers, living. Backs: topic scope.
@@ -28,6 +29,7 @@ Finding structure without labels: k-means, Gaussian mixtures and the EM algorith
 - [UMAP documentation](https://umap-learn.readthedocs.io/en/latest/) — umap-learn developers, living. Backs: UMAP.
 - [Novelty and Outlier Detection (User Guide §2.7)](https://scikit-learn.org/stable/modules/outlier_detection.html) — scikit-learn developers, living. Backs: the anomaly detectors.
 - [Semi-supervised learning (User Guide §1.14)](https://scikit-learn.org/stable/modules/semi_supervised.html) — scikit-learn developers, living. Backs: self-training, label propagation and label spreading.
+- [modAL documentation](https://modal-python.readthedocs.io/en/latest/) — modAL developers, living. Backs: active learning vocabulary (uncertainty measures, committees, batch-mode strategies).
 
 ## Related
 - `machine-learning/learning-path.md` — where this subtopic sits in the reading order.
