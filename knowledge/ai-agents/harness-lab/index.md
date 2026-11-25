@@ -12,7 +12,7 @@ Experiments run while building a coding-agent harness on Claude Code: what was a
 ## Docs
 | Doc | Type | Summary | Status |
 |---|---|---|---|
-| [lab-notebook.md](lab-notebook.md) | deep-dive | Nineteen experiments: hook tests, reviewer calibration, one agent against a model-orchestrated harness, plugin agents as the whole session, when `CLAUDE.md` loads, what the start-up block holds, the guard in `--agent` mode, a script-orchestrated three-arm trial, why the real start-up block is larger than `/context` says, when a project `CLAUDE.md` loads, dropping the user's settings layer and which memory files and imports each layer loads, the Artifact tool's cost, and `skills:` as session versus subagent; the three ways to orchestrate, compared | verified |
+| [lab-notebook.md](lab-notebook.md) | deep-dive | Twenty experiments: hook tests, reviewer calibration, one agent against a model-orchestrated harness, plugin agents as the whole session, when `CLAUDE.md` loads, what the start-up block holds, the guard in `--agent` mode, a script-orchestrated three-arm trial, why the real start-up block is larger than `/context` says, when a project `CLAUDE.md` loads, dropping the user's settings layer and which memory files and imports each settings source loads (`CLAUDE.local.md` included), the Artifact tool's cost, and `skills:` as session versus subagent; the three ways to orchestrate, compared | verified |
 
 ## References
 - `frameworks/knowledge/schemas/topic-index.schema.md` — defines the topic index shape.

@@ -26,7 +26,7 @@ What the experiments showed:
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** nineteen experiments (E1–E19; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; the three ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** twenty experiments (E1–E20; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; the three ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -547,6 +547,33 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - `skills:` preloads only when the agent runs as a subagent. The docs word the field for subagents ("to preload into the subagent's context at startup") and name only `omitClaudeMd` and `initialPrompt` as behaving specially in session mode ✅[^cc_sub], so this case is undocumented.
   - For an agent that runs as the session, put paths to its reference files in its prompt. That costs only the path; the file enters the context once, when it is read.
 
+### E20. The three settings sources and the memory files each loads, `CLAUDE.local.md` included (2026-11-25)
+- **Question:** which memory file does each settings source (`user`, `project`, `local`) bring? Does `CLAUDE.local.md` follow the project rule for imports? And what happens in the home folder?
+- **Setup:**
+  - a git repository under `~/workspace` with `CLAUDE.md` ("ZEBRA-42") and `CLAUDE.local.md` ("OTTER-7");
+  - `/context` run headless with each value of `--setting-sources`;
+  - interactively: a folder whose `CLAUDE.local.md` imports a file outside the folder; and the home folder with `project,local`, answering its trust prompt.
+- **Result: memory files per settings source** ✅[^lab]:
+
+| `--setting-sources` | Memory files listed (type) |
+|---|---|
+| not given (all three) | `~/.claude/CLAUDE.md` (User), its import `core.instructions.md` (User), `repo/CLAUDE.md` (Project), `repo/CLAUDE.local.md` (Local) |
+| `user` | `~/.claude/CLAUDE.md` (User), `core.instructions.md` (User) |
+| `project` | `~/.claude/CLAUDE.md` (Project, found by the walk up from the working folder), `repo/CLAUDE.md` (Project) |
+| `local` | `repo/CLAUDE.local.md` (Local) only |
+| `project,local` | `~/.claude/CLAUDE.md` (Project), `repo/CLAUDE.md` (Project), `repo/CLAUDE.local.md` (Local) |
+| `user,local` | the two User files, `repo/CLAUDE.local.md` (Local) |
+
+- **Result: imports and the home folder** ✅[^lab]:
+  - `CLAUDE.local.md` that imports a file outside the working folder, default sources, interactive: the import-approval prompt appeared, as for a project file (E17).
+  - Home folder, `project,local`, headless: the reply to "What is 2+2?" began "V, 2 + 2 = 4.", so the imported instructions loaded and were followed (E18 showed them in `/context`).
+  - Home folder, interactive: the workspace-trust prompt's default choice is "No, exit". A run that pressed Enter on it got "Claude Code didn't start because this folder isn't trusted." After a run that chose "Yes", `~/.claude.json` still had `hasTrustDialogAccepted: false` for the home folder, so that answer is not saved, as the prompt says ("Yes lasts for this session only"). The project's two external-import flags were also still `false`.
+- **Conclusion:**
+  - Each settings source brings one kind of memory file: `user` the user's own (`~/.claude/CLAUDE.md` and its imports), `project` the `CLAUDE.md` files from the working folder upward, `local` the `CLAUDE.local.md` files.
+  - A file's type decides the import rule. A User file's imports load without asking. A Project or Local file's imports from outside the working folder need approval, unless the same file is already loaded as a User file (E17).
+  - The type a file gets depends on which source found it. Under the home folder, `~/.claude/CLAUDE.md` is a User file when `user` is on, and a Project file found by the walk when only `project` is on.
+  - In the home folder every interactive start asks the trust question again, and pressing Enter at once exits without starting.
+
 ---
 
 ## 4. Three ways to orchestrate, compared
@@ -598,7 +625,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **Not settled:**
   - about 5,000 tokens of a default session's first request, after E11's two causes;
   - why no project `CLAUDE.md` loads in folders under `/private/tmp/…` (E12);
-  - an earlier manual check in the home folder that saw no loaded instructions, which E18 could not reproduce (E18);
+  - an earlier manual check in the home folder that saw no loaded instructions, which E18 and E20 could not reproduce; E20 shows one way to get that result (Enter on the trust prompt's default "No, exit");
   - the docs text on external-import approval was not read for this notebook; the rule rests on E15–E17.
 
 ## References
