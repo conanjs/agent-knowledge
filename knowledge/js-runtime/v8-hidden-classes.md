@@ -5,7 +5,7 @@ topic: js-runtime
 status: verified
 applies-to: ["V8", "Node.js on V8", "Chromium on V8"]
 last-verified: 2026-10-04
-last-updated: 2026-11-14
+last-updated: 2026-11-26
 tags: [performance, v8, objects, inline-caches]
 ---
 
@@ -38,7 +38,7 @@ Object literals with different key order can produce different shape-transition 
 5. V8 can use hidden classes with inline caches so a property-access site remembers how to load a property for shapes it has already seen ✅[^1]
 6. A monomorphic inline cache has seen one shape at that site, a polymorphic cache has seen a small set of shapes, and a megamorphic cache stops tracking an unbounded local set ✅[^2]
 7. Mrale's V8-focused explanation gives property-load inline caches an example threshold of four shapes before megamorphic state in that post ✅[^2]
-8. Repeated add/delete churn can push named properties into dictionary mode, and dictionary properties are typically slower because inline caches do not work with them in the same way ✅[^1]
+8. Repeated add/delete churn can push named properties into dictionary mode, and dictionary properties are typically slower because inline caches do not work with them in the same way ✅[^1] (on V8 13.6 in Node.js 24.22.1, one `delete` of an existing property was enough: measured in [v8-object-and-value-representation-deep-dive.md](v8-object-and-value-representation-deep-dive.md))
 
 ## Worked example
 A constructor that always writes every field in the same order gives each instance the same transition path ✅[^1]

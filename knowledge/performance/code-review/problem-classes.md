@@ -24,7 +24,7 @@ A **problem class** is a code shape that costs more than it needs to as input gr
 
 Notation: O(f(n)) says how work grows with the input size n, not how many seconds it takes ([complexity foundation](../../algorithms/fundamentals/complexity-and-big-o.md)). n, m and k are sizes taken from the code or its workload, V and E are a graph's vertices and edges, and Q is a number of queries.
 
-Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, concurrency with distributed calls and rendering, and three classes that apply only with a measured need. Not covered: compiler-level tuning, SIMD, GPU work. Classes that belong to one domain (datastores, messaging and jobs, browser and mobile clients, language runtimes, data pipelines, machine-learning and LLM applications, network delivery) are in seven more catalogs, 57 classes in all, listed under Related.
+Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, concurrency with distributed calls and rendering, and three classes that apply only with a measured need. Not covered: compiler-level tuning, SIMD, GPU work. Classes that belong to one domain (datastores, messaging and jobs, browser and mobile clients, language runtimes, data pipelines, machine-learning and LLM applications, network delivery) and to JavaScript on V8, Node.js, ORMs and migrations, gRPC, and container configuration, are in thirteen more catalogs, 96 classes in all, listed under Related.
 
 ## Catalog
 
@@ -290,6 +290,12 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 - [problem-classes-data-pipelines.md](problem-classes-data-pipelines.md) — 7 more classes: batch and analytical data processing.
 - [problem-classes-ml-and-llm-applications.md](problem-classes-ml-and-llm-applications.md) — 7 more classes: machine-learning frameworks and large-language-model APIs.
 - [problem-classes-network-and-delivery.md](problem-classes-network-and-delivery.md) — 9 more classes: HTTP delivery, transport and cryptography cost on the request path.
+- [problem-classes-javascript-engine.md](problem-classes-javascript-engine.md) — 8 more classes: JavaScript code shapes that defeat V8's optimizing compilers.
+- [problem-classes-javascript-language.md](problem-classes-javascript-language.md) — 6 more classes: JavaScript and TypeScript language and built-in patterns.
+- [problem-classes-nodejs-runtime.md](problem-classes-nodejs-runtime.md) — 6 more classes: the Node.js runtime.
+- [problem-classes-orm-and-migrations.md](problem-classes-orm-and-migrations.md) — 9 more classes: object-relational mappers and schema migrations.
+- [problem-classes-api-and-rpc.md](problem-classes-api-and-rpc.md) — 3 more classes: API and remote-procedure-call design.
+- [problem-classes-containers-and-runtime-config.md](problem-classes-containers-and-runtime-config.md) — 7 more classes: deployment and runtime configuration.
 - [../../algorithms/workload-selection.md](../../algorithms/workload-selection.md) — choosing structures by workload.
 - [../database-query-performance.md](../database-query-performance.md) — query and data-path performance in depth.
 - [../overload-and-coalescing.md](../overload-and-coalescing.md) — bounding load and coalescing duplicate work.

@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: js-runtime
-last-updated: 2026-11-14
+last-updated: 2026-11-26
 ---
 
 # JavaScript runtime internals
@@ -13,6 +13,9 @@ JavaScript runtime internals covers engine and Node.js behaviors that affect cor
 | Doc | Type | Summary | Status |
 |---|---|---|---|
 | [v8-hidden-classes.md](v8-hidden-classes.md) | concept | Object shapes, V8 Maps, inline caches, dictionary mode, and stable-field construction | verified |
+| [v8-compiler-pipeline-deep-dive.md](v8-compiler-pipeline-deep-dive.md) | deep-dive | How V8 13.6 in Node.js 24 runs JavaScript through Ignition, Sparkplug, Maglev and TurboFan, why it deoptimizes, how inlining and on-stack replacement work, and which old optimization advice no longer holds, checked in a lab | verified |
+| [v8-object-and-value-representation-deep-dive.md](v8-object-and-value-representation-deep-dive.md) | deep-dive | How V8 13.6 stores numbers, objects, arrays, strings and Maps, when each representation goes slow or comes back, bytes per element, and nine corrected beliefs, measured on Node.js 24.22.1 | verified |
+| [v8-memory-and-startup-deep-dive.md](v8-memory-and-startup-deep-dive.md) | deep-dive | How V8 manages memory in Node.js 24 (the scavenger, mark-compact, what keeps memory alive, weak references, external memory, heap flags) and how code gets ready to run (lazy parsing, code cache, snapshots, compile cache), with lab measurements and corrections | verified |
 | [promise-rejections.md](promise-rejections.md) | concept | Floating promises, unhandled rejection behavior, and why linting promise handling matters | verified |
 | [subpath-imports.md](subpath-imports.md) | concept | `package.json` `imports`: why internal aliases start with `#`, versus `paths`, self-reference and relative paths | verified |
 | [private-fields.md](private-fields.md) | concept | `#x` versus TypeScript `private`: runtime privacy, serialization leaks, measured performance | verified |
