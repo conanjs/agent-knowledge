@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: algorithms
-last-updated: 2026-11-07
+last-updated: 2026-11-25
 ---
 
 # Algorithms and data structures
@@ -24,7 +24,7 @@ Practical algorithms and data structures for engineers: how cost grows with inpu
 ## Subtopics
 | Subtopic | Summary |
 |---|---|
-| [fundamentals/](fundamentals/index.md) | Big-O measured from O(1) to O(n²); amortized cost of dynamic arrays |
+| [fundamentals/](fundamentals/index.md) | Big-O measured from O(1) to O(n²); amortized cost; notation and cases; calculating complexity from code; recurrences; space; growth classes and feasible sizes; the doubling experiment; NP-hardness |
 | [data-structures/](data-structures/index.md) | Operation-cost catalog; hash tables and collisions; trees, heaps, B-tree indexes |
 | [sorting-searching/](sorting-searching/index.md) | Timsort, dual-pivot quicksort, stability and adaptivity measured |
 | [graphs/](graphs/index.md) | BFS, DFS, Dijkstra, topological sort and cycles |

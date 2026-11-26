@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: performance
-last-updated: 2026-11-23
+last-updated: 2026-11-25
 ---
 
 # Performance engineering and optimization
@@ -34,6 +34,7 @@ How to reason about, measure and improve performance: latency percentiles and ta
 | [hardware/](hardware/index.md) | Caches and locality; branch prediction; false sharing |
 | [measurement/](measurement/index.md) | Benchmarking methodology; profiling and flame graphs |
 | [optimization/](optimization/index.md) | Optimization playbook; caching and hit ratio |
+| [code-review/](code-review/index.md) | Performance problem classes for code review, and the calibration of a review agent built on them |
 
 ## References
 - [Linux Performance](https://www.brendangregg.com/linuxperf.html) — Brendan Gregg, living. Backs: topic scope.
