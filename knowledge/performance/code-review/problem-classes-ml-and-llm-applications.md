@@ -122,7 +122,7 @@ Notation, each with one worked example:
 
 **Weaker sources, rank 5 or 6.** None used.
 
-**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration, and the agent's index does not list them: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md). Whether a reviewer, person or agent, finds them from this catalog has not been measured.
+**Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
 - In a training or inference loop, look for work that runs once per step and does not need to: a synchronous loader, a tensor read, a per-item forward call; state the cost as calls per step and per run. [rule-candidate]

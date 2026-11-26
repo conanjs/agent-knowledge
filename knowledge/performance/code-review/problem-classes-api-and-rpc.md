@@ -94,7 +94,7 @@ ranked-sources: true
 - `MAX_CONNECTION_AGE`: the grpc.io keepalive page lists it as a server option, "Maximum time that a channel may exist", infinite by default, and states no load-balancing purpose, so this doc does not offer it as a fix for pinned connections ✅[^grpc-keepalive].
 - grpc-js (Node.js) and gRPC C++ defaults were not read for this doc; check them before quoting a number for those implementations.
 
-**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration yet: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md).
+**Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
 - For every gRPC client, ask two questions: what balances calls across backends (`round_robin` over a headless Service, or an L7 proxy), and how many calls share one connection against the server's stream limit. [rule-candidate]

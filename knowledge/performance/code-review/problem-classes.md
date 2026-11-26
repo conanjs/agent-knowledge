@@ -109,7 +109,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
   - Django 6.0's Tasks framework only enqueues work, apart from its development-only Immediate backend: production needs a separate worker to run it ✅[^django-tasks].
   - No rank 1 page was found for "do no I/O while holding a lock"; the statement in this catalog rests on the C# rule to hold locks briefly.
 - **What the sources do not say.** Python's cost table has no row for `list.count`, `sum` or `str.join`; C's `strlen` page states no cost; AIP-158 says a server "should coerce" an oversized page size to its maximum, not that it must reject it.
-- **Calibration state.** Every class except `data-layout-locality` has at least one known-bad sample in the review-agent calibration (`perf-reviewer-calibration.md` §6 and §6.3); 18 known-good samples test the "when the usual advice does not apply" cases.
+- **Calibration state.** Every class except `data-layout-locality` has at least one known-bad sample in the review-agent calibration (`perf-reviewer-calibration.md` §6 and §6.3); 18 known-good samples test the "when the usual advice does not apply" cases. The classes of the thirteen domain catalogs each have one known-bad sample since round 3 (§6.5 of the same doc).
 - **Weaker sources, rank 5 or 6.**
   - Held–Karp solves the travelling salesman problem in Θ(n²·2ⁿ) against Θ(n!) for brute force ✅[^wiki-heldkarp]; greedy set cover is within about ln n of the optimum ✅[^wiki-setcover]. The original papers could not be read.
   - Aho–Corasick matching is linear in the text plus the number of matches once the automaton is built, and building is linear in the total keyword length ✅[^wiki-ac].

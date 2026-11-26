@@ -110,7 +110,7 @@ Terms:
 
 - **Changed after a measurement (2026-11-26).** This catalog first listed "`new Array(n)` then filled by index" as a signal of `object-shape-instability`, with "`[]` plus `push`" as the fix. Both were removed. On Node.js 24.22.1 (V8 13.6), building an array with `new Array(n)` and indexed writes was faster than `push`, reading a holey array that has no real holes cost about a tenth more in most runs, and `fill()` over the whole array makes it packed again: the runs are in [v8-object-and-value-representation-deep-dive.md](../../js-runtime/v8-object-and-value-representation-deep-dive.md). One `delete` of an existing property did put the object in dictionary mode in the same runs, so that signal stays.
 
-**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration, and the agent's index does not list them: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md). Whether a reviewer, person or agent, finds them from this catalog has not been measured.
+**Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
 - When a variable holds a query, a stream or an RDD, count how many times it is read; each read reruns the whole pipeline unless it is materialized. [rule-candidate]
