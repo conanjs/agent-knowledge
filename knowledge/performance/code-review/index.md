@@ -13,7 +13,7 @@ How to find performance problems by reading code, before anything is slow: a cat
 | Doc | Type | Summary | Status |
 |---|---|---|---|
 | [problem-classes.md](problem-classes.md) | reference | Thirty-nine problem classes, each with its signals in code, fix, before → after cost and check, from official docs and checked sources | verified |
-| [perf-reviewer-calibration.md](perf-reviewer-calibration.md) | deep-dive | A Claude Code review agent with a skill loaded on demand, run on 18 samples with known answers, then on 39 more: setup, commands, accuracy, false positives and token cost | verified |
+| [perf-reviewer-calibration.md](perf-reviewer-calibration.md) | deep-dive | A Claude Code review agent with a skill loaded on demand, run on 18 samples with known answers, then on 39 more, with a third arm that reads the index alone: setup, commands, accuracy, false positives and token cost | verified |
 
 ## References
 - [The Algorithm Design Manual: Stony Brook Algorithm Repository](https://www.algorist.com/algorist.html) — Steven Skiena, living. Backs: topic scope (a problem-to-algorithm catalog).
