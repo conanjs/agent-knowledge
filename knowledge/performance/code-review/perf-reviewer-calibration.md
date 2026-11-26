@@ -2,7 +2,7 @@
 schema: deep-dive/v1
 topic: performance/code-review
 status: verified
-applies-to: ["Claude Code 2.1.332, headless -p, Sonnet for the reviewer and Haiku for the loading probes, one macOS machine (Apple M2)", "Node.js 24.22.1; ESLint 10.15.0 with the typescript-eslint parser", "runs of 2026-11-25, and one trap sample run on 2026-11-26"]
+applies-to: ["Claude Code 2.1.332, headless -p, Sonnet for the reviewer and Haiku for the loading probes, one macOS machine (Apple M2)", "Node.js 24.22.1; ESLint 10.15.0 with the typescript-eslint parser", "runs of 2026-11-25; one trap sample and the index-only arm run on 2026-11-26"]
 last-verified: 2026-11-26
 last-updated: 2026-11-26
 synthesized-into: []
@@ -20,6 +20,8 @@ So on these single-problem samples with a stated workload, run headless with Son
 
 Later the same day the index grew to 39 classes and a second round ran 39 more samples: one per new class, two multi-problem flows and 13 traps. With the skill the agent found 29 of 29 planted problems and stayed clean on all 13 traps (one run per arm). Without the reference files the scorer counted 25 of 29; read by hand, the other four had the right fix under a wrong label or line. It cost about half as much.
 
+On 2026-11-26 a third arm ran once on all 58 samples: the index without the reference files. It found the same problems with the same fixes and stayed clean on all 18 good samples. The class id was right for 42 of 43 planted problems, and two findings sat a few lines away from the answer key's lines. On the round-2 samples it used 11 % less input than the full skill, so most of the skill's extra cost is the index: 65 % of the tokens (§6.4).
+
 **Use this when:**
 - you build or change a review agent and want measured accuracy, false positives and cost;
 - you decide how to load an agent's knowledge (a preloaded skill, the Skill tool, or a path in the agent's body);
@@ -29,7 +31,7 @@ Later the same day the index grew to 39 classes and a second round ran 39 more s
 - three ways to load a skill into an agent run as the session, measured;
 - the agent and skill design;
 - 18 samples and their answer key;
-- 54 scored runs in two arms, with hand checks; a second round of 78 runs on 39 new samples;
+- 54 scored runs in two arms, with hand checks; a second round of 78 runs on 39 new samples; a third arm of 58 runs with the index alone;
 - the lint rules and the scaling harness, each tested against known-good and known-bad inputs;
 - ground-truth benchmarks of the samples;
 - what published studies say about finding performance bugs and about language models doing it.
@@ -196,6 +198,7 @@ Each sample is a folder with source files and a `workload.json`: entry point, fi
 **Arms:**
 - **S**: `archkit-build:perf-reviewer` with the skill, run twice.
 - **N**: a copy of the agent in a separate plugin, without the index and reference files, run once. It keeps the list of class ids, so its answers can be scored the same way. The diff against S is six lines: the description, the index line, the two steps that mention it, the "Not a problem when" clause, and "class id from the index" in the output contract.
+- **I** (added on 2026-11-26, §6.4): a copy with the index but no reference files, run once.
 
 **Command, per sample and run.** Each run works on a fresh copy of the sample under `/tmp/perf-cal/<arm>-r<rep>/<sample>/`, a folder where no project `CLAUDE.md` loaded in earlier tests ✅[^lab-notebook]:
 
@@ -323,7 +326,130 @@ node run.mjs --out results/2026-11-25-round2 --arms S:1,N:1 --samples <the 39 ne
 - What the skill did buy is a stable label: the class id and line matched the answer key in 57 of 57 scored findings with it (14 + 14 + 29), against 38 of 43 without it (13 of 14, then 25 of 29). That matters when a program routes or deduplicates findings by class.
 - It cost 27–43 % more input and up to twice the reported cost.
 - The traps did not separate the arms: the model already knew the facts they rest on. The reference files' remaining possible value is facts newer than the model, and that has not been tested.
-- A cheaper middle arm is untested: the index alone (class ids and signals, no reference files).
+- The middle arm, the index alone (class ids and signals, no reference files), ran the next day: §6.4.
+
+### 6.4 The index alone: arm I
+
+**Question:** which part of the skill keeps the class labels stable, the index or the reference files? And how much of the skill's cost does each part carry?
+
+**Setup** (2026-11-26, Claude Code 2.1.332, headless; the CLI reported the model id `claude-sonnet-5-5` in every run of §6 to §6.4).
+- **Arm I** is a third copy of the agent in its own plugin, `variants/index-only/`. It has the same index of 39 class ids and their signals, without the "File" column, and that plugin holds no reference file.
+- Its agent text differs from S in four lines: the description, the sentence about relative paths, the step that reads a reference file, and the "Not a problem when" clause.
+- A script derives both files from the real agent and index, `variants/build-index-only.mjs`, so the arm is rebuilt, not edited by hand.
+- One run on all 58 samples. S and N were not run again: their rows below are those of §6.3.
+
+```bash
+node variants/build-index-only.mjs
+node run.mjs --out results/2026-11-26-index-only --arms I:1 --parallel 4
+node score.mjs results/2026-11-26-index-only
+```
+
+**Result on the 39 samples of round 2.** There all three arms ran with the same 39 classes and the same output contract ✅[^lab-cal]:
+
+| Arm | The agent reads | Class and place both right | Class id right | Place right | Good samples clean | JSON only | Cumulative input (median) | Output tokens (median) | USD, 39 runs |
+|---|---|---|---|---|---|---|---|---|---|
+| S | the index, then reference files | 29/29 | 29/29 | 29/29 | 13/13 | 39/39 | 23,905 | 1,224 | 1.56 |
+| I | the index | 26/29 | 28/29 | 27/29 | 13/13 | 38/39 | 21,346 | 1,125 | 1.24 |
+| N | a list of the class ids | 25/29 | 26/29 | 28/29 | 13/13 | 39/39 | 16,664 | 1,000 | 0.75 |
+
+- **"Class id right"** counts a finding with an expected class in the expected file, on any line.
+- **"Place right"** counts a finding within 3 lines of the answer key's lines, under any class.
+- The scorer of §5 asks for both in one finding.
+
+**I's three misses, read by hand, were labels, as N's were.** Each described the same defect and the same fix as S's finding:
+- B27: the missing effect cleanup, filed at the `useEffect` line (8) and not at the first listener (14). N filed it at the same line.
+- B30: the chain of three fetches, filed at its first fetch (line 36), 3 lines past the window, which ends at line 33.
+- M01: the accumulating spread, filed under `linear-call-in-loop` instead of `allocation-gc`. N gave the same label.
+
+**The M01 miss is not an effect of the reference files.** S read no reference file on M01 (§6.3), so S and I had the same text there, and S still chose `allocation-gc`. With one run per arm, a difference like this cannot be told from run-to-run variation.
+
+**The rest of I's run** ✅[^lab-cal]:
+- **Good samples:** 13 of 13 traps clean, and G14 clean.
+- **Round-1 samples:** 14 of 14 problems with class and place right, nothing raised on the 4 good samples.
+- **All 58 samples:** 40 of 43 with class and place right, 42 of 43 class ids right, 41 of 43 places right, 18 of 18 good samples clean, for 1.83 USD.
+- **Two more findings outside the answer key,** which the scorer counts as extra. Read by hand, both describe a real cost: on B12, the bulk endpoint that the workload names, reported as a second finding (`io-batching-n-plus-one`); on B28, the synchronous file read in the handler, reported again as a minor `blocking-in-async`.
+- **JSON only:** 56 of 58. B18 and G02 came back as a few sentences of reasoning, then the JSON. G02 did the same in §5, §6 and §6.2.
+- **How it ran:** in all 58 runs the first request read the index together with the sample's files, and every run took 3 requests. No run opened a path under `references/` or the real plugin's skill folder.
+
+**What each arm filed, problem by problem** ✅[^lab-cal]. One row per planted problem, taken from the raw replies: the class id and the line of the finding that matched it. Bold marks a cell where the class id or the line falls outside the answer key. For B01–B14 the S and N columns come from round 1 (S run 1; a 15-class index), for the other rows from round 2.
+
+<details>
+<summary>All 43 planted problems in arms S, N and I</summary>
+
+| Planted problem | Accepted class ids | Lines in the answer key | S filed | N filed | I filed |
+|---|---|---|---|---|---|
+| B01-lookup | `lookup-in-loop` | report.ts:7 | `lookup-in-loop` @ 7 | `lookup-in-loop` @ 7 | `lookup-in-loop` @ 7 |
+| B02-dedup | `dedup-set-ops` or `lookup-in-loop` | contacts.ts:5 | `dedup-set-ops` @ 5 | `dedup-set-ops` @ 5 | `dedup-set-ops` @ 5 |
+| B03-topk | `top-k-selection` | leaderboard.ts:4 | `top-k-selection` @ 4 | `top-k-selection` @ 4 | `top-k-selection` @ 4 |
+| B04-range | `range-query` | metrics.ts:6 | `range-query` @ 4 | `range-query` @ 4 | `range-query` @ 6 |
+| B05-graph | `graph-search` | routes.ts:9 | `graph-search` @ 7 | `graph-search` @ 9 | `graph-search` @ 9 |
+| B06-scheduling | `scheduling-intervals` or `top-k-selection` | jobQueue.ts:11–13 | `scheduling-intervals` @ 11 | `scheduling-intervals` @ 11 | `scheduling-intervals` @ 11 |
+| B07-string | `string-matching` | moderation.ts:7–8 | `string-matching` @ 7 | `string-matching` @ 7 | `string-matching` @ 7 |
+| B08-caching | `caching-recomputation` | pricing.ts:1–15 | `caching-recomputation` @ 15 | `caching-recomputation` @ 15 | `caching-recomputation` @ 10 |
+| B09-allocation | `allocation-gc` | catalogIndex.ts:4–8 | `allocation-gc` @ 4 | `allocation-gc` @ 4 | `allocation-gc` @ 4 |
+| B10-n-plus-one | `io-batching-n-plus-one` | invoices.ts:12–14 | `io-batching-n-plus-one` @ 12 | `io-batching-n-plus-one` @ 12 | `io-batching-n-plus-one` @ 12 |
+| B11-db-index | `db-query-index` | orderHistory.ts:11–13; 001_orders.sql:9 | `db-query-index` @ 8 | `db-query-index` @ 8 | `db-query-index` @ 8 |
+| B12-concurrency | `concurrency-backpressure` or `distributed-calls` | crmSync.ts:8 | `concurrency-backpressure` @ 8 | `concurrency-backpressure` @ 8 | `concurrency-backpressure` @ 8 |
+| B13-distributed | `distributed-calls` | paymentsClient.ts:8–10 | `distributed-calls` @ 8 | **`concurrency-backpressure` @ 8** | `distributed-calls` @ 8 |
+| B14-frontend | `frontend-rendering` | ProductTable.tsx:10–22 | `frontend-rendering` @ 22 | `frontend-rendering` @ 22 | `frontend-rendering` @ 22 |
+| B15-seq-shift | `sequence-shift-in-loop` | taskList.ts:5 | `sequence-shift-in-loop` @ 5 | `sequence-shift-in-loop` @ 5 | `sequence-shift-in-loop` @ 5 |
+| B16-subproblems | `overlapping-subproblems` | change.ts:5 | `overlapping-subproblems` @ 5 | `overlapping-subproblems` @ 5 | `overlapping-subproblems` @ 5 |
+| B17-vectorization | `numeric-vectorization` | features.py:6–13 | `numeric-vectorization` @ 13 | `numeric-vectorization` @ 6 | `numeric-vectorization` @ 13 |
+| B18-spatial | `spatial-search` or `db-query-index` | nearbyStores.ts:8–10; 004_stores.sql:7 | `spatial-search` @ 10 | `spatial-search` @ 10 | `spatial-search` @ 10 |
+| B19-transaction | `transaction-lock-scope` | checkout.ts:12–19 | `transaction-lock-scope` @ 19 | `transaction-lock-scope` @ 11 | `transaction-lock-scope` @ 19 |
+| B20-connection | `connection-management` | reportHandler.ts:5–6 | `connection-management` @ 5 | `connection-management` @ 5 | `connection-management` @ 5 |
+| B21-payload | `payload-overfetch` or `db-query-index` | customerList.ts:5 | `payload-overfetch` @ 5 | `payload-overfetch` @ 5 | `payload-overfetch` @ 5 |
+| B22-rescan | `full-rescan-incremental` | dailyTotalsJob.ts:7–9 | `full-rescan-incremental` @ 7 | `full-rescan-incremental` @ 7 | `full-rescan-incremental` @ 7 |
+| B23-warehouse | `warehouse-query-cost` | dailyActiveReport.ts:7–9 | `warehouse-query-cost` @ 7 | `warehouse-query-cost` @ 7 | `warehouse-query-cost` @ 7 |
+| B24-lock | `lock-contention` | handler.go:21–25 | `lock-contention` @ 21 | **`transaction-lock-scope` @ 21** | `lock-contention` @ 21 |
+| B25-blocking | `blocking-in-async` | profile.py:13–16 | `blocking-in-async` @ 13 | `blocking-in-async` @ 13 | `blocking-in-async` @ 13 |
+| B26-polling | `polling-event-rate` | useNotifications.ts:9–12 | `polling-event-rate` @ 9 | `polling-event-rate` @ 9 | `polling-event-rate` @ 9 |
+| B27-leak | `resource-leak` | PriceTicker.tsx:14–16 | `resource-leak` @ 14 | **`resource-leak` @ 8** | **`resource-leak` @ 8** |
+| B28-coldstart | `startup-cold-start` or `caching-recomputation` or `connection-management` | handler.ts:8–9 | `caching-recomputation` @ 8 | `startup-cold-start` @ 8 | `caching-recomputation` @ 8 |
+| B29-logging | `logging-overhead` | importBatch.ts:8–11 | `logging-overhead` @ 8 | `logging-overhead` @ 8 | `logging-overhead` @ 8 |
+| B30-pageload | `page-load-delivery` | Dashboard.tsx:19–30 | `page-load-delivery` @ 24 | `page-load-delivery` @ 27 | **`page-load-delivery` @ 36** |
+| B31-inline | `inline-slow-work` | orderRoute.ts:13–15 | `inline-slow-work` @ 13 | `inline-slow-work` @ 13 | `inline-slow-work` @ 13 |
+| B32-hotpath | `hot-path-constants` | exportNames.ts:4–5 | `hot-path-constants` @ 4 | `hot-path-constants` @ 4 | `hot-path-constants` @ 4 |
+| B33-linear-call | `linear-call-in-loop` or `lookup-in-loop` or `dedup-set-ops` | duplicates.py:4 | `linear-call-in-loop` @ 4 | `linear-call-in-loop` @ 4 | `linear-call-in-loop` @ 4 |
+| B34-combinatorial | `combinatorial-explosion` | routePlanner.ts:5–16 | `combinatorial-explosion` @ 16 | `combinatorial-explosion` @ 16 | `combinatorial-explosion` @ 16 |
+| B35-sql-shape | `sql-query-shape` or `db-query-index` | eventsPage.ts:15 | `sql-query-shape` @ 15 | `sql-query-shape` @ 15 | `sql-query-shape` @ 15 |
+| B36-unbuffered | `unbuffered-io` or `io-batching-n-plus-one` | export_rows.py:7–10 | `unbuffered-io` @ 7 | `unbuffered-io` @ 6 | `unbuffered-io` @ 7 |
+| B37-parallelism | `parallelism-overhead` | score_documents.py:12 | `parallelism-overhead` @ 12 | `parallelism-overhead` @ 12 | `parallelism-overhead` @ 12 |
+| B38-unbounded | `unbounded-input` or `payload-overfetch` | searchRoute.ts:6–15 | `unbounded-input` @ 9 | `unbounded-input` @ 9 | `unbounded-input` @ 9 |
+| M01-statement, part 1 | `io-batching-n-plus-one` | transactions.ts:7–8 | `io-batching-n-plus-one` @ 7 | `io-batching-n-plus-one` @ 7 | `io-batching-n-plus-one` @ 7 |
+| M01-statement, part 2 | `lookup-in-loop` | summarize.ts:9 | `lookup-in-loop` @ 9 | `lookup-in-loop` @ 9 | `lookup-in-loop` @ 9 |
+| M01-statement, part 3 | `allocation-gc` | csv.ts:5 | `allocation-gc` @ 4 | **`linear-call-in-loop` @ 4** | **`linear-call-in-loop` @ 4** |
+| M02-webhooks, part 1 | `concurrency-backpressure` or `distributed-calls` | dispatch.ts:9 | `concurrency-backpressure` @ 9 | `concurrency-backpressure` @ 9 | `concurrency-backpressure` @ 9 |
+| M02-webhooks, part 2 | `distributed-calls` | deliver.ts:5–7 | `distributed-calls` @ 5 | **`concurrency-backpressure` @ 5** | `distributed-calls` @ 5 |
+
+</details>
+
+All 18 good samples came back `clean` with no finding in every arm that ran them: S and N on the 4 of round 1, the 13 traps of round 2 and G14; I on all 18.
+
+**Where the skill's cost sits** (the 39 samples of round 2; each step is the difference between two rows of the table above):
+
+| Step | Cumulative input (median) | USD, 39 runs | USD per review |
+|---|---|---|---|
+| N: the ids only | 16,664 | 0.7528 | 0.0193 |
+| N → I: add the index | + 4,682 (28 % of N) | + 0.4831 (64 % of N) | 0.0317 |
+| I → S: add the reference files | + 2,559 (12 % of I) | + 0.3212 (26 % of I) | 0.0399 |
+
+- Of the 7,241 tokens between N and S, 4,682 belong to the index: 65 %.
+- Of the 0.8043 USD between them, 0.4831 belongs to the index: 60 %.
+- A likely reason, not measured separately: the index is read in request 1, so it is sent again in requests 2 and 3; a reference file is read in request 2 and sent again once.
+
+**Limits.**
+- One run per arm, and I ran a day after S and N, with the same Claude Code version and model id.
+- Only the round-2 rows compare like with like. On the round-1 samples S and N had run with a 15-class index and without the `checked` field.
+- "Class id right" and "place right" were computed after the runs, by a separate script over the same replies; `score.mjs` reports only the two together.
+- The gap between I and S is three findings out of 29.
+
+**Reading** *(synthesis)*:
+- **On these samples the index did the labelling.** With the index alone the class id was right for 42 of 43 planted problems, against 43 of 43 with the reference files and 39 of 43 with the bare list of ids (one run each, Sonnet, headless).
+- **Between S and I three findings differ, and only in their labels:** two were filed at other lines (B27, B30), and one got another class id (M01, where both arms had read the same text). Detection, fixes and false positives were the same.
+- **Dropping them saves little:** 11 % of the input (21,346 against 23,905) and 21 % of the reported cost (1.24 against 1.56 USD), about 0.008 USD per review. So cost is a weak reason to drop the reference files, and stable class ids are a weak reason to keep them.
+- **What would decide it is still untested:** whether the reference files help on facts newer than the model, and on real, larger flows.
+- **The larger share of the cost is the index.** A shorter index, with fewer words per signal, has not been tried.
 
 ---
 
@@ -469,7 +595,7 @@ B16 shows exponential growth directly: ten more units of amount multiplied the t
 1. **For an agent run as the session, point to its knowledge by path.** `${CLAUDE_PLUGIN_ROOT}` in the agent body is replaced with the plugin's path. In Claude Code 2.1.332, headless, with Haiku, frontmatter `skills:` was preloaded only when the agent ran as a subagent (§3, §3.1: three agent kinds, one run each), and the Skill tool added about 2,900 tokens to every request with this machine's skill listing (§3.2).
 2. **Progressive disclosure held.** In round 1 (Sonnet, S runs 1 and 2) the agent read the index plus exactly the matching reference file in 28 of 28 bad-sample runs, and never more than one reference file; in round 2 it did the same on 24 of 24 single-problem samples (§6, §6.3).
 3. **Calibrate with known-good samples, not only known-bad ones.** The traps (constant-size nested loops, a necessary sort, intentional awaits) are where a checker's false positives show. The first lint rules fired on 3 of 4 good samples; the agent on none of 17 good samples. Each false positive pointed to a guard the rule could have, and the second version fired on none of the 4 it was tuned on (§6, §6.3, §7.2).
-4. **Measure what the knowledge adds.** Over two rounds (Sonnet, headless, small samples with a stated workload) the reference files added 27–43 % input and changed no verdict read by hand; they made the class labels stable (§6, §6.3). Keep the part that a measurement shows is needed; the traps did not show which part that is.
+4. **Measure what the knowledge adds.** Over two rounds (Sonnet, headless, small samples with a stated workload) the skill added 27–43 % input and changed no verdict read by hand; it made the class labels stable (§6, §6.3). A third arm then split the skill into its two parts (§6.4, one run): the index alone gave 42 of 43 class ids right and carried 65 % of the extra tokens; the reference files carried the rest, and without them two findings were filed at other lines. Measure the parts apart before deciding which to keep.
 5. **Parse an agent's JSON defensively.** Two wordings and an extra field did not make every reply pure JSON in round 1: 84 of 87 were. In round 2, with the field, 78 of 78 were; whether the field caused that is undetermined (§5, §6.2, §6.3).
 6. **Check the scorer too.** A too-narrow regex marked a correct answer wrong; read a sample of findings by hand (§5).
 7. **The growth exponent separates quadratic from near-linear, but it is not an exact O() meter.** Under about 10 ms per run, start-up and warm-up hid the growth; at millions of items, memory effects pushed linear code to 1.4–1.6 (Node.js 24.22.1, Apple M2, these fixtures). Compare before and after at the same sizes, at three sizes or more (§7.1, §7.3).
@@ -494,6 +620,15 @@ node run.mjs --out results/<date> --arms S:2,N:1 --parallel 4
 node score.mjs results/<date>
 ```
 
+**The index-only arm** (58 headless runs; rebuild the variant after any change to the agent or the index):
+
+```bash
+cd calibration/perf-reviewer
+node variants/build-index-only.mjs
+node run.mjs --out results/<date>-index-only --arms I:1 --parallel 4
+node score.mjs results/<date>-index-only
+```
+
 **Lint over the samples:**
 
 ```bash
@@ -512,15 +647,17 @@ cd bench && sh run-all.sh
 
 ## 11. Verification
 
-- **Measured on 2026-11-25** on one machine: every ✅[^lab-probe] and ✅[^lab-cal] result, except the G14 trap of §6.3, run on 2026-11-26. Raw CLI output, per-run metadata and `scores.json` are in the plugin's `calibration/perf-reviewer/results/2026-11-25/`. Each S sample ran twice and each N sample once, so the numbers show size, not spread.
+- **Measured on 2026-11-25** on one machine: every ✅[^lab-probe] and ✅[^lab-cal] result, except the G14 trap of §6.3 and arm I of §6.4, both run on 2026-11-26. Raw CLI output, per-run metadata and `scores.json` are in the plugin's `calibration/perf-reviewer/results/2026-11-25/`. Each S sample ran twice and each N sample once, so the numbers show size, not spread.
 - **Checked against the Claude Code docs on 2026-11-25:** the `skills` field, the plugin-agent fields, path-variable substitution, and `--allowedTools Read` in headless mode.
 - **Read on 2026-11-25:** the studies in §8, in their abstracts or full text through a page reader that returns extracted text. The numbers are as quoted there. For Mytkowicz et al. the text read was the submission draft.
 - **Re-checked on 2026-11-26 by an independent reviewer:** every table in §6–§6.3 recomputed from the `scores.json` files; §7.1, §7.3 and the Map-lookup table re-run or compared with `bench/results-2026-11-25.txt`; the study numbers re-read in the papers' text (SWE-Perf's 2.26 % and 10.85 % in Table 2 of its HTML version; Mytkowicz et al.'s 33 % and 300 % were not on the landing page and were not re-read); the ESLint tables were not re-run.
+- **Arm I, 2026-11-26:** its three scorer misses and its two findings outside the answer key were read by hand; class and place were split by a separate script over the same replies; the files each run read were taken from its transcript. An independent agent then recomputed every number of §6.4 from the raw result files and the transcripts and found none that differed. The raw replies themselves stay in the plugin folder (`results/2026-11-26-index-only/`), which is not under version control; the per-problem table of §6.4 is the copy kept here.
 - **Synthesis, not a sourced claim:** the "Reading" paragraph in §6 and §9.
 - **Changed after the runs:** one row of `references/verification.md` now warns that linear code on millions of items can fit a slope of 1.4–1.6, from §7.3. The reviewer ran with the earlier text.
 - **Changed after the review of 2026-11-26:** six reference files were corrected to match what their sources say (virtual-thread pinning by JDK version, the skip-scan condition, Dijkstra's stated bounds, `ArrayList` costs, the Django Tasks exception, the latency table's origin). No run has used the corrected text.
 - **Not settled:**
-  - whether the index alone (class ids and signals, without reference files) keeps the labels stable at lower cost;
+  - how much the class ids vary from run to run: §6.4 has one run per arm, and one label differed between two arms that had read the same text;
+  - whether a shorter index keeps the class ids right at lower cost: the index carries about 65 % of the skill's extra tokens (§6.4);
   - whether reference files help on facts newer than the model: no sample tested that;
   - behaviour on real, larger code flows: every sample here is small and has a stated workload;
   - how the second version of the lint rules behaves on known-good code it was not tuned on (§7.2);
@@ -530,7 +667,7 @@ cd bench && sh run-all.sh
 ## References
 
 - Local experiments: the loading probes of §3, a throwaway plugin and a project-level agent, run with Claude Code 2.1.332 and Haiku, 2026-11-25. Sessions 38ea613a, 17de3294, a7fd634a and d5946330 (§3); ab8874d3, 96116e54, 89b962e6, 1baa10c7, 766bcb4f and 3d6fcd06 (§3.1). Sizes from `measure.py` over their transcripts; the tool definitions and the skill listing read from the recorded requests. Backs: §3. [^lab-probe]
-- Local calibration: `archkit-build` plugin, `calibration/perf-reviewer/` (samples, `expected.json`, `run.mjs`, `score.mjs`, `lint-samples.mjs`, `bench/`) and `tests/`. Run with Claude Code 2.1.332 and Sonnet, Node.js 24.22.1, ESLint 10.15.0, on an Apple M2, 2026-11-25; the G14 trap of §6.3 ran on 2026-11-26 (`results/2026-11-26-skip-scan/`). Backs: §3.2, §6, §7. [^lab-cal]
+- Local calibration: `archkit-build` plugin, `calibration/perf-reviewer/` (samples, `expected.json`, `run.mjs`, `score.mjs`, `lint-samples.mjs`, `bench/`) and `tests/`. Run with Claude Code 2.1.332 and Sonnet, Node.js 24.22.1, ESLint 10.15.0, on an Apple M2, 2026-11-25; the G14 trap of §6.3 and arm I of §6.4 ran on 2026-11-26 (`results/2026-11-26-skip-scan/`, `results/2026-11-26-index-only/`, `variants/index-only/`). Backs: §3.2, §6, §7. [^lab-cal]
 - [Harness lab notebook](../../ai-agents/harness-lab/lab-notebook.md) — the earlier experiments on tool allowlists (E2, E8), reviewer calibration (E4), characters per token in a recorded request (E11), `CLAUDE.md` loading by folder (E12) and the settings layer (E13). Backs: §2, §3.2, §5. [^lab-notebook]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §3, the `skills` field. [^cc-sub]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-25. Backs: §3, plugin-agent fields and path variables. [^cc-plugins]
