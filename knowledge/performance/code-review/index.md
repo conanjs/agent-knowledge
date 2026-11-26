@@ -7,7 +7,7 @@ last-updated: 2026-11-26
 
 # Performance code review
 
-How to find performance problems by reading code, before anything is slow: catalogs of problem classes (the code shape, the fix that fits, the cost before and after, and the check that confirms it): a first catalog of 39 general classes and thirteen domain catalogs with 96 more; and the calibration of a read-only review agent built on the first catalog. Not covered: profiling running systems (see `../measurement/`) or tuning a database server.
+How to find performance problems by reading code, before anything is slow: catalogs of problem classes (the code shape, the fix that fits, the cost before and after, and the check that confirms it): a first catalog of 39 general classes and thirteen domain catalogs with 96 more; and the calibration of a read-only review agent built on these catalogs. Not covered: profiling running systems (see `../measurement/`) or tuning a database server.
 
 ## Docs
 | Doc | Type | Summary | Status |
@@ -26,7 +26,7 @@ How to find performance problems by reading code, before anything is slow: catal
 | [problem-classes-orm-and-migrations.md](problem-classes-orm-and-migrations.md) | reference | Nine ORM and migration classes, from sibling-collection joins and tracking overhead to table-rewriting DDL, blocking index builds and in-migration backfills, with the locks each PostgreSQL 19 and MySQL 8.4 statement takes | verified |
 | [problem-classes-api-and-rpc.md](problem-classes-api-and-rpc.md) | reference | Three gRPC classes (stream-limit queueing, connection pinning behind L4 balancers, bulk unary messages), plus the API-specific signal for every shape that belongs to an existing class | verified |
 | [problem-classes-containers-and-runtime-config.md](problem-classes-containers-and-runtime-config.md) | reference | Seven configuration classes from Kubernetes manifests, Dockerfiles and runtime flags: CPU-quota throttling, pools sized from the host's CPUs, heaps that ignore the memory limit, `ndots` DNS expansion, missing readiness gates, build work at container start, autoscaling on the wrong signal | verified |
-| [perf-reviewer-calibration.md](perf-reviewer-calibration.md) | deep-dive | A Claude Code review agent with a skill loaded on demand, run on 18 samples with known answers, then on 39 more, with a third arm that reads the index alone: setup, commands, accuracy, false positives and token cost | verified |
+| [perf-reviewer-calibration.md](perf-reviewer-calibration.md) | deep-dive | A Claude Code review agent with a skill loaded on demand, run on 18 samples with known answers, then on 39 more, with a third arm that reads the index alone, then on 127 more after the index grew to 135 classes: setup, commands, accuracy, false positives and token cost | verified |
 
 ## References
 - [The Algorithm Design Manual: Stony Brook Algorithm Repository](https://www.algorist.com/algorist.html) — Steven Skiena, living. Backs: topic scope (a problem-to-algorithm catalog).

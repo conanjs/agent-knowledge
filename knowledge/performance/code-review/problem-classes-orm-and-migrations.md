@@ -117,7 +117,7 @@ Terms:
   - The PostgreSQL page does not state which lock `SET NOT NULL` takes when it validates a not-null constraint added `NOT VALID`, so the fix above uses `VALIDATE CONSTRAINT`, whose lock the page gives ✅[^pg-alter]. No page read today says what EF Core 10 does when a `Contains` list has more values than the database's parameter limit.
   - The Hibernate 7.4 user guide's batch-insert chapter could not be read in full today; the claims above come from the Hibernate 7.4 short guide only, and the `flush()` then `clear()` fix is the usual pattern, not a quoted one.
 
-**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration yet: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md).
+**Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
 - Read the SQL the ORM sends: two sibling `Include`s, tracking on a read-only path and one context for a whole batch each multiply work by a count you can read from the code. [rule-candidate]

@@ -106,7 +106,7 @@ The domain is code that reads a large dataset, transforms it and writes a result
 - The DataSketches HLL page says the sketch grows until the full HLL array is allocated, and states no byte size independent of the distinct count ✅[^datasketches-hll].
 - The PostgreSQL 19 `EXPLAIN` pages read do not mention a bounded "top-N" sort for `ORDER BY … LIMIT`; whether `ORDER BY random() LIMIT k` sorts all rows or keeps k is not settled here. Either way every row is read and given a random value.
 
-**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration, and the agent's index does not list them: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md). Whether a reviewer, person or agent, finds them from this catalog has not been measured.
+**Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
 - After every join on a key not proven unique, compare row counts before and after; a `DISTINCT` right after a join is a signal, not a fix. [rule-candidate]
