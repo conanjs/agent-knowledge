@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents/harness-lab
 status: verified
-applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 and 2026-11-25"]
+applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-26"]
 last-verified: 2026-11-25
-last-updated: 2026-11-25
+last-updated: 2026-11-26
 synthesized-into: []
 tags: [lab-notebook, claude-code, subagents, plugins, hooks, orchestrator, evaluator, token-cost, experiments]
 ---
@@ -314,6 +314,20 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
   The whole request is 161,894 characters for 38,965 tokens, about 4.2 characters per token.
 
+  The 12 tool definitions one by one, measured as the length of each definition written as JSON (its name, description and input schema), from the same recorded request ✅[^lab]:
+
+| Tool | Characters | | Tool | Characters |
+|---|---|---|---|---|
+| Artifact | 61,300 | | ListAgents | 3,566 |
+| Workflow | 9,487 | | Skill | 3,372 |
+| Agent | 8,759 | | ReportFindings | 3,195 |
+| ScheduleWakeup | 8,096 | | Read | 2,863 |
+| Bash | 6,172 | | ToolSearch | 2,563 |
+| Edit | 1,453 | | Write | 984 |
+
+  At the 4.2 characters per token of this request, Read is about 680 tokens and Bash about 1,470 *(estimate)*.
+  The `Skill` definition's description includes the instruction, when a listed skill covers the task, to "call this tool first".
+
 - **Removing tools, real against estimated** ✅[^lab]:
 
 | Removed | Real first request | Real drop | `/context` total | `/context` drop |
@@ -362,6 +376,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **Conclusion:**
   - A project `CLAUDE.md` loads from the working folder and every folder above it, in default and `--agent` mode alike. Git is not needed.
   - A `CLAUDE.md` in a folder below the working folder does not load at the start.
+  - E21 widens the first point to the default mode, to folders without git, and to folders above a git root (headless runs).
   - `omitClaudeMd: true` keeps project and user files out of a subagent's start, but an agent with Read can still open the file.
   - In folders under `/private/tmp/…`, no project `CLAUDE.md` loaded in any mode. The cause was not found in the docs read; it is an observation. Run tests that involve project files in a normal folder.
 
@@ -576,6 +591,83 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ---
 
+### E21. The upward walk with the default settings sources: folders above, git, and the home folder (2026-11-25)
+- **Question:** with the default settings sources, does the walk from the working folder upward still load project `CLAUDE.md` files, also from folders above the working folder, in folders without git, and above a git root? And how is `~/.claude/CLAUDE.md` listed when both the `user` source and the walk can reach it?
+- **Setup:**
+  - Claude Code 2.1.332, headless only: `claude -p "/context" --model haiku`, reading the whole `### Memory Files` table of its output (a first reading through `grep … | head -20` cut the table after two rows and looked like a missing file);
+  - under the home folder, `~/workspace/_lab-walk-e21p/` with its own `CLAUDE.md`, a subfolder `plain/sub/` with no git above it (neither `~` nor `~/workspace` is a git repository), and a git repository `repo/` with its own `CLAUDE.md`, run from `repo/src/`;
+  - outside the home folder, `/Users/Shared/_lab-walk-e21s/CLAUDE.md`, run from its `sub/` folder, no git;
+  - this knowledge repository, run from its `knowledge/` subfolder.
+- **Result** ✅[^lab]:
+
+| # | Working folder | Git | `--setting-sources` | Memory files listed (type) |
+|---|---|---|---|---|
+| 1 | `~/workspace/_lab-walk-e21p/plain/sub` | none | not given (all three) | `~/.claude/CLAUDE.md` (User), its import `core.instructions.md` (User), `_lab-walk-e21p/CLAUDE.md` (Project) |
+| 2 | `~/workspace/_lab-walk-e21p/repo/src` | `repo/` is the root; `_lab-walk-e21p/CLAUDE.md` is above it | not given | the two User files, `_lab-walk-e21p/CLAUDE.md` (Project), `_lab-walk-e21p/repo/CLAUDE.md` (Project) |
+| 3 | `~/workspace/_lab-walk-e21p/plain/sub` | none | `project,local` | `~/.claude/CLAUDE.md` (Project), `_lab-walk-e21p/CLAUDE.md` (Project) |
+| 4 | `~/workspace/_lab-walk-e21p/repo/src` | as in 2 | `project,local` | `~/.claude/CLAUDE.md` (Project), `_lab-walk-e21p/CLAUDE.md` (Project), `_lab-walk-e21p/repo/CLAUDE.md` (Project) |
+| 5 | `/Users/Shared/_lab-walk-e21s/sub` | none | not given | the two User files, `/Users/Shared/_lab-walk-e21s/CLAUDE.md` (Project) |
+| 6 | `/Users/Shared/_lab-walk-e21s/sub` | none | `project,local` | `/Users/Shared/_lab-walk-e21s/CLAUDE.md` (Project) only |
+| 7 | `~/workspace/agent-knowledge/knowledge` | the repository | not given | the two User files, `agent-knowledge/CLAUDE.md` (Project), and the auto-memory index `MEMORY.md` of this project's folder under `~/.claude/projects/` (type AutoMem: Claude Code's own notes, not a `CLAUDE.md`) |
+
+- **Conclusion** (headless `-p`, Claude Code 2.1.332, normal folders; `--agent` and interactive sessions were not run here):
+  - The upward walk (the `project` source) runs with the default settings sources too. It loaded the `CLAUDE.md` of a folder above the working folder without git (cases 1 and 5), inside a repository (case 7), and above a git root (case 2). This widens E12, whose subfolder case was run only in `--agent` mode inside a git repository.
+  - The walk's limits found earlier still hold: a `CLAUDE.md` in a folder below the working folder does not load at the start (run from the parent of `repo/`, `repo/CLAUDE.md` did not load), and folders under `/private/tmp/…` loaded no project file in any mode (E12).
+  - So with the default sources two mechanisms run together: the `user` source loads `~/.claude/CLAUDE.md` and its imports from any working folder, and the walk loads the project files from the working folder upward.
+  - Under the home folder both could bring `~/.claude/CLAUDE.md`, yet it is listed once, as User (cases 1 and 2). With `user` off, the walk is its only way in: it is then listed as Project, and only when the working folder is under the home folder (cases 3, 4 and 6). *(Inferred: that the walk also reaches the file in cases 1 and 2 and the duplicate is dropped follows from cases 3 and 4; `/context` shows only the result.)*
+
+---
+
+### E22. A skill typed as `/name` in a session run as an agent without the `Skill` tool (2026-11-25)
+- **Question:** in a session started with `--agent` whose `tools` leave out `Skill`, can the person still run a skill by typing `/name`? And what does adding the `Skill` tool change?
+- **Setup:**
+  - Claude Code 2.1.332, headless `-p`, default settings sources, a git folder `~/workspace/_lab-slash-e22/`;
+  - a project skill `.claude/skills/codeword/SKILL.md` with `user-invocable: true`, whose body gives the codeword KESTREL-9;
+  - two project agents on Haiku, told to reply NO-CODEWORD when they do not know it: one with `tools: Read`, one with `tools: Read, Skill`;
+  - each agent got two prompts: `/codeword`, and "What is the codeword?".
+- **Result** ✅[^lab]:
+
+| Agent `tools` | Prompt | Reply | Turns | Cumulative input |
+|---|---|---|---|---|
+| `Read` | `/codeword` | KESTREL-9 | 1 | 3,881 |
+| `Read` | "What is the codeword?" | NO-CODEWORD | 1 | 3,814 |
+| `Read, Skill` | `/codeword` | KESTREL-9 | 1 | 10,642 |
+| `Read, Skill` | "What is the codeword?" | KESTREL-9, after calling the `Skill` tool | 3 | 22,154 |
+
+- **Conclusion** (headless, 2.1.332; interactive sessions not run):
+  - A skill typed as `/name` reaches the model without the `Skill` tool: Claude Code expands it before the request.
+  - Without the tool, the model cannot load a skill by itself.
+  - So an agent run as the session can leave `Skill` out and save the listing on every request (E19): the person types the skill's command when it is needed, and the agent reads other reference files by path.
+
+---
+
+### E23. An orchestrator agent that reads Spec Kit's step by path, from a plain request (2026-11-26)
+- **Question:** can an agent run as the session, without the `Skill` tool, run a Spec Kit step from a request in plain words by reading the step's `SKILL.md` itself, inside the limits its guard hooks set?
+- **Setup:**
+  - Claude Code 2.1.332, headless, default settings sources, Sonnet;
+  - a git folder `~/workspace/_lab-orch-e23/` with `src/server.js`, Spec Kit 1.2.3's `specify`, `clarify`, `plan` and `tasks` skills under `.claude/skills/`, and its `.specify/` scripts and templates, copied from another repository;
+  - the archkit `orchestrator` agent: `tools: Read, Grep, Glob, Write, Edit, Bash`. Its prompt says to read `.claude/skills/speckit-<step>/SKILL.md` for each step. Its hooks allow writes only under `specs/`, `.specify/memory/` and three named files, and shell commands only from a short list with no chaining;
+  - `claude -p '<request>' --plugin-dir <archkit>/build --agent archkit-build:orchestrator --allowedTools Read Grep Glob Write Edit Bash`. The request: add a GET `/health` endpoint to `src/server.js`, do only the specify step, then stop for approval.
+- **Result** ✅[^lab]:
+
+| Request | Size | Tool calls | Outcome |
+|---|---|---|---|
+| 1 | 9,319 | Read `speckit-specify/SKILL.md`, Glob `specs/*/spec.md`, Read `src/server.js` | |
+| 2 | 17,238 | Bash `ls …; cat …; git branch …` | Denied by the hook: chained commands |
+| 3 | 17,489 | Bash `ls -a .specify …`, Glob `.specify/**/*` | `ls` denied: not on the list; Glob ran |
+| 4 | 18,059 | Read the spec template, `init-options.json` and the checklist template | |
+| 5 | 21,379 | Bash `mkdir -p specs/001-health-endpoint/checklists`, Bash `git branch --show-current` | Both allowed |
+| 6 | 21,742 | Write `spec.md`, the quality checklist and `.specify/feature.json` | All allowed |
+| 7 | 23,920 | Text: a summary, and "stopped for your approval" | |
+
+  7 requests, 129,146 tokens of cumulative input, $0.14. The spec has one user story with 3 acceptance scenarios and 5 functional requirements, and no `[NEEDS CLARIFICATION` markers.
+- **Conclusion** (one run):
+  - The agent found and followed the step's instructions by itself, from the path in its prompt; the person did not type `/speckit-specify` (compare E22).
+  - The guard hooks held: two shell commands were denied, and the agent went on with Glob and Read. Those two denials cost two requests; the prompt should send the agent to Glob and Read for looking at files.
+  - The agent's first request was 9,319 tokens with the default settings sources, the request included.
+
+---
+
 ## 4. Three ways to orchestrate, compared
 
 | Way | What the orchestrator is | Cost of orchestration | Measured |
@@ -592,7 +684,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 1. **Measure the first request of every agent.** It is multiplied by every request that follows (E2, E5, E8).
 2. **Give each agent only its tools.** That cuts tool definitions and the skill list at once (E8). One tool, Artifact, is about a third of a default session's start here; deny it wherever pages are not published (E11, E14).
-3. **Which memory files load (E7, E12, E15, E16):** a main session, default or `--agent`, loads the user's files with their imports from any working folder, plus the project's files from the working folder upward; `omitClaudeMd` works only for subagents. `--setting-sources project,local` drops the user layer, but under the home folder the upward walk still finds `~/.claude/CLAUDE.md` as a project file, and its imports load only when they are inside the working folder (E15, E18). To keep instruction files out of a worker, use a subagent with `omitClaudeMd: true`, or a session with `project,local` started in a repository.
+3. **Which memory files load (E7, E12, E15, E16, E21):** a main session, default or `--agent`, loads the user's files with their imports from any working folder, plus the project's files from the working folder upward (default sources, 2.1.330–2.1.332; E21 measured headless runs with and without git and above a git root, E12 the `--agent` case inside a repository); `omitClaudeMd` works only for subagents. `--setting-sources project,local` drops the user layer, but under the home folder the upward walk still finds `~/.claude/CLAUDE.md` as a project file, and its imports load only when they are inside the working folder (E15, E18). To keep instruction files out of a worker, use a subagent with `omitClaudeMd: true`, or a session with `project,local` started in a repository.
 4. **Do not trust an agent's description of its own tools or context, nor `/context` as an exact count.** Test by calling a tool. Measure real sizes from the CLI's usage numbers: `/context` leaves out several parts and counts the rest low (E7, E8, E11).
 5. **Hooks are the part that works in every mode.** They see `agent_type` for subagents and for sessions run as an agent (E6, E9). Put the rules in hooks, not in prose.
 6. **Test a check against a known-good and a known-bad sample before relying on it.** This applies to hooks (E3) and to the reviewer (E4).
