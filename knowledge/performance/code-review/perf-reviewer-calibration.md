@@ -499,6 +499,7 @@ These are the scores after the answer key was corrected (below). Before the corr
   | B128 | `type-unstable-site` | `primitive-boxing` |
 
 - **Two traps were flawed:** each held a real problem its author had not meant. G41 scans a 30 MiB buffer once per word (both arms reported it). G23 has one serial consumer that takes 400 ms per record at 15 records per second (N reported it, S did not).
+- **The lint rules agree on G41.** Run over all 185 samples after the round, the five rules of §7.2 flagged that same line of G41 (`no-linear-lookup-in-loop`) and no other good sample. Among the new bad samples they flagged one, B99, at its planted line (`no-await-per-item`); most of the new samples are not TypeScript or JavaScript, so the rules do not see them ✅[^lab-cal].
 - **On the 29 sound traps, S raised nothing and N raised findings on three:**
   - G24: a `send-per-message` finding on a topic whose volume fits one lane;
   - G25: a `poison-message-loop` finding although the queue declares a delivery limit of 5 and a dead-letter exchange;
