@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents
 status: verified
-applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30; the 2026-03-24 Anthropic post 2026-11-24"]
+applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30; the 2026-03-24 Anthropic post 2026-11-24; §6.4 and §6.5 sources 2026-11-26"]
 last-verified: 2026-10-30
-last-updated: 2026-11-24
+last-updated: 2026-11-26
 synthesized-into: []
 tags: [harness-engineering, agent-harness, guides, sensors, hooks, agents-md, long-running-agents, feedback-loops]
 ---
@@ -20,7 +20,7 @@ tags: [harness-engineering, agent-harness, guides, sensors, hooks, agents-md, lo
 
 Harness engineering is designing that layer so the agent's work can be trusted. It has two halves. **Guides** steer the agent before it acts (instruction files, templates, skills). **Sensors** check its work afterwards and feed errors back (tests, linters, review agents). The core habit: every agent mistake becomes a harness change, so the same mistake cannot happen again. With the model held fixed, harness changes alone have moved a coding agent from outside the top 30 to the top 5 of a benchmark.
 **Use this when:** you set up a repo for coding agents; an agent declares victory too early, leaves broken state or drifts from the architecture; you choose between adding a rule to `AGENTS.md`/`CLAUDE.md` and adding a check; you compare agent tools; someone asks how prompt, context, harness, loop and graph engineering differ.
-**Depth:** every harness component with its default; the guides/sensors × computational/inferential model; the comparison of all five disciplines; the improvement loop; three worked cases with numbers (Anthropic long-running agents, OpenAI's agent-written product, LangChain on Terminal Bench); this repo's own harness as an artifact; a cross-component interaction matrix; a failure matrix; open questions.
+**Depth:** every harness component with its default; the guides/sensors × computational/inferential model; the comparison of all five disciplines; the improvement loop; three worked cases with numbers (Anthropic long-running agents, OpenAI's agent-written product, LangChain on Terminal Bench); how Anthropic's published harnesses plan the work (§6.4); how three vendors document orchestrating agents in code (§6.5); this repo's own harness as an artifact; a cross-component interaction matrix; a failure matrix; open questions.
 
 ---
 
@@ -136,7 +136,7 @@ Two related ideas from the same article ✅[^fowler]:
 
 ---
 
-## 6. Three worked cases
+## 6. Worked cases and vendor practice
 
 ### 6.1 Anthropic: an agent that works across many context windows
 
@@ -228,6 +228,30 @@ Two related ideas from the same article ✅[^fowler]:
 
 ---
 
+### 6.4 How the published Anthropic harnesses plan the work
+
+What each source says about the planning artifacts, read 2026-11-26:
+
+| Source | Who writes the plan | Its form | What later agents may change | Any script turning a plan into data? |
+|---|---|---|---|---|
+| *Effective harnesses for long-running agents* (2025-11-26) | The initializer agent expands the user's prompt into a feature list, every feature failing | JSON with `category`, `description`, `steps` and `passes`; models are "less likely to inappropriately change or overwrite JSON files" than Markdown | Coding agents edit it "only by changing the status of a passes field" | No: the initializer writes the JSON itself ✅[^ant_harness] |
+| *Harness design for long-running application development* (2026-03-24) | A planner expands "a simple 1-4 sentence prompt" into a full product spec, kept to "product context and high level technical design", because spec errors would "cascade into the downstream implementation" | The article names no format; its example is headed prose with user stories and a data model. Before each sprint the generator and the evaluator negotiate a "sprint contract" on what done looks like. "Communication was handled via files" | The sprint construct and its contracts were later removed for Opus 4.6, leaving one evaluator pass at the end | No ✅[^ant_harness2] |
+| Claude Code best practices (living) | The person and Claude: "Interview me until you could write the spec, then write it to SPEC.md", then "start a fresh session to build from it" | A Markdown file | — | No ✅[^cc_best] |
+
+*(Synthesis.)* None of the three compiles Markdown tasks into JSON. Each keeps the machine-checked state (pass flags, contracts, tests) apart from the prose plan, and the one that uses JSON has the model write it directly.
+
+### 6.5 Orchestrating agents in code: what Anthropic, OpenAI and Google document
+
+All three vendors document two ways to run several agents: a model decides which agent runs next, or ordinary code does. Read 2026-11-26:
+
+| Vendor | Code decides | A model decides | How to drive their coding agent from a program |
+|---|---|---|---|
+| Anthropic | Workflows are "orchestrated through predefined code paths"; it advises that "developers start by using LLM APIs directly" ✅[^bea]. Claude Code's dynamic workflows: "A workflow moves the plan into code", as "a JavaScript script" that runs subagents ✅[^cc_wf] | Agents, where the model directs its own process ✅[^bea]; the research system's lead agent is a model, "Claude Opus 4 as the lead agent" ✅[^ant_multi] | Headless mode is "available as a CLI for scripts and CI/CD", with JSON output and `--resume` ✅[^cc_headless]; the Agent SDK is "programmable in Python and TypeScript" ✅[^cc_sdk] |
+| OpenAI | "Orchestrating via code: determining the flow of agents via your code", with structured outputs to route, chaining, an evaluator loop and parallel runs ✅[^oai_orch]; it "makes tasks more deterministic and predictable" ✅[^oai_orch_js] | Handoffs and agents as tools ✅[^oai_orch]; the practical guide's manager and decentralized patterns, after the advice to "maximize a single agent's capabilities first" ✅[^oai_guide] | `codex exec` to "Run as part of a pipeline (CI, pre-merge checks, scheduled jobs)" ✅[^codex_exec]; the Codex SDK to "Programmatically control local Codex agents" ✅[^codex_sdk] |
+| Google | ADK's workflow agents run "without consulting an AI model for assistance with the orchestration", for "deterministic and predictable execution patterns"; the page marks them "superseded by more flexible workflow structures" (graph and dynamic workflows) ✅[^adk_wf]. Sequential pipelines are "linear, deterministic, and refreshingly easy to debug" ✅[^adk_patterns] | Coordinator agents: "This relies on LLM-driven delegation" ✅[^adk_patterns] | Gemini CLI headless mode "runs Gemini CLI once and exits" ✅[^gemini_auto] and "provides a programmatic interface" ✅[^gemini_headless]; its pages carry a banner that Gemini CLI was replaced by Antigravity CLI on 2026-06-18 |
+
+*(Synthesis.)* None of the quoted pages says one way is always better. Code is chosen when the steps and their order are known in advance, for determinism and easier debugging; a model is chosen when the next step depends on judgement. Google's measurement of the cost of multi-agent coordination on sequential work is in [efficient-coding-agents-deep-dive.md](efficient-coding-agents-deep-dive.md) §3.
+
 ## 7. The improvement loop, step by step
 
 The three cases share one cycle ✅[^hashimoto] ✅[^openai] ✅[^lc_improve]:
@@ -313,9 +337,9 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 
 ## References
 
-- [Anthropic: Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic (Erik S., Barry Zhang), 2024. Backs: §1 agent, ACI; §2; §3 workflows. [^bea]
-- [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Justin Young, 2025. Backs: §2; §4; §6.1; §8; §9; §10. [^ant_harness]
-- [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, 2026-03-24, read 2026-11-24. Backs: §2; §8 stronger models; §9 self-evaluation; §10. [^ant_harness2]
+- [Anthropic: Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic (Erik S., Barry Zhang), 2024. Backs: §1 agent, ACI; §2; §3 workflows; §6.5 workflows and agents, start with the API (re-read 2026-11-26). [^bea]
+- [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Justin Young, 2025. Backs: §2; §4; §6.1; §6.4; §8; §9; §10. [^ant_harness]
+- [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, 2026-03-24, read 2026-11-24 and 2026-11-26. Backs: §2; §6.4; §8 stronger models; §9 self-evaluation; §10. [^ant_harness2]
 - [Mitchell Hashimoto: My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — 2026. Backs: §2 definition; §4, §5, §7. [^hashimoto]
 - [OpenAI: Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/) — Ryan Lopopolo, 2026. Backs: §2; §3 Ralph loop; §4; §5; §6.2; §7; §8; §9; §10. [^openai]
 - [LangChain: Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering) — Vivek Trivedy, 2026. Backs: §2; §4; §6.3; §7; §8; §9. [^lc_improve]
@@ -332,6 +356,20 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 - [Anthropic: Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) — Ken Aizawa, 2025. Backs: §8 tools. [^ant_tools]
 - [OpenAI: Prompt engineering guide](https://developers.openai.com/api/docs/guides/prompt-engineering) — OpenAI, living. Backs: §3 prompt row. [^oai_prompt]
 - [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Anthropic, living. Backs: §9 test-specific solutions. [^ant_bp]
+- [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living, read 2026-11-26. Backs: §6.5 dynamic workflows. [^cc_wf]
+- [Run Claude Code programmatically](https://code.claude.com/docs/en/headless) — Anthropic, living, read 2026-11-26. Backs: §6.5 headless mode. [^cc_headless]
+- [Agent SDK overview](https://code.claude.com/docs/en/agent-sdk/overview) — Anthropic, living, read 2026-11-26. Backs: §6.5 SDK languages. [^cc_sdk]
+- [Agent orchestration - OpenAI Agents SDK](https://openai.github.io/openai-agents-python/multi_agent/) — OpenAI, living, read 2026-11-26. Backs: §6.5 orchestrating via code and via the LLM. [^oai_orch]
+- [Agent Orchestration | OpenAI Agents SDK](https://openai.github.io/openai-agents-js/guides/multi-agent/) (JavaScript) — OpenAI, living, read 2026-11-26. Backs: §6.5 determinism. [^oai_orch_js]
+- [A practical guide to building agents](https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf) — OpenAI, undated PDF, read 2026-11-26. Backs: §6.5 single agent first, manager and decentralized patterns. [^oai_guide]
+- [Non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode) — OpenAI, living, read 2026-11-26. Backs: §6.5 `codex exec` in pipelines. [^codex_exec]
+- [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk) — OpenAI, living, read 2026-11-26. Backs: §6.5 Codex SDK. [^codex_sdk]
+- [Template agent workflows - Agent Development Kit (ADK)](https://adk.dev/agents/workflow-agents/) — Google, living, read 2026-11-26. Backs: §6.5 workflow agents and their replacement. [^adk_wf]
+- [Developer's guide to multi-agent patterns in ADK](https://developers.googleblog.com/developers-guide-to-multi-agent-patterns-in-adk/) — Google, 2025-12-16, read 2026-11-26. Backs: §6.5 sequential and coordinator patterns. [^adk_patterns]
+- [Headless mode reference | Gemini CLI](https://geminicli.com/docs/cli/headless/) — Google, last updated 2026-03-10, read 2026-11-26. Backs: §6.5 programmatic interface, and the banner that Antigravity CLI replaced Gemini CLI on 2026-06-18. [^gemini_headless]
+- [Automate tasks with headless mode | Gemini CLI](https://geminicli.com/docs/cli/tutorials/automation/) — Google, last updated 2026-03-09, read 2026-11-26. Backs: §6.5 runs once and exits. [^gemini_auto]
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) — Anthropic, 2025-06-13, read 2026-11-26. Backs: §6.5 the lead agent is a model. [^ant_multi]
+- [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) — Anthropic, living, read 2026-11-26. Backs: §6.4 spec interview and `SPEC.md`. [^cc_best]
 - `.claude/settings.json`, `scripts/claude-doc-hook.sh`, `scripts/check-docs.sh` — in `conanjs/agent-config`: its computational sensor: validators and scenarios after every doc edit, exit 2 on failure.
 - `copilot/atlas/`, `copilot/frameworks/knowledge/tools/validate-knowledge.mjs` — in `conanjs/agent-config` before the split: its map and doc checks (guide and sensor).
 - `copilot/tracker/`, `specs/015-tracker/` — in `conanjs/agent-config`: its tracker: an instruction (guide) plus session-start hooks (sensor), tested as described in §4.
