@@ -3,7 +3,7 @@ schema: deep-dive/v1
 topic: ai-agents/harness-lab
 status: verified
 applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-26"]
-last-verified: 2026-11-25
+last-verified: 2026-11-26
 last-updated: 2026-11-26
 synthesized-into: []
 tags: [lab-notebook, claude-code, subagents, plugins, hooks, orchestrator, evaluator, token-cost, experiments]
@@ -26,7 +26,7 @@ What the experiments showed:
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** twenty experiments (E1–E20; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; the three ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** twenty-nine experiments (E1–E29; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -668,15 +668,164 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ---
 
-## 4. Three ways to orchestrate, compared
+### E24. One story card from Spec Kit files through test-author, red check, implementer and gate (2026-11-26)
+- **Question:** does the script orchestrator run a story card end to end with two separate workers: a test-author that writes the acceptance tests, then an implementer that may not touch them? What does one card cost?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet for both workers, each run with `--setting-sources project,local`;
+  - a git folder `~/workspace/_lab-t2/` with `src/server.mjs` (a server that answers 404 to everything) and `node --test` as the only check;
+  - a hand-written Spec Kit 1.2.3-shaped feature `specs/001-health/`: one user story with three acceptance scenarios (GET `/health` gives 200 and `{"status":"ok"}`, POST gives 405, other routes still 404) and one task line;
+  - `cards.mjs` compiled it into card `001-US1`: allowed `src/server.mjs` and `test/unit/**`, protected `specs/**` and the card's acceptance folder `test/acceptance/001-US1/**`;
+  - `build-task.mjs` ran the card: test-author, then the script's red check (every scenario id named in a test file, and the test command must fail), a commit of the tests, the implementer with its guard and gate, then `[X]` in `tasks.md` and a second commit.
+- **Result** ✅[^lab]:
+
+| Worker | Requests | First request | Cumulative input | Tool calls | Cost |
+|---|---|---|---|---|---|
+| test-author | 5 | 6,360 | 40,496 | Read, Read, Write, Bash, Bash | $0.032 |
+| implementer | 4 | 6,221 | 30,711 | Read, Read, Glob, Edit, Bash | $0.022 |
+
+  - The test file named each test by its scenario id (`US1-AS1: GET /health answers 200 with JSON ok`, and so on). The red check's `node --test` exited 1 before the code existed.
+  - The gate passed at its first attempt. The script marked `T001` `[X]` and made two commits: "001-US1: acceptance tests", then "001-US1: Check that the service is alive". Afterwards all 3 tests passed.
+  - Together: 71,207 tokens of cumulative input and $0.054 for the card, about 25 seconds of worker time.
+- **Two defects found by the first attempt, fixed before this run:**
+  - The script's commit failed when the repository's `.gitignore` already listed the run state: `git add` with `:(exclude)` pathspecs for ignored paths exits non-zero. It now stages everything and then unstages the run state with `git rm --cached --ignore-unmatch`. A test covers it.
+  - The test-author tried to write its test file through a shell heredoc, which its tool list denied; it then used Write. Its prompt now says to write files with Write or Edit.
+- **Conclusion** (one card, one run):
+  - Two workers with separate roles completed a card without a model orchestrating them; the tests were committed before the implementer started, so the gate's scope check would have reported any change to them.
+  - Each worker started at about 6,200–6,400 tokens with the user layer off, more than the 4,800 measured for the implementer in E13; the agents' prompts and tool lists are larger now.
+  - The `usage` totals in `claude -p --output-format json` equal the sum of every request's size in the transcript, so a run record can take cumulative input from that output.
+
+---
+
+### E25. A plugin declared in a project's settings, in headless runs (2026-11-26)
+- **Question:** if a repository's `.claude/settings.json` declares a plugin marketplace and enables its plugin, can a headless worker run that plugin's agent without `--plugin-dir`?
+- **Setup:** Claude Code 2.1.332; a new git folder whose `.claude/settings.json` has `extraKnownMarketplaces.archkit` (`"source": "directory"`, the absolute path of the archkit folder, whose `.claude-plugin/marketplace.json` lists `archkit-build` at `./build`) and `enabledPlugins: {"archkit-build@archkit": true}`; the marketplace was not added with `claude plugin marketplace add`. Then `claude -p "Reply with the word READY only." --agent archkit-build:test-author`, once with the default settings sources and once with `--setting-sources project,local`.
+- **Result** ✅[^lab]: both runs exited 1 with "--agent 'archkit-build:test-author' not found", listing only the other agents.
+- **Conclusion** (headless, 2.1.332, a folder never trusted interactively, two runs): a marketplace declared in project settings was not installed by a `-p` run. The settings page says these keys "apply only after each teammate trusts the folder" ✅[^cc_settings], so the missing trust is the likely cause *(inferred: what a headless run does with the trust step was not observed)*; the interactive install was not tried, because answering it changes the user's plugin registry. Workers started by a script should keep `--plugin-dir`.
+
+### E26. One feature across two repositories, run by the script (2026-11-26)
+- **Question:** do `cards.mjs` and `build-task.mjs`, run from a system workspace with `--repo`, build a feature that spans a provider and a consumer repository, and do the two halves work together?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet workers with `--setting-sources project,local`;
+  - `~/workspace/_lab-t3/system/` with `system.json` (two services) and the shared contract `contracts/users-api.md`: `GET /users/:id` answers 200 with `{"id","name"}`, 404 for an unknown id, 405 for other methods;
+  - `svc-users` (provider): a server that answered 404 to everything, a user map, one story with 3 scenarios, task `T001`;
+  - `svc-greeter` (consumer): an empty `src/greet.mjs`, one story with 3 scenarios (a known user, an unknown user, a 500 from the users API), task `T001 … (depends on svc-users:T001)`;
+  - the per-repository spec, tasks and contract copy were written by hand, as the orchestrator would write them; from the system workspace: `cards.mjs specs/001-user-greeting --repo ../<service>`, then `build-task.mjs ../<service>/.archkit/cards/…/001-US1.json --repo ../<service>`, provider first.
+- **Result** ✅[^lab]:
+
+| Repository | Worker | Requests (from the transcript) | Cumulative input | Cost |
+|---|---|---|---|---|
+| svc-users | test-author | 5 | 41,633 | $0.030 |
+| svc-users | implementer | 5 | 40,550 | $0.031 |
+| svc-greeter | test-author | 5 | 41,398 | $0.034 |
+| svc-greeter | implementer | 5 | 41,017 | $0.030 |
+
+  - `cards.mjs` gave the consumer's card `depends_external: ["svc-users:T001"]`.
+  - Both cards passed: every scenario id had a test, the red check failed before the code (exit 1), the gate passed at its first attempt, `T001` was marked `[X]`, and each repository got two commits.
+  - Afterwards a separate script started the provider's real server and called the consumer's real `greet()` against it: "Hello, Ada!", "Hello, Grace!", "Hello, stranger!".
+  - Together: 164,598 tokens of cumulative input and $0.125 for the feature, without any model orchestrating.
+- **Conclusion** (one run, two small repositories): the script layer handles a cross-repository feature when each repository holds its own spec, tasks and a copy of the contract. The orchestrator model's part (writing those files and choosing the order) was not run here.
+
+---
+
+### E27. The orchestrator agent runs a two-repository feature from a plain request (2026-11-26)
+- **Question:** given only a request in plain words, does the orchestrator agent write the spec, plan, contract and each repository's tasks, compile the cards and build them in dependency order? What does it cost next to the script-only run of E26?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; the orchestrator with the default settings sources, `--plugin-dir <archkit>/build`, `--add-dir` for the two service repositories, and `--allowedTools Read Grep Glob Write Edit Bash` (its guard hooks limit writes and shell commands);
+  - fresh copies of E26's repositories with no spec or tasks: a system workspace with Spec Kit 1.2.3's skills and scripts and a `system.json`; `svc-users` (a server that answers 404, a user map) and `svc-greeter` (an empty `greet.mjs`);
+  - the request named the endpoint and the greeting's three outcomes, and said, for the trial, that the spec and plan were approved in advance.
+- **Result, first run** ✅[^lab]: 18 requests, 827,948 tokens of cumulative input, $0.46 for the orchestrator, 125 seconds.
+  - It read the specify, plan and tasks skills, wrote the spec, plan, research notes, contract and tasks in the system workspace, then each service's `spec.md` and `tasks.md`, and compiled both repositories' cards without problems; the consumer's card had `depends_external: ["svc-users:T001"]`.
+  - It also read `cards.mjs` itself, twice (requests 10 and 11), to learn the task format.
+  - Two shell commands were denied by its hook: a chained `ls … && git …`, and `git -C <repo> status`.
+  - The provider's card ended `gate-failed` after 3 attempts with its tests passing: the gate's scope check reported the service's own `specs/…/spec.md` and `tasks.md` as protected files changed. The orchestrator had written them after the repository's last commit, so they were untracked. The orchestrator diagnosed this from `gate.json` and its log, stopped, and asked for the files to be committed.
+- **Fixes, then a resumed run:**
+  - `build-task.mjs` now commits the feature's documents and cards itself before a run ("<feature>: spec, tasks and cards"), and stops with `dirty-tree`, before any worker, when anything else is uncommitted. The orchestrator's prompt now states the task-line format `cards.mjs` needs; `git -C <repo> status|log|diff --stat` is allowed.
+  - The provider was reset to its base commit, and the same session was resumed (`--resume`) with that news: 3 more requests, 210,063 tokens. Both cards passed at their first gate attempt, with 3 and 4 acceptance tests; each repository got three commits (documents, tests, code) and `T001` marked `[X]`.
+
+| Part | Requests or sessions | Cumulative input | Cost |
+|---|---|---|---|
+| Orchestrator, first run | 18 requests | 827,948 | $0.463 |
+| Orchestrator, resumed | 3 requests | 210,063 | about $0.051 *(the second run's `total_cost_usd`, $0.514, appears to include the first: inferred from the difference)* |
+| Workers, the failed provider attempt | 2 sessions | 116,400 | $0.085 |
+| Workers, the two passing cards | 4 sessions | 164,652 | $0.124 |
+
+  - The orchestrator used 1,038,011 of the 1,319,063 tokens, 79 %. Its requests grew from 9,972 to 71,907 tokens.
+  - A separate script then ran the provider's real server against the consumer's real `greet()`: "Hello, Ada!", "Hello, Grace!", "Hello, stranger!", and with the server stopped, an error "users API unreachable: fetch failed".
+- **Another defect found:** `cards.mjs` took a route in backticks (`/users/:id`) and a URL template (`${usersUrl}/users/…`) for file paths, so both ended up in `allowed_paths`. It now keeps only relative paths made of plain segments; a test covers it.
+- **Conclusion** (one feature, one run plus one resume):
+  - The agent ran the whole chain from a plain request, and stopped with a correct diagnosis when the script layer failed, instead of working around its guards.
+  - Here the model orchestrator used about 3.7 times the tokens of the workers it coordinated (1,038,011 against 281,052). Two of its costs have since been removed (reading `cards.mjs`; a failed card), and were not re-measured.
+
+---
+
+### E28. The same card as a Claude Code dynamic workflow (2026-11-26)
+- **Question:** run E24's card through a dynamic workflow instead of `build-task.mjs`: does it work, what does it cost, and do the guard and gate hooks still hold when the workers are the workflow's subagents?
+- **Setup:**
+  - Claude Code 2.1.332, headless, a copy of E24's repository at the commit before the build, the same card and plugin;
+  - the host session: `claude -p 'Run the workflow with scriptPath .archkit/card.workflow.js.' --plugin-dir <archkit>/build --agent card-runner --setting-sources project,local`, where `card-runner` is a project agent with `tools: Workflow, Read`;
+  - the workflow script, in JavaScript: `agent()` with `agentType: 'archkit-build:test-author'`; a red-check step; `agent()` with `agentType: 'archkit-build:implementer'`; a finish step. The dynamic-workflows docs say there is "no filesystem or shell access from the workflow itself" ✅[^cc_wf], so the red check, the commits and the `[X]` had to be done by an agent: a project agent `shell-step` (`tools: Bash, Read, Edit`, Haiku) with a schema for its report.
+- **Result** ✅[^lab]:
+
+| Run | What happened |
+|---|---|
+| 1 | The host could not load the script: `scriptPath` needs the `Read` tool, and the host had only `Workflow` |
+| 2 | With `general-purpose` on Haiku for the mechanical steps: tests written and committed, but the red-check agent put a sentence ("US1-AS1 and US1-AS2 fail under node --test …") into the `uncovered` field meant for missing ids, so the script stopped |
+| 3 | With `shell-step` and `uncovered` limited to the card's ids: the agent ran `git -C <absolute path> add …` instead of the `git add …` it was given; the command was not on the allowed list, was denied, and it reported `committed: false` |
+| 4 | With `shell-step` told to run each command "character for character": **pass**. Tests committed, gate passed at attempt 1 (`gate.json` written by the `SubagentStop` hook), `T001` marked `[X]`, two commits, all 3 tests pass |
+
+  Run 4 against E24:
+
+| | E24, `build-task.mjs` | E28 run 4, dynamic workflow |
+|---|---|---|
+| test-author | 40,496 (session) | 35,203 (subagent, first request 7,163) |
+| implementer | 30,711 (session) | 33,575 (subagent, first request 6,907) |
+| Red check, commits, `[X]` | 0 (script) | 61,274 (two Haiku agents: 21,260 and 40,014) |
+| Orchestration | 0 (script) | 35,315 (host session) |
+| **Cumulative input** | **71,207** | **165,367** |
+| Cost (`total_cost_usd`) | $0.054 | $0.070 |
+
+- **Conclusion** (one card; four runs: the first stopped on the host's configuration, the second and third on a model doing a fixed step):
+  - The workflow ran the plugin's agents as subagents with their own tool lists; the gate held through `SubagentStop`, and the guard denied nothing because no write left the allowed paths.
+  - For fixed steps, the script was cheaper and steadier: the workflow spent 2.3 times the input tokens, and two of its four runs failed because a model did a step that code does in `build-task.mjs` (a field misread, a command rewritten).
+  - The workers themselves cost about the same either way (68,778 against 71,207 tokens).
+
+---
+
+### E29. Planning and building in two fresh sessions (2026-11-26)
+- **Question:** E27's orchestrator spent 79 % of the run's tokens, and its requests grew to 72,000 tokens as it read Spec Kit's files. Does splitting the work into a planning session and a fresh build session cut that, with the same result?
+- **Setup:**
+  - fresh copies of E27's three repositories at their base commits; the same request, again with the spec and plan approved in advance for the trial; the same flags as E27;
+  - the orchestrator's prompt now says to plan in one session and stop with `planned: specs/<NNN>`, and to build in a new session from the files, without reading Spec Kit's `SKILL.md` files; it also states the task-line format `cards.mjs` needs (added after E27);
+  - session 1: the request; session 2, new: `Build specs/001-greet-by-user-id`.
+- **Result** ✅[^lab]:
+
+| | E27, one session | E29 planning session | E29 build session |
+|---|---|---|---|
+| Requests | 21 (14 until the cards compiled, 7 after) | 9 | 5 |
+| Cumulative input | 1,038,011 (564,602 + 473,409) | 303,017 | 65,699 |
+| Average request while building | 67,630 | — | 13,140 |
+| Cost | about $0.51 | $0.280 | $0.063 |
+
+  - The planning session read the specify, plan and tasks skills, wrote the spec, plan and contract and each repository's spec and tasks, compiled both repositories' cards without problems, and stopped with `planned: specs/001-greet-by-user-id`. It did not read `cards.mjs` this time. One `mkdir -p` with two paths was denied (the rule allowed one); it used Write instead.
+  - The build session read the two `tasks.md` files and card summaries, ran the provider's card, then the consumer's: both passed at their first gate attempt, with 3 and 4 tests, `T001` marked `[X]`, three commits per repository.
+  - Workers: 151,848 tokens and $0.114 for four sessions. The orchestrator's share fell from 79 % to 71 % (368,716 of 520,564).
+  - The provider's real server against the consumer's real `greet()`: "Hello, Ada!", "Hello, Grace!", "Hello, stranger!", and "users API unreachable" with the server stopped.
+- **Conclusion** (one feature, one run of each session):
+  - The orchestrator used 64 % fewer tokens than in E27 (368,716 against 1,038,011). The building part shrank most: a fresh session's requests averaged about a fifth of the size of comparable steps at the end of one long session (E27's last 7 requests also diagnosed a failed card and resumed). Part of the planning saving comes from the prompt change, since this run did not read `cards.mjs`; E27 also carried a failed card. These causes were not measured apart.
+  - Planning still dominates: 303,017 tokens. The three Spec Kit skills it read (41,318 characters as read, about 9,800 tokens) were sent again in each later request, about 64,000 tokens or 21 % of the session *(estimate at 4.2 characters per token, not a counter-test)*.
+
+---
+
+## 4. Four ways to orchestrate, compared
 
 | Way | What the orchestrator is | Cost of orchestration | Measured |
 |---|---|---|---|
 | A skill in the main session | The default session reading `SKILL.md` and following it | About 41,000 tokens per orchestrator request; 358,393–463,013 cumulative per task in E5 | E5: it also ran a step out of order and tripped a permission rule |
-| An agent as the whole session | `claude --agent <orchestrator>`: its own prompt and tools | Smaller start (about 3,000–8,200 tokens in E6–E10, E13), still a model on every step | Not run as an orchestrator |
-| A script | A program that runs each agent as its own session (`claude -p --agent …`) and handles files and git itself | No model tokens for orchestration | E10: A+ used 54,877–137,343 tokens of cumulative input per task, against A's 267,751–408,418, with the same results |
+| An agent as the whole session | `claude --agent <orchestrator>`: its own prompt and tools | Smaller start (about 3,000–10,000 tokens in E6–E10, E13, E23, E27), still a model on every step, and its requests grow with what it has read | E27: one two-repository feature, 21 requests and 1,038,011 tokens for the orchestrator (79 % of the run) against 281,052 for its workers; it planned and ran the scripts correctly, after three script fixes and one resume |
+| A script | A program that runs each agent as its own session (`claude -p --agent …`) and handles files and git itself | No model tokens for orchestration | E10: A+ used 54,877–137,343 tokens of cumulative input per task, against A's 267,751–408,418, with the same results. E24: 71,207 for a whole card |
+| A Claude Code dynamic workflow | A JavaScript script that runs the agents as subagents of one session; it cannot touch files or run commands, so fixed steps go to agents | The host session plus an agent for every fixed step | E28: 165,367 for the same card as E24, and two of four runs stopped because a model did a fixed step wrongly |
 
-*(Synthesis.)* When the steps are fixed, as they are here, the orchestration is a workflow, and code runs it more cheaply and more reliably than a model does.
+*(Synthesis, from one card per way in E24 and E28 and the trials of E5 and E10.)* When the steps are fixed, as they are here, the orchestration is a workflow, and code runs it more cheaply and more reliably than a model does. A model orchestrator earns its cost on the steps that need judgement: writing the spec and tasks, and deciding what to do when a card fails (E27).
 
 ---
 
@@ -692,6 +841,8 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 8. **An evaluator only judges what it is allowed to read.** Limited to the diff, it called tested criteria untested, twice in E10 and once in E4. Given the acceptance tests too, it stopped doing so and found a real test gap instead (E10, rep 3).
 9. **Add an agent only when a measurement shows the gap it closes.** In E10 reps 1–2 the reviewer added 75 % more input and found no real problem; after its prompt was fixed (rep 3) it found one real test gap, in code that was already correct.
 10. **Start workers without the user's layer** (`--setting-sources project,local`) in their repository, and give them their own permissions. That drops the user's plugins, hooks and, for a repository, the user's imported instructions, while the harness plugin keeps working (E13, E15). Started in the home folder, the imported instructions still load (E18).
+11. **Keep fixed steps in code, not in an agent.** In E28 a model ran the red check and the commits; two of four runs failed, once on a misread field and once on a rewritten command. In `build-task.mjs` the same steps cost no tokens; its first runs also found defects (a commit that failed on ignored paths in E24, untracked documents and paths misread from task text in E27), but each was fixed once in code, and the later runs passed (E24, E26, E27, E29). The comparison rests on one small card for the workflow (E28).
+12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each).
 
 ---
 
@@ -707,12 +858,13 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 and 2026-11-25:** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24, 2026-11-25 and 2026-11-26 (E24–E29):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
   - hooks inside subagents and `agent_type`;
-  - the plugin layout.
+  - the plugin layout;
+  - on 2026-11-26: the trust condition for project marketplace settings (E25) and the dynamic-workflows page (E28).
 - **Synthesis, not a sourced claim:** the conclusion lines, §4's last paragraph, and §5.
 - **Not settled:**
   - about 5,000 tokens of a default session's first request, after E11's two causes;
@@ -722,10 +874,12 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 and 2026-11-25; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E19 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-26; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E29 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
+- [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living, read 2026-11-26. Backs: E28 a workflow script has no filesystem or shell access. [^cc_wf]
+- [Settings files and precedence](https://code.claude.com/docs/en/settings) — Anthropic, living, read 2026-11-26. Backs: E25 project marketplace keys apply after the folder is trusted. [^cc_settings]
 - Claude Code settings JSON schema, `enableArtifact` entry — bundled with Claude Code 2.1.332, read 2026-11-25. Backs: E14 which settings source wins. [^schema]
 
 ## Related
