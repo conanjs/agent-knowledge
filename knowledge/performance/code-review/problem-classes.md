@@ -20,9 +20,11 @@ ranked-sources: true
 ## Scope
 A **problem class** is a code shape that costs more than it needs to as input grows, together with its standard remedy. Analogy: a doctor's differential diagnosis. Symptoms (the shape) point to a named condition (the class), which has a standard treatment (the fix) and a test that confirms it (the check). One concrete row: `orders.map(o => customers.find(c => c.id === o.customerId))` is class `lookup-in-loop`; a `Map` built once turns O(n·m) into O(n + m); a scaling test shows the growth exponent fall from about 2 to about 1.
 
+**Admission test, used by the seven domain catalogs under Related.** A code shape is listed as a class when all five hold: (1) a reviewer can point at it in a file under review (code, a query, a schema or config); (2) a standard remedy replaces it (a named structure, API, setting or pattern); (3) its cost before → after can be stated from the code alone, as a growth class or a count of round trips, requests, bytes, allocations or copies; (4) a rank 1–3 source backs the fix or the cost; (5) it is not a sub-case of a class already listed. A shape that fails the fifth point is filed under the class it belongs to.
+
 Notation: O(f(n)) says how work grows with the input size n, not how many seconds it takes ([complexity foundation](../../algorithms/fundamentals/complexity-and-big-o.md)). n, m and k are sizes taken from the code or its workload, V and E are a graph's vertices and edges, and Q is a number of queries.
 
-Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, concurrency with distributed calls and rendering, and three classes that apply only with a measured need. Not covered: compiler-level tuning, SIMD, GPU work.
+Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, concurrency with distributed calls and rendering, and three classes that apply only with a measured need. Not covered: compiler-level tuning, SIMD, GPU work. Classes that belong to one domain (datastores, messaging and jobs, browser and mobile clients, language runtimes, data pipelines, machine-learning and LLM applications, network delivery) are in seven more catalogs, 57 classes in all, listed under Related.
 
 ## Catalog
 
@@ -281,6 +283,13 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 
 ## Related
 - [perf-reviewer-calibration.md](perf-reviewer-calibration.md) — the review agent built on this catalog, and how it scored on known samples.
+- [problem-classes-datastores.md](problem-classes-datastores.md) — 8 more classes: key-value, document, wide-column and search stores, and storage that only grows.
+- [problem-classes-messaging-and-jobs.md](problem-classes-messaging-and-jobs.md) — 9 more classes: message brokers, streams and background jobs.
+- [problem-classes-web-and-mobile-clients.md](problem-classes-web-and-mobile-clients.md) — 9 more classes: browser and mobile app runtime.
+- [problem-classes-language-runtimes.md](problem-classes-language-runtimes.md) — 8 more classes: costs hidden by language and runtime features.
+- [problem-classes-data-pipelines.md](problem-classes-data-pipelines.md) — 7 more classes: batch and analytical data processing.
+- [problem-classes-ml-and-llm-applications.md](problem-classes-ml-and-llm-applications.md) — 7 more classes: machine-learning frameworks and large-language-model APIs.
+- [problem-classes-network-and-delivery.md](problem-classes-network-and-delivery.md) — 9 more classes: HTTP delivery, transport and cryptography cost on the request path.
 - [../../algorithms/workload-selection.md](../../algorithms/workload-selection.md) — choosing structures by workload.
 - [../database-query-performance.md](../database-query-performance.md) — query and data-path performance in depth.
 - [../overload-and-coalescing.md](../overload-and-coalescing.md) — bounding load and coalescing duplicate work.

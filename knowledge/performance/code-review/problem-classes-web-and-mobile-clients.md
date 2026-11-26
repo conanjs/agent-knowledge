@@ -1,0 +1,153 @@
+---
+schema: knowledge-doc/v1
+type: reference
+topic: performance/code-review
+status: verified
+applies-to: ["Browsers: web.dev and MDN pages (living), read 2026-11-26", "React 19 docs (react.dev, living); React Redux 8.1 and later for the selector checks", "Android: androidx RecyclerView 1.x; Jetpack Compose with Kotlin 2.0.20 or later (strong skipping on by default), earlier versions where a row says so"]
+last-verified: 2026-11-26
+last-updated: 2026-11-26
+tags: [performance, code-review, browser, react, android, jetpack-compose, animation, fonts, bfcache, images, lists, recomposition]
+ranked-sources: true
+---
+
+# Performance problem classes for web and mobile clients
+
+## Summary
+**TL;DR:** Nine code shapes make browser pages and Android apps do more work per frame, per update or per navigation than they need to: animating layout properties, fonts that hide text, a client boundary set too high, subscriptions that change on every update, back-forward cache blockers, list items without a stable identity, images decoded far larger than their view, and two Jetpack Compose shapes that defeat skipping. Each has a named fix and a cost you can state from the code as a count (frames with layout, re-renders, rebinds, bytes).
+**Use this when:** you review front-end or Android code for performance, or build a reviewer that does; you have spotted one of these shapes and need the fix, the cost and the check.
+**Not this doc:** the first 39 classes, including rendering thousands of rows, heavy render work, page-load delivery, scroll-handler rate, effect cleanup and start-up imports → [problem-classes.md](problem-classes.md); Web Vitals definitions and thresholds → [../runtime-and-client-performance.md](../runtime-and-client-performance.md); a real interaction case → [../case-ui-interaction.md](../case-ui-interaction.md); how CSS and JavaScript animation work → [../../javascript/browser/css-and-javascript-animation.md](../../javascript/browser/css-and-javascript-animation.md).
+
+## Scope
+The domain is the client runtime: a browser page (HTML, CSS, JavaScript, React) and an Android app (Views and Jetpack Compose). Covered: 9 classes in two groups. Not covered: the 39 classes of the first catalog (see "Belongs to an existing class" in Lookup notes for client sub-cases of them), server and network delivery (headers, compression, HTTP versions), and iOS, for which no Apple page was read.
+
+Notation, each with one worked example:
+- **n**: items in a list. A chat screen with n = 500 messages where one message moves to the top: without stable keys Compose recomposes every item, with keys about 1.
+- **k**: components that subscribe to one value (a context, a store selector). k = 40 rows that each call `useSelector` with a selector that returns a new object: one unrelated action causes 40 re-renders instead of 0.
+- **F**: frames during an animation or scroll. A 0.5-second animation at 60 frames per second has F = 30: animating `left` runs layout 30 times, animating `transform` runs it 0 times.
+- **w × h × 4**: bytes of a decoded bitmap in the 4-bytes-per-pixel format (ARGB_8888). A 2048 × 1536 photo is 2048 × 1536 × 4 = 12,582,912 bytes, about 12 MB, even when it is shown in a 128 × 96 thumbnail.
+
+| Term | Plain meaning | Analogy | Concrete example |
+|---|---|---|---|
+| Layout (reflow) | The browser recomputes the size and position of elements | Re-measuring every shelf after moving one box | Changing `el.style.width` |
+| Compositor | The browser stage that moves and fades ready-made layers, without layout or paint | Sliding a printed transparency over a projector | `transform: translateX(40px)` |
+| Cumulative Layout Shift (CLS) | A score of how much visible content moves unexpectedly | A page that jumps while you read it | Text reflows when a web font swaps in |
+| Hydration | React attaching event handlers to HTML the server already rendered | Wiring lights into a house that was built without power | `hydrateRoot(root, <App />)` |
+| Client boundary | The `'use client'` line from which modules are sent to and run in the browser | The border where goods leave the warehouse and go on the truck | `'use client'` at the top of `layout.tsx` |
+| Back/forward cache (bfcache) | The browser keeps a left page in memory so Back restores it at once | Pausing a film instead of rewinding it | Pressing Back restores the page with no request |
+| Recomposition | Compose re-running a composable function because its inputs or read state changed | Redrawing one panel of a comic strip | `Title(scroll.value)` runs again on every scroll |
+| Skipping | Compose not re-running a composable whose parameters are equal to last time | A clerk who sees the same form and does not reprocess it | `ContactDetails(contact)` skipped when `contact` is the same object |
+| Key | A stable identity for a list item, used to match old and new items | A name tag instead of a seat number | `key={message.id}`, `items(list, key = { it.id })` |
+
+## Catalog
+
+**Browser and React**
+
+| Class | Signals in code | Fix | Before → after | Check |
+|---|---|---|---|---|
+| `layout-property-animation` | `transition: width / height / top / left / margin`; `@keyframes` that change `left` or `height`; `el.style.top = …` in each `requestAnimationFrame`; animated `box-shadow` | Animate `transform` (`translate`, `scale`) and `opacity`; `will-change` only on elements about to change, as a last resort | Per frame: layout, paint and composite → composite only, over F frames. Only `transform` and `opacity` can be handled by the compositor alone ✅[^webdev-compositor]; restrict animations to them and avoid properties that trigger layout or paint ✅[^webdev-animations]; changing `top` and `left` causes layout shifts, while composited `translate` animations do not count toward CLS ✅[^webdev-cls]; every layer requires memory ✅[^webdev-compositor], and excessive `will-change` leads to excessive memory use and worse performance ✅[^mdn-willchange] | A performance recording of the animation: no Layout or Paint entries per frame after the fix; CLS no higher |
+| `web-font-blocking` | `@font-face` with no `font-display`; font stylesheets loaded through CSS `@import` or a third-party stylesheet; no `preconnect` or `preload` for the font of the main text | `font-display: swap` for brand text, `optional` for body text; `<link rel="preload" as="font" crossorigin>`; `preconnect` to the font host; WOFF2 and subsetting | Text hidden for up to the block period → shown on first paint; a late swap shift → none with `optional`. Chromium and Firefox block text rendering for up to 3 seconds while a web font loads, Safari indefinitely ✅[^webdev-fonts]; in the block period text renders in an invisible fallback; `swap` has an extremely small block period and an infinite swap period, `optional` no swap period ✅[^mdn-fontdisplay]; `optional` avoids a re-layout, and a preloaded font is more likely to meet first paint ✅[^webdev-cls]; the browser must load all the CSS before it discovers which fonts are needed ✅[^webdev-fonts] | Filmstrip of a cold load on a throttled network: text visible on the first painted frame; layout shift from the font swap near 0 |
+| `client-boundary-too-high` | `'use client'` at the top of a root layout (a framework file such as `layout.tsx` in Next.js: react.dev names no framework, so the root-layout shape comes from framework practice, not from the React pages cited here), a page or a widely imported module; render-only libraries (markdown, syntax highlighting) imported into client components; a page with no `<Suspense>` around slow data | Move `'use client'` down to the interactive leaves; render static parts as Server Components; wrap slow sections in `<Suspense>` and stream (`renderToPipeableStream`) | Client JavaScript: every module under the boundary → only the interactive leaves; first HTML: waits for the slowest data → only the shell. `'use client'` marks a module and its transitive dependencies as client code, and only Client modules are bundled and evaluated by the client ✅[^react-useclient]; libraries used only to render static content in a Server Component are not in the bundle ✅[^react-rsc]; React Server Components are stable in React 19 for app code, while the low-level APIs a bundler or framework builds on do not follow semver ✅[^react-rsc]; only components outside every `<Suspense>` boundary must finish before streaming starts, and data fetched in an Effect does not suspend ✅[^react-pipeable] | Bundle analyzer: modules in the route's client chunk before and after; time to the first HTML bytes with one data source slowed |
+| `broad-store-subscription` | `useSelector(state => state)`; a selector that returns a new object or array (`state => ({ a: state.a, b: state.b })`, `.filter` or `.map` in the selector); a `getSnapshot` that builds an object; one context provider that holds a fast-changing value (pointer position, a timer) next to slow ones | One `useSelector` per field, `shallowEqual`, or a memoized selector (`createSelector`); return cached snapshots; put fast-changing values in their own context or store | Re-renders per store update: all k subscribers → only those whose slice changed. `useSelector` runs its selector on every dispatched action and compares results with `===`, so a new object forces a re-render after every action ✅[^redux-hooks]; from React Redux 8.1 a development check warns when a selector returns a different result for the same input, and another when it returns the whole root state ✅[^redux-hooks]; React re-renders when `getSnapshot` returns a different value by `Object.is`, and a new object on every call loops ✅[^react-usese]; every consumer of a context re-renders when the provider's value changes, and `memo` does not prevent it ✅[^react-usecontext] | React Profiler: commits of a consumer on an unrelated action fall to 0; `actualDuration` per update ✅[^react-profiler]; Redux development warnings silent |
+| `bfcache-blocker` | `addEventListener('unload', …)` or `onunload`; a `beforeunload` listener added on load rather than only while there are unsaved changes; `Cache-Control: no-store` on pages without sensitive data | `pagehide` instead of `unload`; add `beforeunload` only while changes are unsaved and remove it after saving; `no-store` only on sensitive pages | Each Back or Forward navigation: a full page load (requests, parse, render) → a restore from memory with no request. The bfcache restores the entire page from memory without the network ✅[^webdev-bfcache]; on a page last updated 2026-10-16, Firefox treats pages that use `unload` as ineligible (except on iOS), Chrome no longer fires `unload` (except on iOS), and Safari attempts to cache some pages that have an `unload` listener ✅[^webdev-bfcache]; pages with `no-store` may not be eligible ✅[^webdev-bfcache] | Chrome DevTools, Application panel, Back-forward Cache, Run Test: the page is restored, or the panel names the blocking reason ✅[^webdev-bfcache]; `NotRestoredReasons` in field data |
+
+**Lists, images and Android (Views and Jetpack Compose)**
+
+| Class | Signals in code | Fix | Before → after | Check |
+|---|---|---|---|---|
+| `unstable-list-identity` | React `key={index}` on a list that reorders, inserts or deletes; `key={Math.random()}`; no key; `notifyDataSetChanged()` after every change; Compose `items(list)` with no `key`, or a key from the index or `hashCode()` | Stable IDs from the data: `key={item.id}`; `ListAdapter` with a `DiffUtil.ItemCallback` and `submitList`, or the `notifyItem*` calls; `items(list, key = { it.id })`, plus `contentType` for mixed item types | Work when one item changes or moves: every rendered item recreated, rebound or recomposed → about 1. With no key React uses the index, which often leads to subtle bugs when items are inserted, deleted or reordered; random keys cause all components and DOM to be recreated every time ✅[^react-lists]; `notifyDataSetChanged` forces a full rebind and relayout of all visible views and is a last resort ✅[^android-adapter]; `ListAdapter` diffs on a background thread and dispatches `notifyItem` events ✅[^android-listadapter]; Compose keys item state by position by default ✅[^compose-lists], and without keys a move makes it recompose every item; never use indexes or `hashCode()` as keys ✅[^compose-best] | Move one item to the top, then count `onBindViewHolder` calls, React commits, or Layout Inspector compositions per item ✅[^compose-debug]: about 1 |
+| `oversized-image-decode` | `<img src>` with one large file and no `srcset` / `sizes`; `BitmapFactory.decode*` with no `inSampleSize`; `ImageDecoder` with no target size; a full-resolution photo bound to a thumbnail view | `srcset` with `w` descriptors plus `sizes`, often 3 to 5 widths; `inJustDecodeBounds`, then a power-of-two `inSampleSize`; `ImageDecoder.setTargetSize` (Android 9 and later); an image library (Coil, Glide) that sizes to the view | Memory and bytes per image: source w × h × 4 → view-sized. A 2048 × 1536 image decoded with `inSampleSize` 4 is about 512 × 384 and uses about 0.75 MB instead of 12 MB in ARGB_8888 ✅[^android-bitmap]; a resolution above the view gives no visible benefit and still costs memory ✅[^android-bitmap]; desktop-sized images served to mobile can use 2 to 4 times more data than needed, and serving 3 to 5 sizes is common ✅[^webdev-responsive]; the browser picks a `srcset` candidate using `sizes` and the device ✅[^mdn-responsive] | Bytes downloaded per image at a phone viewport; bitmap size in a heap dump equals the view size times the density |
+| `compose-new-instance-params` | A composable given a list or object built inline in the parent on every recomposition (`items.filter { }`, `listOf(…)`, `Model(…)`); parameter types from modules without the Compose compiler; `var` properties in parameter types; Kotlin before 2.0.20, or strong skipping turned off, with `List` / `Set` / `Map` parameters | Build the value once (`remember(keys) { }`, or in the `ViewModel`) and pass the same reference; Kotlin 2.0.20 or later; a stability configuration file or `@Stable` / `@Immutable` only where `equals` is cheap | Child work per parent recomposition: k composables re-run → 0 when their inputs did not change. With strong skipping, the default from Kotlin 2.0.20, unstable parameters are compared with `===`, so a new instance with equal values still recomposes; before 2.0.20 a composable with an unstable parameter always recomposes with its parent ✅[^compose-stability]; `List`, `Set` and `Map` are inferred unstable because the implementation may be mutable ✅[^compose-diagnose]; annotating collection models makes Compose compare every element on each pass ✅[^compose-strongskip] | Compiler reports (`reportsDestination`): `restartable skippable` and each parameter's stability ✅[^compose-diagnose]; Layout Inspector skip counts rise for the child ✅[^compose-debug] |
+| `compose-early-state-read` | `scrollState.value`, `listState.firstVisibleItemIndex` or an animated value read in a composable body; `Modifier.offset(y = …)`, `.background(color)` fed by fast-changing state; a write to state after reading it in composition | `derivedStateOf`, or `computedStateOf` from Compose Runtime 1.13, for thresholds; pass `() -> T` lambdas down; lambda modifiers `offset { }`, `drawBehind { }`; write state only in event callbacks | Recompositions over F frames: about F → one per threshold change, or 0 when only layout or draw runs. A scroll state read in composition changes constantly, so the list recomposes constantly; derived state recomposes only when the derived value changes ✅[^compose-best]; reading the offset in a lambda `offset { }` skips composition and goes to layout, and `drawBehind` skips composition and layout ✅[^compose-best]; a backwards write can cause recomposition on every frame, endlessly ✅[^compose-best] | Layout Inspector composition count of the composable while scrolling ✅[^compose-debug]: about the number of frames before, near 0 after |
+
+## Lookup notes
+
+**Not a problem when**
+
+| Class | Not a problem when |
+|---|---|
+| `layout-property-animation` | The property changes once with no transition (a toggle), so layout runs once, not per frame |
+| `web-font-blocking` | The text uses a system font stack; or the face is an icon font, where a fallback glyph is meaningless and a short block may be the better choice |
+| `client-boundary-too-high` | The whole route is interactive (an editor, a canvas); or the app does not use Server Components, in which case a large bundle is `startup-cold-start` |
+| `broad-store-subscription` | The selector returns a primitive or a reference already stored in the state; React's own page says that re-rendering context consumers because a new value object is created on each render is not a problem in smaller apps ✅[^react-usecontext] |
+| `bfcache-blocker` | The page holds sensitive data and sets `no-store` on purpose ✅[^webdev-bfcache]; `beforeunload` guards real unsaved changes |
+| `unstable-list-identity` | The list never reorders, inserts or deletes; react.dev accepts the index for poem lines that never reorder ✅[^react-lists]; in Compose a small bounded list (1 to 10 items) can be a plain `Row` or `Column` ✅[^compose-best] |
+| `oversized-image-decode` | The image is shown full-screen and zoomable (decode visible tiles with `BitmapRegionDecoder` instead ✅[^android-bitmap]); or an image library already sizes it to the view |
+| `compose-new-instance-params` | Kotlin 2.0.20 or later and the parent passes the same reference; making every composable skippable without a measured problem is premature optimization ✅[^compose-diagnose] |
+| `compose-early-state-read` | The state changes rarely, or the value changes what is composed (which items exist), not only position or colour |
+
+**Belongs to an existing class** (client sub-cases of the first catalog's classes, not added here)
+- A large initial JavaScript bundle (code that only one route or interaction needs) → `startup-cold-start`, whose fix is load on demand. In React, `lazy(() => import('./X.js'))` defers loading a component's code until it first renders, and `lazy` must be declared at module top level, or state resets ✅[^react-lazy].
+- A context value object or function created on every render → `frontend-rendering` ("new props to memoized children"): the same `Object.is` identity problem, fixed with `useMemo` and `useCallback` ✅[^react-usecontext]. A subscription that is too broad even with stable values is `broad-store-subscription` here.
+- Long tasks that delay input (Interaction to Next Paint) → `concurrency-backpressure` ("CPU-heavy work on the event loop", partition it). Browser specifics: a task over 50 ms is a long task; `scheduler.yield()` runs the continuation before other similar tasks, and is supported in Chrome and Edge 129 and Firefox 142 but not Safari, so keep a `setTimeout` fallback; do the visible update first and yield before analytics or saving ✅[^webdev-longtasks].
+- An excessive DOM size → `frontend-rendering` (windowing, `content-visibility`). Lighthouse warns above 800 nodes and calls a DOM over 1,400 nodes excessive ✅[^webdev-domsize].
+- Disk or network I/O on the Android main thread → `blocking-in-async`: the main thread is the app's event loop. An Application Not Responding (ANR) error is triggered when input gets no response within 5 seconds, and the fix is `withContext(Dispatchers.IO)` in a `ViewModel` or a repository ✅[^android-anr]; StrictMode catches accidental disk or network access on the main thread, but is best effort and not guaranteed to find all of it ✅[^android-strictmode].
+- Sorting or filtering inside a composable body → `frontend-rendering` ("heavy filter or sort in the render body"): compute it once with `remember(keys) { }` or in the `ViewModel` ✅[^compose-best].
+- `list.indexOf(item)` inside a Compose `items { }` block → `lookup-in-loop`; it makes layout an O(N²) scan, and `itemsIndexed` gives the index ✅[^compose-best].
+
+**Corrections found while checking the sources (2026-11-26)**
+- `unload` handlers: web.dev now says Chrome no longer fires `unload` (except on iOS); for `unload` the page names Firefox as the browser where it makes a page ineligible (Chrome does not fire it, Safari may still cache the page; on iOS all browsers behave like Safari) ✅[^webdev-bfcache]. A Chrome-only test may miss the blocker.
+- Compose stability: since Kotlin 2.0.20 an unstable parameter no longer prevents skipping; only a new instance does ✅[^compose-stability]. The older advice to wrap lists in immutable collections or annotate models can now cost more: they make Compose compare every element with `.equals()`, which for large collections or models used in lazy layouts can be slower than comparing the reference ✅[^compose-strongskip].
+- React keys: react.dev frames index keys mainly as a source of bugs, and random keys as the performance case ✅[^react-lists]; Android's Compose page states the performance cost of missing keys directly ✅[^compose-best].
+- `isInputPending()`: web.dev no longer recommends it; yield whether or not input is pending ✅[^webdev-longtasks].
+- `will-change` is a last resort for an existing problem, not a default ✅[^mdn-willchange].
+
+**What the sources do not say**
+- No react.dev page read today explains selective hydration. The React 18 release post lists "Add selective hydration" as a changelog line only ✅[^react18], and the `hydrateRoot` page does not mention Suspense or selective hydration ✅[^react-hydrateroot]. A claim that React hydrates Suspense boundaries independently, or first hydrates the part a user clicks, is not backed here.
+- MDN gives no durations for the font block and swap periods; the 3-second figure comes from web.dev ✅[^webdev-fonts].
+- No page read gives a frame-time number for layout against compositor animation, or a decode-time number for an oversized bitmap; state those costs as counts (frames with layout, bytes decoded).
+
+**Weaker sources, rank 5 or 6:** none used.
+
+**Calibration state (2026-11-26).** None of these classes has a sample in the review-agent calibration, and the agent's index does not list them: see [perf-reviewer-calibration.md](perf-reviewer-calibration.md). Whether a reviewer, person or agent, finds them from this catalog has not been measured.
+
+## Takeaways
+- Animate only `transform` and `opacity`; a transition or keyframe on `width`, `height`, `top` or `left` is a finding. [rule-candidate]
+- A list that can reorder, insert or delete needs a stable ID from the data as its key, in React, RecyclerView and Compose alike. [rule-candidate]
+- A selector, snapshot, context value or composable parameter should keep its reference until its data changes; a new object per call costs one re-render per subscriber per update. [rule-candidate]
+- Check the version before flagging: Compose strong skipping (Kotlin 2.0.20) and Chrome's `unload` change both narrowed older advice.
+
+## Verification status
+- Verified: 65 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+
+## References
+- [renderToPipeableStream](https://react.dev/reference/react-dom/server/renderToPipeableStream) — React team, React 19 docs, living. Rank 1. Backs: Catalog, client-boundary-too-high. [^react-pipeable]
+- ['use client'](https://react.dev/reference/rsc/use-client) — React team, React 19 docs, living. Rank 1. Backs: Catalog, client-boundary-too-high. [^react-useclient]
+- [Server Components](https://react.dev/reference/rsc/server-components) — React team, React 19. Rank 1. Backs: Catalog, client-boundary-too-high. [^react-rsc]
+- [hydrateRoot](https://react.dev/reference/react-dom/client/hydrateRoot) — React team, React 19 docs, living. Rank 1. Backs: Lookup notes, what the sources do not say. [^react-hydrateroot]
+- [React v18.0](https://react.dev/blog/2022/03/29/react-v18) — React team, 2022. Rank 1. Backs: Lookup notes, what the sources do not say. [^react18]
+- [Hooks (useSelector)](https://redux.js.org/react-redux/api/hooks) — Redux maintainers, React Redux 8.1 and later, living. Rank 1. Backs: Catalog, broad-store-subscription. [^redux-hooks]
+- [useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) — React team, React 19 docs, living. Rank 1. Backs: Catalog, broad-store-subscription. [^react-usese]
+- [useContext](https://react.dev/reference/react/useContext) — React team, React 19 docs, living. Rank 1. Backs: Catalog, broad-store-subscription; Lookup notes. [^react-usecontext]
+- [Profiler](https://react.dev/reference/react/Profiler) — React team, React 19 docs, living. Rank 1. Backs: Catalog, broad-store-subscription check. [^react-profiler]
+- [Rendering Lists](https://react.dev/learn/rendering-lists) — React team, React 19 docs, living. Rank 1. Backs: Catalog, unstable-list-identity; Lookup notes. [^react-lists]
+- [lazy](https://react.dev/reference/react/lazy) — React team, React 19 docs, living. Rank 1. Backs: Lookup notes, existing classes. [^react-lazy]
+- [RecyclerView.Adapter](https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.Adapter) — Android Developers, androidx.recyclerview, living. Rank 1. Backs: Catalog, unstable-list-identity. [^android-adapter]
+- [ListAdapter](https://developer.android.com/reference/androidx/recyclerview/widget/ListAdapter) — Android Developers, androidx.recyclerview, living. Rank 1. Backs: Catalog, unstable-list-identity. [^android-listadapter]
+- [Lists and grids](https://developer.android.com/develop/ui/compose/lists) — Android Developers, Jetpack Compose, living. Rank 1. Backs: Catalog, unstable-list-identity. [^compose-lists]
+- [Follow best practices (Compose performance)](https://developer.android.com/develop/ui/compose/performance/bestpractices) — Android Developers, Jetpack Compose, living. Rank 1. Backs: Catalog, unstable-list-identity and compose-early-state-read; Lookup notes. [^compose-best]
+- [Stability in Compose](https://developer.android.com/develop/ui/compose/performance/stability) — Android Developers, Kotlin 2.0.20 and later, living. Rank 1. Backs: Catalog, compose-new-instance-params; Lookup notes. [^compose-stability]
+- [Strong skipping mode](https://developer.android.com/develop/ui/compose/performance/stability/strongskipping) — Android Developers, Kotlin 2.0.20, living. Rank 1. Backs: Catalog, compose-new-instance-params; Lookup notes. [^compose-strongskip]
+- [Diagnose stability issues](https://developer.android.com/develop/ui/compose/performance/stability/diagnose) — Android Developers, living. Rank 1. Backs: Catalog, compose-new-instance-params; Lookup notes. [^compose-diagnose]
+- [Debug your Compose UI](https://developer.android.com/develop/ui/compose/tooling/debug) — Android Developers, API 29 and Compose 1.2.0 or later, living. Rank 1. Backs: Catalog, checks of the list and Compose classes. [^compose-debug]
+- [Loading large bitmaps efficiently](https://developer.android.com/topic/performance/graphics/load-bitmap) — Android Developers, living. Rank 1. Backs: Catalog, oversized-image-decode; Lookup notes. [^android-bitmap]
+- [ANRs](https://developer.android.com/topic/performance/vitals/anr) — Android Developers, living. Rank 1. Backs: Lookup notes, existing classes. [^android-anr]
+- [StrictMode](https://developer.android.com/reference/android/os/StrictMode) — Android Developers, API level 9 and later, living. Rank 1. Backs: Lookup notes, existing classes. [^android-strictmode]
+- [will-change](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change) — MDN Web Docs, living. Rank 3. Backs: Catalog, layout-property-animation; Lookup notes. [^mdn-willchange]
+- [font-display](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display) — MDN Web Docs, living. Rank 3. Backs: Catalog, web-font-blocking. [^mdn-fontdisplay]
+- [Responsive images](https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Responsive_images) — MDN Web Docs, living. Rank 3. Backs: Catalog, oversized-image-decode. [^mdn-responsive]
+- [Stick to compositor-only properties and manage layer count](https://web.dev/articles/stick-to-compositor-only-properties-and-manage-layer-count) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, layout-property-animation. [^webdev-compositor]
+- [How to create high-performance CSS animations](https://web.dev/articles/animations-guide) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, layout-property-animation. [^webdev-animations]
+- [Optimize Cumulative Layout Shift](https://web.dev/articles/optimize-cls) — web.dev (Chrome team), 2025. Rank 4. Backs: Catalog, layout-property-animation and web-font-blocking. [^webdev-cls]
+- [Best practices for fonts](https://web.dev/articles/font-best-practices) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, web-font-blocking; Lookup notes. [^webdev-fonts]
+- [Back/forward cache](https://web.dev/articles/bfcache) — web.dev (Chrome team), 2026. Rank 4. Backs: Catalog, bfcache-blocker; Lookup notes. [^webdev-bfcache]
+- [Serve responsive images](https://web.dev/articles/serve-responsive-images) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, oversized-image-decode. [^webdev-responsive]
+- [Optimize long tasks](https://web.dev/articles/optimize-long-tasks) — web.dev (Chrome team), 2024. Rank 4. Backs: Lookup notes, existing classes and corrections. [^webdev-longtasks]
+- [How large DOM sizes affect interactivity](https://web.dev/articles/dom-size-and-interactivity) — web.dev (Chrome team), living. Rank 4. Backs: Lookup notes, existing classes. [^webdev-domsize]
+
+## Related
+- [problem-classes.md](problem-classes.md) — the first catalog of 39 classes, including `frontend-rendering`, `page-load-delivery` and `startup-cold-start`.
+- [perf-reviewer-calibration.md](perf-reviewer-calibration.md) — the review agent built on these catalogs and how it scored.
+- [../runtime-and-client-performance.md](../runtime-and-client-performance.md) — Web Vitals thresholds and how to profile client work.
+- [../case-ui-interaction.md](../case-ui-interaction.md) — a real case of reducing interaction work.
+- [../../javascript/browser/css-and-javascript-animation.md](../../javascript/browser/css-and-javascript-animation.md) — how transitions, keyframes and `requestAnimationFrame` work.
+- [../../javascript/modules/es-modules.md](../../javascript/modules/es-modules.md) — dynamic `import()` for loading code on demand.
