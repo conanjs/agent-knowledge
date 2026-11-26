@@ -4,7 +4,7 @@ topic: ai-agents
 status: verified
 applies-to: ["Coding agents that run subagents and hooks; settings named for Claude Code 2.1, principles also for Codex, Copilot and Gemini CLI", "sources read 2026-11-24", "measurements from Claude Code transcripts on one machine, read 2026-11-24"]
 last-verified: 2026-11-24
-last-updated: 2026-11-25
+last-updated: 2026-11-26
 synthesized-into: []
 tags: [token-cost, latency, subagents, multi-agent, context-rot, instruction-density, hallucination, evaluator, hooks, measurement]
 ---
@@ -41,6 +41,7 @@ The evidence for "worse": accuracy falls as the input grows, as instructions pil
 | Term | Plain English | Analogy | Concrete artifact |
 |---|---|---|---|
 | Request | One call to the model. One agent turn can make several | One trip to a service counter | One `assistant` line with a `usage` field in a Claude Code transcript |
+| Round trip | One request sent to the model and its answer coming back. When the answer asks for a tool, Claude Code runs the tool on the machine and sends the next request, which carries everything again plus the result | Going back to the counter with one more page, and handing over the whole file again | In a transcript, an `assistant` line with a `tool_use` block, then a `user` line with its `tool_result`, then the next `assistant` line |
 | Transcript | The log file Claude Code writes for each conversation and each subagent, one JSON object per line | Minutes taken during a meeting | `~/.claude/projects/<folder>/<session>/subagents/agent-<id>.jsonl` |
 | Request size | Everything the model reads in one request: new input, cache writes and cache reads | The whole stack of paper handed over at the counter | `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` |
 | First request | The size of an agent's first request, before it has done anything: system prompt, tool definitions, skill list, instruction files, the task | The binder every new temp worker is handed on day one | 57,115 tokens for the median engineering role in §4 |
@@ -63,6 +64,46 @@ The evidence for "worse": accuracy falls as the input grows, as instructions pil
    - a 20,000-token tool output read in request 5 is paid again in each of the remaining 28 requests.
 4. **Caching changes the price, not what the model reads.** In the measured runs, 96 % of cumulative input was cache reads ✅[^measured]. Cached tokens are billed at a fraction of the normal price (prices in [context-engineering-deep-dive.md](context-engineering-deep-dive.md) §6), but they are still in the window. Context rot and position effects (§3) are about what is in the input, not about how it was billed. *(Synthesis.)*
 5. **Wall-clock time follows the number of requests.** Each request waits for the model to read and answer. Time spent in deliberate waits counts too: the engineering runs below made 24 `Monitor` calls and 15 `sleep`/`until` loops ✅[^measured].
+
+
+### 2.1 What one request carries: tools, skills and the round trip
+
+**Three actors:**
+- **Claude Code** (the program on the machine): its job is to build every request, from the agent file, the settings and the conversation so far, and to run the tools the model asks for.
+- **The model** (Anthropic's servers, over the network): its job is to read the request and answer, or to ask for tool calls. It cannot open a file itself.
+- **The files** (`SKILL.md`, reference files, code): they hold the knowledge. They reach the model when Claude Code puts them into the start of the session, when Claude Code loads them on demand (for example a `CLAUDE.md` in a subfolder once a file there is read, see [session-start-context-by-agent.md](session-start-context-by-agent.md)), or as the result of a tool call.
+
+**Two frontmatter fields with two jobs** ([claude-code-agents-and-skills.md](claude-code-agents-and-skills.md) covers where agents and skills load from):
+
+```yaml
+tools: Read, Grep, Glob, Skill   # what the model may call while it works
+skills: [perf-patterns]          # SKILL.md bodies put into the context at the start: subagents only (lab notebook, E19)
+```
+
+**What each request carries** (Claude Code 2.1.332, 2026-11-25):
+
+| Part | In the request when | Measured, with its settings |
+|---|---|---|
+| The definition of each tool in `tools` (name, description, input schema) that is not deferred; a deferred tool sends only its name | Every request | A default session, Sonnet, default settings sources: 12 tool definitions, 111,810 characters. For example Read 2,863, Bash 6,172, Skill 3,372 and Artifact 61,300 (E11) ✅[^lab_req] |
+| With the `Skill` tool: its definition plus the skill listing (the name and description of every skill the session can see) | Every request, only when the agent has the `Skill` tool | Haiku, run as the session, default settings sources, about 30 skills: 6,745 tokens more than the same agent without `Skill` (E19). Haiku, `--setting-sources project,local`, 19 skills: 2,911 tokens more. In that recorded request the definition is 3,372 characters and the listing 8,791 with its heading line, 12,163 together ✅[^lab_req] |
+| The body of each skill named in `skills:` | From the start, only when the agent runs as a subagent; not loaded when it runs as the session (`--agent`) | E19 ✅[^lab_req] |
+| Each tool result: a file's content, a command's output | Every request after the call | The size of the file or the output |
+
+**The round trip.** The model answers a request either with text or with one or more tool calls. Claude Code runs every call of that answer locally, then sends one new request: the whole previous request, plus the calls and their results. The loop and its sources are in [agent-token-accounting.md](agent-token-accounting.md) "How it works", steps 2–5. Each round trip adds waiting time (item 5 above) and sends the whole context again (item 1), so the parts in the table above are paid once per round trip.
+
+**Two ways to hand reference files to an agent that runs as the session, measured.** A throwaway plugin whose skill `kit` (`SKILL.md`, holding one codeword) points to a reference file `references/detail.md` (holding another). The path agent's body says "The index is the file `${CLAUDE_PLUGIN_ROOT}/skills/kit/SKILL.md`"; Claude Code replaced the variable with the absolute path. Each agent was asked for both codewords; the `Skill`-tool agent's prompt also began "Use the kit skill first". Haiku, `--setting-sources project,local`, an empty folder, one run each. The requests and their tool calls were read from the two transcripts ✅[^lab_req]:
+
+| Way | Request 1 | Request 2 | Request 3 | Request 4 | Cumulative input |
+|---|---|---|---|---|---|
+| The `Skill` tool in `tools` | 7,340 tokens: calls `Skill`. The tool result is only "Launching skill: probe:kit"; Claude Code then adds the body of `SKILL.md`, without its front matter, as a separate message | 8,257: calls Glob on the skill folder and Read on `SKILL.md` again ("I'll check the files directly") | 9,097: calls Read on `detail.md` | 9,225: answers | 33,919 |
+| The skill's path in the agent body (`${CLAUDE_PLUGIN_ROOT}/skills/kit/SKILL.md`) | 4,429: calls Read on `SKILL.md` | 4,649: calls Read on `detail.md` | 4,877: answers | — | 13,955 |
+
+What the two runs show:
+1. **Each request is smaller with the path:** without the `Skill` tool there is no tool definition and no skill listing, 7,340 − 4,429 = 2,911 tokens here (12,163 characters at about 4.2 characters per token), sent again on every request. This part comes from the mechanism.
+2. **The extra request in the `Skill` run came from the model, not from the tool.** The `Skill` call in request 1 brought the text of `SKILL.md`, as the Read did in request 1 of the other run; both took one request. The extra request is request 2, where the model checked the files again and read `SKILL.md` a second time.
+3. **Why the `Skill` call may still cost a request** *(inference, not measured: the probe had no other file to read)*: the tool's own description tells the model, when a skill covers the task, to "call this tool first" (E11's recorded request). A model with the path can read the index together with the code it needs in its first request.
+
+The reference files enter the context either way, once each, when they are read.
 
 ---
 
@@ -357,6 +398,7 @@ Run it before and after a harness change, on the same tasks.
 
 - Local measurement: the §9 script over the Claude Code transcripts on one machine, plus `wc -c` and `grep` over agentic-sdlc v2's `agents/`, `foundations/`, `stacks/`, `paradigms/` and `schemas/`, 2026-11-24. Backs: §2; §4; §5; §8. [^measured]
 - Local trial, recorded in full in [harness-lab/lab-notebook.md](harness-lab/lab-notebook.md) (E4, E5): three task cards run once by one Sonnet agent and once through an orchestrator, implementer, gate, guard and reviewer, with headless Claude Code 2.1.330 on 2026-11-24. Backs: §4.1. [^trial]
+- Local experiments: [harness-lab/lab-notebook.md](harness-lab/lab-notebook.md) E11 and E19, and the loading probes of [performance/code-review/perf-reviewer-calibration.md](../performance/code-review/perf-reviewer-calibration.md) §3 and §3.2, Claude Code 2.1.332 and Haiku, 2026-11-25. Backs: §2.1. [^lab_req]
 - [Chroma: Context Rot](https://www.trychroma.com/research/context-rot) — Hong, Troynikov, Huber, 2025. Backs: §3 context rot. [^chroma]
 - [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172) — Nelson F. Liu et al., TACL 2023. Backs: §3 position effect. [^lost]
 - [NoLiMa: Long-Context Evaluation Beyond Literal Matching](https://arxiv.org/abs/2502.05167) — Ali Modarressi et al., ICML 2025, read 2026-11-24. Backs: §1; §3. [^nolima]
