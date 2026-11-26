@@ -5,7 +5,7 @@ topic: algorithms
 status: verified
 applies-to: ["the docs under knowledge/algorithms/ as of 2026-11-04"]
 last-verified: 2026-11-04
-last-updated: 2026-11-04
+last-updated: 2026-11-25
 tags: [algorithms, learning-path, data-structures, curriculum]
 ---
 
@@ -25,7 +25,7 @@ The v1 docs under `knowledge/algorithms/`, ordered by dependency. Exercises run 
 
 | # | Stage | Read | Exercise | Self-check: you can explain … |
 |---|---|---|---|---|
-| 1 | Complexity | `fundamentals/complexity-and-big-o.md` → `fundamentals/amortized-analysis.md` | Time list membership vs set membership at 1k, 10k, 100k items | … why a set lookup stays flat while a list scan grows 10× per 10× data |
+| 1 | Complexity | `fundamentals/complexity-and-big-o.md` → `fundamentals/asymptotic-notation-and-cases.md` → `fundamentals/calculating-complexity-from-code.md` → `fundamentals/amortized-analysis.md` → `fundamentals/recurrences-and-the-master-theorem.md` → `fundamentals/space-complexity.md` → `fundamentals/growth-classes-and-feasible-input-sizes.md` → `fundamentals/measuring-complexity-empirically.md` → `fundamentals/intractable-problems-and-np-hardness.md` | Time list membership vs set membership at 1k, 10k, 100k items | … why a set lookup stays flat while a list scan grows 10× per 10× data |
 | 2 | Data structures | `data-structures/data-structure-catalog.md` → `data-structures/hash-tables.md` → `data-structures/trees-heaps-and-b-trees.md` | Build a dict with a constant `__hash__`; run `EXPLAIN QUERY PLAN` before and after `CREATE INDEX` in SQLite | … what a load factor is and what a database index does |
 | 3 | Sorting & searching | `sorting-searching/sorting-algorithms.md` | Count comparisons of `sorted()` on random vs sorted input | … stability, and why timsort is fast on nearly sorted data |
 | 4 | Graphs | `graphs/graph-algorithms.md` | Order a small build graph with `graphlib`; add a cycle | … when to use BFS vs Dijkstra, and what a topological sort needs |
