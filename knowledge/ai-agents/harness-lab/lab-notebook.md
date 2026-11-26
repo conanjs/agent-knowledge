@@ -20,13 +20,15 @@ What the experiments showed:
 - A plugin's agent can run as the whole session, but then `omitClaudeMd` is ignored.
 - Hooks see `agent_type` in every mode.
 - Asking an agent to list its tools is not evidence of what it has.
+- Fixed steps are cheaper and steadier in a script than in a model or a workflow (E24, E28, E31).
+- Path-scoped rules reach a worker when it touches their area, and they changed the code when legacy code showed the wrong conventions (E30, E32).
 
 **Use this when:**
 - you build or change an agent harness on Claude Code (subagents, plugin agents, hooks, headless runs);
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** twenty-nine experiments (E1–E29; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** thirty-three experiments (E1–E33; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -560,7 +562,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   So the tool brings the whole skill listing with it: here about 6,700 tokens on every request. How much depends on how many skills the session can see; with the user layer off, fewer user and plugin skills are listed. E8 shows the listing absent for agents without `Skill`.
 - **Conclusion:**
   - `skills:` preloads only when the agent runs as a subagent. The docs word the field for subagents ("to preload into the subagent's context at startup") and name only `omitClaudeMd` and `initialPrompt` as behaving specially in session mode ✅[^cc_sub], so this case is undocumented.
-  - For an agent that runs as the session, put paths to its reference files in its prompt. That costs only the path; the file enters the context once, when it is read.
+  - For an agent that runs as the session, put paths to its reference files in its prompt. That costs only the path; the file enters the context once, when it is read. For rules about one area of the code there is a second route: a path-scoped rule in `.claude/rules/` (E30).
 
 ### E20. The three settings sources and the memory files each loads, `CLAUDE.local.md` included (2026-11-25)
 - **Question:** which memory file does each settings source (`user`, `project`, `local`) bring? Does `CLAUDE.local.md` follow the project rule for imports? And what happens in the home folder?
@@ -816,13 +818,73 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ---
 
+### E30. Path-scoped rules in `.claude/rules/` for a headless worker (2026-11-26)
+- **Question:** a rule file with `paths:` front matter is documented to load when a matching file is read (the docs row "Loaded later, on demand" in [session-start-context-by-agent.md](../session-start-context-by-agent.md)). Does it load for a worker started with `--setting-sources project,local`, and also when the worker creates a matching file without reading one?
+- **Setup:** Claude Code 2.1.332, headless, Haiku; a git folder with `.claude/rules/routes.md` (`paths: ["src/routes/**"]`, codeword PUFFIN-4 and two route rules), `.claude/rules/always.md` (no `paths:`, codeword GANNET-2), `src/routes/health.mjs` and `src/db/index.mjs`; a project agent with `tools: Read, Write, Glob`, asked to do a task and then list every codeword in its context. Each case is one run; the transcript was searched for the codeword.
+- **Result** ✅[^lab]:
+
+| Case | PUFFIN-4 in the transcript | Codewords the agent listed |
+|---|---|---|
+| A. No file touched | no | GANNET-2 |
+| B. Read `src/routes/health.mjs` | yes, as a `nested_memory` attachment after the Read | GANNET-2, PUFFIN-4 |
+| C. Read `src/db/index.mjs` (no match) | no | GANNET-2 |
+| D. Create `src/routes/users.mjs` without reading any file | yes, after the Write | GANNET-2, PUFFIN-4; it also followed the rule ("doesn't import from `src/db`") |
+
+- **Side findings:** in case C the agent reported "MCP Server Instructions" for a Claude Docs integration in its context with `project,local`; that it came from a connector of the account is inferred from the server's name. The user's `~/.claude/CLAUDE.md` also loaded, as a project file, because the folder is under the home folder (lesson 3).
+- **Conclusion** (headless, 2.1.332, Haiku, `project,local`, one run per case; only Read and Write were tried, not Edit, Grep, Glob or Bash): a path-scoped rule loaded when the worker read or wrote a matching file, and not otherwise; a rule without `paths:` loaded at the start. So rules about one area of the code can reach a worker exactly when it works there, without the `Skill` tool or `skills:`.
+
+### E31. The build phase as one script, `build-feature.mjs` (2026-11-26)
+- **Question:** with a script that compiles every repository's cards, orders them across repositories and runs them, how much is left for the orchestrator's build session?
+- **Setup:** Claude Code 2.1.332, headless, Sonnet; E29's three repositories reset to the commit after planning (spec, tasks and cards committed, nothing built); a fresh orchestrator session `Build specs/001-greet-by-user-id`, whose prompt now says to run `build-feature.mjs` once and read its summary (so the prompt differs from E29's).
+- **Result** ✅[^lab]:
+  - Request 1 ran `build-feature.mjs`; it built `svc-users` then `svc-greeter`, both `pass`, and wrote `.archkit/runs/feature-001-greet-by-user-id.json`.
+  - The orchestrator then checked the branch name in each repository (one chained command was denied by its hook, then run as two).
+  - Orchestrator: 4 requests, 43,769 tokens, $0.038, against E29's build session of 5 requests and 65,699 tokens. Workers: 156,106 tokens, $0.130.
+  - The provider's real server against the consumer's real `greet()`: all four outcomes as in E29.
+- **Conclusion** (one run): on the path where every card passes, the build session is one script call; the model's remaining requests were its own report and an unasked branch check.
+
+---
+
+### E32. Do path-scoped pattern rules change the code workers write? (2026-11-26)
+- **Question:** a repository has conventions that behaviour tests do not check (a repository returns only public fields and throws `NotFoundError`; a route handler is named `get<Resource>`, validates its input first and answers errors as `{error: {code, message}}`). Do two path-scoped rules (E30) make the test-author and implementer follow them, and what do they cost?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet workers with `--setting-sources project,local`, run by `build-task.mjs`; checks `node --test` and a boundary script (routes may not import `src/infra/`);
+  - a generated repository with `src/lib/` helpers, an in-memory table whose rows carry internal `_` fields, and one story: GET `/users/:id` answers 200 with id and name, 404 for an unknown id, 400 for a bad id. Its three tasks name `src/infra/db/user-repo.mjs`, `src/services/user-service.mjs` and `src/routes/get-user.mjs`;
+  - **arm "with":** `.claude/rules/route-handler.md` (`paths: src/routes/**`) and `.claude/rules/repository.md` (`paths: src/infra/db/**`), each about 6 lines; **arm "without":** no rules;
+  - **two kinds of neighbour code:** "clean", where `get-team.mjs` and `team-repo.mjs` already follow the conventions (and the "with" arm lists them as `examples`); and "legacy", where they predate them (return the row, return `null`, skip validation, answer a plain-text 404), and the rules say "Older files … predate this pattern";
+  - the instrument: a script with 8 checks on the result (C1 `findUserById` exported; C2 only public fields returned; C3 `NotFoundError` thrown; C4 handler named `get<Resource>`; C5 `validate()` used; C6 400 body `{error: {code: "INVALID_INPUT"}}`; C7 404 body and the exact 200 body; C8 the handler calls a service). It scored 8 on a known-good implementation and 6 on one that returns the row (C2, C7). Two runs per cell.
+- **Result** ✅[^lab]:
+
+| Neighbour code | Arm | Score | Gate | Rules loaded | Cumulative input | Cost |
+|---|---|---|---|---|---|---|
+| clean | with | 8, 8 | pass at attempt 1, twice | both rules, in both workers, both runs | 100,450; 100,233 | $0.088; $0.090 |
+| clean | without | 8, 8 | pass at attempt 1, twice | — | 84,935; 96,290 | $0.081; $0.082 |
+| legacy | with | 8, 8 | pass at attempt 1, twice | both rules, in both workers, both runs | 112,558; 111,394 | $0.113; $0.096 |
+| legacy | without | **3, 3** | pass at attempt 1, twice | — | 108,160; 129,067 | $0.089; $0.100 |
+
+  In the legacy repository without rules, both runs missed the same five checks (C1, C2, C3, C4, C6): the code copied the neighbours, and the gate and the acceptance tests still passed.
+- **Conclusion** (one feature, two runs per cell, Node.js, two small rules):
+  - When the code around the change already shows the conventions, the workers copied it and the rules added nothing measurable. The input of the two arms differed by 4–18 %, within the spread of two runs (the two clean runs without rules differ by 13 %); that arm also listed the two good files as `examples`, so rules and examples were not measured apart.
+  - When the code around it does not, the rules made the difference: 8 of 8 checks against 3 of 8, at about the same cost.
+  - Behaviour tests and the gate did not catch the drift in any run. Conventions need a rule the worker reads or a check that fails. No reviewer ran (every card was `risk: normal`), so whether a reviewer would catch the drift is untested.
+
+---
+
+### E33. Auto memory in a worker started with `--setting-sources project,local` (2026-11-26)
+- **Question:** the headless docs say `claude -p` loads auto memory as an interactive session would, unless `--bare` is given ✅[^cc_headless]. Does a worker with the user layer off still get the user's auto memory, and does `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` stop it?
+- **Setup:** Claude Code 2.1.332, headless `claude -p "/context" --model haiku --setting-sources project,local`, run in this knowledge repository, whose project folder under `~/.claude/projects/` holds an auto-memory `MEMORY.md`; once as is, once with the variable set.
+- **Result** ✅[^lab]: as is, the memory files listed included `MEMORY.md`, type AutoMem, 528 tokens. With `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` it was gone, and the project files were unchanged.
+- **Conclusion** (headless, 2.1.332, one run each): dropping the user layer does not drop auto memory. A worker in one of the user's repositories reads the user's own notes about that repository unless the variable is set.
+
+---
+
 ## 4. Four ways to orchestrate, compared
 
 | Way | What the orchestrator is | Cost of orchestration | Measured |
 |---|---|---|---|
 | A skill in the main session | The default session reading `SKILL.md` and following it | About 41,000 tokens per orchestrator request; 358,393–463,013 cumulative per task in E5 | E5: it also ran a step out of order and tripped a permission rule |
 | An agent as the whole session | `claude --agent <orchestrator>`: its own prompt and tools | Smaller start (about 3,000–10,000 tokens in E6–E10, E13, E23, E27), still a model on every step, and its requests grow with what it has read | E27: one two-repository feature, 21 requests and 1,038,011 tokens for the orchestrator (79 % of the run) against 281,052 for its workers; it planned and ran the scripts correctly, after three script fixes and one resume |
-| A script | A program that runs each agent as its own session (`claude -p --agent …`) and handles files and git itself | No model tokens for orchestration | E10: A+ used 54,877–137,343 tokens of cumulative input per task, against A's 267,751–408,418, with the same results. E24: 71,207 for a whole card |
+| A script | A program that runs each agent as its own session (`claude -p --agent …`) and handles files and git itself | No model tokens for orchestration | E10: A+ used 54,877–137,343 tokens of cumulative input per task, against A's 267,751–408,418, with the same results. E24: 71,207 for a whole card. The model session around the script still costs something: 43,769 tokens for E31's build session |
 | A Claude Code dynamic workflow | A JavaScript script that runs the agents as subagents of one session; it cannot touch files or run commands, so fixed steps go to agents | The host session plus an agent for every fixed step | E28: 165,367 for the same card as E24, and two of four runs stopped because a model did a fixed step wrongly |
 
 *(Synthesis, from one card per way in E24 and E28 and the trials of E5 and E10.)* When the steps are fixed, as they are here, the orchestration is a workflow, and code runs it more cheaply and more reliably than a model does. A model orchestrator earns its cost on the steps that need judgement: writing the spec and tasks, and deciding what to do when a card fails (E27).
@@ -842,7 +904,8 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 9. **Add an agent only when a measurement shows the gap it closes.** In E10 reps 1–2 the reviewer added 75 % more input and found no real problem; after its prompt was fixed (rep 3) it found one real test gap, in code that was already correct.
 10. **Start workers without the user's layer** (`--setting-sources project,local`) in their repository, and give them their own permissions. That drops the user's plugins, hooks and, for a repository, the user's imported instructions, while the harness plugin keeps working (E13, E15). Started in the home folder, the imported instructions still load (E18).
 11. **Keep fixed steps in code, not in an agent.** In E28 a model ran the red check and the commits; two of four runs failed, once on a misread field and once on a rewritten command. In `build-task.mjs` the same steps cost no tokens; its first runs also found defects (a commit that failed on ignored paths in E24, untracked documents and paths misread from task text in E27), but each was fixed once in code, and the later runs passed (E24, E26, E27, E29). The comparison rests on one small card for the workflow (E28).
-12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each).
+12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each). With the build phase as one script call, the build session fell to 43,769 tokens (E31).
+13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area, and not otherwise (E30). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
 
 ---
 
@@ -858,7 +921,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## 7. Verification
 
-- **Measured on 2026-11-24, 2026-11-25 and 2026-11-26 (E24–E29):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24, 2026-11-25 and 2026-11-26 (E24–E33):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -874,10 +937,11 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-26; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E29 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-26; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E33 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
+- [Run Claude Code programmatically](https://code.claude.com/docs/en/headless) — Anthropic, living, read 2026-11-26. Backs: E33 `claude -p` loads auto memory unless `--bare` is given. [^cc_headless]
 - [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living, read 2026-11-26. Backs: E28 a workflow script has no filesystem or shell access. [^cc_wf]
 - [Settings files and precedence](https://code.claude.com/docs/en/settings) — Anthropic, living, read 2026-11-26. Backs: E25 project marketplace keys apply after the folder is trusted. [^cc_settings]
 - Claude Code settings JSON schema, `enableArtifact` entry — bundled with Claude Code 2.1.332, read 2026-11-25. Backs: E14 which settings source wins. [^schema]
