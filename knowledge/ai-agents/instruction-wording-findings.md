@@ -3,7 +3,7 @@ schema: knowledge-doc/v1
 type: reference
 topic: ai-agents
 status: verified
-applies-to: ["Claude Code 2.1.318 with Claude Opus 5.5", "GitHub Copilot CLI 1.0.105 with Claude Sonnet 5.5", "Codex CLI 0.166.0-alpha.6 with gpt-6.1-sol and gpt-6-luna", "runs of 2026-11-07 and 2026-11-09", "knowledge-judge prompt runs of 2026-11-22 (Claude Code subagents, Claude Opus 5.5)", "doc-writer and reviewer subagent runs of 2026-11-24 and 2026-11-25 (Claude Code, Claude Opus 5.5)"]
+applies-to: ["Claude Code 2.1.318 with Claude Opus 5.5", "GitHub Copilot CLI 1.0.105 with Claude Sonnet 5.5", "Codex CLI 0.166.0-alpha.6 with gpt-6.1-sol and gpt-6-luna", "runs of 2026-11-07 and 2026-11-09", "knowledge-judge prompt runs of 2026-11-22 (Claude Code subagents, Claude Opus 5.5)", "doc-writer and reviewer subagent runs of 2026-11-24 and 2026-11-25 (Claude Code, Claude Opus 5.5)", "perf-reviewer agent runs of 2026-11-25 (Claude Code 2.1.332, Sonnet)"]
 last-verified: 2026-11-10
 last-updated: 2026-11-25
 tags: [instructions, wording, compliance, triggers, agents-md, claude-md, copilot-instructions, measurement]
@@ -24,7 +24,7 @@ Covered: wordings in this repo's global instructions (`copilot/instructions/`) a
 
 The runs were scripted (`claude -p`, `copilot -p`, `codex exec`), in a small test project, two runs per prompt and wording. Copilot Chat in VS Code and other models are not covered yet. Each count is "runs that complied / runs".
 
-IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowledge (the knowledge-judge), run as Claude Code subagents on Claude Opus 5.5, one run per prompt version and test doc. IW-19 to IW-21 are briefs given to doc-writing subagents in two builds of the knowledge base (Claude Code, Claude Opus 5.5).
+IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowledge (the knowledge-judge), run as Claude Code subagents on Claude Opus 5.5, one run per prompt version and test doc. IW-19 to IW-21 are briefs given to doc-writing subagents in two builds of the knowledge base (Claude Code, Claude Opus 5.5). IW-22 and IW-23 are the output contract of a review agent run as a headless session (Claude Code 2.1.332, Sonnet).
 
 **Analogy:** a recipe card in a busy kitchen. "When the order says *vegan*, use the blue binder" works, because the cook sees the word on the order. "When the pantry has saffron, use the red binder" makes the cook walk to the pantry to check. "The default plate has four sides" gets ignored when the order is a quick snack.
 
@@ -55,6 +55,8 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 | IW-19 | Writer brief for parallel doc writers (Claude Code subagents): "Save scripts to `$LAB/experiments/<subtopic>/<doc-slug>.py` … Put the script (trimmed to its essence, ideally ≤ 40 lines) and its **real, unedited** output … in the doc's Worked example". Then an addendum: "never cite `experiments/<subtopic>/<slug>.py` or any `$LAB` path in a doc … put the **full** script that printed the quoted output in a collapsible block" | The first finished doc showed only the script's core loop and cited the scratch path the brief had named, so a reader could not reproduce its output: the brief's own path became the doc's citation. After the addendum, every doc embedded its full script and none cited a scratch path | 10 writers, 57 docs, 2026-11-24: scratch path cited in 1 of 1 doc finished before the addendum; 0 of 57 at the end; the embedded scripts, re-run, printed every quoted output line in 57 of 57 docs (one wall-clock timing block excluded) | — | — | ✅[^9] |
 | IW-20 | Same brief: "its **real, unedited** output (trim long output with `…`, never change numbers)". Then: "**Quoted output is byte-for-byte what the script printed.** No labels typed into the block … if a label helps, make the script print it … The lead re-runs every embedded script and diffs each quoted line against its stdout" | "Unedited" was read as "numbers unchanged": no number was ever changed, but 2 of 10 writers typed notes into output blocks (labels such as `<- overfit`, a trailing `slow`, a `… (5 more lines: …)` line). After the byte-for-byte wording, which also named the check that would catch it, the writers diffed their own blocks against stdout and moved the notes into the script or the prose | 10 writers, 57 docs, 2026-11-24: changed numbers 0 of 57 docs; typed notes in 6 of 57 docs before the second wording; 0 of 57 after | — | — | ✅[^9] |
 | IW-21 | IW-19's and IW-20's final wordings put in a new brief from the start, for 5 new writers: "the **full** script sits in a `<details>` block after the output it printed; quoted output is byte-for-byte what the script printed (no typed labels or notes inside output blocks — make the script print a label if you need one)", plus "the lead re-runs every embedded script" | Followed as written. No doc cited a scratch path and no output block held a typed note. The one slip was in the prose: a caption called a hand-drawn graph "printed by the full script" | 5 writers, 17 docs, 2026-11-25: scratch path cited 0 of 17; typed notes in output blocks 0 of 17; every quoted output line printed by the re-run script in 16 of 17 docs, the 17th being the hand-drawn graph's caption (fixed in review) | — | — | ✅[^10] |
+| IW-22 | A review agent's output line, changed from "Reply with JSON only: no code fence, no text before or after." to "Reply with JSON only. A program parses your whole reply, so its first character is `{` and its last is `}`: no code fence, no notes before or after." | With the first wording, the one `clean` verdict of a 2-run smoke test came as prose (its own size arithmetic) followed by the JSON. With the second, 53 of 54 replies were pure JSON; the exception was again a `clean` verdict on the same sample, preceded by its arithmetic. Prose before JSON appeared only on clean verdicts | Claude Code 2.1.332 with Sonnet, `--agent` sessions, 2026-11-25: first wording 1/2 pure JSON; second wording 53/54 (35/36 and 18/18 in two agent variants) | — | — | ✅[^11] |
+| IW-23 | IW-22's second wording, plus a field for the reasoning in the JSON contract: `"checked": "<one or two sentences: what you examined and, for a clean verdict, why its cost is fine, with the sizes>"` | The only replies that were not pure JSON were clean verdicts on one sample, where the model wrote its size arithmetic before the JSON. With the field, that sample still came back once with prose first. The field did give every clean verdict a stated reason | Claude Code 2.1.332 with Sonnet, `--agent` sessions, 2026-11-25: without the field 70/72 pure JSON (that sample 2/4); with it 14/15 (that sample 2/3): no difference shown. With the field on 39 other samples, 78/78 in two agent variants | — | — | ✅[^11] |
 
 ## Lookup notes
 - **The pattern behind the findings.**
@@ -87,7 +89,7 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - _Not cited by any rule yet._
 
 ## Verification status
-- Verified: 23 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
+- Verified: 25 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-10
 
 ## References
 - Local measurement, 2026-11-09:
@@ -111,6 +113,8 @@ IW-16 and IW-17 are a different kind of wording: an agent prompt in agent-knowle
 - Local measurement, 2026-11-24: one knowledge-base build of `knowledge/machine-learning/` by 10 writer subagents and 10 reviewer subagents (Claude Code, Claude Opus 5.5, `general-purpose` agents), 57 docs. Scratch-path citations counted by `grep`; quoted outputs checked by a script that re-runs every embedded full script in the lab (`machine-learning/lab-setup.md`) and looks up each quoted line in its stdout; review counts from each reviewer's report. [^9]
 
 - Local measurement, 2026-11-25: the next build of `knowledge/machine-learning/` (17 docs in 7 topics) by 5 writer and 5 reviewer subagents (Claude Code, Claude Opus 5.5), with the same output check; counts from the check script and each reviewer's report. [^10]
+
+- Local measurement, 2026-11-25: the `perf-reviewer` agent of the archkit-build plugin, run headless on 18 calibration samples; a 2-run smoke test with the first wording, then 54 runs with the second (two runs of the agent with its skill, one of a control without the reference files), 18 more after its index grew, 15 with the `checked` field, and 78 on 39 new samples; replies parsed by `score.mjs`; details in `performance/code-review/perf-reviewer-calibration.md` §5, §6, §6.2 and §6.3. [^11]
 
 ## Related
 - `ai-agents/agent-token-accounting.md` — why each file read adds a full model request.
