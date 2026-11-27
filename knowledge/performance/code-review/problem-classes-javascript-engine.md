@@ -3,7 +3,7 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17 (lab, Docker node:24.22.1-alpine on Apple M2); V8 source at tag 13.6.233.17; MDN and Vue 3 docs read 2026-11-26"]
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17, linux arm64, pointer compression off (lab, Docker node:24.22.1-alpine on Apple M2); V8 source at tag 13.6.233.17; MDN and Vue 3 docs read 2026-11-26"]
 last-verified: 2026-11-26
 last-updated: 2026-11-26
 tags: [performance, code-review, javascript, v8, turbofan, maglev, inline-caches, deoptimization, proxy, eval, prototypes]
@@ -428,7 +428,7 @@ bytecode identical
 - Verified: 61 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
 
 ## References
-- Lab run — Docker image `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58) on Apple M2, `--network none`, 2026-11-26; scripts and outputs are in the `<details>` blocks of this doc. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab run — Docker image `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Maglev on) on Apple M2, `--network none`, 2026-11-26; scripts and outputs are in the `<details>` blocks of this doc. No other V8 version, architecture or build was run. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
 - [V8 src/runtime/runtime.h, OptimizationStatus](https://github.com/v8/v8/blob/13.6.233.17/src/runtime/runtime.h) — V8 project, tag 13.6.233.17. Rank 1. Backs: Scope, terms. [^v8-runtime]
 - [V8 src/ic/ic.cc, TransitionMarkFromState](https://github.com/v8/v8/blob/13.6.233.17/src/ic/ic.cc) — V8 project, tag 13.6.233.17. Rank 1. Backs: Scope, terms. [^v8-ic]
 - [V8 src/flags/flag-definitions.h](https://github.com/v8/v8/blob/13.6.233.17/src/flags/flag-definitions.h) — V8 project, tag 13.6.233.17. Rank 1. Backs: Catalog, megamorphic-access-site, oversized-function; Lookup notes. [^v8-flags]
