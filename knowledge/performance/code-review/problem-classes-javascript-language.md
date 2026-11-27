@@ -3,7 +3,7 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (V8 12.4 to 15.0)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)"]
+applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (V8 12.4 to 15.0)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)", "and in Google Chrome 158.0.8127.89 (V8 15.8, headless page); sort counts also on Deno 2.9.8 (V8 15.0) and Electron 38.8.6 (V8 14.0)"]
 last-verified: 2026-11-27
 last-updated: 2026-11-27
 tags: [performance, code-review, javascript, typescript, array-methods, iterator-helpers, async, microtasks, errors, stack-traces, sort, spread, tsconfig]
@@ -54,7 +54,7 @@ Terms:
 |---|---|---|---|---|
 | `chained-array-passes` | `.filter(...).map(...)`, `.map(...).filter(...).reduce(...)`, `Object.entries(o).filter(...).map(...)`, `[...map.values()].filter(...)`, `Array.from(iter).map(...)` over large or unbounded arrays; `.map(...)` whose result is discarded | One `for` loop, or one `reduce`, that filters and transforms in the same pass; `forEach` or `for…of` when no array is needed; iterator helpers (`arr.values().filter(p).map(f)`) when the source is an iterator, is infinite, or is cut short by `take` or `find` | k passes and k − 1 intermediate arrays of up to n elements → 1 pass and no intermediate array. `map` creates a new array, and calling it without using the result is an anti-pattern ✅[^mdn-map]; `filter` calls its callback once per element and constructs a new array ✅[^mdn-filter]; converting to an array and then reducing creates an intermediate array and iterates twice ✅[^mdn-iter]; iterator helpers are lazy and produce the next value only when requested ✅[^mdn-itermap]. Measured on Node.js 24.22.1 over n = 1,000,000: the chain created 2 arrays and grew the heap by 20 MB per run, one indexed loop created none and grew it by 0 MB, iterator helpers created no array but grew the heap by 80 MB per run ✅[^lab], the same on Node.js 22.23.4 and 25.7.0; with pointer compression on the growth was 10 MB, 0 MB and 40 MB, on Electron 43.7.7 (V8 15.0) and on a Node.js 24.22.3 build with V8 13.6, so pointer compression is the cause ✅[^lab-matrix] | Heap growth around a forced collection (`node --expose-gc`) at n and 2n: expect it to double before the fix and stay near 0 after; or an allocation profile showing no arrays allocated by the chain |
 | `full-pass-for-first` | `filter(p)[0]`; `filter(p).length > 0`, `!== 0` or `=== 0`; `map(f).includes(x)`; `str.match(/re/g)` used as a boolean or compared to `null`; `arr.filter(p).length === arr.length` to test all | `find`, `findIndex`, `some`, `every`, `includes`; `re.test(str)` with a regex that has no `g` flag; `Iterator.prototype.find` or `some` on iterators | n predicate calls plus an array of m matches → i + 1 calls and no array; with no match, both make n calls. `find` returns the first matching element and stops iterating ✅[^mdn-find]; MDN points to `some` for "does any element satisfy" ✅[^mdn-find]; `filter` calls its callback for every element ✅[^mdn-filter]; `match` with `g` returns all matches ✅[^mdn-match], and MDN points to `test` for "does it match" ✅[^mdn-match]. Measured on Node.js 24.22.1 with n = 100,000 and the first match at index 10: 100,000 predicate calls for `filter`, 11 for `find` and `some` ✅[^lab] | Count predicate calls with a counter on a test input whose first match is early: expect i + 1 after the fix |
-| `sort-key-recompute` | A comparator that derives its keys: `sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))`, `new Date(a.ts) - new Date(b.ts)`, `parseFloat`, `JSON.stringify`, a regex or a `map.get(a.id)` inside the comparator; the same in `toSorted` | Decorate, sort, undecorate: `rows.map(r => ({ k: key(r), r })).sort((x, y) => cmp(x.k, y.k)).map(x => x.r)`; or store the key on the record once; for locale order, also one shared `Intl.Collator` (`hot-path-constants`) | 2 key computations per comparator call, and the number of calls grows faster than n (about n·log₂ n for a comparison sort: arithmetic, see "What the sources do not say") → n key computations, plus two arrays of n. The comparator can be called many times per element, which may yield a high overhead ✅[^mdn-sort]; MDN's remedy is to extract the sort values once into a temporary array, sort it, then map back ✅[^mdn-sort]. Measured on Node.js 24.22.1 with n = 10,000 seeded rows: 119,955 comparator calls and 239,910 key computations → 10,000 ✅[^lab], the same on V8 12.4 to 14.1; Electron 43.7.7 (V8 15.0) made 119,784 calls and 239,568 key computations on the same rows; a Node.js 24.22.3 build with pointer compression made 119,955, so pointer compression is not the cause of that change ✅[^lab-matrix] | A counter in the key function on a test of n = 10,000: expect n after the fix, and the same order |
+| `sort-key-recompute` | A comparator that derives its keys: `sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))`, `new Date(a.ts) - new Date(b.ts)`, `parseFloat`, `JSON.stringify`, a regex or a `map.get(a.id)` inside the comparator; the same in `toSorted` | Decorate, sort, undecorate: `rows.map(r => ({ k: key(r), r })).sort((x, y) => cmp(x.k, y.k)).map(x => x.r)`; or store the key on the record once; for locale order, also one shared `Intl.Collator` (`hot-path-constants`) | 2 key computations per comparator call, and the number of calls grows faster than n (about n·log₂ n for a comparison sort: arithmetic, see "What the sources do not say") → n key computations, plus two arrays of n. The comparator can be called many times per element, which may yield a high overhead ✅[^mdn-sort]; MDN's remedy is to extract the sort values once into a temporary array, sort it, then map back ✅[^mdn-sort]. Measured on Node.js 24.22.1 with n = 10,000 seeded rows: 119,955 comparator calls and 239,910 key computations → 10,000 ✅[^lab], the same on V8 12.4 to 14.1 (Node.js; Electron 38.8.6 with V8 14.0); V8 15.0 in Electron 43.7.7 and in Deno 2.9.8, and V8 15.8 in Chrome 158, made 119,784 calls and 239,568 key computations on the same rows: the count came with the V8 version, not with pointer compression ✅[^lab-matrix] | A counter in the key function on a test of n = 10,000: expect n after the fix, and the same order |
 
 **Calls, async code and errors**
 
@@ -75,7 +75,7 @@ Terms:
 
 | Class | Not a problem when |
 |---|---|
-| `chained-array-passes` | n is small, or the chain runs once; the intermediate array is needed anyway (it is returned or reused); readability wins on a cold path. In the lab on Node.js 24.22.1, iterator helpers over an in-memory array allocated more total bytes than the chain (80 MB against 20 MB per run), so they were not a fix for allocation volume there ✅[^lab]; with pointer compression on (Electron 43.7.7; Node.js 24.22.3 with V8 13.6) it was 40 MB against 10 MB ✅[^lab-matrix] |
+| `chained-array-passes` | n is small, or the chain runs once; the intermediate array is needed anyway (it is returned or reused); readability wins on a cold path. In the lab on Node.js 24.22.1, iterator helpers over an in-memory array allocated more total bytes than the chain (80 MB against 20 MB per run), so they were not a fix for allocation volume there ✅[^lab]; with pointer compression on (Electron 43.7.7; Node.js 24.22.3 with V8 13.6; Chrome 158) it was 40 MB against 10 MB ✅[^lab-matrix] |
 | `full-pass-for-first` | All matches are needed later in the same function (then keep the `filter` result and test its length once); the array is small |
 | `sort-key-recompute` | The key is a plain property read (`a.price - b.price`); n is small; the extra two arrays of n are too much memory for the input |
 | `await-per-sync-value` | The value is sometimes a real promise and the code must accept both (then await only when needed); the pause is wanted, to let other work run between items in a long loop |
@@ -99,7 +99,7 @@ Terms:
   - The TSConfig reference page, which carries no TypeScript version label, gives the `target` default as `es2023` with `module: node20`, `esnext` with `module: nodenext` and `ES5` otherwise ✅[^ts-tsconfig], while the TypeScript 6.0 release notes say the new default is the latest ECMAScript version, `es2025` there ✅[^ts-60]. The two pages disagree, so which default applies to which TypeScript version is unconfirmed here: check the version in use. The 6.0 notes say `target: es5` is deprecated, setting `--downlevelIteration` at all gives a deprecation error, and options deprecated in 6.0 are removed in TypeScript 7.0; `"ignoreDeprecations": "6.0"` keeps them working in 6.0 only ✅[^ts-60]. So `downlevelIteration` in a `tsconfig.json` is an upgrade blocker for 7.0.
   - The often-quoted argument limit of 65,536 is JavaScriptCore's ✅[^mdn-apply]; on Node.js 24.22.1 spread calls worked at 120,000 elements and failed at 200,000 (on Node.js 22.23.4 they failed at 120,000 ✅[^lab-matrix]), the error is a stack-size `RangeError`, and no page gives the limit as a number ✅[^lab].
 - **What the sources do not say.**
-  - No page read gives the number of comparator calls: MDN says the complexity of `sort` cannot be guaranteed because it depends on the implementation ✅[^mdn-sort]. "About n·log₂ n" is arithmetic for a comparison sort: 10,000 · log₂ 10,000 ≈ 132,877, near the 119,955 measured (119,784 on Electron 43.7.7).
+  - No page read gives the number of comparator calls: MDN says the complexity of `sort` cannot be guaranteed because it depends on the implementation ✅[^mdn-sort]. "About n·log₂ n" is arithmetic for a comparison sort: 10,000 · log₂ 10,000 ≈ 132,877, near the 119,955 measured (119,784 in Electron 43.7.7, Deno 2.9.8 and Chrome 158).
   - No V8 or Node.js page gives V8's argument limit as a number. It depends on the stack size (`--stack-size`) and on how deep the call already is, so a bisection in the lab did not give one stable value; only fixed sizes are reported.
   - MDN says `for await` over a sync iterable is slower ✅[^mdn-forawait] but gives no factor; V8's stack-trace page gives no cost per frame.
 - **Weaker sources, rank 5 or 6.** None used.
@@ -306,7 +306,7 @@ ES2022 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 
 ```
 </details>
 
-**Other builds and versions (2026-11-27).** The seven scripts above ran again, unchanged except for layout, on six more builds, once per script and build (the TypeScript script loaded a local TypeScript 5.9.3 package on macOS; E9 and E2 mounted it read-only). No script prints a time, so all ran on the emulated x64 build too.
+**Other builds and versions (2026-11-27).** The seven scripts above ran again, unchanged except for layout, on six more builds and in Chrome 158 (E10), once per script and build (the TypeScript script loaded a local TypeScript 5.9.3 package on macOS; E9 and E2 mounted it read-only). No script prints a time, so all ran on the emulated x64 build too.
 
 | Id | Build | Differs from E0 |
 |---|---|---|
@@ -317,23 +317,35 @@ ES2022 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 
 | E4 | Node.js 25.7.0, V8 14.1.146.11, macOS arm64 | newer Node.js and V8 |
 | E7 | Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0.245.31), macOS arm64 | pointer compression on, V8 sandbox on, V8 15.0 |
 | E9 | Node.js 24.22.3, V8 13.6.233.17-node.63, linux x64 container emulated on arm64: the Node.js project's unofficial pointer-compression build | against E2: pointer compression on only (sandbox off) |
+| E6 | Deno 2.9.8, V8 15.0.245.2, linux arm64 container, pointer compression and V8 sandbox off | narrowing run only (`sortkey.mjs`): V8 15.0 outside Electron |
+| E8 | Electron 38.8.6 run as Node (Node.js 22.22.0 API, V8 14.0.365.10), macOS arm64, pointer compression and V8 sandbox on | narrowing run only (`sortkey.mjs`): another Electron build, older V8 |
+| E10 | Google Chrome 158.0.8127.89, V8 15.8.62.31, macOS 26.1 arm64, headless, the script inlined in a `file://` page as a module script | Chrome itself: V8 15.8, pointer compression on, no Node.js API |
 
-| Script (claim) | E1 | E2 | E3 | E4 | E7 | E9 |
-|---|---|---|---|---|---|---|
-| `chain.mjs` (arrays made and heap growth per variant) | same | same | same | same | differs | differs |
-| `first.mjs` (predicate calls, n against i + 1) | same | same | same | same | same | same |
-| `sortkey.mjs` (comparator calls, key computations) | same | same | same | same | differs | same |
-| `spreadargs.mjs` (spread works at 120,000, fails at 200,000) | same | same | differs | same | same | same |
-| `hops.mjs` (microtask turns per loop and `return` form) | same | same | same | same | same | same |
-| `stack.mjs` (frames per `Error.stackTraceLimit`) | same | same | same | same | same | same |
-| `ts.mjs` (helpers per target, turns, helper calls) | same | same | same | same | same | same |
+| Script (claim) | E1 | E2 | E3 | E4 | E7 | E9 | E10 |
+|---|---|---|---|---|---|---|---|
+| `chain.mjs` (arrays made and heap growth per variant) | same | same | same | same | differs | differs | differs (page variant) |
+| `first.mjs` (predicate calls, n against i + 1) | same | same | same | same | same | same | same |
+| `sortkey.mjs` (comparator calls, key computations) | same | same | same | same | differs | same | differs |
+| `spreadargs.mjs` (spread works at 120,000, fails at 200,000) | same | same | differs | same | same | same | same |
+| `hops.mjs` (microtask turns per loop and `return` form) | same | same | same | same | same | same | same |
+| `stack.mjs` (frames per `Error.stackTraceLimit`) | same | same | same | same | same | same | differs |
+| `ts.mjs` (helpers per target, turns, helper calls) | same | same | same | same | same | same | same (page variant) |
 
 What differs:
 - `chain.mjs`, E7 and E9: heap growth per run of 20 MB (chain) and 80 MB (iterator helpers) on E0 became 10 MB and 40 MB; the arrays made (2, 0, 0), the result and the order are unchanged. E9 gave 10 and 40 MB and E2 20 and 80 MB, same V8 13.6, so pointer compression is the cause ✅[^lab-matrix].
-- `sortkey.mjs`, E7: 119,955 comparator calls and 239,910 key computations on E0 became 119,784 and 239,568, on the same rows (same SHA-1 of the names) and in the same order. A probe that sorted plain integers also made fewer comparator calls on E7 than on E1, E3 and E4: the sort compares differently in that build. E9 and E2 both made 119,955 calls (and 119,983 on the integer probe), so pointer compression is not the cause ✅[^lab-matrix]; V8 15.0, the V8 sandbox and Electron itself remain, not isolated.
+- `sortkey.mjs`, E7: 119,955 comparator calls and 239,910 key computations on E0 became 119,784 and 239,568, on the same rows (same SHA-1 of the names) and in the same order. A probe that sorted plain integers also made fewer comparator calls on E7 than on E1, E3 and E4: the sort compares differently in that build. E9 and E2 both made 119,955 calls (and 119,983 on the integer probe), so pointer compression is not the cause; E6 (Deno 2.9.8, V8 15.0, no sandbox) made 119,784 (119,803 on the probe) and E8 (Electron 38.8.6, V8 14.0) 119,955 (119,983): the count comes with the V8 version, seen on V8 15.0 in two embedders and on V8 15.8 in Chrome 158, not on V8 12.4 to 14.1 ✅[^lab-matrix].
 - `spreadargs.mjs`, E3: both spread calls worked at 120,000 elements on E0; on Node.js 22.23.4 both threw `RangeError: Maximum call stack size exceeded` at 120,000 and worked at 100,000. All builds used their default stack size.
 
-<details><summary>Differing output (E7, E9 and E3)</summary>
+Chrome 158 (E10): `chrome --headless=new --user-data-dir=<an empty folder> --enable-precise-memory-info --js-flags="<V8 flags>" --virtual-time-budget=120000 --dump-dom file://<page>`; the page inlines the script as a module script after a small script that collects its `console.log` lines into the page, read from the dumped page. Two page variants (lines below), which gave the baseline result on E1 (`chain.mjs` keeps its Node.js call there). What Chrome 158 does differently from the baseline ✅[^lab-matrix]:
+  - `chain.mjs`: heap growth 10, 0 and 40 MB per run against 20, 0 and 80, as with pointer compression on E7 and E9; arrays made and result unchanged.
+  - `sortkey.mjs`: 119,784 comparator calls against 119,955, as on the V8 15.0 builds; same order.
+  - `stack.mjs`: 202 frames with `Infinity` against 205: one frame sits below the 201 recursion frames in the page, four (the module loader) in Node.js; 10 and 0 unchanged.
+
+Efficiency mode: in default headless Chrome the renderer is sometimes treated as a background process and V8 then stays in Maglev; none of these seven scripts reads a time or a tier (counts, heap growth and frames only), and `chain.mjs`, `sortkey.mjs`, `stack.mjs` gave the same output in 3 of 3 runs also with the Chrome flag `--disable-renderer-backgrounding` (10, 0 and 40 MB; 119,784 calls; 202 frames), so the figures above do not depend on it.
+
+Could not be checked in Chrome: none.
+
+<details><summary>Differing output (E7, E9, E3, then E6, E8 and E10)</summary>
 
 `ELECTRON_RUN_AS_NODE=1 <Electron 43.7.7> --expose-gc --max-semi-space-size=256 --min-semi-space-size=256 chain.mjs`, the two lines that differ:
 ```text
@@ -350,6 +362,15 @@ key in comparator: key computations 239568 | comparator calls 119784
    100000 | Math.max(...arr): ok | [].push(...arr): ok
    120000 | Math.max(...arr): RangeError: Maximum call stack size exceeded | [].push(...arr): RangeError: Maximum call stack size exceeded
 ```
+E6 is `deno run -A sortkey.mjs` in `denoland/deno:alpine-2.9.8`; E8 is `ELECTRON_RUN_AS_NODE=1 <Electron 38.8.6> sortkey.mjs`:
+```text
+E6:  key in comparator: key computations 239568 | comparator calls 119784
+E8:  key in comparator: key computations 239910 | comparator calls 119955
+E10: key in comparator: key computations 239568 | comparator calls 119784
+E10, chain.mjs page variant: chain 10 10 10 10 10 | one loop 0 0 0 0 0 | iter helper 40 40 40 40 40 (MB per run)
+E10, stack.mjs: limit Infinity | frames captured: 202
+```
+Page variants: `chain.mjs` line 13, `process.memoryUsage().heapUsed` (twice) → `performance.memory.usedJSHeapSize`, run with `--js-flags="--expose-gc --max-semi-space-size=256 --min-semi-space-size=256"`; `ts.mjs` lines 3 and 4 (`import { createRequire } …` and `const ts = …('/ts')`) → `const ts = { version: '5.9.3' }, EMITTED = { … }`, the `transpileModule` output of TypeScript 5.9.3 for the four targets, produced beforehand with the local package, and line 15 → `const emit = (target) => EMITTED[target];`.
 </details>
 
 **Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
@@ -361,12 +382,12 @@ key in comparator: key computations 239568 | comparator calls 119784
 - A `tsconfig.json` `target` older than the runtime turns native syntax into helper calls in every file; set it to the oldest runtime the code really runs on.
 
 ## Verification status
-- Verified: 68 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
-- Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64; V8 versions outside 12.4 to 15.0.
+- Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Then 7 runs in Chrome 158 (E10; two page variants, checked on E1): 4 same, 3 differ, 0 could not run; and `sortkey.mjs` once each on E6 and E8. Totals: 49 cells, 42 same, 7 differ. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari (other engines: out of scope of this doc); V8 versions outside 12.4 to 15.8.
 
 ## References
 - Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Apple M2 under Docker), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
-- Lab matrix: the seven scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4 with V8 12.4.254.21; Node.js 25.7.0 with V8 14.1.146.11; Electron 43.7.7 as Node with V8 15.0.245.31 and pointer compression on), then E9 (Node.js 24.22.3, V8 13.6.233.17-node.63, linux x64 emulated, pointer compression on, sandbox off) beside E2, with a local TypeScript 5.9.3 package; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, chained-array-passes and sort-key-recompute; Lookup notes. [^lab-matrix]
+- Lab matrix: the seven scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4 with V8 12.4.254.21; Node.js 25.7.0 with V8 14.1.146.11; Electron 43.7.7 as Node with V8 15.0.245.31 and pointer compression on), then E9 (Node.js 24.22.3, V8 13.6.233.17-node.63, linux x64 emulated, pointer compression on, sandbox off) beside E2, then E10 (Google Chrome 158.0.8127.89, V8 15.8.62.31, headless page, macOS arm64) and, for `sortkey.mjs`, E6 (Deno 2.9.8, V8 15.0.245.2) and E8 (Electron 38.8.6 as Node, V8 14.0.365.10), with a local TypeScript 5.9.3 package; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, chained-array-passes and sort-key-recompute; Lookup notes. [^lab-matrix]
 - [Stack trace API](https://v8.dev/docs/stack-trace-api) — V8, living. Rank 1. Backs: Catalog, stack-capture-per-call. [^v8-stack]
 - [Errors: Error.stackTraceLimit and new Error()](https://nodejs.org/docs/latest-v24.x/api/errors.html) — Node.js, v24.22.3 docs. Rank 1. Backs: Catalog, stack-capture-per-call. [^node-errors]
 - [TSConfig Reference: target](https://www.typescriptlang.org/tsconfig/target.html) — TypeScript, living. Rank 1. Backs: Catalog, ts-downlevel-emit. [^ts-target]
