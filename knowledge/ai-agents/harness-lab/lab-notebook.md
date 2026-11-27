@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents/harness-lab
 status: verified
-applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-26"]
+applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-27"]
 last-verified: 2026-11-26
-last-updated: 2026-11-26
+last-updated: 2026-11-27
 synthesized-into: []
 tags: [lab-notebook, claude-code, subagents, plugins, hooks, orchestrator, evaluator, token-cost, experiments]
 ---
@@ -28,7 +28,7 @@ What the experiments showed:
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** thirty-three experiments (E1–E33; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** thirty-four experiments (E1–E34; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -878,6 +878,34 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ---
 
+### E34. First run on a real repository: three stories in agent-config (2026-11-27)
+- **Question:** does the whole chain hold on a real repository (a Node repository with Prettier, ESLint and 161 Cucumber scenarios), with two `risk: high` stories, so the reviewer runs for real?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; a git worktree of the user's `agent-config-next` on a new branch, with Spec Kit 1.2.3's skills, an `.archkit/repo.json` (checks `test-tools`, `lint`, `check-format`; acceptance tests in `tests/acceptance/<card>/`, added to the Cucumber paths) and ignore rules, committed first;
+  - the request (three parts): the tracker CLI gets `--update T-<n> --title`; secret-looking strings (`ghp_`, `gho_`, `github_pat_`, `sk-…`, `xox[bpa]-`, `AKIA…`) become `[redacted]` in everything the tracker writes; the desktop-notify hook removes them from notification text. The user had delegated the approvals for the run, so the prompt treated the spec, the plan and any proposed pattern as approved;
+  - planning in an orchestrator session; the build phase with `build-feature.mjs` (E31) run directly, because one call could exceed a tool's 10-minute limit (the orchestrator's prompt now loops over its new `--next` flag, which builds one card per call). A card is `risk: high` when its text names authentication, permissions, money, secrets or tokens; then the reviewer runs after the gate (the script that runs the checks when a worker stops).
+- **Result** ✅[^lab]:
+  - **Planning:** 15 requests, 824,050 tokens, $0.51, 113 s. Three cards: `001-US1` (5 scenarios, normal), `001-US2` (5 scenarios, `risk: high`, depends on US1), `001-US3` (3 scenarios, `risk: high`). Writing `.claude/rules/hook-program.md` for a proposed pattern was refused: "a sensitive file". The orchestrator reverted its `repo.json` change and went on without the pattern.
+  - **Build, attempt 1:** stopped at `dirty-tree` before any worker: Spec Kit's `.specify/feature.json` was not among the files the script commits. Added.
+  - **Build, attempt 2:** `001-US1` ended `gate-failed` after 3 attempts (374,748 tokens, $0.31). The test-author had asserted the whole `TRACKER.md`, including a `## Done` section that the tracker's existing rule TR-12 moves away on every edit; the implementer implemented `--title`, passed the other four scenarios, and stopped as `blocked` instead of breaking TR-12. The story's scenarios were then clarified ("each checks only the lines or fields it names; the rest of the files keeps following the existing rules").
+  - **Build, attempt 3:** all three cards passed at their first gate attempt; the reviewer ran for both high-risk cards and returned `pass` with no findings; each card got two commits and its task marked `[X]`.
+
+| Card | Test-author | Implementer | Reviewer | Card total |
+|---|---|---|---|---|
+| 001-US1 | 150,154 | 110,599 | — | 260,753, $0.233 |
+| 001-US2 | 199,679 | 83,598 | 40,342 | 323,619, $0.316 |
+| 001-US3 | 181,458 | 284,426 | 29,139 | 495,023, $0.351 |
+
+  - Afterwards the repository's full `verify-before-commit` passed with 177 scenarios: 161 before, 13 acceptance scenarios in `tests/acceptance/`, and 3 that the US3 implementer added to the module's own new feature file. A manual run renamed an item and replaced three secret-looking strings with `[redacted]`.
+  - Eight tool calls needed approval and were denied: test-authors writing files through shell heredocs and chained commands, and the US3 implementer running `prettier --write`, which was not among its commands, so it fixed the formatting by hand (32 turns).
+  - Whole run: 2,278,193 tokens and about $1.73; the orchestrator's planning took 36 % of the tokens and about 30 % of the cost.
+- **Conclusion** (one feature, one repository, three attempts at the build):
+  - The chain built three stories on a real repository, and the reviewer ran. Each stop happened before damage: nothing was committed by a failed card. *(The author's reading:)* the stops came from the harness (a state file the script did not commit) and from a model's behaviour (a test that asserted more than its scenario); the proposed fixes for the second are recorded as incidents and were not tried.
+  - Writing `.claude/rules/hook-program.md` with the Write tool was refused once, in a headless `claude -p` session on 2.1.332 with `--allowedTools` including Write: Claude Code treats the path as sensitive. Proposed patterns need another route to the person.
+  - Workers on a real repository cost more than in the toy repositories: a test-author's cumulative input was 150,000–200,000 tokens over 11–13 turns here, against about 40,000 over 6–8 turns in E24 and E26 (both from the CLI's `usage` and `num_turns`). That reading the Cucumber steps and fixtures caused most of it is an inference, not measured.
+
+---
+
 ## 4. Four ways to orchestrate, compared
 
 | Way | What the orchestrator is | Cost of orchestration | Measured |
@@ -921,7 +949,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## 7. Verification
 
-- **Measured on 2026-11-24, 2026-11-25 and 2026-11-26 (E24–E33):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24 to 2026-11-27 (E24–E34 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -937,7 +965,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-26; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E33 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E34 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]

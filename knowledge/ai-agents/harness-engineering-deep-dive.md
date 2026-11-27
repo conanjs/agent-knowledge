@@ -2,7 +2,7 @@
 schema: deep-dive/v1
 topic: ai-agents
 status: verified
-applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30; the 2026-03-24 Anthropic post 2026-11-24; §6.4 and §6.5 sources 2026-11-26"]
+applies-to: ["Coding and task agents (Claude Code, Codex, LangChain Deep Agents and similar)", "sources read 2026-10-30; the 2026-03-24 Anthropic post 2026-11-24; §6.4–§6.6 sources 2026-11-26"]
 last-verified: 2026-10-30
 last-updated: 2026-11-26
 synthesized-into: []
@@ -20,7 +20,7 @@ tags: [harness-engineering, agent-harness, guides, sensors, hooks, agents-md, lo
 
 Harness engineering is designing that layer so the agent's work can be trusted. It has two halves. **Guides** steer the agent before it acts (instruction files, templates, skills). **Sensors** check its work afterwards and feed errors back (tests, linters, review agents). The core habit: every agent mistake becomes a harness change, so the same mistake cannot happen again. With the model held fixed, harness changes alone have moved a coding agent from outside the top 30 to the top 5 of a benchmark.
 **Use this when:** you set up a repo for coding agents; an agent declares victory too early, leaves broken state or drifts from the architecture; you choose between adding a rule to `AGENTS.md`/`CLAUDE.md` and adding a check; you compare agent tools; someone asks how prompt, context, harness, loop and graph engineering differ.
-**Depth:** every harness component with its default; the guides/sensors × computational/inferential model; the comparison of all five disciplines; the improvement loop; three worked cases with numbers (Anthropic long-running agents, OpenAI's agent-written product, LangChain on Terminal Bench); how Anthropic's published harnesses plan the work (§6.4); how three vendors document orchestrating agents in code (§6.5); this repo's own harness as an artifact; a cross-component interaction matrix; a failure matrix; open questions.
+**Depth:** every harness component with its default; the guides/sensors × computational/inferential model; the comparison of all five disciplines; the improvement loop; three worked cases with numbers (Anthropic long-running agents, OpenAI's agent-written product, LangChain on Terminal Bench); how Anthropic's published harnesses plan the work (§6.4); how three vendors document orchestrating agents in code (§6.5); what Anthropic describes for improving an agent across runs (§6.6); this repo's own harness as an artifact; a cross-component interaction matrix; a failure matrix; open questions.
 
 ---
 
@@ -252,6 +252,20 @@ All three vendors document two ways to run several agents: a model decides which
 
 *(Synthesis.)* None of the quoted pages says one way is always better. Code is chosen when the steps and their order are known in advance, for determinism and easier debugging; a model is chosen when the next step depends on judgement. Google's measurement of the cost of multi-agent coordination on sequential work is in [efficient-coding-agents-deep-dive.md](efficient-coding-agents-deep-dive.md) §3.
 
+### 6.6 Improving an agent across runs: what Anthropic describes
+
+Read 2026-11-26. Two loops are easy to confuse:
+
+| Loop | What Anthropic says | Scope |
+|---|---|---|
+| Evaluator-optimizer | "one LLM call generates a response while another provides evaluation and feedback in a loop", useful when there are "clear evaluation criteria" ✅[^bea] | Inside one task |
+| Evaluation and transcript review | Build an evaluation, read the agents' transcripts, change the tools, evaluate again: "Simply concatenate the transcripts from your evaluation agents and paste them into Claude Code"; "Claude is an expert at analyzing transcripts and refactoring lots of tools" ✅[^ant_tools] | Across runs, for tools |
+| Regression and capability evals | A grader is "logic that scores some aspect of the agent's performance"; regression evals "should have a nearly 100% pass rate" and run "on each agent change and model upgrade" ✅[^ant_evals] | Across runs and model releases |
+| Tuning the evaluator | "read the evaluator's logs, find examples where its judgment diverged from mine", then update its prompt; with a new model, strip pieces "no longer load-bearing" ✅[^ant_harness2] | Across runs, for the harness |
+| Notes and memory | Structured note-taking keeps notes "persisted to memory outside of the context window", for example "maintaining a NOTES.md file" ✅[^ant_ctx]. The memory tool (an API tool; your application stores the files) keeps files across conversations, written by Claude and run by the application ✅[^memtool]. In Claude Code, auto memory holds notes Claude writes from corrections and preferences, which the user can edit or delete; `CLAUDE.md` is written by the user ✅[^cc_memory] | Across sessions, for one agent |
+
+*(Synthesis.)* None of the pages read describes a process that gathers lessons from many runs into changes of the harness itself. The closest are regression evals and transcript review; the loop in §7 and ACE in [context-engineering-deep-dive.md](context-engineering-deep-dive.md) fill that gap.
+
 ## 7. The improvement loop, step by step
 
 The three cases share one cycle ✅[^hashimoto] ✅[^openai] ✅[^lc_improve]:
@@ -337,9 +351,9 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 
 ## References
 
-- [Anthropic: Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic (Erik S., Barry Zhang), 2024. Backs: §1 agent, ACI; §2; §3 workflows; §6.5 workflows and agents, start with the API (re-read 2026-11-26). [^bea]
+- [Anthropic: Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic (Erik S., Barry Zhang), 2024. Backs: §1 agent, ACI; §2; §3 workflows; §6.5 workflows and agents, start with the API (re-read 2026-11-26); §6.6. [^bea]
 - [Anthropic: Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Justin Young, 2025. Backs: §2; §4; §6.1; §6.4; §8; §9; §10. [^ant_harness]
-- [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, 2026-03-24, read 2026-11-24 and 2026-11-26. Backs: §2; §6.4; §8 stronger models; §9 self-evaluation; §10. [^ant_harness2]
+- [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Prithvi Rajasekaran, 2026-03-24, read 2026-11-24 and 2026-11-26. Backs: §2; §6.4; §8 stronger models; §9 self-evaluation; §10; §6.6. [^ant_harness2]
 - [Mitchell Hashimoto: My AI Adoption Journey](https://mitchellh.com/writing/my-ai-adoption-journey) — 2026. Backs: §2 definition; §4, §5, §7. [^hashimoto]
 - [OpenAI: Harness engineering: leveraging Codex in an agent-first world](https://openai.com/index/harness-engineering/) — Ryan Lopopolo, 2026. Backs: §2; §3 Ralph loop; §4; §5; §6.2; §7; §8; §9; §10. [^openai]
 - [LangChain: Improving Deep Agents with harness engineering](https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering) — Vivek Trivedy, 2026. Backs: §2; §4; §6.3; §7; §8; §9. [^lc_improve]
@@ -350,10 +364,10 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 - [ESLint: command line interface, exit codes](https://eslint.org/docs/latest/use/command-line-interface#exit-codes) — OpenJS Foundation, living, read 2026-11-23. Backs: §9 exit 1 for violations, 2 for configuration or internal errors. [^eslint_exit]
 - [Codex: hooks](https://learn.chatgpt.com/docs/hooks) — OpenAI, living; read 2026-10-31. Backs: §4 Codex `SessionStart` output, `~/.codex/hooks.json`, trust review. [^codex_hooks]
 - [GitHub Copilot CLI: hooks reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-hooks-reference) — GitHub, living; read 2026-10-30. Backs: §4 `sessionStart` consumes only `additionalContext`; `~/.copilot/hooks/`. [^copilot_hooks]
-- [Claude Code: How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living. Backs: §4 memory; §8 and §9 context vs. enforcement, 200 lines. [^cc_memory]
+- [Claude Code: How Claude remembers your project](https://code.claude.com/docs/en/memory) — Anthropic, living. Backs: §4 memory; §8 and §9 context vs. enforcement, 200 lines; §6.6. [^cc_memory]
 - [AGENTS.md](https://agents.md/) — Agentic AI Foundation (Linux Foundation), living. Backs: §4 memory; nearest file in the tree wins. [^agentsmd]
-- [Anthropic: Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic, 2025. Backs: §3; §4 context management. [^ant_ctx]
-- [Anthropic: Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) — Ken Aizawa, 2025. Backs: §8 tools. [^ant_tools]
+- [Anthropic: Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — Anthropic, 2025. Backs: §3; §4 context management; §6.6. [^ant_ctx]
+- [Anthropic: Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents) — Ken Aizawa, 2025. Backs: §8 tools; §6.6. [^ant_tools]
 - [OpenAI: Prompt engineering guide](https://developers.openai.com/api/docs/guides/prompt-engineering) — OpenAI, living. Backs: §3 prompt row. [^oai_prompt]
 - [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Anthropic, living. Backs: §9 test-specific solutions. [^ant_bp]
 - [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living, read 2026-11-26. Backs: §6.5 dynamic workflows. [^cc_wf]
@@ -369,6 +383,8 @@ The guide (the schema doc) said the same thing earlier. The sensor made sure it 
 - [Headless mode reference | Gemini CLI](https://geminicli.com/docs/cli/headless/) — Google, last updated 2026-03-10, read 2026-11-26. Backs: §6.5 programmatic interface, and the banner that Antigravity CLI replaced Gemini CLI on 2026-06-18. [^gemini_headless]
 - [Automate tasks with headless mode | Gemini CLI](https://geminicli.com/docs/cli/tutorials/automation/) — Google, last updated 2026-03-09, read 2026-11-26. Backs: §6.5 runs once and exits. [^gemini_auto]
 - [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) — Anthropic, 2025-06-13, read 2026-11-26. Backs: §6.5 the lead agent is a model. [^ant_multi]
+- [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Anthropic, 2026-01-09, read 2026-11-26. Backs: §6.6 graders, regression and capability evals. [^ant_evals]
+- [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool) — Anthropic, living, read 2026-11-26. Backs: §6.6 the memory tool stores files across conversations, client-side. [^memtool]
 - [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) — Anthropic, living, read 2026-11-26. Backs: §6.4 spec interview and `SPEC.md`. [^cc_best]
 - `.claude/settings.json`, `scripts/claude-doc-hook.sh`, `scripts/check-docs.sh` — in `conanjs/agent-config`: its computational sensor: validators and scenarios after every doc edit, exit 2 on failure.
 - `copilot/atlas/`, `copilot/frameworks/knowledge/tools/validate-knowledge.mjs` — in `conanjs/agent-config` before the split: its map and doc checks (guide and sensor).
