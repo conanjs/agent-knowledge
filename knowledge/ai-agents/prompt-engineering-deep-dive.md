@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents
 status: verified
-applies-to: ["LLM APIs with system/developer and user messages (Claude, OpenAI, Gemini)", "sources read 2026-10-30"]
+applies-to: ["LLM APIs with system/developer and user messages (Claude, OpenAI, Gemini)", "sources read 2026-10-30", "Gemini long-context row (§6) read 2026-11-23 and re-checked 2026-11-27"]
 last-verified: 2026-10-30
-last-updated: 2026-10-30
+last-updated: 2026-11-27
 synthesized-into: []
 tags: [prompt-engineering, few-shot, chain-of-thought, evaluation, prompt-injection, llm]
 ---
@@ -119,7 +119,7 @@ A prompt is read by one model but written by several parties. What a change on o
 | **Retrieved content** (web page, file, tool output) contains instructions | Can change behaviour: indirect prompt injection ✅[^owasp] | The builder's rules are bypassed through data. The fix lives outside the prompt (§8) |
 | **Model upgrade** under the same prompt | Different sensitivity to emphasis, format and examples ✅[^ant_bp] ✅[^sclar] | Eval scores move with no prompt change, which is why snapshots are pinned ✅[^oai] |
 | **Examples** made very uniform | The model copies their shape and content ✅[^manus] | Output diversity drops for every user |
-| **Long documents** placed after the question | The question is answered with less attention on the material ✅[^ant_bp] ✅[^lost] | Users see confident answers that miss facts in the middle |
+| **Long documents** placed after the question | The question is answered with less attention on the material ✅[^ant_bp] ✅[^lost]. Gemini's docs give the same advice: put the query at the end, after all the other context ✅[^gem_long] | Users see confident answers that miss facts in the middle |
 
 ---
 
@@ -188,6 +188,7 @@ Task: route support tickets to `billing`, `bug` or `other`, as JSON. The numbere
 ## 10. Verification
 
 - **Verified on 2026-10-30:** every row marked ✅, against the sources listed in References: vendor docs read live, papers read on arXiv.
+- **Verified on 2026-11-23, re-checked on 2026-11-27 in a browser** (the page is rendered by JavaScript, so a plain HTTP fetch shows no text): the Gemini long-context advice in §6, "put your query / question at the end of the prompt (after all the other context)". The older URL `https://ai.google.dev/gemini-api/docs/long-context` redirects (HTTP 301) to the page cited in References, which states the advice.
 - **Synthesis, not a sourced claim:**
   - the "what would a competent human need?" triage in §2;
   - "a prompt is tied to a model version" in §5;
@@ -202,6 +203,7 @@ Task: route support tickets to `billing`, `bug` or `other`, as JSON. The numbere
 - [Anthropic: Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — Anthropic, living. Backs: §4 parts, ordering (+30%); §5 techniques, prefill 400, reasoning models; §9. [^ant_bp]
 - [OpenAI: Prompt engineering guide](https://developers.openai.com/api/docs/guides/prompt-engineering) — OpenAI, living. Backs: §1 roles; §2 definition; §3 snapshots, evals; §4 section order, chain of command; §5 reasoning models. [^oai]
 - [Google: Prompt design strategies (Gemini API)](https://ai.google.dev/gemini-api/docs/prompting-strategies) — Google, living. Backs: §2 definition; §4 few-shot; §5 chaining, sampling parameters. [^google]
+- [Long context](https://aistudio.google.com/docs/long-context) — Google, Gemini API docs, living, read 2026-11-23 and 2026-11-27 (`ai.google.dev/gemini-api/docs/long-context` redirects here). Backs: §6 query placed after the long context. [^gem_long]
 - [Schulhoff et al., The Prompt Report: A Systematic Survey of Prompt Engineering Techniques](https://arxiv.org/abs/2406.06608) — arXiv, 2024 (rev. 2025). Backs: §2 size of the field. [^report]
 - [Brown et al., Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165) — arXiv, 2020. Backs: §1, §5 few-shot. [^gpt3]
 - [Wei et al., Chain-of-Thought Prompting Elicits Reasoning in Large Language Models](https://arxiv.org/abs/2201.11903) — arXiv, 2022. Backs: §1, §5 chain of thought. [^cot]
