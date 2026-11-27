@@ -5,7 +5,7 @@ topic: performance/code-review
 status: verified
 applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (V8 12.4 to 15.0)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)", "and in Google Chrome 158.0.8127.89 (V8 15.8, headless page); sort counts also on Deno 2.9.8 (V8 15.0) and Electron 38.8.6 (V8 14.0)"]
 last-verified: 2026-11-27
-last-updated: 2026-11-27
+last-updated: 2026-11-28
 tags: [performance, code-review, javascript, typescript, array-methods, iterator-helpers, async, microtasks, errors, stack-traces, sort, spread, tsconfig]
 ranked-sources: true
 ---
@@ -383,7 +383,7 @@ Page variants: `chain.mjs` line 13, `process.memoryUsage().heapUsed` (twice) →
 
 ## Verification status
 - Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
-- Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Then 7 runs in Chrome 158 (E10; two page variants, checked on E1): 4 same, 3 differ, 0 could not run; and `sortkey.mjs` once each on E6 and E8. Totals: 49 cells, 42 same, 7 differ. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari (other engines: out of scope of this doc); V8 versions outside 12.4 to 15.8.
+- Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Then 7 runs in Chrome 158 (E10; two page variants, checked on E1): 4 same, 3 differ, 0 could not run; and `sortkey.mjs` once each on E6 and E8. Totals: 49 cells, 42 same, 7 differ. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari themselves, and this doc's own scripts on their engines (an engine-neutral cross-check of the rules on SpiderMonkey and JavaScriptCore, run on 2026-11-28, is in `../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md`); V8 versions outside 12.4 to 15.8.
 
 ## References
 - Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Apple M2 under Docker), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
@@ -412,6 +412,7 @@ Page variants: `chain.mjs` line 13, `process.memoryUsage().heapUsed` (twice) →
 - [Faster async functions and promises](https://v8.dev/blog/fast-async) — V8 team, 2018-11-12. Rank 4. Backs: Lookup notes, corrections. [^v8-fastasync]
 
 ## Related
+- [../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md](../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md) — which of the rules measured on V8 also hold on SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS framework's shell, Bun, a WebKit page): 33 engine-neutral checks.
 - [problem-classes.md](problem-classes.md) — the first catalog of 39 classes; several shapes found here belong to its classes.
 - [perf-reviewer-calibration.md](perf-reviewer-calibration.md) — the review agent built on these catalogs, and how it scored.
 - [problem-classes-language-runtimes.md](problem-classes-language-runtimes.md) — `object-shape-instability` and `copy-per-iteration`.
