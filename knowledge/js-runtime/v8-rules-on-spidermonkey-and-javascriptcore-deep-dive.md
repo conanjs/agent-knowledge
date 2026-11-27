@@ -13,7 +13,7 @@ ranked-sources: true
 # V8's performance rules on SpiderMonkey and JavaScriptCore: 33 checks on six environments
 
 ## Summary
-**TL;DR:** 33 checks of V8-derived performance rules ran on V8 (Node.js 24 and Chrome 158), SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS 26.1 shell, Bun 1.4.5 and a WebKit page) on one Apple M2 ✅[^lab]. In 20 checks the rule holds on all three engines; in 9 it holds with a weaker or no effect on one or two engines or environments; 2 are engine-specific numbers (bytes per element, the largest spread call); 2 could not be measured on SpiderMonkey (the closure liveness check, the string slice bytes); no rule mattered on V8 alone. Some results differ from the V8-only picture ✅[^lab]. A direct `eval` that never runs made a function about 25 times slower on V8 in Node.js, 18 times in Chrome, 94 to 99 times on SpiderMonkey and 18 to 28 times on JavaScriptCore when it is called as the V8 catalog calls it; only V8 lost that cost, when it inlined the function into its caller. An accessor in an object literal read 9 to 34 times slower than a field on V8 and at most 1.44 times slower on the other two engines. On JavaScriptCore, `delete` did not slow reads, a plain slice of 3 characters kept a 16 MiB parent string alive (13 characters on V8), and a `Map` entry took 68 to 126 bytes in the table's run (the figure varies with the number of entries, §4.10) against 36.8 on V8 in Node.js. `for…of` was 3.8 to 4.0 times slower than an index loop in Firefox and 2.4 times in the JavaScriptCore shell.
+**TL;DR:** 33 checks of V8-derived performance rules ran on V8 (Node.js 24 and Chrome 158), SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS 26.1 shell, Bun 1.4.5 and a WebKit page) on one Apple M2 ✅[^lab]. In 21 checks the rule holds on all three engines; in 8 it holds with a weaker or no effect on one or two engines or environments; 2 are engine-specific numbers (bytes per element, the largest spread call); 2 could not be measured on SpiderMonkey (the closure liveness check, the string slice bytes); no rule mattered on V8 alone. Some results differ from the V8-only picture ✅[^lab]. A direct `eval` that never runs made a function about 25 times slower on V8 in Node.js, 18 times in Chrome, 94 to 99 times on SpiderMonkey and 18 to 28 times on JavaScriptCore when it is called as the V8 catalog calls it; only V8 lost that cost, when it inlined the function into its caller. An accessor in an object literal read 9 to 34 times slower than a field on V8 and at most 1.44 times slower on the other two engines. On JavaScriptCore, `delete` did not slow reads, a plain slice of 3 characters kept a 16 MiB parent string alive (13 characters on V8), and a `Map` entry took 68 to 126 bytes in the table's run (the figure varies with the number of entries, §4.10) against 36.8 on V8 in Node.js. `for…of` was 3.8 to 4.0 times slower than an index loop in Firefox and 2.4 times in the JavaScriptCore shell.
 
 **Use this when:**
 - a skill or review comment cites a V8-measured rule, and the code runs in Firefox, in a browser built on WebKit or in another JavaScriptCore host (Bun);
@@ -326,9 +326,9 @@ The master table: one row per check. Each engine column gives the headline numbe
 | 28 | `JL-A1`, `JL-A2` | turns: `await` per plain value / `return p` / `return await p` | 1,001 / 3,001 / 2,001 | same | same | same | same | same | holds on all three engines |
 | 29 | `JL-A8`, `JN-E3` | 100,000 microtasks against a 0 ms timer: first, and when done | microtasks, 3.7 to 4.5 ms | microtasks, 25 to 27 ms | microtasks, 32 to 48 ms | microtasks, 9 to 14 ms | microtasks, 2.2 to 3.6 ms | microtasks, 2.0 to 3.0 ms | holds on all three engines |
 | 30 | `JL-G1` | a sibling closure keeps the array: 10 scopes / liveness | 76.3 MiB / alive | 38.1 MiB / alive | — / not measurable (control object kept) | 76.3 MiB / alive | 76.3 MiB / alive | — / alive | not measurable on SM-firefox |
-| 31 | `JL-G2` | cache of a stopped job whose handle is kept | collected | alive | alive | not measurable (no `setInterval`, no `EventTarget`) | collected | alive | holds in the browsers' pages (V8-chrome, SM-firefox, JSC-page); weaker on V8-node and JSC-bun (the handle changed nothing there) |
+| 31 | `JL-G2` | cache of a stopped job whose handle is kept | alive | alive | alive | not measurable (no `setInterval`, no `EventTarget`) | alive | alive | holds on all three engines (the JavaScriptCore shell cannot run it; JSC-bun and JSC-page can) |
 | 32 | `JL-G3` | shortest plain `slice` that kept the 16 MiB parent (`[...s].join('')` freed it, up to 1,000 characters) | 16.0 MiB at 13 | 16.0 MiB at 13 | — | 16.0 MiB at 3 | 16.0 MiB at 3 | — | not measurable on SM-firefox |
-| 33 | `JL-G4`, `JL-G5` | `WeakMap` entry freed / finalizer ran within the script's wait (Node.js and Bun: 40 to 55 ms after the first forced collection) | yes / no (none in 3,000 ms and 215 to 246 forced collections either) | yes / yes | yes / yes | yes / yes | yes / no (ran 12 to 19 ms after the first forced collection in a second script) | yes / yes | holds on all three engines |
+| 33 | `JL-G4`, `JL-G5` | `WeakMap` entry freed / finalizer ran within the script's wait (second script, ms from start to the callback) | yes / yes (24 to 27 ms) | yes / yes | yes / yes | yes / yes (28 to 30 ms) | yes / yes (12 to 16 ms) | yes / yes | holds on all three engines |
 
 ## 4. Worked examples
 
@@ -3655,29 +3655,24 @@ settle(refs['no sibling (control)']).then((s) => {
 
 ### 4.31 `JL-G2`: a timer and a listener keep a cache alive
 
-A job holds a 10⁶-element cache in a `setInterval` callback, or in an `EventTarget` listener; three jobs of each: never stopped (handle dropped), stopped with the handle kept, and stopped with the handle dropped; a `WeakRef` to each cache ✅[^lab]:
+A job holds a 10⁶-element cache in a `setInterval` callback, or in an `EventTarget` listener; three jobs of each: never stopped (handle dropped), stopped with the handle kept, and stopped with the handle dropped; a `WeakRef` to each cache. The handles that are kept go into an array that the script also puts on `globalThis`, so that they stay reachable until the script ends ✅[^lab]:
 
 | Job | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
 | timer, never stopped | alive | alive | alive | not measurable | alive | alive |
-| timer, stopped, handle kept | collected | alive | alive | not measurable | collected | alive |
+| timer, stopped, handle kept | alive | alive | alive | not measurable | alive | alive |
 | timer, stopped, handle dropped | collected | collected | collected | not measurable | collected | collected |
 | listener, never removed | alive | alive | alive | not measurable | alive | alive |
-| listener, removed, handle kept | collected | alive | alive | not measurable | collected | alive |
+| listener, removed, handle kept | alive | alive | alive | not measurable | alive | alive |
 | listener, removed, handle dropped | collected | collected | collected | not measurable | collected | collected |
 
-The same in all three runs of each environment, and in three re-runs. In every page (Chrome, Firefox, the WebKit page), a stopped job whose handle was kept still kept its cache; in Node.js and Bun it did not, so on those two the advice to drop the handle changed nothing and the engines of one family disagree (V8-chrome against V8-node, JSC-page against JSC-bun). Firefox's control object was collected after 4 steps in the lab's run 2 and after 55 to 61 in the re-runs; either way the control was collected, so the Firefox result counts. The JavaScriptCore shell has no `setInterval`, no `clearTimeout` and no `EventTarget`, so neither half can be measured there. For browser code: stop the timer, remove the listener, and drop the handle too: in all three browsers' engines the handle alone kept the cache.
+The same in all three runs of each environment (V8-node, JSC-bun, V8-chrome, SM-firefox, JSC-page). On every environment that can run the check, a stopped job whose handle was kept still kept its cache, and a stopped job whose handle was dropped did not, so the rule holds on all of them. Firefox's control object was collected after 4 to 55 steps in the three runs; either way the control was collected, so the Firefox result counts. The JavaScriptCore shell has no `setInterval`, no `clearTimeout` and no `EventTarget`, so neither half can be measured there.
+
+The first version of this part said that keeping the handle changed nothing in Node.js and Bun. That was a script artifact: the script kept the handles in a top-level array that nothing used after the loop, so in a Node.js or Bun file the handles themselves became garbage, while in a page a top-level `const` lives as long as the page. With the array also put on `globalThis` (one line), Node.js and Bun gave the same result as the pages; the unfixed script, run once on each, still gave "collected" (first block of the details below). For browser code: stop the timer, remove the listener, and drop the handle too: the handle alone kept the cache on every engine that ran the check.
 
 <details><summary>Lab: <code>timers.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
-V8-node, JSC-bun (identical output):
-
-```text
-setInterval: function, clearInterval: function, EventTarget: function
-controls collected after 1 steps | timer: running 1 of 1 alive, stopped and handle kept 0 of 1 alive, stopped and dropped 0 of 1 alive | listener: running 1 of 1 alive, stopped and handle kept 0 of 1 alive, stopped and dropped 0 of 1 alive
-```
-
-V8-chrome:
+V8-node, V8-chrome, JSC-bun (identical output):
 
 ```text
 setInterval: function, clearInterval: function, EventTarget: function
@@ -3707,6 +3702,13 @@ setInterval: function, clearInterval: function, EventTarget: function
 controls collected after 2 steps | timer: running 1 of 1 alive, stopped and handle kept 1 of 1 alive, stopped and dropped 0 of 1 alive | listener: running 1 of 1 alive, stopped and handle kept 1 of 1 alive, stopped and dropped 0 of 1 alive
 ```
 
+The unfixed script (the same without the `globalThis.__keep = keep;` line), one run on V8-node and one on JSC-bun (identical output):
+
+```text
+setInterval: function, clearInterval: function, EventTarget: function
+controls collected after 1 steps | timer: running 1 of 1 alive, stopped and handle kept 0 of 1 alive, stopped and dropped 0 of 1 alive | listener: running 1 of 1 alive, stopped and handle kept 0 of 1 alive, stopped and dropped 0 of 1 alive
+```
+
 ```js
 globalThis.__manualFinish = true;
 const g = globalThis;
@@ -3732,7 +3734,7 @@ const jobs = {
   listener(refs) { const cache = new Array(1e6).fill(0); refs.push(new WeakRef(cache)); const on = () => cache.length; bus.addEventListener('tick', on); return { stop() { bus.removeEventListener('tick', on); } }; },
 };
 console.log(`setInterval: ${typeof g.setInterval}, clearInterval: ${typeof g.clearInterval}, EventTarget: ${typeof g.EventTarget}`);
-const control = [], r = {}, keep = [];
+const control = [], r = {}, keep = []; globalThis.__keep = keep; // the kept handles must outlive this script
 (() => { const c = new Array(1e6).fill(0); control.push(new WeakRef(c)); })();
 for (const k in jobs) {
   if (k === 'timer' ? !g.setInterval || !g.clearInterval : !bus) { console.log(`${k}: not measurable here`); continue; }
@@ -4035,32 +4037,34 @@ console.log(`len ${len} ${idiom}: ${((a - b) / 2 ** 20).toFixed(1)} MiB (part.le
 
 ### 4.33 `JL-G4` / `JL-G5`: a `WeakMap` value that holds its key; when a finalizer runs
 
-A `WeakMap` entry whose value references its own key, with the key dropped; and a `FinalizationRegistry` target dropped before one forced full collection (where there is one), then two timer turns ✅[^lab]:
+A `WeakMap` entry whose value references its own key, with the key dropped; and a `FinalizationRegistry` target dropped before one forced full collection (where there is one), then two timer turns. The `WeakMap` and the registry are also put on `globalThis`, so that they stay reachable ✅[^lab]:
 
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
 | key and value of the `WeakMap` entry | collected | collected | collected | collected | collected | collected |
-| finalizer callbacks right after the forced GC (same turn) | 0 | 0 | no forced GC | 0 | 0 | no forced GC |
-| after the next timer turn | 0 | 1 | — | 1 | 0 | — |
-| at the end of the script (5 to 26 timer turns later) | 0 | 1 | 1 | 1 | 0 | 1 |
+| finalizer callbacks right after the forced GC (same turn) | 0 | 0 | no forced GC | 0 | 1 | no forced GC |
+| after the next timer turn | 1 | 1 | — | 1 | 1 | — |
+| at the end of the script (after the script's own settling steps) | 1 | 1 | 1 | 1 | 1 | 1 |
 
-A value that points back to its key did not keep the entry alive on any engine. No finalizer ran in the same turn as the collection anywhere; Chrome and the JavaScriptCore shell ran it one timer turn later; Node.js and Bun had not run it when the script ended, although `deref()` already returned `undefined`. That wait was short: from the first forced collection to the end of the script it took 41 to 56 ms on Node.js and Bun (one forced collection, a timer turn, a 10 ms timer, then six more forced collections with a timer turn each). A second script (below) forced a collection every 10 ms for up to 3,000 ms: Node.js still had run no callback after 215 to 246 collections and 3,000 ms, and its exit event saw none (two runs); Bun ran the callback after the first or second collection, 12 to 19 ms after the start (four runs). So "the finalizer did not run" is a statement about the first script's wait on Node.js and Bun, and about 3,000 ms and 215 collections on Node.js; it is not true of Bun in general. For browser code: `WeakMap` side data is safe everywhere; a `FinalizationRegistry` callback runs late or not at all, so it can never carry program logic.
+The same in all three runs of each environment. A value that points back to its key did not keep the entry alive on any engine. A finalizer callback ran on every engine: in the same turn as the forced collection on Bun, one timer turn later on Node.js, Chrome and the JavaScriptCore shell, and within the script's wait in Firefox and the WebKit page (no forced collection there). A second script (below) forced a collection every 10 ms for up to 3,000 ms and stopped at the first callback: Node.js 24 to 27 ms after the start (2 steps, three runs), the JavaScriptCore shell 28 to 30 ms (2 steps, three runs), Bun 12 to 16 ms (1 step, three runs).
+
+The first version of this part said that no finalizer ran on Node.js (none in 3,000 ms and 204 to 246 forced collections) and not by the end of the script on Bun. That was a script artifact of the kind described in §6.1: the registry was held only by a top-level `const` that nothing used after its first lines, so in a Node.js or Bun file the registry itself became garbage, and a registry that is collected never calls back. With one line that puts it on `globalThis`, Node.js and Bun behaved as the other engines. The `WeakMap` is held on `globalThis` too in the final script; its result was the same as before. For browser code: `WeakMap` side data is safe everywhere; a `FinalizationRegistry` callback runs after the collection, at a time the language does not fix (the same turn on one engine, a later turn on the others), so it can never carry program logic.
 
 <details><summary>Lab: <code>weak.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
-V8-node, JSC-bun (identical output):
+V8-node, V8-chrome, JSC-mac (identical output):
 
 ```text
 after one forced full GC, same turn: target deref undefined, callbacks 0
-next timer turn: callbacks 0
-after a 10 ms timer: callbacks 0
-controls collected after 0 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 0
+next timer turn: callbacks 1
+after a 10 ms timer: callbacks 1
+controls collected after 0 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 1
 ```
 
-V8-chrome, JSC-mac (identical output):
+JSC-bun:
 
 ```text
-after one forced full GC, same turn: target deref undefined, callbacks 0
+after one forced full GC, same turn: target deref undefined, callbacks 1
 next timer turn: callbacks 1
 after a 10 ms timer: callbacks 1
 controls collected after 0 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 1
@@ -4070,7 +4074,7 @@ SM-firefox:
 
 ```text
 no forced GC here
-controls collected after 21 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 1
+controls collected after 19 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 1
 ```
 
 JSC-page:
@@ -4099,8 +4103,10 @@ const alive = (refs) => refs.filter((r) => r.deref() !== undefined).length + ' o
 const done = () => g.__finish && g.__finish();
 // JL-G4: a WeakMap value that references its own key; the key is dropped. JL-G5: when a FinalizationRegistry callback runs.
 const wm = new WeakMap(), refs = { key: [], value: [] }, control = [], log = [];
+globalThis.__wm = wm; // held on globalThis so the WeakMap itself stays reachable
 (() => { const key = {}; const value = { key, big: new Array(1e6).fill(0) }; wm.set(key, value); refs.key.push(new WeakRef(key)); refs.value.push(new WeakRef(value)); control.push(new WeakRef({ big: new Array(1e6).fill(0) })); })();
 const fr = new FinalizationRegistry((h) => log.push(h));
+globalThis.__fr = fr; // the registry must stay reachable or its callbacks never run
 let target = { big: new Array(1e5).fill(0) }; const tref = new WeakRef(target); fr.register(target, 't'); target = null;
 (async () => {
   await tick();
@@ -4115,31 +4121,32 @@ let target = { big: new Array(1e5).fill(0) }; const tref = new WeakRef(target); 
 ```
 </details>
 
-<details><summary>Lab: <code>finalizer-wait.js</code>, output of run 1 on each environment that ran it, then the script</summary>
+<details><summary>Lab: <code>finalizer-wait.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
 V8-node:
 
 ```text
-waited 3003 ms, 215 steps (gc forced + 10 ms timer each), deref undefined, callbacks 0
-exit event, callbacks 0
+waited 26 ms, 2 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
+exit event, callbacks 1
 ```
 
 JSC-mac:
 
 ```text
-waited 25 ms, 2 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
+waited 28 ms, 2 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
 ```
 
 JSC-bun:
 
 ```text
-waited 19 ms, 1 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
+waited 12 ms, 1 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
 exit event, callbacks 1
 ```
 
 ```js
 // JL-G5, second script: force a full collection every 10 ms for up to 3,000 ms (or until the FinalizationRegistry callback runs); print how long it waited.
 const log = []; const fr = new FinalizationRegistry((h) => log.push(h));
+globalThis.__fr = fr; // the registry must stay reachable or its callbacks never run
 let target = { big: new Array(1e5).fill(0) }; const tref = new WeakRef(target); fr.register(target, 't'); target = null;
 const full = globalThis.fullGC || (globalThis.Bun ? () => Bun.gc(true) : globalThis.gc);
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -4165,7 +4172,7 @@ These rules helped, or (for "no gain" rules) stayed right, on V8, SpiderMonkey a
 - **Functions:** keep small temporary objects (`JE-F11`); keep `try`/`catch`, `arguments` and `for…in` over objects (`JE-F9`); split generated functions of thousands of statements (`JE-F6`: a cliff on every engine, between 1,000 and 2,000 statements in Firefox, 2,000 and 3,000 on V8-node, 3,000 and 4,000 in Chrome, 4,000 and 6,000 on JavaScriptCore); warm up for 20,000 calls before timing (`JE-M1`).
 - **Language:** one loop over a chain of array methods (`JL-L1`), no iterator helpers over in-memory arrays for speed (`JL-L2`, timed only), `find` over `filter(p)[0]` (`JL-L3`), sort keys computed once (`JL-L4`), no errors on routine paths (`JL-L5`), a `Set` or `Map` built once and `push` over rebuilding (`JL-L7`, `JL-L8`), `#private` fields (`JL-L10`).
 - **Async:** no `await` on plain values in loops, keep `return await` (`JL-A1`, `JL-A2`), and no long synchronous or microtask work that is expected to let timers in (`JL-A8`, `JN-E3`).
-- **Memory:** keep big values out of a scope with long-lived closures or set them to `null` (`JL-G1`, measured on V8 and JavaScriptCore; not measurable in Firefox); stop timers and remove listeners (`JL-G2`; dropping the handle too matters in the pages of Chrome, Firefox and WebKit, not in Node.js or Bun); `WeakMap` for side data, no logic in finalizers (`JL-G4`, `JL-G5`).
+- **Memory:** keep big values out of a scope with long-lived closures or set them to `null` (`JL-G1`, measured on V8 and JavaScriptCore; not measurable in Firefox); stop timers and remove listeners, and drop the handle too (`JL-G2`; a stopped job whose handle was kept still held its cache on V8-node, V8-chrome, SpiderMonkey, JSC-bun and JSC-page); `WeakMap` for side data, no logic in finalizers (`JL-G4`, `JL-G5`).
 
 ### 5.2 Rules that matter only on V8, or mostly there
 
@@ -4178,7 +4185,6 @@ Following them never cost on another engine, but the gain was V8's ✅[^lab]:
 - **`JE-O6`, `JE-N6`:** prototype writes and `push` against `new Array(n)` made no difference on SpiderMonkey; both still paid on JavaScriptCore.
 - **`JE-N7`, `JE-S3`, `JE-S4`:** the rule held with a smaller effect on one or two engines (reads of a sparse array against a `Map` on V8-chrome and SM-firefox; reading a growing string inside the loop on SM-firefox, where it was linear); rows 8 and 11.
 - **`JE-M1`:** a warm-up step (a faster phase after about 5,000 to 11,000 calls) appeared on V8-node and JavaScriptCore; in Chrome and in Firefox the rounds did not step within 15,000 calls. Warming up longer never hurts.
-- **`JL-G2`, dropping the handle:** a stopped job whose handle was kept still held its cache in the pages of Chrome, Firefox and WebKit; in Node.js and Bun it did not.
 - **`JL-L6` is a number of each build, not a rule that moves:** the largest array a spread call accepted was 123,683 to 124,541 on V8, 500,000 to 524,287 on SpiderMonkey and 638,452 to 638,728 on JavaScriptCore, for the builds of this lab and a top-level call.
 
 ### 5.3 Where a V8-only reading would mislead on another engine
@@ -4239,6 +4245,7 @@ R('100 calls of 10^4 reads of o.a', { 'plain field': x100(r1, field), 'class get
 - **Timers differ.** 0.02 ms in Firefox (with `privacy.reduceTimerPrecision` off) and in the JavaScriptCore shell, 0.1 ms in Chrome, 1 ms in the WebKit page ✅[^lab]: time a pass of 200 ms or more, not single calls.
 - **Algebra can remove work.** In the first version of the §4.19 script (`s = (s + i * j) | 0;`) the generated 1,000-statement function ran at 0.004 ns per statement on JSC-mac and JSC-page, far below one instruction per statement; the final script mixes bits so that nothing can be folded. And one JSC-mac run built 10⁴ records in 0.003 ms (§4.3) ✅[^lab]: a printed result proves the result is used, not that every statement ran.
 - **Liveness without `gc()` is slow and not always conclusive.** In Firefox the controls were collected after 3 to 60 garbage steps in the timer and weak-reference scripts, while in the closure script one of three controls was still alive after 500 steps in every run, so §4.30 gives no Firefox verdict ✅[^lab].
+- **A top-level variable of a Node.js or Bun file does not keep an object alive after its last use; a top-level `const` of a page script does.** The first versions of §4.31 and §4.33 kept their handles, and the `FinalizationRegistry`, in top-level variables that nothing used again: the pages kept them, Node.js and Bun let them be collected, and the checks reported "collected" for the handle and "no callback" for the finalizer, which looked like a difference between engines. When a liveness check must keep something alive, hold it on `globalThis` (or use it again after the check) ✅[^lab]. §4.30 and §4.32 use their objects again after the measurement, so they were not affected.
 - **Bun runs a `.js` file in strict mode,** the JavaScriptCore shell does not ✅[^lab]; with strict-mode tail calls, JavaScriptCore drops the caller's frame ✅[^ptc], which changed the frame count in §4.24.
 
 ### 6.2 Not done, and what could not be measured
@@ -4252,7 +4259,7 @@ R('100 calls of 10^4 reads of o.a', { 'plain field': x100(r1, field), 'class get
 
 ## Verification status
 
-- **Measured on 2026-11-28** on the six environments of §2.1: 50 scripts (41 for the 33 checks, one probe, and 8 for the environment check), each check script run three times on each environment (`features.js` five times), the probe three times on V8-node only, the environment scripts once where they apply; 697 runs in all by the author, not counting the re-runs below. A second reviewer re-ran the scripts of §4.18 to §4.33 three times on each environment (the ranges in those parts and in their rows of §3 cover both sets of runs), ran the environment scripts once more, and added four scripts: a probe of `Error.stackTraceLimit` (with a strict-mode variant), the slice lengths of §4.32, and the finalizer wait of §4.33; the bit-mixing script of §4.19 replaced the author's. `uptime` one-minute load averages were 2.1 to 13.8 at the start of a run (the highest during the first runs of §4.2 to §4.5 and §4.12 to §4.13, with another lab and this lab's own script checks on the same machine; §4.4, §4.12 and §4.13 were re-run later at loads of 2.6 to 4). Byte counts, call counts, turn counts and liveness results were the same in every run except one JSC-mac `Map` count (84.0 or 125.9 bytes). Timing ratios are quoted as ranges over the runs.
+- **Measured on 2026-11-28** on the six environments of §2.1: 50 scripts (41 for the 33 checks, one probe, and 8 for the environment check), each check script run three times on each environment (`features.js` five times), the probe three times on V8-node only, the environment scripts once where they apply; 697 runs in all by the author, not counting the re-runs below. A second reviewer (and a third, who corrected §4.31 and §4.33 by holding the handles and the registry on `globalThis`, three runs on each environment that can run them) re-ran the scripts of §4.18 to §4.33 three times on each environment (the ranges in those parts and in their rows of §3 cover both sets of runs), ran the environment scripts once more, and added four scripts: a probe of `Error.stackTraceLimit` (with a strict-mode variant), the slice lengths of §4.32, and the finalizer wait of §4.33; the bit-mixing script of §4.19 replaced the author's. `uptime` one-minute load averages were 2.1 to 13.8 at the start of a run (the highest during the first runs of §4.2 to §4.5 and §4.12 to §4.13, with another lab and this lab's own script checks on the same machine; §4.4, §4.12 and §4.13 were re-run later at loads of 2.6 to 4). Byte counts, call counts, turn counts and liveness results were the same in every run except one JSC-mac `Map` count (84.0 or 125.9 bytes). Timing ratios are quoted as ranges over the runs.
 - **Read on 2026-11-28:** the WebKit documentation page on JavaScriptCore, the Firefox source docs page on SpiderMonkey, the Bun documentation's first page, the WebKit blog post on proper tail calls, MDN's `Error.stackTraceLimit` page, and the ECMAScript specification's sections on WeakRef (§26.1, AddToKeptObjects) and on `Array.prototype.find`, `filter` and `sort` (§23.1.3).
 - **Not checked:** why any SpiderMonkey or JavaScriptCore timing came out as it did; whether Safari 26.1 uses the same JavaScriptCore build as the macOS 26.1 framework; behaviour on other hardware or operating systems.
 
