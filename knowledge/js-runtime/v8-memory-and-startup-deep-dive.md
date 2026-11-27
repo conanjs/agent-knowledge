@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: js-runtime
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17-node.58, pointer compression off, image node:24.22.1-alpine, linux arm64 Docker VM with 8 CPUs and 8 GiB of memory on an Apple M2, no container memory limit", "Node.js documentation for v24.22.3; ECMAScript 2027 draft; V8 source at tag 13.6.233.17", "lab runs of 2026-11-26"]
-last-updated: 2026-11-26
-last-verified: 2026-11-26
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17-node.58, pointer compression off, image node:24.22.1-alpine, linux arm64 Docker VM with 8 CPUs and 8 GiB of memory on an Apple M2, no container memory limit", "Node.js documentation for v24.22.3; ECMAScript 2027 draft; V8 source at tag 13.6.233.17", "lab runs of 2026-11-26", "matrix re-run of 2026-11-27: macOS 26.1 arm64 with Node.js 24.22.1, 22.23.4 (V8 12.4) and 25.7.0 (V8 14.1), linux x64 emulated with Node.js 24.22.1, Electron 43.7.7 as Node (V8 15.0, pointer compression on)"]
+last-updated: 2026-11-27
+last-verified: 2026-11-27
 synthesized-into: []
 tags: [v8, nodejs, garbage-collection, scavenger, mark-compact, orinoco, heap, memory-leak, closures, weakref, finalizationregistry, weakmap, external-memory, startup, lazy-parsing, code-cache, startup-snapshot, compile-cache]
 ranked-sources: true
@@ -95,7 +95,7 @@ Each script prints its Node.js and V8 versions first. The machine is a Docker VM
 
 ### 3.1 The heap's spaces in this build
 
-`v8.getHeapSpaceStatistics()` lists 13 spaces in Node.js 24.22.1. A thousand small objects land in `new_space`; one 2,000,000-element array (about 15 MiB) lands directly in `new_large_object_space` ✅[^lab]. The Node.js docs warn that neither the order nor the presence of a space is guaranteed from one V8 version to the next ✅[^nodev8], so code should look a space up by name and tolerate its absence.
+`v8.getHeapSpaceStatistics()` lists 13 spaces in Node.js 24.22.1. A thousand small objects land in `new_space`; one 2,000,000-element array (about 15 MiB) lands directly in `new_large_object_space` ✅[^lab]. The same 13 spaces were listed on V8 14.1 (Node.js 25.7.0) and V8 15.0 (Electron 43); V8 12.4 (Node.js 22.23.4) listed 11, without `shared_trusted_space` and `shared_trusted_large_object_space`. With pointer compression on (Electron 43, V8 15.0) the array took 7,813 KB, half the size (cause not isolated) ✅[^lab-matrix]. The Node.js docs warn that neither the order nor the presence of a space is guaranteed from one V8 version to the next ✅[^nodev8], so code should look a space up by name and tolerate its absence.
 
 <details><summary>Lab: spaces.mjs</summary>
 
@@ -140,7 +140,7 @@ heap_size_limit: 2240 MiB (kept 1000 + 2000000)
 
 **Why it helps.** The cost of a scavenge follows the number of survivors, not the amount allocated, and most objects die young ✅[^trash]. Short-lived temporaries are therefore cheap, as long as they do die.
 
-**See it yourself.** `%InYoungGeneration(obj)` (with `--allow-natives-syntax`) and `gc({ type: 'minor' })` (with `--expose-gc`) show promotion directly. `gc()` with no argument runs a major, synchronous GC; `{ type: 'minor' }` asks for a minor one ✅[^gcext]. Here 20,000 objects held by one array were still young after the first scavenge and in the old generation after the second; `old_space` grew by 627 KB at that moment ✅[^lab].
+**See it yourself.** `%InYoungGeneration(obj)` (with `--allow-natives-syntax`) and `gc({ type: 'minor' })` (with `--expose-gc`) show promotion directly. `gc()` with no argument runs a major, synchronous GC; `{ type: 'minor' }` asks for a minor one ✅[^gcext]. Here 20,000 objects held by one array were still young after the first scavenge and in the old generation after the second; `old_space` grew by 627 KB at that moment ✅[^lab]. The two-scavenge result was the same on all six builds of the matrix; with pointer compression on (Electron 43, V8 15.0) `old_space` grew by 391 KB instead (cause not isolated) ✅[^lab-matrix].
 
 <details><summary>Lab: promotion.mjs</summary>
 
@@ -259,7 +259,7 @@ kept 40 chunks
 ```
 </details>
 
-The times in these lines change from run to run; the field layout does not. `--trace-gc-verbose` adds a per-space table after each line, `--trace-gc-nvp` prints one `name=value` line per GC, and `--trace-gc-ignore-scavenger` hides scavenges ✅[^lab].
+The times in these lines change from run to run; the field layout does not. Across versions the fields stayed the same, but the spelling moved: V8 14.1 (Node.js 25.7.0) and V8 15.0 (Electron 43) print `pooled: 0.0 MB` and one space, not two, before `(average mu`, and V8 15.0 named the V8-started major GC `Incremental Mark-Compact`, where V8 13.6 and 14.1 print `Mark-Compact` ✅[^lab-matrix]. A parser of `--trace-gc` lines should not depend on that spacing or that name. `--trace-gc-verbose` adds a per-space table after each line, `--trace-gc-nvp` prints one `name=value` line per GC, and `--trace-gc-ignore-scavenger` hides scavenges ✅[^lab].
 
 ### 3.4 Parallel, incremental, concurrent and idle-time work (Orinoco)
 
@@ -280,7 +280,7 @@ A scavenge must find every old object that points into the young generation, wit
 
 **What the engine does.** V8 tags new objects with an allocation memento that points back to the code that created them, and uses the share of tagged objects found alive in a scavenge to estimate the lifetime of each site's objects; one use is pretenuring, allocating a site's objects directly in the old generation ✅[^memento]. That skips copying objects that would be promoted anyway.
 
-**See it yourself.** `--trace-pretenuring-statistics` prints the decision for each site: created and found mementos, their ratio, the threshold (0.85 here) and the state change, such as `maybe tenure => tenure` ✅[^lab]. In a loop that keeps 3,000,000 objects from one object literal, the last object allocated was already in the old generation in 10 of 10 runs; with `--no-allocation-site-pretenuring` it was young in 10 of 10 ✅[^lab]. The trace lines and their counts vary between runs, and in one of three traced runs the site was still at `maybe tenure` when the loop ended, so that run printed `young=true`; the 10-of-10 counts were the same in every pass ✅[^lab].
+**See it yourself.** `--trace-pretenuring-statistics` prints the decision for each site: created and found mementos, their ratio, the threshold (0.85 here) and the state change, such as `maybe tenure => tenure` ✅[^lab]. In a loop that keeps 3,000,000 objects from one object literal, the last object allocated was already in the old generation in 10 of 10 runs; with `--no-allocation-site-pretenuring` it was young in 10 of 10 ✅[^lab]. On macOS with V8 13.6 and 14.1, on emulated x64 and with V8 15.0 (Electron 43) the default gave 10 of 10 when run alone (9 of 10 in some passes run beside other labs); on V8 12.4 (Node.js 22.23.4) it gave 0 of 10 in three passes, because the site stayed at `maybe tenure`; V8 15.0 printed `threshold=0.80`, not 0.85 ✅[^lab-matrix]. The trace lines and their counts vary between runs, and in one of three traced runs the site was still at `maybe tenure` when the loop ended, so that run printed `young=true`; the 10-of-10 counts were the same in every pass ✅[^lab].
 
 <details><summary>Lab: pretenure.mjs and pretenure-count.mjs</summary>
 
@@ -334,7 +334,7 @@ default (pretenuring on)           last object already in the old generation in 
 
 `--max-old-space-size` sets the maximum size of the old generation in MiB, and V8 spends more time in GC as the heap approaches it ✅[^nodecli]. `--max-semi-space-size` sets the maximum semi-space size; the Node.js docs say the young generation is three times the semi-space, so 1 MiB more semi-space adds 3 MiB of heap ✅[^nodecli]. The V8 source computes the young-generation size as semi-space size × (number of semi-spaces + the new-large-object ratio), with two semi-spaces unless `--minor-ms` is on ✅[^heapcc].
 
-The lab agrees: `heap_size_limit` was 704 MiB with `--max-old-space-size=512`, 608 MiB with a 32 MiB semi-space, and 515 MiB with a 1 MiB semi-space, that is, old space + 3 × semi-space each time ✅[^lab]. The same arithmetic puts this machine's default maximum semi-space at 64 MiB (704 − 512 = 192 = 3 × 64), and §4.5 shows the new space reaching 128 MiB (two semi-spaces of 64 MiB) with default flags ✅[^lab]. The default depends on the memory limit: per the docs, 1 MiB at a 512 MiB limit on 64-bit systems, and under 16 MiB for limits up to 2 GiB ✅[^nodecli]. The default `heap_size_limit` here was 2240 MiB, worked out from the VM's 8 GiB ✅[^lab][^nodev8].
+The lab agrees: `heap_size_limit` was 704 MiB with `--max-old-space-size=512`, 608 MiB with a 32 MiB semi-space, and 515 MiB with a 1 MiB semi-space, that is, old space + 3 × semi-space each time ✅[^lab]. The 608 and 515 MiB rows were the same on all six builds; with `--max-old-space-size=512` alone the limit was 704 MiB on V8 13.6 and 14.1, but 560 MiB on V8 12.4 (Node.js 22.23.4, so a 16 MiB default semi-space) and 608 MiB on Electron 43 (V8 15.0, a 32 MiB default; cause not isolated) ✅[^lab-matrix]. The same arithmetic puts this machine's default maximum semi-space at 64 MiB (704 − 512 = 192 = 3 × 64), and §4.5 shows the new space reaching 128 MiB (two semi-spaces of 64 MiB) with default flags ✅[^lab]. The default depends on the memory limit: per the docs, 1 MiB at a 512 MiB limit on 64-bit systems, and under 16 MiB for limits up to 2 GiB ✅[^nodecli]. The default `heap_size_limit` depends on the memory the process sees, so no one value is the default. Here it was 2240 MiB, worked out from the VM's 8 GiB ✅[^lab][^nodev8]. On the 16 GiB macOS host it was 4288 MiB with Node.js 24.22.1 and 25.7.0, 4144 MiB with Node.js 22.23.4 and 4192 MiB with Electron 43 (pointer compression on; Node.js 25.7.0 without it gave 4288, so the cause of the small difference is not isolated) ✅[^lab-matrix].
 
 <details><summary>Lab: heap-limit.mjs</summary>
 
@@ -370,8 +370,9 @@ How a container's memory limit sets the default heap of the main thread and of e
 - `new ArrayBuffer(64 MiB)`: `external` and `arrayBuffers` +64 MiB at once; `heapUsed` and `rss` unchanged. The memory is reserved but not yet touched.
 - writing every byte of it: `rss` +64 MiB, nothing else.
 - `Buffer.alloc(64 MiB, 2)`: `external`, `arrayBuffers` and `rss` +64 MiB together, because the fill touches every page.
-- `Buffer.allocUnsafe(100)`: a slice of a 65,536-byte shared pool. The Node.js 24 docs list that version 24.18.0 raised the default `Buffer.poolSize` from 8192 to 65536 bytes, and say the pool is used when the size is less than `Buffer.poolSize >>> 1` (the same page says "less than or equal to half" in one other sentence, so the exact boundary is unclear in the docs; this doc did not test it) ✅[^nodebuf]. Holding such a small `Buffer` for a long time keeps the whole pool chunk alive; the docs suggest `Buffer.allocUnsafeSlow()` plus a copy for that case ✅[^nodebuf].
+- `Buffer.allocUnsafe(100)`: a slice of a 65,536-byte shared pool. The Node.js 24 docs list that version 24.18.0 raised the default `Buffer.poolSize` from 8192 to 65536 bytes, and say the pool is used when the size is less than `Buffer.poolSize >>> 1` (the same page says "less than or equal to half" in one other sentence, so the exact boundary is unclear in the docs; this doc did not test it) ✅[^nodebuf]. Holding such a small `Buffer` for a long time keeps the whole pool chunk alive; the docs suggest `Buffer.allocUnsafeSlow()` plus a copy for that case ✅[^nodebuf]. The lab saw 65,536 bytes on Node.js 24.22.1 and in Electron 43 (Node.js 24.21.0 API), and 8,192 bytes on Node.js 22.23.4 and on Node.js 25.7.0 ✅[^lab-matrix].
 - after dropping both buffers and a full GC, the counters fell in two steps, in the same job and after a later timer turn, and the split between the two steps differed between runs (in three runs: `arrayBuffers` −128 MiB then 0 twice, and −64 MiB then −64 MiB once, with `rss` falling by only 5 MiB in the first step of that run) ✅[^lab]. The backing stores are released after the GC, not inside it, so a measurement taken right after `gc()` can still show them.
+- on other builds (three runs each) ✅[^lab-matrix]: on macOS with Node.js 22.23.4, 24.22.1 and 25.7.0, `rss` did not fall in either step, while `external` and `arrayBuffers` fell as on linux; in Electron 43, `rss` fell by 127 MiB only after the timer turn, and `arrayBuffers` stayed 0 in every row, which the docs allow when Node.js is embedded as a library ✅[^nodeproc]. Read `rss` per platform, and do not rely on `arrayBuffers` in an embedder.
 
 <details><summary>Lab: external.mjs</summary>
 
@@ -428,9 +429,9 @@ after a 100 ms timer and a full GC   change in MiB: rss    0  heapTotal    0  he
 - `plain` (a declaration, called): preparsed, then fully parsed and compiled on its call;
 - `wrapped` (parenthesized, called): fully parsed and compiled at once;
 - `neverCalled`: only preparsed;
-- with `--max-lazy`, `wrapped` behaves like `plain`; with `--no-lazy`, all three are fully parsed up front ✅[^lab]. The event lists were the same in three runs.
+- with `--max-lazy`, `wrapped` behaves like `plain`; with `--no-lazy`, all three are fully parsed up front ✅[^lab]. The event lists were the same in three runs. They were the same on V8 13.6 to 15.0 in the matrix; V8 12.4 (Node.js 22.23.4) logs one more event, `first-execution`, after `interpreter`, and the order of events is otherwise the same ✅[^lab-matrix].
 
-The explicit compile hint `//# allFunctionsCalledOnLoad` as the first line, which the V8 blog (29 April 2025) describes for Chrome 136 ✅[^hints], changed nothing in Node.js 24.22.1 (V8 13.6.233.17): the event list of `plain`, `wrapped` and `neverCalled` was the same with and without the comment as the first line, when the file was run as the main CommonJS file, loaded with `require`, run as an ES module, or compiled with `vm.Script` ✅[^lab]. The V8 post says the comment makes V8 compile the whole file eagerly when placed at the top of a file, that it ships in Chrome 136, that individual functions are a future goal, and that it should be used sparingly; it does not mention Node.js or other embedders ✅[^hints]. This doc does not establish why Node.js 24 ignored it (for example whether Chrome's embedder, not V8 itself, acts on it); it only shows no effect in these four ways of loading, and `node --v8-options` lists no flag for it.
+The explicit compile hint `//# allFunctionsCalledOnLoad` as the first line, which the V8 blog (29 April 2025) describes for Chrome 136 ✅[^hints], changed nothing in Node.js 24.22.1 (V8 13.6.233.17): the event list of `plain`, `wrapped` and `neverCalled` was the same with and without the comment as the first line, when the file was run as the main CommonJS file, loaded with `require`, run as an ES module, or compiled with `vm.Script` ✅[^lab]. The V8 post says the comment makes V8 compile the whole file eagerly when placed at the top of a file, that it ships in Chrome 136, that individual functions are a future goal, and that it should be used sparingly; it does not mention Node.js or other embedders ✅[^hints]. This doc does not establish why Node.js 24 ignored it (for example whether Chrome's embedder, not V8 itself, acts on it); it only shows no effect in these four ways of loading, and `node --v8-options` lists no flag for it. The comment had no effect on any build of the matrix (V8 12.4 to 15.0). V8 12.4 (Node.js 22.23.4) does list `--compile-hints-magic`, off by default; with it on, the comment still changed nothing for a CommonJS main file; V8 13.6, 14.1 and 15.0 list no such flag ✅[^lab-matrix].
 
 <details><summary>Lab: lazy-events.mjs</summary>
 
@@ -534,7 +535,9 @@ vm.Script, no hint                 plain: preparse-no-resolution>full-parse>pars
 - the same-length result held in three runs, for a cache made before and one made after running a function, and for a 100 KB script with the edit at its end (the variation script below);
 - one character added: rejected;
 - run with `--no-lazy`: rejected, because the flag hash differs;
-- a cache made before running was 396,608 bytes, one made after running 2,516,608 bytes.
+- a cache made before running was 396,608 bytes, one made after running 2,516,608 bytes. The sizes depend on the build: the same on emulated x64, 363,616 and 2,513,616 bytes on V8 12.4, 396,608 and 2,539,096 on V8 14.1, 377,400 and 2,429,536 on V8 15.0 (Electron 43) ✅[^lab-matrix].
+
+The accept and reject results above, `r=111` included, were the same on all six builds of the matrix: V8 12.4, 13.6, 14.1 and 15.0, macOS and linux, arm64 and emulated x64, pointer compression off and on ✅[^lab-matrix].
 
 <details><summary>Lab: cache-same-length.mjs</summary>
 
@@ -601,7 +604,7 @@ The code that keeps a cache safe: key it by a hash of the source content (and th
 
 **Limits.** The building script is a single entry point that can load built-in modules but not other user-land modules ✅[^nodecli]. When loading, Node.js checks that the version, architecture and platform match exactly and that V8 flags and CPU features are compatible, and otherwise exits with status 1 ✅[^nodecli]. The 2015 post adds that the snapshot cannot capture interaction with the outside world, and that values like `Math.random()` are frozen at build time ✅[^snap15]. The snapshot build process is no longer experimental since Node.js 24.13.1, and the Startup Snapshot API is stable since 24.0.0 ✅[^nodecli][^nodev8].
 
-Measured here on Node.js 24.22.1, a program that spends its start building a table of 300,000 primes took a median of 187.4 ms from source and 20.1 ms from an 8.5 MiB snapshot, against 13.0 ms for `node -e 0` (§4.8) ✅[^lab].
+Measured here on Node.js 24.22.1, a program that spends its start building a table of 300,000 primes took a median of 187.4 ms from source and 20.1 ms from an 8.5 MiB snapshot, against 13.0 ms for `node -e 0` (§4.8) ✅[^lab]. Electron 43 run as Node (`ELECTRON_RUN_AS_NODE=1`) could not build the snapshot: it ran the entry file as a plain script, and `setDeserializeMainFunction` threw `ERR_NOT_BUILDING_SNAPSHOT` ✅[^lab-matrix].
 
 ### 3.12 Module loading and the module compile cache
 
@@ -613,13 +616,13 @@ What a re-export file (a "barrel") costs at load time is in [barrel-files.md](ba
 
 ## 4. Worked examples
 
-Each example below shows the code shape, the measured result, and the fix. Memory figures are `heapUsed` after a full GC (`--expose-gc`), so they show retained memory, not garbage waiting to be collected.
+Each example below shows the code shape, the measured result, and the fix. Memory figures are `heapUsed` after a full GC (`--expose-gc`), so they show retained memory, not garbage waiting to be collected. With pointer compression on (Electron 43, V8 15.0), every array and object of small integers in §4 and §6 took half the bytes (a 1,000,000-element array 3.8 MiB, not 7.6), so each retained size was halved; what was kept alive and what was freed was the same on all six builds, and the 16 MiB sliced-string parent did not shrink ✅[^lab-matrix]. The cause is not isolated: V8 14.1 without compression gave the full sizes, but Electron also differs by its V8 sandbox and V8 version.
 
 ### 4.1 A closure keeps a variable it never uses
 
 **What the engine does.** Variables that some closure captures are stored in one context object for the scope, and every closure created in that scope points to that context ✅[^lab]. A closure that uses nothing therefore keeps alive everything its sibling closures captured.
 
-**Measured here on Node.js 24.22.1** ✅[^lab]: ten tiny closures kept 76.3 MiB alive (7.6 MiB each, the 1,000,000-element array) when a sibling closure in the same scope used the array; 0.0 MiB when no closure captured it; 0.0 MiB when the captured variable was set to `null` before returning. Variations, three runs each with the same figures: 20 closures over a 250,000-element array kept 38.1 MiB, and 2 closures over a 4,000,000-element array kept 61.0 MiB (each array's size times the number of closures), whether the sibling that uses the array is created before or after the tiny one; and a sibling that uses the array only inside an `if` that never runs still kept all ten arrays (76.3 MiB). All cases use `const` or `let` array variables and arrow functions in a plain function scope; classes, `eval` and generators were not tried.
+**Measured here on Node.js 24.22.1** ✅[^lab] (the same on every matrix build without pointer compression; 38.1 MiB with it on, as said above ✅[^lab-matrix]): ten tiny closures kept 76.3 MiB alive (7.6 MiB each, the 1,000,000-element array) when a sibling closure in the same scope used the array; 0.0 MiB when no closure captured it; 0.0 MiB when the captured variable was set to `null` before returning. Variations, three runs each with the same figures: 20 closures over a 250,000-element array kept 38.1 MiB, and 2 closures over a 4,000,000-element array kept 61.0 MiB (each array's size times the number of closures), whether the sibling that uses the array is created before or after the tiny one; and a sibling that uses the array only inside an `if` that never runs still kept all ten arrays (76.3 MiB). All cases use `const` or `let` array variables and arrow functions in a plain function scope; classes, `eval` and generators were not tried.
 
 <details><summary>Lab: closure-context.mjs</summary>
 
@@ -672,7 +675,7 @@ C captured, then null  retained by 10 tiny closures: 0.0 MiB
 
 ### 4.2 Timers, listeners and handles
 
-A `setInterval` callback and an event listener are reachable from Node.js's timer list and from the emitter, so whatever they capture stays alive until `clearInterval` and `off` ✅[^lab]. In the lab, a job whose handle the caller threw away still kept its 7.6 MiB cache, because the timer and the listener held it. A stopped job also kept its cache while the caller held its handle, because the `stop()` closure shares the context that holds the cache (§4.1); dropping the handle freed it ✅[^lab].
+A `setInterval` callback and an event listener are reachable from Node.js's timer list and from the emitter, so whatever they capture stays alive until `clearInterval` and `off` ✅[^lab]. In the lab, a job whose handle the caller threw away still kept its 7.6 MiB cache, because the timer and the listener held it (3.8 MiB with pointer compression on, Electron 43, cause not isolated ✅[^lab-matrix]). A stopped job also kept its cache while the caller held its handle, because the `stop()` closure shares the context that holds the cache (§4.1); dropping the handle freed it ✅[^lab].
 
 <details><summary>Lab: closure-variants.mjs (other sizes, other order, a branch that never runs)</summary>
 
@@ -808,7 +811,7 @@ When you keep a small part of a big input (a header line of a large file, an ID 
 
 ### 4.4 `WeakMap`, `WeakRef` and `FinalizationRegistry`
 
-**`WeakMap`.** A `WeakMap` does not keep its keys alive, and once a key is not live its value is not necessarily live either ✅[^tc39]. In V8 the entry is freed by a GC that covers the key. Measured here on Node.js 24.22.1, with key and value in the old generation: dropping the key changed nothing, a scavenge changed nothing, and the full GC freed the 15 MiB value ✅[^lab]. The same held in three runs for a 4 MiB and a 31 MiB value, for a key that had only seen one full GC, for a key that had never been promoted, and for 2,000 small keys with 8 KB values: a scavenge freed none of them and a full GC freed all ✅[^lab]. This is what this V8 build did for these shapes; the specification only says an unreachable key's value is not necessarily live.
+**`WeakMap`.** A `WeakMap` does not keep its keys alive, and once a key is not live its value is not necessarily live either ✅[^tc39]. In V8 the entry is freed by a GC that covers the key. Measured here on Node.js 24.22.1, with key and value in the old generation: dropping the key changed nothing, a scavenge changed nothing, and the full GC freed the 15 MiB value ✅[^lab]. The same happened on all six builds of the matrix, for every variation below; with pointer compression on (Electron 43, cause not isolated) the value was 7.6 MiB ✅[^lab-matrix]. The same held in three runs for a 4 MiB and a 31 MiB value, for a key that had only seen one full GC, for a key that had never been promoted, and for 2,000 small keys with 8 KB values: a scavenge freed none of them and a full GC freed all ✅[^lab]. This is what this V8 build did for these shapes; the specification only says an unreachable key's value is not necessarily live.
 
 <details><summary>Lab: weakmap.mjs</summary>
 
@@ -962,6 +965,7 @@ The young generation's size matters only when it actually grows ✅[^lab]:
 
 - With garbage that dies at once, the new space stayed at 2 MiB with default flags, and the count stayed at 158 or 159. `--min-semi-space-size=16` made it start at 32 MiB, and the count fell to 10. `--max-semi-space-size=1`, `=16` and `=64` each gave 158 or 159 scavenges and a 2 MiB new space in three runs (command lines in the block below).
 - With a sliding window (each array kept for the next 2,000 calls), the default new space grew to 128 MiB, and the run had 13 scavenges. `--max-semi-space-size=64` gave the same 13. `--max-semi-space-size=1` capped it at 2 MiB, raising the count to about 310 and adding 2 major GCs.
+- On other builds (three runs each on macOS) ✅[^lab-matrix]: with garbage that dies at once, `--max-semi-space-size` set to 16 or 64 changed nothing on any build (157 scavenges on V8 14.1, 161 on V8 12.4). With pointer compression on (Electron 43, V8 15.0) the default new space ended at 4 MiB with 193 to 195 scavenges, and `--max-semi-space-size=1` raised that to 228 or 229. In the sliding window, the default semi-space is smaller on V8 12.4 (16 MiB) and in Electron 43 (32 MiB, by `heap_size_limit` in §3.7): the new space stayed at 32 MiB (V8 12.4) or 51 to 59 MiB (Electron) with 27 or 18 to 19 scavenges and 1 major GC, and `--max-semi-space-size=64` cut them to 14 (V8 12.4) and 15 (Electron). On V8 14.1 the new space grew to 110 MiB, not 128.
 
 <details><summary>Lab: alloc-rate.mjs</summary>
 
@@ -1210,7 +1214,7 @@ from snapshot             prints 4256233  median   20.1 ms  sorted runs [18.8, 1
 ```
 </details>
 
-Wall time from spawn to exit, medians of 9 runs after one warm-up, measured here on Node.js 24.22.1: 187.4 ms from source and 20.1 ms from the snapshot; an empty `node -e 0` took 13.0 ms ✅[^lab]. Three more runs gave 179.8 to 186.1 ms from source, 18.4 to 18.9 ms from the snapshot and 12.8 to 15.4 ms for `node -e 0`. These are for this one program (a 300,000-prime table) on this machine; the ratio depends on how much work the setup code does. Both paths printed the same last prime, 4256233.
+Wall time from spawn to exit, medians of 9 runs after one warm-up, measured here on Node.js 24.22.1: 187.4 ms from source and 20.1 ms from the snapshot; an empty `node -e 0` took 13.0 ms ✅[^lab]. Three more runs gave 179.8 to 186.1 ms from source, 18.4 to 18.9 ms from the snapshot and 12.8 to 15.4 ms for `node -e 0`. These are for this one program (a 300,000-prime table) on this machine; the ratio depends on how much work the setup code does. Both paths printed the same last prime, 4256233. On the macOS host (three runs each of Node.js 22.23.4, 24.22.1 and 25.7.0) the snapshot still won, with a smaller ratio because a bare process start was slower there: 195 to 263 ms from source, 29 to 80 ms from the snapshot, 23 to 43 ms for `node -e 0` (measured here, with other jobs running); the blob was 7.6 MiB on Node.js 22.23.4 and 8.1 MiB on 25.7.0 ✅[^lab-matrix].
 
 ### 4.9 The module compile cache, timed
 
@@ -1260,7 +1264,7 @@ cache directory holds 2 entries
 ```
 </details>
 
-Import time of the generated ES module, medians of 9 runs, measured here on Node.js 24.22.1: 51.9 ms without the cache, 53.2 ms for a run that fills an empty cache, 42.8 ms with a filled cache ✅[^lab]. Three more runs gave 46.9 to 48.6 ms, 48.1 to 55.2 ms and 38.8 to 42.1 ms; the filled cache was faster than no cache by about 10 to 20 % each time, for this one 3,000-function module.
+Import time of the generated ES module, medians of 9 runs, measured here on Node.js 24.22.1: 51.9 ms without the cache, 53.2 ms for a run that fills an empty cache, 42.8 ms with a filled cache ✅[^lab]. Three more runs gave 46.9 to 48.6 ms, 48.1 to 55.2 ms and 38.8 to 42.1 ms; the filled cache was faster than no cache by about 10 to 20 % each time, for this one 3,000-function module. On the macOS host (Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43, three runs each) the order was the same but the gain was larger, mostly 30 to 40 % (14 to 53 % over all twelve runs) ✅[^lab-matrix].
 
 ## 5. Reference & invariants
 
@@ -1365,11 +1369,11 @@ node v24.22.1, V8 13.6.233.17-node.58, arm64
 | "`global.gc()` should be called in production to keep memory low." | It needs `--expose-gc`, for which the Node.js 24 CLI docs have only a heading and no description ✅[^nodecli]. It runs a synchronous major GC ✅[^gcext] that marks the whole heap inside one pause: the median pause of `gc()` was 2.7 to 4.1 ms at 9 MiB, 17.2 to 17.9 ms at 52 MiB and 51.2 to 63.7 ms at 152 MiB of live small objects, in three runs measured here on Node.js 24.22.1 (an earlier run of the same script gave 2.6, 16.0 and 46.2 ms; the script is below) ✅[^lab]. V8's own major GCs mark mostly concurrently (§3.3). And it cannot free anything still reachable. |
 | "`WeakMap` entries are collected as soon as the key is unreachable." | Only by a GC that covers the key: an old key's 15 MiB value survived a scavenge and was freed by the next full GC (§4.4) ✅[^lab]. The specification does not promise collection at all ✅[^tc39]. |
 | "A `FinalizationRegistry` callback runs when the object is collected." | It ran on a later turn of the event loop, after the GC (§4.4) ✅[^lab]; the specification does not promise that it runs ✅[^tc39], and V8's guide says it might not happen at all ✅[^weakfeat]. |
-| "Raising `--max-semi-space-size` reduces the number of scavenges." The Node.js memory guide says a larger new space "can reduce the frequency of minor garbage collection cycles" ✅[^nodelearn]. | It raises a ceiling. For the loop of §4.5 whose garbage dies at once, `--max-semi-space-size` set to 1, 16 and 64 left the new space at 2 MiB and the count at 158 or 159 in three runs; `--min-semi-space-size` did change it (§4.5) ✅[^lab]. With many survivors, the default on this 8 GiB machine already allowed 64 MiB semi-spaces, so 64 changed nothing; lowering it to 1 MiB multiplied scavenges by about 24 ✅[^lab]. On a machine with a 512 MiB limit the default is 1 MiB ✅[^nodecli], and raising it can matter there. |
+| "Raising `--max-semi-space-size` reduces the number of scavenges." The Node.js memory guide says a larger new space "can reduce the frequency of minor garbage collection cycles" ✅[^nodelearn]. | It raises a ceiling. For the loop of §4.5 whose garbage dies at once, `--max-semi-space-size` set to 1, 16 and 64 left the new space at 2 MiB and the count at 158 or 159 in three runs; `--min-semi-space-size` did change it (§4.5) ✅[^lab]. Raising it changed nothing for that loop on all six builds of the matrix ✅[^lab-matrix]. With many survivors, the default on this 8 GiB machine already allowed 64 MiB semi-spaces, so 64 changed nothing; lowering it to 1 MiB multiplied scavenges by about 24 ✅[^lab]. On Node.js 22.23.4 (V8 12.4) and Electron 43 (V8 15.0), whose default semi-space was smaller, 64 did cut the sliding-window scavenges, from 27 to 14 and from 18 or 19 to 15 ✅[^lab-matrix]. On a machine with a 512 MiB limit the default is 1 MiB ✅[^nodecli], and raising it can matter there. |
 | "V8 rejects a code cache when the source has changed." | In V8 13.6.233.17 the source check is the source's length plus two flags (wrapped arguments, module) ✅[^codeser]. In `vm.Script` on Node.js 24.22.1 a same-length edit was accepted and the old code ran, in all variations tried (§3.10) ✅[^lab]. Treat it as this version's behaviour and key your cache by a hash of the content. |
 | "A code cache makes startup fast." | Only for functions compiled when the cache was made: for a 3,000-function script whose functions all run, 39.9 ms with a cache made before running, 3.1 ms with one made after, 53.0 ms with none, measured here on Node.js 24.22.1 (§4.7) ✅[^lab][^ccdev]. |
 | "`heapUsed` is the memory my process uses." | `ArrayBuffer` and `Buffer` contents appear only in `external`, `arrayBuffers` and, once touched, `rss` (§3.8) ✅[^lab][^nodeproc]. |
-| "`Buffer.allocUnsafe` slices an 8 KiB pool." | Since Node.js 24.18.0 the pool is 64 KiB ✅[^nodebuf]; the lab shows 65,536 bytes ✅[^lab]. A small long-lived pooled `Buffer` keeps that whole chunk alive. |
+| "`Buffer.allocUnsafe` slices an 8 KiB pool." | Since Node.js 24.18.0 the pool is 64 KiB ✅[^nodebuf]; the lab shows 65,536 bytes ✅[^lab]. Node.js 22.23.4 and 25.7.0 still used 8,192 bytes (§3.8) ✅[^lab-matrix]. A small long-lived pooled `Buffer` keeps that whole chunk alive. |
 
 ### 6.2 Pitfalls when measuring
 
@@ -1415,11 +1419,465 @@ after key = null and a full GC: heapUsed 19.1 MiB
 | Module compile cache | 51.9 → 42.8 ms here, no code changes (§4.9) | cache written at exit; tied to Node.js version and module paths ✅[^nodemodule] |
 | `WeakRef` / `FinalizationRegistry` | caches that do not keep their values alive | no timing guarantee, no guarantee at all for callbacks ✅[^tc39] |
 
+### 6.4 Other builds and versions (2026-11-27)
+
+Every embedded script was run again on five more builds on the same Apple M2 machine (16 GiB of memory, 8 CPUs) ✅[^lab-matrix]. On the macOS host the
+scripts' `/tmp/` paths were moved to a private folder per build, so parallel runs could not overwrite each other's files; nothing else in them changed.
+
+| Id | Build | What differs from the baseline |
+|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17-node.58, `node:24.22.1-alpine`, linux arm64 Docker VM (8 GiB) | the baseline: every ✅[^lab] result above |
+| E1 | macOS 26.1 arm64, Node.js 24.22.1, same V8 | the operating system, and 16 GiB instead of 8 |
+| E2 | linux x64 container, emulated on arm64, Node.js 24.22.1, same V8 | the CPU architecture; timings are meaningless under emulation |
+| E3 | macOS arm64, Node.js 22.23.4, V8 12.4.254.21-node.57 | an older V8 and Node.js |
+| E4 | macOS arm64, Node.js 25.7.0, V8 14.1.146.11-node.20 | a newer V8 and Node.js, pointer compression still off |
+| E7 | macOS arm64, Electron 43.7.7 run as Node (`ELECTRON_RUN_AS_NODE=1`; Node.js 24.21.0 API, V8 15.0.245.31-electron.0) | pointer compression on, the V8 sandbox on, V8 15.0; a difference seen only here has no isolated cause unless stated |
+
+`same` means every line that does not depend on time or addresses matched the baseline (sizes and `heapUsed` baselines that moved by under 0.5 MiB,
+and the run-to-run spread the doc already reports, count as same); for a timing script it means the order and roughly the ratio held. `not run`: a timing
+script on emulated E2 (its output was saved, not compared). E2 ran each script once (`pretenure-count.mjs` three times); the hosts ran the scripts whose results vary, and every timing script, three times.
+
+| Script | Claim it backs | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|---|
+| spaces.mjs | 13 spaces; a big array goes to `new_large_object_space` | differs | same | differs | differs | differs |
+| promotion.mjs | promoted after the second scavenge | same | same | same | same | differs |
+| gc-trace.mjs | `--trace-gc` fields; forced `gc()` | same | same | same | differs | differs |
+| gc-major.mjs | a V8-started major GC with incremental steps | same | same | same | differs | differs |
+| pretenure.mjs | pretenuring trace | same | same | differs | same | differs |
+| pretenure-count.mjs | 10 of 10 pretenured | same | same | differs | same | same |
+| heap-limit.mjs | limit = old space + 3 × semi-space | differs | same | differs | differs | differs |
+| external.mjs | what `process.memoryUsage()` fields move | differs | same | differs | differs | differs |
+| lazy-events.mjs | lazy, eager and `--max-lazy`/`--no-lazy` events | same | same | differs | same | same |
+| hint-variants.mjs | the compile-hint comment changes nothing | same | same | differs | same | same |
+| cache-same-length.mjs | same-length cache accepted, old code runs | same | same | same | same | same |
+| cache-variants.mjs | same-length result in variations | same | same | same | same | same |
+| closure-context.mjs | a shared context keeps the array | same | same | same | same | differs |
+| closure-variants.mjs | the same in other sizes and orders | same | same | same | same | differs |
+| timers-listeners.mjs | timers and listeners keep captures | same | same | same | same | differs |
+| sliced-string.mjs | a 13+ character slice keeps its parent | same | same | same | same | same |
+| weakmap.mjs | a `WeakMap` value waits for a full GC | same | same | same | same | differs |
+| weakmap-variants.mjs | the same for other keys and sizes | same | same | same | same | differs |
+| weakmap-small.mjs | the same for 2,000 small keys | same | same | same | same | differs |
+| weakref.mjs | `WeakRef` and cleanup timing | same | same | same | same | same |
+| alloc-rate.mjs | scavenge counts and semi-space flags | same | same | differs | differs | differs |
+| lazy-timing.mjs | parentheses cost when little runs | same | not run | same | same | same |
+| code-cache.mjs | cache checks, sizes, timings | same | same | differs | differs | differs |
+| snapshot.mjs | snapshot start time | differs | same | differs | differs | cannot run |
+| compile-cache.mjs | module compile cache gain | differs | same | differs | differs | differs |
+| null.mjs | `null` frees only at the next GC | same | same | same | same | differs |
+| forced-gc.mjs | `gc()` pause grows with the heap | same | not run | same | same | differs |
+| weakmap-toplevel.mjs | top-level key stays alive | same | same | same | same | differs |
+
+**Held on every build:** the same-length code-cache result (`cachedDataRejected=false`, `r=111`, and every variation), the `WeakMap` results (a scavenge
+freed nothing, a full GC freed the value), the `WeakRef` and `FinalizationRegistry` timing, the sliced-string result, promotion after two scavenges, lazy
+compilation and the parenthesized-function heuristic, and, in every startup timing that could run, which path was fastest.
+
+**What differs:**
+
+- **Heap spaces.** Baseline: 13 spaces. V8 12.4 (Node.js 22.23.4): 11, without `shared_trusted_space` and `shared_trusted_large_object_space`.
+- **Default heap limit.** It depends on the memory the process sees. Baseline: 2240 MiB on the 8 GiB VM. On the 16 GiB host: 4288 MiB (Node.js 24.22.1 and 25.7.0), 4144 MiB (22.23.4), 4192 MiB (Electron 43). The cap that pointer compression puts on the heap was measured on the 16 GiB macOS host: with `--max-old-space-size=8192` and `--max-old-space-size=16384`, `heap_size_limit` followed the flag on Node.js 24.22.1 and 25.7.0 (8,384 and 16,576 MiB) and stayed at 4,192 MiB on Electron 43.7.7 (V8 15.0) and at 4,096 MiB on Electron 38.8.6 (V8 14.0), the two builds with pointer compression on ✅[^lab-matrix]. Both Electron builds also have the V8 sandbox on, so these runs alone do not separate the two; Node.js's build option says pointer compression "limits max heap to 4GB" (see [v8-object-and-value-representation-deep-dive.md](v8-object-and-value-representation-deep-dive.md), §3.1).
+- **Default semi-space.** Baseline: `--max-old-space-size=512` gave 704 MiB, so a 64 MiB semi-space. V8 12.4: 560 MiB (16 MiB); Electron 43: 608 MiB (32 MiB).
+- **Pointer compression halves arrays and objects of small integers (Electron 43 only).** Baseline: a 2,000,000-element array 15,625 KB, ten closures 76.3 MiB, a job's
+  cache 7.6 MiB, a `WeakMap` value about 15 MiB, `old_space` +627 KB on promotion, 152 MiB for 3,000,000 objects. E7: 7,813 KB, 38.1 MiB, 3.8 MiB, 7.6 MiB,
+  +391 KB, 76 MiB. What was kept alive did not change. Cause not isolated (V8 14.1 without compression kept the full sizes).
+- **`--trace-gc` spelling.** Baseline: `pooled: 0 MB,` and two spaces before `(average mu`; the V8-started major GC is `Mark-Compact`. V8 14.1 and 15.0:
+  `pooled: 0.0 MB,` and one space; V8 15.0 prints `Incremental Mark-Compact`.
+- **Pretenuring.** Baseline: 10 of 10, threshold 0.85. V8 12.4: 0 of 10 in three passes (the site stayed at `maybe tenure`). V8 15.0: threshold 0.80, still 10 of 10 when run alone.
+- **`process.memoryUsage()` on macOS and in Electron.** Baseline (linux): `rss` fell by 128 MiB after the buffers were dropped. macOS with Node.js: `rss`
+  did not fall in either step, in three runs per version. Electron 43: `rss` −127 MiB only after the timer turn, and `arrayBuffers` 0 in every row.
+- **`Buffer.poolSize`.** Baseline: 65,536. Node.js 22.23.4 and 25.7.0: 8,192.
+- **Function events.** Baseline: `... -> interpreter`. V8 12.4 adds `-> first-execution`. V8 12.4 also lists `--compile-hints-magic` (off by default); with it
+  on, the hint comment still had no effect.
+- **Scavenge counts.** Baseline: 158 or 159 for the dying garbage; the sliding window grew to 128 MiB with 13 scavenges, and `--max-semi-space-size=64` changed
+  nothing. V8 12.4: 161; window 27 scavenges and 1 major GC at 32 MiB, 14 with `=64`. V8 14.1: 157; window at 110 MiB. Electron 43: 193 to 195 at a 4 MiB
+  new space, 228 or 229 with `--max-semi-space-size=1`; window 18 or 19 and 1 major GC, 15 with `=64`.
+- **Code-cache sizes.** Baseline: 396,608 and 2,516,608 bytes (the same on emulated x64). V8 12.4: 363,616 and 2,513,616; V8 14.1: 396,608 and 2,539,096; V8 15.0: 377,400 and 2,429,536.
+- **Startup snapshot.** Baseline: 187.4 ms from source, 20.1 ms from an 8.5 MiB blob, 13.0 ms for `node -e 0`. macOS (Node.js 22.23.4, 24.22.1, 25.7.0):
+  195 to 263 ms, 29 to 80 ms and 23 to 43 ms (a second review, with other jobs running), so a smaller ratio; blob 7.6 MiB on 22.23.4 and 8.1 MiB on 25.7.0. Electron 43: cannot run, see §3.11.
+- **Module compile cache.** Baseline: a filled cache 10 to 20 % faster than none. macOS (all four host builds): mostly 30 to 40 % (14 to 53 %).
+
+
+<details><summary>Matrix: spaces.mjs and heap-limit.mjs (spaces, default limits)</summary>
+
+```text
+# E3 (macOS, Node.js 22.23.4)
+$ node spaces.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+space name                         used KB   change after allocating
+read_only_space                          0        0
+new_space                              476       60
+old_space                             2666        3
+code_space                              30        6
+shared_space                             0        0
+trusted_space                          684        1
+new_large_object_space               15625    15625
+large_object_space                     256        0
+code_large_object_space                  0        0
+shared_large_object_space                0        0
+trusted_large_object_space               0        0
+heap_size_limit: 4144 MiB (kept 1000 + 2000000)
+
+# E7 (Electron 43 as Node)
+$ node spaces.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+space name                         used KB   change after allocating
+read_only_space                          0        0
+new_space                              389       31
+old_space                             1500        2
+code_space                              39        0
+shared_space                             0        0
+trusted_space                          652        1
+shared_trusted_space                     0        0
+new_large_object_space                7813     7813
+large_object_space                       0        0
+code_large_object_space                  0        0
+shared_large_object_space                0        0
+shared_trusted_large_object_space        0        0
+trusted_large_object_space               0        0
+heap_size_limit: 4192 MiB (kept 1000 + 2000000)
+
+# E1 (macOS, Node.js 24.22.1), limit line only
+$ node spaces.mjs
+node v24.22.1, V8 13.6.233.17-node.58, arm64
+heap_size_limit: 4288 MiB (kept 1000 + 2000000)
+
+# E4 (macOS, Node.js 25.7.0), limit line only
+$ node spaces.mjs
+node v25.7.0, V8 14.1.146.11-node.20, arm64
+heap_size_limit: 4288 MiB (kept 1000 + 2000000)
+
+# E3 (macOS, Node.js 22.23.4)
+$ node heap-limit.mjs
+flags: (none)  heap_size_limit 4144 MiB
+
+$ node --max-old-space-size=512 heap-limit.mjs
+flags: --max-old-space-size=512  heap_size_limit 560 MiB
+
+$ node --max-old-space-size=512 --max-semi-space-size=32 heap-limit.mjs
+flags: --max-old-space-size=512 --max-semi-space-size=32  heap_size_limit 608 MiB
+
+$ node --max-old-space-size=512 --max-semi-space-size=1 heap-limit.mjs
+flags: --max-old-space-size=512 --max-semi-space-size=1  heap_size_limit 515 MiB
+
+# E7 (Electron 43 as Node)
+$ node heap-limit.mjs
+flags: (none)  heap_size_limit 4192 MiB
+
+$ node --max-old-space-size=512 heap-limit.mjs
+flags: --max-old-space-size=512  heap_size_limit 608 MiB
+
+$ node --max-old-space-size=512 --max-semi-space-size=32 heap-limit.mjs
+flags: --max-old-space-size=512 --max-semi-space-size=32  heap_size_limit 608 MiB
+
+$ node --max-old-space-size=512 --max-semi-space-size=1 heap-limit.mjs
+flags: --max-old-space-size=512 --max-semi-space-size=1  heap_size_limit 515 MiB
+```
+</details>
+
+<details><summary>Matrix: pointer compression: promotion, closures, timers, WeakMap, null.mjs, forced-gc.mjs on E7</summary>
+
+```text
+# E7 (Electron 43 as Node)
+$ node --expose-gc --allow-natives-syntax promotion.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+just allocated             young=true  new_space=  439 KB  old_space= 1544 KB
+after 1st scavenge         young=true  new_space=  456 KB  old_space= 1545 KB
+after 2nd scavenge         young=false  new_space=   32 KB  old_space= 1936 KB
+
+
+$ node --expose-gc closure-context.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+A shared context       retained by 10 tiny closures: 38.1 MiB
+B no capture           retained by 10 tiny closures: 0.0 MiB
+C captured, then null  retained by 10 tiny closures: 0.0 MiB
+
+
+$ node --expose-gc closure-variants.mjs
+A 250k x20 tiny-first          19.1 MiB array size MiB each ~ 1.9
+A 250k x20 used-first          19.1 MiB array size MiB each ~ 1.9
+A 4M x2 used-first             30.5 MiB array size MiB each ~ 30.5
+branch never taken 1M x10      38.1 MiB array size MiB each ~ 7.6
+no sibling at all 1M x10       0.0 MiB array size MiB each ~ 7.6
+
+
+$ node --expose-gc timers-listeners.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+job 1 started, its handle discarded:         +3.8 MiB, listeners on bus: 1
+job 2 started, handle kept:                  +7.6 MiB, listeners on bus: 2
+job 2 stopped, handle still kept:            +7.6 MiB, listeners on bus: 1
+job 2 handle dropped:                        +3.8 MiB, listeners on bus: 1
+
+
+$ node --expose-gc weakmap.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+before the entry:               heapUsed 2.1 MiB
+WeakMap entry alive:            heapUsed 9.7 MiB
+after key dropped, no GC yet:   heapUsed 9.7 MiB
+after a scavenge (minor GC):    heapUsed 9.8 MiB
+after a full GC:                heapUsed 2.1 MiB
+
+
+$ node --expose-gc weakmap-toplevel.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+WeakMap entry alive:            heapUsed 9.7 MiB
+after key = null and a full GC: heapUsed 9.7 MiB
+
+
+$ node --expose-gc null.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+array alive:                    heapUsed 9.7 MiB
+after big = null, no GC yet:    heapUsed 9.7 MiB
+after a full GC:                heapUsed 2.1 MiB
+
+
+$ node --expose-gc forced-gc.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+ 100000 live objects, heapUsed    5 MiB: gc() blocks for median    2.2 ms
+1000000 live objects, heapUsed   26 MiB: gc() blocks for median   11.2 ms
+3000000 live objects, heapUsed   76 MiB: gc() blocks for median   34.0 ms
+```
+</details>
+
+<details><summary>Matrix: gc-trace.mjs and gc-major.mjs (line format; only the last GC line of each run shown)</summary>
+
+```text
+# E4 (macOS, Node.js 25.7.0)
+$ node --trace-gc --expose-gc gc-trace.mjs
+node v25.7.0, V8 14.1.146.11-node.20, arm64
+[9969:0xae780c000]       60 ms: Mark-Compact 5.5 (8.4) -> 3.6 (8.4) MB, pooled: 0.0 MB, 1.22 / 0.00 ms (average mu = 0.978, current mu = 0.978) testing; GC in old space requested
+
+# E7 (Electron 43 as Node)
+$ node --trace-gc gc-major.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+[9975:0x120008b0000]       87 ms: Incremental Mark-Compact 39.3 (53.8) -> 35.6 (53.2) MB, pooled: 0.0 MB, 23.99 / 0.00 ms (+ 0.4 ms in 12 steps since start of marking, biggest step 0.2 ms, walltime since start of marking 27 ms) (average mu = 0.713, current mu = 0.713) finalize incremental marking via stack guard; GC in old space requested
+```
+</details>
+
+<details><summary>Matrix: pretenure.mjs and pretenure-count.mjs</summary>
+
+```text
+# E3 (macOS, Node.js 22.23.4)
+$ node --allow-natives-syntax --trace-pretenuring-statistics pretenure.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --allow-natives-syntax --trace-pretenuring-statistics
+[9997:0x8a540c000] pretenuring: AllocationSite(0x700000daf1): (created, found, ratio) (7900, 7900, 1.000000) undecided => maybe tenure
+[9997:0x8a540c000] pretenuring: threshold=0.85 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=7900 tenured=0 not_tenured=1
+[9997:0x8a540c000] pretenuring: AllocationSite(0x700000daf1): (created, found, ratio) (6089, 6089, 1.000000) maybe tenure => maybe tenure
+[9997:0x8a540c000] pretenuring: threshold=0.85 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=6089 tenured=0 not_tenured=1
+[9997:0x8a540c000] pretenuring: AllocationSite(0x700000daf1): (created, found, ratio) (2383, 2383, 1.000000) maybe tenure => maybe tenure
+[9997:0x8a540c000] pretenuring: threshold=0.85 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=2383 tenured=0 not_tenured=1
+last object pushed in the hot loop: young=true
+
+
+$ node pretenure-count.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+default (pretenuring on)           last object already in the old generation in 0 of 10 runs
+--no-allocation-site-pretenuring   last object already in the old generation in 0 of 10 runs
+
+# E7 (Electron 43 as Node), threshold lines only
+$ node --allow-natives-syntax --trace-pretenuring-statistics pretenure.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --allow-natives-syntax --trace-pretenuring-statistics
+[9987:0x130008b0000] pretenuring: threshold=0.80 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=2832 tenured=0 not_tenured=1
+[9987:0x130008b0000] pretenuring: threshold=0.80 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=10148 tenured=1 not_tenured=0
+[9987:0x130008b0000] pretenuring: threshold=0.80 deopt_maybe_tenured=0 visited_sites=1 active_sites=1 mementos=3682 tenured=1 not_tenured=0
+last object pushed in the hot loop: young=false
+```
+</details>
+
+<details><summary>Matrix: external.mjs</summary>
+
+```text
+# E1 (macOS, Node.js 24.22.1)
+$ node --expose-gc external.mjs
+node v24.22.1, V8 13.6.233.17-node.58, arm64
+baseline                             change in MiB: rss    0  heapTotal    0  heapUsed    0  external    0  arrayBuffers    0
+new ArrayBuffer(64 MiB), untouched   change in MiB: rss    0  heapTotal    0  heapUsed    0  external   64  arrayBuffers   64
+same buffer, every byte written      change in MiB: rss   64  heapTotal    0  heapUsed    0  external    0  arrayBuffers    0
+Buffer.alloc(64 MiB, 2)              change in MiB: rss   64  heapTotal    0  heapUsed    0  external   64  arrayBuffers   64
+Buffer.allocUnsafe(100): length 100, underlying ArrayBuffer 65536 bytes (Buffer.poolSize 65536)
+both dropped, full GC, same job      change in MiB: rss    0  heapTotal    0  heapUsed    0  external    0  arrayBuffers -128
+after a 100 ms timer and a full GC   change in MiB: rss    0  heapTotal    0  heapUsed    0  external -128  arrayBuffers    0
+
+# E3 (macOS, Node.js 22.23.4), pool line only
+$ node --expose-gc external.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+Buffer.allocUnsafe(100): length 100, underlying ArrayBuffer 8192 bytes (Buffer.poolSize 8192)
+
+# E4 (macOS, Node.js 25.7.0), pool line only
+$ node --expose-gc external.mjs
+node v25.7.0, V8 14.1.146.11-node.20, arm64
+Buffer.allocUnsafe(100): length 100, underlying ArrayBuffer 8192 bytes (Buffer.poolSize 8192)
+
+# E7 (Electron 43 as Node)
+$ node --expose-gc external.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+baseline                             change in MiB: rss    0  heapTotal    0  heapUsed    0  external    0  arrayBuffers    0
+new ArrayBuffer(64 MiB), untouched   change in MiB: rss    0  heapTotal    0  heapUsed    0  external   64  arrayBuffers    0
+same buffer, every byte written      change in MiB: rss   64  heapTotal    0  heapUsed    0  external    0  arrayBuffers    0
+Buffer.alloc(64 MiB, 2)              change in MiB: rss   64  heapTotal    0  heapUsed    0  external   64  arrayBuffers    0
+Buffer.allocUnsafe(100): length 100, underlying ArrayBuffer 65536 bytes (Buffer.poolSize 65536)
+both dropped, full GC, same job      change in MiB: rss    0  heapTotal    0  heapUsed    0  external    0  arrayBuffers    0
+after a 100 ms timer and a full GC   change in MiB: rss -127  heapTotal    0  heapUsed    0  external -128  arrayBuffers    0
+```
+</details>
+
+<details><summary>Matrix: lazy-events.mjs on V8 12.4, and the compile-hint flag</summary>
+
+```text
+# E3 (macOS, Node.js 22.23.4), first flag set only
+$ node lazy-events.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+target.js, flags: (default)
+  plain        preparse-resolution -> full-parse -> parse-function -> interpreter -> first-execution
+  wrapped      full-parse -> interpreter -> first-execution
+  neverCalled  preparse-resolution
+
+# E3 (macOS, Node.js 22.23.4): node --v8-options | grep -A1 compile-hints
+  --compile-hints-magic (enable magic compile hints comments)
+        type: bool  default: --no-compile-hints-magic
+
+# E3 (macOS, Node.js 22.23.4): node --compile-hints-magic --log-function-events ... h.js (h.js starts with //# allFunctionsCalledOnLoad), then without the flag
+plain preparse-resolution
+neverCalled preparse-resolution
+plain full-parse
+plain parse-function
+plain interpreter
+plain first-execution
+plain preparse-resolution
+neverCalled preparse-resolution
+plain full-parse
+plain parse-function
+plain interpreter
+plain first-execution
+```
+</details>
+
+<details><summary>Matrix: alloc-rate.mjs</summary>
+
+```text
+# E3 (macOS, Node.js 22.23.4)
+$ node alloc-rate.mjs temporaries
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: (none)
+temporaries minor GCs: 161, major GCs: 0, new_space size at the end: 2 MiB
+$ node alloc-rate.mjs reuse
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: (none)
+reuse       minor GCs: 0, major GCs: 0, new_space size at the end: 1 MiB
+$ node --min-semi-space-size=16 alloc-rate.mjs temporaries
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --min-semi-space-size=16
+temporaries minor GCs: 10, major GCs: 0, new_space size at the end: 32 MiB
+$ node alloc-rate.mjs window
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: (none)
+window      minor GCs: 27, major GCs: 1, new_space size at the end: 32 MiB
+$ node --max-semi-space-size=1 alloc-rate.mjs window
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --max-semi-space-size=1
+window      minor GCs: 317, major GCs: 2, new_space size at the end: 2 MiB
+$ node --max-semi-space-size=64 alloc-rate.mjs window
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --max-semi-space-size=64
+window      minor GCs: 14, major GCs: 0, new_space size at the end: 128 MiB
+$ node --max-semi-space-size=1 alloc-rate.mjs temporaries
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --max-semi-space-size=1
+temporaries minor GCs: 161, major GCs: 0, new_space size at the end: 2 MiB
+$ node --max-semi-space-size=16 alloc-rate.mjs temporaries
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --max-semi-space-size=16
+temporaries minor GCs: 161, major GCs: 0, new_space size at the end: 2 MiB
+$ node --max-semi-space-size=64 alloc-rate.mjs temporaries
+node v22.23.4, V8 12.4.254.21-node.57, arm64; flags: --max-semi-space-size=64
+temporaries minor GCs: 161, major GCs: 0, new_space size at the end: 2 MiB
+
+# E7 (Electron 43 as Node)
+$ node alloc-rate.mjs temporaries
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: (none)
+temporaries minor GCs: 195, major GCs: 0, new_space size at the end: 4 MiB
+$ node alloc-rate.mjs reuse
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: (none)
+reuse       minor GCs: 0, major GCs: 0, new_space size at the end: 1 MiB
+$ node --min-semi-space-size=16 alloc-rate.mjs temporaries
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --min-semi-space-size=16
+temporaries minor GCs: 14, major GCs: 0, new_space size at the end: 32 MiB
+$ node alloc-rate.mjs window
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: (none)
+window      minor GCs: 19, major GCs: 1, new_space size at the end: 59 MiB
+$ node --max-semi-space-size=1 alloc-rate.mjs window
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --max-semi-space-size=1
+window      minor GCs: 381, major GCs: 3, new_space size at the end: 2 MiB
+$ node --max-semi-space-size=64 alloc-rate.mjs window
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --max-semi-space-size=64
+window      minor GCs: 15, major GCs: 1, new_space size at the end: 128 MiB
+$ node --max-semi-space-size=1 alloc-rate.mjs temporaries
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --max-semi-space-size=1
+temporaries minor GCs: 229, major GCs: 0, new_space size at the end: 2 MiB
+$ node --max-semi-space-size=16 alloc-rate.mjs temporaries
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --max-semi-space-size=16
+temporaries minor GCs: 195, major GCs: 0, new_space size at the end: 4 MiB
+$ node --max-semi-space-size=64 alloc-rate.mjs temporaries
+node v24.21.0, V8 15.0.245.31-electron.0, arm64; flags: --max-semi-space-size=64
+temporaries minor GCs: 194, major GCs: 0, new_space size at the end: 4 MiB
+```
+</details>
+
+<details><summary>Matrix: code-cache.mjs (sizes) and snapshot.mjs</summary>
+
+```text
+# E3 (macOS, Node.js 22.23.4)
+$ node code-cache.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+same source, same flags:   cachedDataRejected=false (cache 2513616 bytes)
+cache made before running: cachedDataRejected=false (cache 363616 bytes)
+
+# E4 (macOS, Node.js 25.7.0)
+$ node code-cache.mjs
+node v25.7.0, V8 14.1.146.11-node.20, arm64
+same source, same flags:   cachedDataRejected=false (cache 2539096 bytes)
+cache made before running: cachedDataRejected=false (cache 396608 bytes)
+
+# E7 (Electron 43 as Node)
+$ node code-cache.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+same source, same flags:   cachedDataRejected=false (cache 2429536 bytes)
+cache made before running: cachedDataRejected=false (cache 377400 bytes)
+
+# E3 (macOS, Node.js 22.23.4), sorted runs cut
+$ node snapshot.mjs
+node v22.23.4, V8 12.4.254.21-node.57, arm64
+snapshot blob: 7.6 MiB
+empty script (node -e 0)  prints -        median   33.7 ms
+from source               prints 4256233  median  262.6 ms
+from snapshot             prints 4256233  median   36.7 ms
+
+# E7 (Electron 43 as Node), error lines only
+$ node snapshot.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+Error [ERR_NOT_BUILDING_SNAPSHOT]: Operation cannot be invoked when not building startup snapshot
+Error: Command failed: /Applications/Visual Studio Code.app/Contents/MacOS/Code --snapshot-blob <scratch>/h-E7/t/snap.blob --build-snapshot <scratch>/h-E7/t/snap-entry.js
+```
+</details>
+
+<details><summary>Matrix: compile-cache.mjs</summary>
+
+```text
+# E1 (macOS, Node.js 24.22.1)
+$ node compile-cache.mjs
+node v24.22.1, V8 13.6.233.17-node.58, arm64
+no compile cache         status null     median  47.6 ms  sorted runs [47.4, 47.4, 47.4, 47.5, 47.6, 48.0, 48.1, 48.2, 51.0]
+empty cache each time    status ENABLED  median  49.6 ms  sorted runs [49.2, 49.2, 49.4, 49.4, 49.6, 49.8, 50.2, 50.4, 53.4]
+cache already filled     status ENABLED  median  31.9 ms  sorted runs [31.5, 31.5, 31.6, 31.6, 31.9, 32.0, 33.4, 41.6, 43.9]
+cache directory holds 2 entries
+
+# E7 (Electron 43 as Node)
+$ node compile-cache.mjs
+node v24.21.0, V8 15.0.245.31-electron.0, arm64
+no compile cache         status null     median  42.3 ms  sorted runs [41.5, 41.6, 41.7, 42.3, 42.3, 42.4, 45.1, 46.6, 60.4]
+empty cache each time    status ENABLED  median  47.9 ms  sorted runs [45.6, 46.8, 47.7, 47.9, 47.9, 49.4, 58.7, 105.7, 107.7]
+cache already filled     status ENABLED  median  27.9 ms  sorted runs [27.5, 27.6, 27.6, 27.8, 27.9, 30.3, 30.4, 36.7, 36.7]
+cache directory holds 2 entries
+```
+</details>
+
 ## Verification status
 
 - **Measured on 2026-11-26**, Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine` on an arm64 Docker VM with 8 CPUs and 8 GiB, `--network none`: every ✅[^lab] claim. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: none of those was run. Every script ran in three full passes (timings with 7 repetitions in the first pass, 9 in the other two); the embedded outputs are from the second, and the third was compared with it line by line. GC times, `--trace-gc` addresses and timings change between runs; the structural results (promotion after two scavenges, retained sizes, `cachedDataRejected` values, `r=111`, the 10-of-10 counts) were the same in every pass. The pretenuring trace, the steps in which external memory is released, and the major-GC count of the sliding-window run (0 or 1) varied. Timing medians of the second and third passes differed by at most about 15 %.
 - **Independent re-run on 2026-11-26** (second reviewer): all 20 embedded scripts were re-run three more times with the doc's command; every structural result matched, and the timings are quoted with their range where they differ. Added: the variation scripts in §3.9, §3.10, §4.1, §4.4, §4.5 and §6.1, and the `null.mjs` and `forced-gc.mjs` scripts that earlier cited the lab without embedding it. The 46.2 ms `gc()` pause did not reproduce (51.2 to 63.7 ms in three runs).
 - **Read on 2026-11-26** with WebFetch: the V8 blog posts (with their dates in the text), the V8 feature page on weak references, the Node.js v24.22.3 docs, the ECMAScript 2027 draft §9.9 to §9.11, the V8 source at tag 13.6.233.17 (`gc-tracer.cc`, `string.h`, `code-serializer.cc`, `gc-extension.cc`, `heap.cc`), and the abstract of the 2015 pretenuring paper.
+- **Matrix re-run on 2026-11-27** (§6.4): 28 scripts from the 25 lab blocks on five more builds, 398 runs in all (90 each on E1, E4 and E7, 87 on E3, 41 on E2); of the 140 script-and-build results, 93 were the same, 44 differed, 1 could not run (`snapshot.mjs` in Electron 43) and 2 were not run (timing scripts on emulated E2). Still not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0.
 - **Not checked:** whether Node.js reports idle periods to V8 (§3.4); why `//# allFunctionsCalledOnLoad` had no effect in Node.js 24.22.1 (§3.9); whether `Buffer.allocUnsafe` pools a size of exactly half the pool size (§3.8); why the top-level `WeakMap` test kept its value (§6.2); the contents of the module compile cache (§3.12); the exact default maximum semi-space size as a function of memory (only inferred for this machine from `heap_size_limit`, §3.7); behaviour on x64, on Linux hosts outside Docker, or under a container memory limit.
 
 ## References
@@ -1450,6 +1908,7 @@ after key = null and a full GC: heapUsed 19.1 MiB
 - [Weak references and finalizers](https://v8.dev/features/weak-references) — V8 team (Gunasekaran, Bynens, Guo, Swirski), 2019-07-09, updated 2020-06-19. Rank 4. Backs: §4.4, §6.1. [^weakfeat]
 - [Grokking V8 closures for fun (and profit?)](https://mrale.ph/blog/2012/09/23/grokking-v8-closures-for-fun.html) — personal blog, 2012-09-23 (updated 2013, 2014). Rank 6. Backs: §6.1, the 2012 description of shared contexts. [^mraleph]
 - Lab: the scripts and outputs embedded in this doc, run on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in the `node:24.22.1-alpine` image, arm64, 8 CPUs, 8 GiB, `--network none`; flag defaults from `node --v8-options` in the same image. Backs: every ✅[^lab]. [^lab]
+- Lab matrix: the same scripts re-run on 2026-11-27 on six environments (E0 above; macOS 26.1 arm64 with Node.js 24.22.1, 22.23.4 and 25.7.0; linux x64 emulated with Node.js 24.22.1; Electron 43.7.7 as Node with V8 15.0 and pointer compression on), outputs in the matrix blocks of §6.4. Rank 1, primary measurement. Backs: every ✅[^lab-matrix]. The heap-limit runs with `--max-old-space-size` also used a second Electron build with pointer compression on: Electron 38.8.6 run as Node (V8 14.0.365.10), macOS arm64. [^lab-matrix]
 
 ## Related
 

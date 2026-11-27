@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26"]
-last-verified: 2026-11-26
-last-updated: 2026-11-26
+applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (V8 12.4 to 15.0)"]
+last-verified: 2026-11-27
+last-updated: 2026-11-27
 tags: [performance, code-review, javascript, typescript, array-methods, iterator-helpers, async, microtasks, errors, stack-traces, sort, spread, tsconfig]
 ranked-sources: true
 ---
@@ -20,7 +20,7 @@ ranked-sources: true
 ## Scope
 The domain is cost that a reviewer can count from JavaScript or TypeScript source: built-in array, string and regular-expression methods, functions and calls, `async` code, error objects, and the TypeScript compiler options that change the emitted JavaScript. Analogy: a recipe that says "chop all the onions, put them in a bowl, then slice all the chopped onions into another bowl" when one pass over the board would do; nothing is wrong with each step, the bowls are the cost. Concrete example: `orders.filter(isPaid).map(toRow).reduce(sum, 0)` over 1,000,000 orders builds two arrays that are thrown away as soon as `reduce` returns.
 
-Covered: six classes in three groups (collections and iteration; calls, async code and errors; TypeScript emit). Engine-independent claims come from MDN, the Node.js and V8 docs and the TypeScript docs; every count marked ✅[^lab] was measured on Node.js 24.22.1 and holds for that version. Not covered: V8 compiler behaviour (inline caches, deoptimization, `arguments`, `for…in`, closures per call), which is in `problem-classes-javascript-engine.md`; the Node.js event loop, buffers, streams and module loading, in `problem-classes-nodejs-runtime.md`; shapes that belong to existing classes, listed under "Belongs to an existing class".
+Covered: six classes in three groups (collections and iteration; calls, async code and errors; TypeScript emit). Engine-independent claims come from MDN, the Node.js and V8 docs and the TypeScript docs; every count marked ✅[^lab] was measured on Node.js 24.22.1 and holds for that version; the re-run on five more builds is in Lookup notes, "Other builds and versions". Not covered: V8 compiler behaviour (inline caches, deoptimization, `arguments`, `for…in`, closures per call), which is in `problem-classes-javascript-engine.md`; the Node.js event loop, buffers, streams and module loading, in `problem-classes-nodejs-runtime.md`; shapes that belong to existing classes, listed under "Belongs to an existing class".
 
 Notation (each symbol is a count read from the code or its workload):
 
@@ -52,9 +52,9 @@ Terms:
 
 | Class | Signals in code | Fix | Before → after | Check |
 |---|---|---|---|---|
-| `chained-array-passes` | `.filter(...).map(...)`, `.map(...).filter(...).reduce(...)`, `Object.entries(o).filter(...).map(...)`, `[...map.values()].filter(...)`, `Array.from(iter).map(...)` over large or unbounded arrays; `.map(...)` whose result is discarded | One `for` loop, or one `reduce`, that filters and transforms in the same pass; `forEach` or `for…of` when no array is needed; iterator helpers (`arr.values().filter(p).map(f)`) when the source is an iterator, is infinite, or is cut short by `take` or `find` | k passes and k − 1 intermediate arrays of up to n elements → 1 pass and no intermediate array. `map` creates a new array, and calling it without using the result is an anti-pattern ✅[^mdn-map]; `filter` calls its callback once per element and constructs a new array ✅[^mdn-filter]; converting to an array and then reducing creates an intermediate array and iterates twice ✅[^mdn-iter]; iterator helpers are lazy and produce the next value only when requested ✅[^mdn-itermap]. Measured on Node.js 24.22.1 over n = 1,000,000: the chain created 2 arrays and grew the heap by 20 MB per run, one indexed loop created none and grew it by 0 MB, iterator helpers created no array but grew the heap by 80 MB per run ✅[^lab] | Heap growth around a forced collection (`node --expose-gc`) at n and 2n: expect it to double before the fix and stay near 0 after; or an allocation profile showing no arrays allocated by the chain |
+| `chained-array-passes` | `.filter(...).map(...)`, `.map(...).filter(...).reduce(...)`, `Object.entries(o).filter(...).map(...)`, `[...map.values()].filter(...)`, `Array.from(iter).map(...)` over large or unbounded arrays; `.map(...)` whose result is discarded | One `for` loop, or one `reduce`, that filters and transforms in the same pass; `forEach` or `for…of` when no array is needed; iterator helpers (`arr.values().filter(p).map(f)`) when the source is an iterator, is infinite, or is cut short by `take` or `find` | k passes and k − 1 intermediate arrays of up to n elements → 1 pass and no intermediate array. `map` creates a new array, and calling it without using the result is an anti-pattern ✅[^mdn-map]; `filter` calls its callback once per element and constructs a new array ✅[^mdn-filter]; converting to an array and then reducing creates an intermediate array and iterates twice ✅[^mdn-iter]; iterator helpers are lazy and produce the next value only when requested ✅[^mdn-itermap]. Measured on Node.js 24.22.1 over n = 1,000,000: the chain created 2 arrays and grew the heap by 20 MB per run, one indexed loop created none and grew it by 0 MB, iterator helpers created no array but grew the heap by 80 MB per run ✅[^lab], the same on Node.js 22.23.4 and 25.7.0; with pointer compression on (Electron 43.7.7, V8 15.0) the growth was 10 MB, 0 MB and 40 MB, cause not isolated ✅[^lab-matrix] | Heap growth around a forced collection (`node --expose-gc`) at n and 2n: expect it to double before the fix and stay near 0 after; or an allocation profile showing no arrays allocated by the chain |
 | `full-pass-for-first` | `filter(p)[0]`; `filter(p).length > 0`, `!== 0` or `=== 0`; `map(f).includes(x)`; `str.match(/re/g)` used as a boolean or compared to `null`; `arr.filter(p).length === arr.length` to test all | `find`, `findIndex`, `some`, `every`, `includes`; `re.test(str)` with a regex that has no `g` flag; `Iterator.prototype.find` or `some` on iterators | n predicate calls plus an array of m matches → i + 1 calls and no array; with no match, both make n calls. `find` returns the first matching element and stops iterating ✅[^mdn-find]; MDN points to `some` for "does any element satisfy" ✅[^mdn-find]; `filter` calls its callback for every element ✅[^mdn-filter]; `match` with `g` returns all matches ✅[^mdn-match], and MDN points to `test` for "does it match" ✅[^mdn-match]. Measured on Node.js 24.22.1 with n = 100,000 and the first match at index 10: 100,000 predicate calls for `filter`, 11 for `find` and `some` ✅[^lab] | Count predicate calls with a counter on a test input whose first match is early: expect i + 1 after the fix |
-| `sort-key-recompute` | A comparator that derives its keys: `sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))`, `new Date(a.ts) - new Date(b.ts)`, `parseFloat`, `JSON.stringify`, a regex or a `map.get(a.id)` inside the comparator; the same in `toSorted` | Decorate, sort, undecorate: `rows.map(r => ({ k: key(r), r })).sort((x, y) => cmp(x.k, y.k)).map(x => x.r)`; or store the key on the record once; for locale order, also one shared `Intl.Collator` (`hot-path-constants`) | 2 key computations per comparator call, and the number of calls grows faster than n (about n·log₂ n for a comparison sort: arithmetic, see "What the sources do not say") → n key computations, plus two arrays of n. The comparator can be called many times per element, which may yield a high overhead ✅[^mdn-sort]; MDN's remedy is to extract the sort values once into a temporary array, sort it, then map back ✅[^mdn-sort]. Measured on Node.js 24.22.1 with n = 10,000 seeded rows: 119,955 comparator calls and 239,910 key computations → 10,000 ✅[^lab] | A counter in the key function on a test of n = 10,000: expect n after the fix, and the same order |
+| `sort-key-recompute` | A comparator that derives its keys: `sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))`, `new Date(a.ts) - new Date(b.ts)`, `parseFloat`, `JSON.stringify`, a regex or a `map.get(a.id)` inside the comparator; the same in `toSorted` | Decorate, sort, undecorate: `rows.map(r => ({ k: key(r), r })).sort((x, y) => cmp(x.k, y.k)).map(x => x.r)`; or store the key on the record once; for locale order, also one shared `Intl.Collator` (`hot-path-constants`) | 2 key computations per comparator call, and the number of calls grows faster than n (about n·log₂ n for a comparison sort: arithmetic, see "What the sources do not say") → n key computations, plus two arrays of n. The comparator can be called many times per element, which may yield a high overhead ✅[^mdn-sort]; MDN's remedy is to extract the sort values once into a temporary array, sort it, then map back ✅[^mdn-sort]. Measured on Node.js 24.22.1 with n = 10,000 seeded rows: 119,955 comparator calls and 239,910 key computations → 10,000 ✅[^lab], the same on V8 12.4 to 14.1; Electron 43.7.7 (V8 15.0) made 119,784 calls and 239,568 key computations on the same rows, cause not isolated ✅[^lab-matrix] | A counter in the key function on a test of n = 10,000: expect n after the fix, and the same order |
 
 **Calls, async code and errors**
 
@@ -75,7 +75,7 @@ Terms:
 
 | Class | Not a problem when |
 |---|---|
-| `chained-array-passes` | n is small, or the chain runs once; the intermediate array is needed anyway (it is returned or reused); readability wins on a cold path. In the lab on Node.js 24.22.1, iterator helpers over an in-memory array allocated more total bytes than the chain (80 MB against 20 MB per run), so they were not a fix for allocation volume there ✅[^lab] |
+| `chained-array-passes` | n is small, or the chain runs once; the intermediate array is needed anyway (it is returned or reused); readability wins on a cold path. In the lab on Node.js 24.22.1, iterator helpers over an in-memory array allocated more total bytes than the chain (80 MB against 20 MB per run), so they were not a fix for allocation volume there ✅[^lab]; with pointer compression on (Electron 43.7.7) it was 40 MB against 10 MB ✅[^lab-matrix] |
 | `full-pass-for-first` | All matches are needed later in the same function (then keep the `filter` result and test its length once); the array is small |
 | `sort-key-recompute` | The key is a plain property read (`a.price - b.price`); n is small; the extra two arrays of n are too much memory for the input |
 | `await-per-sync-value` | The value is sometimes a real promise and the code must accept both (then await only when needed); the pause is wanted, to let other work run between items in a long loop |
@@ -86,7 +86,7 @@ Terms:
   - A plain object used as a dictionary with frequent adds and `delete` → `object-shape-instability` (`problem-classes-language-runtimes.md`), whose fix is a `Map`; MDN says a `Map` performs better with frequent additions and removals ✅[^mdn-mapobj].
   - `Object.keys(o).length` for a size, or `Object.keys` / `entries` / `values` rebuilt inside a loop → `linear-call-in-loop` (`problem-classes.md`); MDN calls counting an object's items through `Object.keys` less efficient than a `Map`'s `size` ✅[^mdn-mapobj].
   - `{ ...item, x }` or `structuredClone(item)` per element when no copy is needed → `copy-per-iteration` (`problem-classes-language-runtimes.md`); `JSON.parse(JSON.stringify(x))` → `payload-overfetch`; spread or `concat` on an accumulator → `allocation-gc` (both `problem-classes.md`).
-  - `Math.max(...arr)`, `target.push(...items)`, `fn.apply(null, arr)` or `String.fromCharCode(...codes)` where the array size comes from data → `unbounded-input` (`problem-classes.md`): it is a failure at a size, not a cost per element, and the fix is the same (a cap, or fixed-size chunks; MDN's example uses 32,768; a loop or `reduce` for min and max). Long argument lists risk exceeding the engine's argument length limit, whose consequences are unspecified and vary across engines ✅[^mdn-apply]; spread and `apply` either fail or return the wrong result for too many elements, and `reduce` does not have this problem ✅[^mdn-max]. Measured on Node.js 24.22.1 with the default stack: both `Math.max(...arr)` and `[].push(...arr)` worked at 120,000 elements and threw `RangeError: Maximum call stack size exceeded` at 200,000 ✅[^lab].
+  - `Math.max(...arr)`, `target.push(...items)`, `fn.apply(null, arr)` or `String.fromCharCode(...codes)` where the array size comes from data → `unbounded-input` (`problem-classes.md`): it is a failure at a size, not a cost per element, and the fix is the same (a cap, or fixed-size chunks; MDN's example uses 32,768; a loop or `reduce` for min and max). Long argument lists risk exceeding the engine's argument length limit, whose consequences are unspecified and vary across engines ✅[^mdn-apply]; spread and `apply` either fail or return the wrong result for too many elements, and `reduce` does not have this problem ✅[^mdn-max]. Measured on Node.js 24.22.1 with the default stack: both `Math.max(...arr)` and `[].push(...arr)` worked at 120,000 elements and threw `RangeError: Maximum call stack size exceeded` at 200,000 ✅[^lab], and the same on Node.js 25.7.0 and Electron 43.7.7; on Node.js 22.23.4 (V8 12.4) both already threw at 120,000 and worked at 100,000 ✅[^lab-matrix]. The limit changes with the build: test the sizes on the runtime in use.
   - Reads past `arr.length` and arrays that mix small integers, doubles and objects → `object-shape-instability`. `new Array(n)` then filled by index is not a finding on V8 13.6: building it was faster than `push` and the holey kind cost little on reads ([measured](../../js-runtime/v8-object-and-value-representation-deep-dive.md)).
   - `new RegExp(source)` or a literal regex built per iteration, and exceptions thrown for routine outcomes → `hot-path-constants`, and so are error objects created as routine return values (one `ValidationError` per bad row). A regex with the `g` flag reused with `test` is a correctness bug, not a cost: `test` advances `lastIndex` and the next call resumes from it, even on a different string ✅[^mdn-test].
   - Independent `await`s in sequence → `concurrency-backpressure`; barrel imports → `startup-cold-start` (both `problem-classes.md`, and `../../js-runtime/barrel-files.md`).
@@ -94,12 +94,12 @@ Terms:
   - `arguments`, `for…in`, closures created per iteration, getters and `Proxy` on hot paths → `problem-classes-javascript-engine.md`.
 - **Corrections found while checking the sources (2026-11-26).**
   - MDN says `return await promise` is at least as fast as `return promise`, because of how the specification and engines handle native promises ✅[^mdn-await]. Measured on Node.js 24.22.1 only (native promises), 1,000 calls of an `async` function that does `return p` took 3,001 turns of a competing microtask chain, and `return await p` took 2,001 ✅[^lab]. The V8 post of 12 November 2018 describes the change: an `await` on a native promise went from a minimum of three microticks to one, enabled by default in V8 7.2 ✅[^v8-fastasync].
-  - Iterator helpers avoid intermediate arrays, and MDN says the iterator's own `reduce` "may be more efficient, especially memory-wise" ✅[^mdn-iter]. On Node.js 24.22.1 the helper chain still allocated about four times the heap of the eager chain (80 MB against 20 MB per run, same on all 5 runs) ✅[^lab]. The lab measures total bytes allocated between collections, not the peak of live memory; that intermediate arrays raise the live peak while helpers keep it flat is an inference, not measured.
+  - Iterator helpers avoid intermediate arrays, and MDN says the iterator's own `reduce` "may be more efficient, especially memory-wise" ✅[^mdn-iter]. On Node.js 24.22.1 the helper chain still allocated about four times the heap of the eager chain (80 MB against 20 MB per run, same on all 5 runs) ✅[^lab]; with pointer compression on (Electron 43.7.7, V8 15.0) also four times, at 40 MB against 10 MB ✅[^lab-matrix]. The lab measures total bytes allocated between collections, not the peak of live memory; that intermediate arrays raise the live peak while helpers keep it flat is an inference, not measured.
   - Code downleveled to ES2015 by TypeScript 5.9.3 (`__awaiter` over a generator) took the same 1,001 microtask turns for 1,000 awaits as native `async` code ✅[^lab]: for that shape the cost is helper calls and code size, not extra turns.
   - The TSConfig reference page, which carries no TypeScript version label, gives the `target` default as `es2023` with `module: node20`, `esnext` with `module: nodenext` and `ES5` otherwise ✅[^ts-tsconfig], while the TypeScript 6.0 release notes say the new default is the latest ECMAScript version, `es2025` there ✅[^ts-60]. The two pages disagree, so which default applies to which TypeScript version is unconfirmed here: check the version in use. The 6.0 notes say `target: es5` is deprecated, setting `--downlevelIteration` at all gives a deprecation error, and options deprecated in 6.0 are removed in TypeScript 7.0; `"ignoreDeprecations": "6.0"` keeps them working in 6.0 only ✅[^ts-60]. So `downlevelIteration` in a `tsconfig.json` is an upgrade blocker for 7.0.
-  - The often-quoted argument limit of 65,536 is JavaScriptCore's ✅[^mdn-apply]; on Node.js 24.22.1 spread calls worked at 120,000 elements and failed at 200,000, the error is a stack-size `RangeError`, and no page gives the limit as a number ✅[^lab].
+  - The often-quoted argument limit of 65,536 is JavaScriptCore's ✅[^mdn-apply]; on Node.js 24.22.1 spread calls worked at 120,000 elements and failed at 200,000 (on Node.js 22.23.4 they failed at 120,000 ✅[^lab-matrix]), the error is a stack-size `RangeError`, and no page gives the limit as a number ✅[^lab].
 - **What the sources do not say.**
-  - No page read gives the number of comparator calls: MDN says the complexity of `sort` cannot be guaranteed because it depends on the implementation ✅[^mdn-sort]. "About n·log₂ n" is arithmetic for a comparison sort: 10,000 · log₂ 10,000 ≈ 132,877, near the 119,955 measured.
+  - No page read gives the number of comparator calls: MDN says the complexity of `sort` cannot be guaranteed because it depends on the implementation ✅[^mdn-sort]. "About n·log₂ n" is arithmetic for a comparison sort: 10,000 · log₂ 10,000 ≈ 132,877, near the 119,955 measured (119,784 on Electron 43.7.7).
   - No V8 or Node.js page gives V8's argument limit as a number. It depends on the stack size (`--stack-size`) and on how deep the call already is, so a bisection in the lab did not give one stable value; only fixed sizes are reported.
   - MDN says `for await` over a sync iterable is slower ✅[^mdn-forawait] but gives no factor; V8's stack-trace page gives no cost per frame.
 - **Weaker sources, rank 5 or 6.** None used.
@@ -107,14 +107,12 @@ Terms:
 **Lab runs.** Each script below ran in `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, Apple M2 under Docker) on 2026-11-26 with `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node <flags> <script>.mjs`; flags are given per script. The TypeScript script also mounts a TypeScript 5.9.3 package read-only with `-v <path-to-typescript-package>:/ts:ro`.
 
 Chained methods allocate an array per step; iterator helpers allocated more bytes in this run ✅[^lab] (flags `--expose-gc --max-semi-space-size=256 --min-semi-space-size=256`, so no collection runs inside one measurement):
-
 <details><summary><code>chain.mjs</code> (run as <code>node --expose-gc --max-semi-space-size=256 --min-semi-space-size=256 chain.mjs</code>) and its output</summary>
 
 ```js
 // filter -> map -> reduce, one indexed loop, and iterator helpers over 1,000,000 small integers:
 // arrays created (counted through Symbol.species) and heap growth in MB over 5 runs with no collection in between.
-let made = 0;
-class Counted extends Array { constructor(...a) { super(...a); made++; } }
+let made = 0; class Counted extends Array { constructor(...a) { super(...a); made++; } }
 const src = Counted.from({ length: 1_000_000 }, (_, i) => i);
 const isEven = (x) => (x & 1) === 0, low = (x) => x & 1023, add = (a, b) => (a + b) | 0;
 const variants = {
@@ -123,14 +121,8 @@ const variants = {
   'iter helper': () => src.values().filter(isEven).map(low).reduce(add, 0),
 };
 for (const [label, fn] of Object.entries(variants)) {
-  const mbs = []; let result;
-  made = 0;
-  for (let run = 0; run < 5; run++) {
-    globalThis.gc();
-    const before = process.memoryUsage().heapUsed;
-    result = fn();
-    mbs.push(Math.round((process.memoryUsage().heapUsed - before) / 1e6));
-  }
+  const mbs = []; let result; made = 0;
+  for (let run = 0; run < 5; run++) { globalThis.gc(); const before = process.memoryUsage().heapUsed; result = fn(); mbs.push(Math.round((process.memoryUsage().heapUsed - before) / 1e6)); }
   console.log(label.padEnd(11), '| arrays made per run:', made / 5, '| heap growth MB per run:', mbs.join(' '), '| result:', result);
 }
 ```
@@ -140,11 +132,9 @@ chain       | arrays made per run: 2 | heap growth MB per run: 20 20 20 20 20 | 
 one loop    | arrays made per run: 0 | heap growth MB per run: 0 0 0 0 0 | result: 255435488
 iter helper | arrays made per run: 0 | heap growth MB per run: 80 80 80 80 80 | result: 255435488
 ```
-
 </details>
 
 A full pass makes n predicate calls where the first match needs i + 1 ✅[^lab]:
-
 <details><summary><code>first.mjs</code> (run as <code>node first.mjs</code>) and its output</summary>
 
 ```js
@@ -169,11 +159,9 @@ filter(p).length > 0       predicate calls: 100000 | result: true
 some(p)                    predicate calls:     11 | result: true
 match(/error/g) array length: 50000 | test(/error/): true
 ```
-
 </details>
 
 A comparator that derives keys computes 2 keys per call ✅[^lab]:
-
 <details><summary><code>sortkey.mjs</code> (run as <code>node sortkey.mjs</code>) and its output</summary>
 
 ```js
@@ -181,9 +169,7 @@ A comparator that derives keys computes 2 keys per call ✅[^lab]:
 let seed = 42; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
 const n = 10_000;
 const rows = Array.from({ length: n }, () => ({ name: 'User' + Math.floor(rnd() * 1e9) }));
-let keys = 0;
-const key = (r) => { keys++; return r.name.toLowerCase(); };
-const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+let keys = 0; const key = (r) => { keys++; return r.name.toLowerCase(); }, cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 keys = 0; const s1 = rows.slice().sort((a, b) => cmp(key(a), key(b)));
 console.log('key in comparator: key computations', keys, '| comparator calls', keys / 2);
 keys = 0; const s2 = rows.map((r) => ({ k: key(r), r })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.r);
@@ -196,11 +182,9 @@ key in comparator: key computations 239910 | comparator calls 119955
 key computed once:  key computations 10000
 same order: true
 ```
-
 </details>
 
-Spread calls (class `unbounded-input`, see "Belongs to an existing class") worked at 120,000 elements and failed at 200,000 on Node.js 24.22.1 ✅[^lab]:
-
+Spread calls (class `unbounded-input`, see "Belongs to an existing class") worked at 120,000 elements and failed at 200,000 on Node.js 24.22.1 ✅[^lab] (on Node.js 22.23.4 they failed at 120,000: "Other builds and versions"):
 <details><summary><code>spreadargs.mjs</code> (run as <code>node spreadargs.mjs</code>) and its output</summary>
 
 ```js
@@ -220,33 +204,24 @@ console.log('reduce over 10,000,000:', new Array(10_000_000).fill(1).reduce((m, 
   1000000 | Math.max(...arr): RangeError: Maximum call stack size exceeded | [].push(...arr): RangeError: Maximum call stack size exceeded
 reduce over 10,000,000: 1
 ```
-
 </details>
 
 Microtask turns per loop and per `return` form ✅[^lab]:
-
 <details><summary><code>hops.mjs</code> (run as <code>node hops.mjs</code>) and its output</summary>
 
 ```js
 // Microtask hops: how many turns a competing microtask chain gets while each variant finishes.
 async function countTicks(work) {
-  let ticks = 0, done = false;
-  const spin = () => { if (!done) { ticks++; queueMicrotask(spin); } };
-  queueMicrotask(spin);
-  await work();
-  done = true;
-  return ticks;
+  let ticks = 0, done = false; const spin = () => { if (!done) { ticks++; queueMicrotask(spin); } };
+  queueMicrotask(spin); await work(); done = true; return ticks;
 }
 const n = 1000, values = Array.from({ length: n }, (_, i) => i);
-const syncAdd = (a, b) => a + b;
-const asyncAdd = async (a, b) => a + b;
+const syncAdd = (a, b) => a + b, asyncAdd = async (a, b) => a + b;
 console.log('sync loop, no await           ', await countTicks(async () => { let s = 0; for (const v of values) s = syncAdd(s, v); return s; }));
 console.log('await on each plain value     ', await countTicks(async () => { let s = 0; for (const v of values) s += await v; return s; }));
 console.log('await asyncAdd() per element  ', await countTicks(async () => { let s = 0; for (const v of values) s = await asyncAdd(s, v); return s; }));
 console.log('for await over a plain array  ', await countTicks(async () => { let s = 0; for await (const v of values) s += v; return s; }));
-const p = () => Promise.resolve(1);
-const viaReturn = async () => p();
-const viaReturnAwait = async () => await p();
+const p = () => Promise.resolve(1), viaReturn = async () => p(), viaReturnAwait = async () => await p();
 console.log('await f(), f returns p        ', await countTicks(async () => { for (let i = 0; i < n; i++) await viaReturn(); }));
 console.log('await f(), f does return await', await countTicks(async () => { for (let i = 0; i < n; i++) await viaReturnAwait(); }));
 ```
@@ -259,11 +234,9 @@ for await over a plain array   2003
 await f(), f returns p         3001
 await f(), f does return await 2001
 ```
-
 </details>
 
 Frames captured per error object ✅[^lab]:
-
 <details><summary><code>stack.mjs</code> (run as <code>node stack.mjs</code>) and its output</summary>
 
 ```js
@@ -280,11 +253,9 @@ default limit: 10 | frames captured: 10
 limit Infinity | frames captured: 205
 limit 0        | frames captured: 0 | stack: "Error: x"
 ```
-
 </details>
 
 Helpers emitted per target by TypeScript 5.9.3, and the ES2015 and ES2022 output run: microtask turns and private-field helper calls ✅[^lab]:
-
 <details><summary><code>ts.mjs</code> (run as <code>node ts.mjs</code>) and its output</summary>
 
 ```js
@@ -309,8 +280,7 @@ for (const target of ['ES2015', 'ES2017', 'ES2018', 'ES2022']) {
   console.log(target.padEnd(7), '| emitted lines:', String(out.split('\n').length).padStart(3), '| helpers:', helpers.join(', ') || 'none');
 }
 async function countTicks(work) {
-  let ticks = 0, done = false;
-  const spin = () => { if (!done) { ticks++; queueMicrotask(spin); } };
+  let ticks = 0, done = false; const spin = () => { if (!done) { ticks++; queueMicrotask(spin); } };
   queueMicrotask(spin); await work(); done = true; return ticks;
 }
 for (const target of ['ES2015', 'ES2022']) {
@@ -334,7 +304,50 @@ ES2022  | emitted lines:  20 | helpers: none
 ES2015 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 1000 inc(): {"__classPrivateFieldGet":1000,"__classPrivateFieldSet":1000}
 ES2022 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 1000 inc(): {}
 ```
+</details>
 
+**Other builds and versions (2026-11-27).** The seven scripts above ran again, unchanged except for layout, on five more builds, once per script and build (the TypeScript script loaded a local TypeScript 5.9.3 package on macOS). No script prints a time, so all ran on the emulated x64 build too.
+
+| Id | Build | Differs from E0 |
+|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17, linux arm64 container, pointer compression off | baseline (the runs above) |
+| E1 | Node.js 24.22.1 on macOS 26.1 arm64 | operating system |
+| E2 | Node.js 24.22.1, linux x64 container emulated on arm64 | CPU architecture, emulated |
+| E3 | Node.js 22.23.4, V8 12.4.254.21, macOS arm64 | older Node.js and V8 |
+| E4 | Node.js 25.7.0, V8 14.1.146.11, macOS arm64 | newer Node.js and V8 |
+| E7 | Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0.245.31), macOS arm64 | pointer compression on, V8 sandbox on, V8 15.0 |
+
+| Script (claim) | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|
+| `chain.mjs` (arrays made and heap growth per variant) | same | same | same | same | differs |
+| `first.mjs` (predicate calls, n against i + 1) | same | same | same | same | same |
+| `sortkey.mjs` (comparator calls, key computations) | same | same | same | same | differs |
+| `spreadargs.mjs` (spread works at 120,000, fails at 200,000) | same | same | differs | same | same |
+| `hops.mjs` (microtask turns per loop and `return` form) | same | same | same | same | same |
+| `stack.mjs` (frames per `Error.stackTraceLimit`) | same | same | same | same | same |
+| `ts.mjs` (helpers per target, turns, helper calls) | same | same | same | same | same |
+
+What differs:
+- `chain.mjs`, E7: heap growth per run of 20 MB (chain) and 80 MB (iterator helpers) on E0 became 10 MB and 40 MB; the arrays made (2, 0, 0), the result and the order are unchanged. E4 (V8 14.1, compression off) gave E0's numbers, so the cause is pointer compression or V8 15.0: not isolated.
+- `sortkey.mjs`, E7: 119,955 comparator calls and 239,910 key computations on E0 became 119,784 and 239,568, on the same rows (same SHA-1 of the names) and in the same order. A probe that sorted plain integers also made fewer comparator calls on E7 than on E1, E3 and E4: the sort compares differently in that build; cause not isolated.
+- `spreadargs.mjs`, E3: both spread calls worked at 120,000 elements on E0; on Node.js 22.23.4 both threw `RangeError: Maximum call stack size exceeded` at 120,000 and worked at 100,000. All builds used their default stack size.
+
+<details><summary>Differing output (E7 and E3)</summary>
+
+`ELECTRON_RUN_AS_NODE=1 <Electron 43.7.7> --expose-gc --max-semi-space-size=256 --min-semi-space-size=256 chain.mjs`, the two lines that differ:
+```text
+chain       | arrays made per run: 2 | heap growth MB per run: 10 10 10 10 10 | result: 255435488
+iter helper | arrays made per run: 0 | heap growth MB per run: 40 40 40 40 40 | result: 255435488
+```
+`ELECTRON_RUN_AS_NODE=1 <Electron 43.7.7> sortkey.mjs`, the line that differs:
+```text
+key in comparator: key computations 239568 | comparator calls 119784
+```
+`<Node.js 22.23.4>/bin/node spreadargs.mjs`, lines 2 and 3:
+```text
+   100000 | Math.max(...arr): ok | [].push(...arr): ok
+   120000 | Math.max(...arr): RangeError: Maximum call stack size exceeded | [].push(...arr): RangeError: Maximum call stack size exceeded
+```
 </details>
 
 **Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
@@ -346,10 +359,12 @@ ES2022 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 
 - A `tsconfig.json` `target` older than the runtime turns native syntax into helper calls in every file; set it to the oldest runtime the code really runs on.
 
 ## Verification status
-- Verified: 60 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- Verified: 66 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Matrix re-run on 2026-11-27: 7 scripts on 5 more builds, 35 runs: 32 same, 3 differ, 0 could not run. Not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0.
 
 ## References
-- Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Apple M2 under Docker; no other version or build was run), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Apple M2 under Docker), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab matrix: the seven scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4 with V8 12.4.254.21; Node.js 25.7.0 with V8 14.1.146.11; Electron 43.7.7 as Node with V8 15.0.245.31 and pointer compression on), with a local TypeScript 5.9.3 package; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, chained-array-passes and sort-key-recompute; Lookup notes. [^lab-matrix]
 - [Stack trace API](https://v8.dev/docs/stack-trace-api) — V8, living. Rank 1. Backs: Catalog, stack-capture-per-call. [^v8-stack]
 - [Errors: Error.stackTraceLimit and new Error()](https://nodejs.org/docs/latest-v24.x/api/errors.html) — Node.js, v24.22.3 docs. Rank 1. Backs: Catalog, stack-capture-per-call. [^node-errors]
 - [TSConfig Reference: target](https://www.typescriptlang.org/tsconfig/target.html) — TypeScript, living. Rank 1. Backs: Catalog, ts-downlevel-emit. [^ts-target]

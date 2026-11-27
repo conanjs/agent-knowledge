@@ -571,6 +571,7 @@ The whole round cost 14.83 USD (S 11.92 for 145 runs, N 2.91 for 127), plus 0.26
 - The hand reading was done by an agent, not by a person; three of its verdicts on fixes were re-read here.
 - N was not run on the old samples with 135 ids, and S was not re-run on the old bad samples.
 - The skill text changed after the run: the `object-shape-instability` row and reference file lost a signal (`new Array(n)` filled by index) that a measurement contradicted, and the `for-in-over-array` reference gained a sentence. Only the re-run of the three repaired samples has used the changed text.
+- On 2026-11-27, after that re-run, nineteen reference files of the JavaScript engine, JavaScript language and Node.js runtime classes gained version scopes, when their catalogs' lab scripts were run on five more builds. No calibration run has used those nineteen files as they are now.
 
 **Reading** *(synthesis)*:
 - **With 135 classes the skill changes what a program receives.** The class id was right for 96 of 96 planted problems with it and 86 of 96 without it; on the traps it raised nothing (29 sound ones in the round, the two repaired ones in the re-run), against findings on 3 without it. With 39 classes the same comparison was 43 of 43 against 39 of 43, and no trap separated the arms (§6.3, §6.4).

@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["Node.js 24 (API docs v24.22.3, read 2026-11-26; lab on Node.js 24.22.1 with V8 13.6.233.17 and libuv 1.52.1)", "libuv 1.x documentation (living)"]
-last-verified: 2026-11-26
-last-updated: 2026-11-26
+applies-to: ["Node.js 24 (API docs v24.22.3, read 2026-11-26; lab on Node.js 24.22.1 with V8 13.6.233.17 and libuv 1.52.1)", "libuv 1.x documentation (living)", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (Node.js 24.21.0 API)"]
+last-verified: 2026-11-27
+last-updated: 2026-11-27
 tags: [performance, code-review, nodejs, event-loop, libuv, thread-pool, buffers, worker-threads, async-hooks, source-maps]
 ranked-sources: true
 ---
@@ -53,13 +53,13 @@ Terms:
 |---|---|---|---|---|
 | `threadpool-saturation` | Many concurrent `crypto.pbkdf2`, `crypto.scrypt`, `crypto.randomBytes` or `crypto.generateKeyPair` calls; async `zlib.gzip` / `deflate` / `brotliCompress` of each response; `Promise.all` over many `fs.promises` calls; outgoing HTTP or database connections to host names (they resolve through `dns.lookup`); no `UV_THREADPOOL_SIZE` in the deploy environment, or `process.env.UV_THREADPOOL_SIZE = …` set in code | Set `UV_THREADPOOL_SIZE` in the environment before the process starts; cap concurrent pool-heavy calls (a semaphore of at most p); move CPU-heavy hashing or compression to worker threads (`../../js-runtime/worker-thread-pools.md`); cache compressed output; resolve hosts with `dns.resolve*` or a cached lookup | When t ≥ p long tasks are in flight, every other pool task (a file read, a DNS lookup) waits for one to finish → waits only when t exceeds the larger pool or the capped concurrency. In Node.js 24, the CLI page lists as pool users all `fs` APIs other than the file watchers and the explicitly synchronous ones, asynchronous `crypto` APIs "such as" `pbkdf2`, `scrypt`, `randomBytes`, `randomFill` and `generateKeyPair`, `dns.lookup`, and all `zlib` APIs other than the explicitly synchronous ones ✅[^node-cli]; its default is 4 threads, and one slow API degrades "seemingly unrelated" pool APIs ✅[^node-cli]; libuv's pool is global, its maximum 1024 ✅[^libuv-tp]; each long task shrinks the pool by one until it ends ✅[^node-dontblock]; `dns.lookup` is a synchronous `getaddrinfo` call on the pool, and other networking APIs call it internally ✅[^node-dns]; `dns.resolve*` does not use the pool ✅[^node-dns]; zlib docs strongly recommend caching compression results ✅[^node-zlib] | Lab run 1: a file read issued after 4 `pbkdf2` calls waits for one of them with the default pool, not with p = 8; in production, latency of a cheap file-reading endpoint while hashing load runs |
 | `microtask-starvation` | A recursive `process.nextTick(step)` or `queueMicrotask(step)` used to "break up" long work; an `async` loop over a large array whose `await`s only meet already-resolved values (`await cache.get(k)` on an in-memory cache, `await Promise.resolve()`); a promise chain built per item | Yield to the event loop with `setImmediate` every k steps (for example `await new Promise((r) => setImmediate(r))`), or move the work to a worker thread | Timers and I/O wait until all n steps finish → wait for at most one batch of k steps. The next tick queue is "fully drained" before the event loop continues, and each time that queue is drained the microtask queue is drained immediately after ✅[^node-process]; recursive `process.nextTick` calls can "starve" I/O by keeping the loop from its poll phase ✅[^node-loop-guide]; the same guide recommends `setImmediate()` "in all cases" because it is easier to reason about ✅[^node-loop-guide]. The pages state the starvation for `process.nextTick` only; for `queueMicrotask` and promise continuations the evidence here is lab run 2, not a page | Lab run 2: 100,000 recursive `nextTick` or `queueMicrotask` steps all run before a 0 ms timer, `setImmediate` steps do not; in production, `perf_hooks.monitorEventLoopDelay()` samples the event loop delay (resolution default 10 ms in Node.js 24) ✅[^node-perf] |
-| `async-hook-per-resource` | `async_hooks.createHook({ init, before, after, destroy }).enable()` in application code or an in-house tracing or context library; a `destroy` hook; `executionAsyncResource()` used to carry request context; `--no-async-context-frame` in `NODE_OPTIONS` | Use `AsyncLocalStorage` for request context; Diagnostics Channel or `process.getActiveResourcesInfo()` for diagnostics; if a hook must stay, `trackPromises: false` and no `destroy` hook | Hook callbacks for every async resource, promises included → none. The Node.js 24 docs do not recommend `createHook`, citing "performance implications" ✅[^node-asynchooks]; promises are not tracked by default because V8's promise introspection is expensive, and `createHook` turns that tracking on (`trackPromises` defaults to `true`) ✅[^node-asynchooks]; the `destroy` hook adds tracking of promises through the garbage collector ✅[^node-asynchooks]; `AsyncLocalStorage` is "a performant and memory safe implementation" ✅[^node-alsctx]; the CLI page says `--no-async-context-frame` (added in v24.0.0) disables `AsyncLocalStorage` backed by `AsyncContextFrame` and uses the prior `async_hooks` implementation, so without the flag Node.js 24 uses the `AsyncContextFrame` one ✅[^node-cli]. The Async hooks page gives no "added in" version for `trackPromises`: check it on your minor version of Node.js 24 (the lab ran 24.22.1) | Lab run 3: an `init` hook counts 2004 calls for 1,000 `await`s, 0 with `trackPromises: false`; grep dependencies and `NODE_OPTIONS` for `createHook` and `--no-async-context-frame` |
+| `async-hook-per-resource` | `async_hooks.createHook({ init, before, after, destroy }).enable()` in application code or an in-house tracing or context library; a `destroy` hook; `executionAsyncResource()` used to carry request context; `--no-async-context-frame` in `NODE_OPTIONS` | Use `AsyncLocalStorage` for request context; Diagnostics Channel or `process.getActiveResourcesInfo()` for diagnostics; if a hook must stay, `trackPromises: false` and no `destroy` hook | Hook callbacks for every async resource, promises included → none. The Node.js 24 docs do not recommend `createHook`, citing "performance implications" ✅[^node-asynchooks]; promises are not tracked by default because V8's promise introspection is expensive, and `createHook` turns that tracking on (`trackPromises` defaults to `true`) ✅[^node-asynchooks]; the `destroy` hook adds tracking of promises through the garbage collector ✅[^node-asynchooks]; `AsyncLocalStorage` is "a performant and memory safe implementation" ✅[^node-alsctx]; the CLI page says `--no-async-context-frame` (added in v24.0.0) disables `AsyncLocalStorage` backed by `AsyncContextFrame` and uses the prior `async_hooks` implementation, so without the flag Node.js 24 uses the `AsyncContextFrame` one ✅[^node-cli]. The Async hooks page gives no "added in" version for `trackPromises`: check it on your minor version of Node.js 24 (the lab ran 24.22.1) | Lab run 3: an `init` hook counts 2004 calls for 1,000 `await`s, 0 with `trackPromises: false` (the same on Node.js 24.21.0 in Electron 43.7.7 and on 25.7.0; on Node.js 22.23.4 the option had no effect: 2003 calls ✅[^lab-matrix]); grep dependencies and `NODE_OPTIONS` for `createHook` and `--no-async-context-frame` |
 
 **Buffers and worker messages**
 
 | Class | Signals in code | Fix | Before → after | Check |
 |---|---|---|---|---|
-| `retained-buffer-view` | A small `buf.subarray(a, b)` or deprecated `buf.slice(a, b)` of a large file, socket or body buffer stored in a long-lived `Map`, cache or session; many small `Buffer.from(string)` or `Buffer.allocUnsafe(n)` values kept for the life of the process; `Buffer.from(view)` used to "detach" a view | Copy what is kept into its own memory: `Buffer.allocUnsafeSlow(len)` plus `view.copy(own)`; or keep a string or number instead of bytes | Retained memory per kept entry = the whole parent buffer (s bytes) or a whole pool block → the entry's own length. `subarray` returns a `Buffer` that "references the same memory as the original" ✅[^node-buffer]; in Node.js 24, `Buffer.poolSize` defaults to 65,536 bytes (raised from 8,192 in v24.18.0), and `allocUnsafe` uses the pool for sizes below half of it (`poolSize >>> 1`), while `from(array)`, `from(string)` and `concat` "may" use it like `allocUnsafe` does ✅[^node-buffer]; for memory kept "for an indeterminate amount of time", the docs suggest `Buffer.allocUnsafeSlow()` and copying out ✅[^node-buffer] | Lab run 4: compare `entry.buffer.byteLength` with `entry.length` for stored entries (10,485,760 against 16 for a view); a heap snapshot shows the retained `ArrayBuffer` size |
+| `retained-buffer-view` | A small `buf.subarray(a, b)` or deprecated `buf.slice(a, b)` of a large file, socket or body buffer stored in a long-lived `Map`, cache or session; many small `Buffer.from(string)` or `Buffer.allocUnsafe(n)` values kept for the life of the process; `Buffer.from(view)` used to "detach" a view | Copy what is kept into its own memory: `Buffer.allocUnsafeSlow(len)` plus `view.copy(own)`; or keep a string or number instead of bytes | Retained memory per kept entry = the whole parent buffer (s bytes) or a whole pool block → the entry's own length. `subarray` returns a `Buffer` that "references the same memory as the original" ✅[^node-buffer]; in Node.js 24, `Buffer.poolSize` defaults to 65,536 bytes (raised from 8,192 in v24.18.0), and `allocUnsafe` uses the pool for sizes below half of it (`poolSize >>> 1`), while `from(array)`, `from(string)` and `concat` "may" use it like `allocUnsafe` does ✅[^node-buffer]; the lab read 65,536 on Node.js 24.22.1 and 24.21.0 (Electron 43.7.7), and 8,192 on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix]; for memory kept "for an indeterminate amount of time", the docs suggest `Buffer.allocUnsafeSlow()` and copying out ✅[^node-buffer] | Lab run 4: compare `entry.buffer.byteLength` with `entry.length` for stored entries (10,485,760 against 16 for a view); a heap snapshot shows the retained `ArrayBuffer` size |
 | `worker-message-copy` | `worker.postMessage(bigBuffer)` or `port.postMessage({ data: arrayBuffer })` with no transfer list, once per task; large arrays or objects posted to a worker for every job; small pooled `Buffer`s (`Buffer.from`, `allocUnsafe`) posted to workers | Pass the `ArrayBuffer` in `transferList` when the sender owns it (`Buffer.alloc`, `allocUnsafeSlow`, `new ArrayBuffer`); a `SharedArrayBuffer` for data many threads read; send a path or an id and let the worker read the data | s bytes copied per message, n messages → 0 bytes copied (ownership moves). An `ArrayBuffer` not in `transferList` is copied, a transferred one is unusable on the sending side ✅[^node-worker]; a `Buffer` from the internal pool cannot be transferred and is cloned, which "sends a copy of the entire `Buffer` pool" ✅[^node-worker]; buffers from `Buffer.alloc()` or `allocUnsafeSlow()` can be transferred, and that makes every other view of them unusable ✅[^node-worker]; a `SharedArrayBuffer` is accessible from both threads ✅[^node-worker] | Lab run 5: after a transfer the sender's `byteLength` is 0, after a clone it is unchanged; count bytes posted per task |
 
 **Runtime flags**
@@ -77,7 +77,7 @@ Terms:
 | `threadpool-saturation` | Pool work is rare or short; the process does one job at a time (a CLI or a batch script); network sockets, which do not use the pool, are the only I/O; `fs.readFile` reads into memory one chunk at a time, letting the event loop turn between chunks, which gives it "less impact" on other pool activity ✅[^node-fs] (it still buffers the whole file in memory) |
 | `microtask-starvation` | n is small, or the loop awaits real I/O on each step (each wait returns to the event loop); `nextTick` is used once, for example to emit an event after the caller attached its handlers ✅[^node-process] |
 | `async-hook-per-resource` | The hook runs only in a debugging session or a test; context comes from `AsyncLocalStorage` on Node.js 24 without `--no-async-context-frame`, so backed by `AsyncContextFrame` ✅[^node-cli]; the application has few promises per request |
-| `retained-buffer-view` | The view lives only for one request; the parent buffer is kept anyway; the kept data is tiny and few, so one 64 KiB pool block is an acceptable cost |
+| `retained-buffer-view` | The view lives only for one request; the parent buffer is kept anyway; the kept data is tiny and few, so one pool block (64 KiB on Node.js 24.22.1, 8 KiB on 22.23.4 and 25.7.0 ✅[^lab-matrix]) is an acceptable cost |
 | `worker-message-copy` | Messages are small; the sender must keep its copy; the data is posted once at worker start-up |
 | `source-maps-on-hot-stacks` | Stacks are read only for rare, logged failures; the service is a CLI or a development build |
 
@@ -148,7 +148,7 @@ setImmediate    : all 100000 steps ran before the 0 ms timer: false
 ```
 </details>
 
-  - Run 3. A hook with only an `init` callback was called 2004 times for an `async` loop of 1,000 `await Promise.resolve(i)`, and 0 times with `trackPromises: false` ✅[^lab].
+  - Run 3. A hook with only an `init` callback was called 2004 times for an `async` loop of 1,000 `await Promise.resolve(i)`, and 0 times with `trackPromises: false` ✅[^lab]; on Node.js 22.23.4, 2004 and 2003 times ✅[^lab-matrix].
 <details><summary>hooks.mjs and output</summary>
 
 ```js
@@ -172,7 +172,7 @@ init calls for 1000 awaits, trackPromises: false: 0
 ```
 </details>
 
-  - Run 4. A 14-character `Buffer.from(string)` sits in a 65,536-byte pool block; a 16-byte `subarray` of a 10 MiB buffer keeps all 10,485,760 bytes reachable; `Buffer.from(view)` lands in a pool block again; only `Buffer.allocUnsafeSlow(16)` plus `copy` owns exactly 16 bytes ✅[^lab].
+  - Run 4. A 14-character `Buffer.from(string)` sits in a 65,536-byte pool block; a 16-byte `subarray` of a 10 MiB buffer keeps all 10,485,760 bytes reachable; `Buffer.from(view)` lands in a pool block again; only `Buffer.allocUnsafeSlow(16)` plus `copy` owns exactly 16 bytes ✅[^lab]. On Node.js 22.23.4 and 25.7.0 the pool block was 8,192 bytes; the view and the copy gave the same numbers ✅[^lab-matrix].
 <details><summary>buffers.mjs and output</summary>
 
 ```js
@@ -199,7 +199,7 @@ Buffer.allocUnsafeSlow(16) + copy: backing ArrayBuffer 16
 ```
 </details>
 
-  - Run 5. Posting a 1 MiB `ArrayBuffer` without a transfer list left the sender's copy intact (a clone); with a transfer list the sender's `byteLength` became 0; a 5-byte pooled `Buffer` arrived with a 65,536-byte backing `ArrayBuffer` ✅[^lab].
+  - Run 5. Posting a 1 MiB `ArrayBuffer` without a transfer list left the sender's copy intact (a clone); with a transfer list the sender's `byteLength` became 0; a 5-byte pooled `Buffer` arrived with a 65,536-byte backing `ArrayBuffer` ✅[^lab] (8,192 bytes on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix]).
 <details><summary>transfer.mjs and output</summary>
 
 ```js
@@ -233,7 +233,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 </details>
 
 - **Corrections found while checking the sources (2026-11-26).**
-  - The `Buffer` pool default is 64 KiB (65,536 bytes) from Node.js 24.18.0; before that it was 8,192 ✅[^node-buffer]; lab run 4 shows 65,536 on 24.22.1 ✅[^lab].
+  - The `Buffer` pool default is 64 KiB (65,536 bytes) from Node.js 24.18.0; before that it was 8,192 ✅[^node-buffer]; lab run 4 shows 65,536 on 24.22.1 ✅[^lab]. Node.js 25.7.0 printed 8,192, like 22.23.4 ✅[^lab-matrix], so a newer major version does not imply the larger pool: read `Buffer.poolSize` on the version in use.
   - Setting `process.env.UV_THREADPOOL_SIZE` inside the program "is not guaranteed to work", because the pool may already exist ✅[^node-cli]. Set it in the environment of the process.
   - `dns.lookup` reads `/etc/hosts` and runs on the pool; `dns.resolve*` always queries the network and ignores `/etc/hosts` ✅[^node-dns], so switching changes behaviour, not only cost.
   - `AsyncLocalStorage` on Node.js 24 uses the `async_hooks`-based implementation only with `--no-async-context-frame` ✅[^node-cli]; advice that it is slow because of `async_hooks` describes that older implementation.
@@ -245,6 +245,53 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
   - The Node.js "Don't block the event loop" guide names the pool size k and gives no default; the default 4 comes from the CLI page ✅[^node-cli] and libuv ✅[^libuv-tp].
   - `--inspect` in production is a security issue, not a performance class: binding the inspector to a public address allows remote code execution ✅[^node-cli].
 
+**Other builds and versions (2026-11-27).** The five scripts above ran again, unchanged, on five more builds. `threadpool.mjs` ran 3 times per build with the pool unset and 3 times with `UV_THREADPOOL_SIZE=8`, with 8 CPUs visible in every build, and gave the same output each time; the other scripts ran once. No script prints a time, so all ran on the emulated x64 build too. E7 is Electron's Node mode: its thread pool, worker messages and `Buffer` are Electron's build, and its results say nothing about a Node.js release.
+
+| Id | Build | Differs from E0 |
+|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17, libuv 1.52.1, linux arm64 container | baseline (the runs above) |
+| E1 | Node.js 24.22.1, libuv 1.52.1, macOS 26.1 arm64 | operating system |
+| E2 | Node.js 24.22.1, libuv 1.52.1, linux x64 container emulated on arm64 | CPU architecture, emulated |
+| E3 | Node.js 22.23.4, V8 12.4.254.21, libuv 1.51.0, macOS arm64 | older Node.js, V8 and libuv |
+| E4 | Node.js 25.7.0, V8 14.1.146.11, libuv 1.51.0, macOS arm64 | newer Node.js and V8, older libuv |
+| E7 | Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0.245.31, libuv 1.52.1), macOS arm64 | Electron, pointer compression on, V8 sandbox on |
+
+| Script (claim) | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|
+| `threadpool.mjs` (a read and a lookup wait behind 4 hashes with p = 4, not with p = 8) | same | same | same | same | same |
+| `starve.mjs` (`nextTick` and `queueMicrotask` steps run before a 0 ms timer) | same | same | same | same | same |
+| `hooks.mjs` (`init` calls with and without `trackPromises`) | same | same | differs | same | same |
+| `buffers.mjs` (pool block size, view retention, own copy) | same | same | differs | differs | same |
+| `transfer.mjs` (clone, transfer, pooled `Buffer` backing) | same | same | differs | differs | same |
+
+What differs:
+- `hooks.mjs`, E3: with `trackPromises: false` the hook got 0 `init` calls on E0 and 2003 on Node.js 22.23.4: the option is not honoured there. The default hook got 2004 on both. Side check, not a script: `node --help` on 22.23.4 lists `--experimental-async-context-frame` and no `--no-async-context-frame`; 24.22.1 and 25.7.0 list `--no-async-context-frame`.
+- `buffers.mjs`, E3 and E4: `Buffer.poolSize` is 65,536 on E0 and 8,192 on Node.js 22.23.4 and 25.7.0, and the 14-character string and `Buffer.from(view)` sit in an 8,192-byte block. The view (10,485,760) and the own copy (16) are unchanged.
+- `transfer.mjs`, E3 and E4: the 5-byte pooled `Buffer` arrives with a 65,536-byte backing `ArrayBuffer` on E0 and an 8,192-byte one on Node.js 22.23.4 and 25.7.0. The clone and the transfer are unchanged.
+
+<details><summary>Differing output (E3 and E4)</summary>
+
+`<Node.js 22.23.4>/bin/node hooks.mjs`:
+```text
+init calls for 1000 awaits, default hook: 2004
+init calls for 1000 awaits, trackPromises: false: 2003
+```
+`<Node.js 22.23.4 or 25.7.0>/bin/node buffers.mjs` (both print the same):
+```text
+Buffer.poolSize: 8192
+Buffer.from(14-char string): length 14 backing ArrayBuffer 8192
+big.subarray(0, 16) of 10 MiB: length 16 backing ArrayBuffer 10485760
+Buffer.from(view): backing ArrayBuffer 8192
+Buffer.allocUnsafeSlow(16) + copy: backing ArrayBuffer 16
+```
+`<Node.js 22.23.4 or 25.7.0>/bin/node transfer.mjs` (both print the same):
+```text
+cloned 1 MiB ArrayBuffer, sender byteLength after post: 1048576
+transferred 1 MiB ArrayBuffer, sender byteLength after post: 0
+received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Buffer: length 5 backing ArrayBuffer 8192
+```
+</details>
+
 **Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
@@ -253,10 +300,12 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 - A `Buffer` you keep or post is only as small as its backing `ArrayBuffer`: copy kept slices out, and transfer large buffers to workers. [rule-candidate]
 
 ## Verification status
-- Verified: 52 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Matrix re-run on 2026-11-27: 5 scripts on 5 more builds, 25 script-and-build results (50 process runs, `threadpool.mjs` 6 times per build): 20 same, 5 differ, 0 could not run. Not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0; another CPU count or `UV_THREADPOOL_SIZE` than 8 CPUs with 4 and 8 threads.
 
 ## References
-- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`; no other version or platform was run), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
+- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
+- Lab matrix: the five scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4; Node.js 25.7.0; Electron 43.7.7 as Node with the Node.js 24.21.0 API), 8 CPUs; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, async-hook-per-resource and retained-buffer-view; Lookup notes. [^lab-matrix]
 - [Command-line API: UV_THREADPOOL_SIZE, --enable-source-maps, --no-async-context-frame, --inspect](https://nodejs.org/docs/latest-v24.x/api/cli.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation, async-hook-per-resource, source-maps-on-hot-stacks; Lookup notes. [^node-cli]
 - [Thread pool work scheduling](https://docs.libuv.org/en/v1.x/threadpool.html) — libuv project, v1.x, living. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes. [^libuv-tp]
 - [DNS: Implementation considerations](https://nodejs.org/docs/latest-v24.x/api/dns.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes, corrections. [^node-dns]
