@@ -3,9 +3,9 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17, linux arm64, pointer compression off (lab, Docker node:24.22.1-alpine on Apple M2); V8 source at tag 13.6.233.17; MDN and Vue 3 docs read 2026-11-26"]
-last-verified: 2026-11-26
-last-updated: 2026-11-26
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17, linux arm64, pointer compression off (lab, Docker node:24.22.1-alpine on Apple M2); V8 source at tag 13.6.233.17; MDN and Vue 3 docs read 2026-11-26", "Matrix re-run 2026-11-27: same V8 on macOS arm64 and emulated linux x64; Node.js 22.23.4 (V8 12.4), 25.7.0 (V8 14.1); Electron 43.7.7 as Node (V8 15.0, pointer compression on)"]
+last-verified: 2026-11-27
+last-updated: 2026-11-27
 tags: [performance, code-review, javascript, v8, turbofan, maglev, inline-caches, deoptimization, proxy, eval, prototypes]
 ranked-sources: true
 ---
@@ -42,7 +42,7 @@ Terms:
 | Protector | A global V8 flag that says "nobody changed this built-in"; while it holds, fast paths skip checks | A "no changes since inspection" seal on a machine | Writing `Array.prototype.constructor` flips `%ArraySpeciesProtector()` to false ✅[^lab] |
 | Function context | A heap object that holds a function's variables when something may read them by name | Moving your notes from your head to a shared whiteboard | A function holding a direct `eval` allocates one per call ✅[^lab] |
 
-How the lab checks work: natives such as `%GetOptimizationStatus` need `--allow-natives-syntax`, and V8 flags such as `--trace-deopt` have no stability guarantee across Node.js versions ✅[^node-cli]. Each script below runs with `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine <command>`; timings are medians of 7 or 9 runs after a warm-up, measured here on Node.js 24.22.1; the doc quotes the first run and the range of three independent re-runs, and every conclusion held in all of them.
+How the lab checks work: natives such as `%GetOptimizationStatus` need `--allow-natives-syntax`, and V8 flags such as `--trace-deopt` have no stability guarantee across Node.js versions ✅[^node-cli]. Each script below runs with `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine <command>`; timings are medians of 7 or 9 runs after a warm-up, measured here on Node.js 24.22.1; the doc quotes the first run and the range of three independent re-runs, and every conclusion held in all of them. The scripts test TurboFan with `& 64` and Maglev with `& 32`, the bits of V8 12.4 and 13.6; on V8 14.1 (Node.js 25.7.0) and V8 15.0 (Electron 43) the bits are 32 and 16, so there the scripts print `TurboFan=false` for TurboFan code ✅[^lab-matrix].
 
 ## Catalog
 
@@ -51,8 +51,8 @@ How the lab checks work: natives such as `%GetOptimizationStatus` need `--allow-
 | Class | Signals in code | Fix | Before → after | Check |
 |---|---|---|---|---|
 | `megamorphic-access-site` | One generic helper on a hot path called with many unrelated classes or literals: `getId(x)`, `serialize(entity)`, `compare(a, b)`, `deepEqual`, a visitor reading `node.kind` over many AST node classes, a loop over one array that mixes records from several factories; each shape is stable, but one site sees 5 or more | Normalize at the boundary to one class or one factory with all fields; or split the helper per type so each site sees 4 shapes or fewer (a lab limit, see Check); or keep one array per record kind | Per read a cached shape check → a generic lookup. In the lab, the site went `1 -> P` at 4 shapes and `P -> N` at 5 and at 8; the flag `--max-valid-polymorphic-map-count` defaults to 4 in V8 13.6 (printed by `node --v8-options`, defined in `flag-definitions.h`) ✅[^lab] ✅[^v8-flags]; one read with 1, 4 and 8 shapes took medians of 10.3 to 11.7, 45.2 to 54.4 and 57.5 to 67.5 ms per 10⁷ calls in six runs, measured here on Node.js 24.22.1 (the one-shape run reads the same object every step) ✅[^lab] | `node --log-ic --logfile=ic.log --no-logfile-per-isolate app.js`, then `grep ^LoadIC ic.log` for the file's line: `P -> N` before, at most `1 -> P` after ✅[^lab] |
-| `type-unstable-site` | Integer math that can leave the 32-bit range with no `\| 0` or `Math.imul` (string hashes `h = h * 31 + c`, checksums); a number variable started as `undefined`, `null` or `''` (`let total;` then `total += x`); one accumulator or parameter used for numbers on most calls and strings on some | One type per site: start numbers at `0`; convert at the input boundary (`Number(x)`); for 32-bit hash math use `Math.imul(h, 31)` and `\| 0`, which gives C-like 32-bit multiplication ✅[^mdn-imul] (a change of result, so only where wrapping is intended); separate functions for the string and number paths | A deopt when the site meets a value outside what it was compiled for, then slower general code. In the lab the unbounded hash deopted with `reason: overflow` while the `Math.imul` version stayed a Smi ✅[^lab]; a sum loop whose `+=` had once seen a string stayed slower on small integers: 0.72 to 0.78 ms against 2.08 to 2.14 ms median per 10⁶ elements in three runs, measured here ✅[^lab] | `node --trace-deopt app.js \| grep -o 'reason: [^)]*'`: no new reasons for the hot function after warm-up ✅[^lab] |
-| `oversized-function` | Generated code compiled into one function: `new Function(body)` with a body built from a schema, grammar or template; code-generator output with thousands of statements; a giant `switch` dispatch loop | Split into functions under the limit: one per rule, state or case group; make the generator emit helpers | TurboFan code → never TurboFan for that function. V8 13.6 sets `max_optimized_bytecode_size` to `60 * KB`, which `node --v8-options` prints as `--max-optimized-bytecode-size=61440` ✅[^v8-flags] ✅[^lab]; in the lab a 60,135-byte function was TurboFan-compiled, a 62,235-byte one was refused with "Function is too big to be optimized", and Maglev still compiled both ✅[^lab] | `node --trace-opt app.js \| grep 'too big'`: no line after the split; `--print-bytecode --print-bytecode-filter=<name>` prints `Bytecode length` ✅[^lab] |
+| `type-unstable-site` | Integer math that can leave the 32-bit range with no `\| 0` or `Math.imul` (string hashes `h = h * 31 + c`, checksums); a number variable started as `undefined`, `null` or `''` (`let total;` then `total += x`); one accumulator or parameter used for numbers on most calls and strings on some | One type per site: start numbers at `0`; convert at the input boundary (`Number(x)`); for 32-bit hash math use `Math.imul(h, 31)` and `\| 0`, which gives C-like 32-bit multiplication ✅[^mdn-imul] (a change of result, so only where wrapping is intended); separate functions for the string and number paths | A deopt when the site meets a value outside what it was compiled for, then slower general code. In the lab the unbounded hash deopted with `reason: overflow` while the `Math.imul` version stayed a Smi ✅[^lab]; with pointer compression on (Electron 43, V8 15.0) Smis end at 2³⁰ − 1, so a 32-bit hash between 2³⁰ and 2³¹ − 1 came back as a heap number from both functions there, without a deopt, while V8 12.4 to 14.1 without compression returned a Smi ✅[^lab-matrix]; a sum loop whose `+=` had once seen a string stayed slower on small integers: 0.72 to 0.78 ms against 2.08 to 2.14 ms median per 10⁶ elements in three runs, measured here ✅[^lab] | `node --trace-deopt app.js \| grep -o 'reason: [^)]*'`: no new reasons for the hot function after warm-up ✅[^lab] |
+| `oversized-function` | Generated code compiled into one function: `new Function(body)` with a body built from a schema, grammar or template; code-generator output with thousands of statements; a giant `switch` dispatch loop | Split into functions under the limit: one per rule, state or case group; make the generator emit helpers | TurboFan code → never TurboFan for that function. V8 13.6 sets `max_optimized_bytecode_size` to `60 * KB`, which `node --v8-options` prints as `--max-optimized-bytecode-size=61440` ✅[^v8-flags] ✅[^lab]; in the lab a 60,135-byte function was TurboFan-compiled, a 62,235-byte one was refused with "Function is too big to be optimized", and on V8 13.6 Maglev still compiled both ✅[^lab]. The TurboFan limit was the same on V8 12.4, 14.1 and 15.0; Maglev differs: off by default on V8 12.4 (Node.js 22); on V8 14.1 and 15.0, read with the new bits, the script printed `Maglev=false` for all four sizes, because its second function has the same source as the first; forced alone, Maglev compiled the 3,000-statement function on V8 14.1 but not on V8 15.0 (Electron 43, cause not isolated) ✅[^lab-matrix] | `node --trace-opt app.js \| grep 'too big'`: no line after the split; `--print-bytecode --print-bytecode-filter=<name>` prints `Bytecode length` ✅[^lab] |
 
 <details><summary>Lab: megamorphic-access-site (mega.mjs, mega.sh). One read `o.id` fed objects of 1, 4 or 8 shapes, plus 5 shapes (five.mjs)</summary>
 
@@ -186,7 +186,7 @@ Bytecode length: 125235
 
 | Class | Signals in code | Fix | Before → after | Check |
 |---|---|---|---|---|
-| `direct-eval-scope` | `eval(` called by name inside a function (not `(0, eval)(…)` or `eval?.(…)`), even on a branch that rarely runs; `with (obj) { … }` in sloppy-mode code; expression or template engines that call `eval` inside the hot function | Indirect eval, which runs in the global scope ✅[^mdn-eval], or `Function(...)` built once with the needed values as parameters ✅[^mdn-eval]; `obj[name]` for a dynamic property ✅[^mdn-eval]; for `with`, a temporary variable or destructuring ✅[^mdn-with] | Per call 0 → 2 heap allocations, and variables move from registers to a heap context. MDN says direct eval makes engines disable optimizations related to inlining ✅[^mdn-eval], and that `with` repeats the property lookup each time an identifier is used ✅[^mdn-with]; in the lab a function whose `eval` never ran allocated a function context and an arguments object per call, used 15 context-slot loads and stores, and caused 1,084 scavenges where the plain function caused 0 ✅[^lab] | `--print-bytecode --print-bytecode-filter=<fn>`: no `CreateFunctionContext` after the fix; `--trace-gc` scavenge count flat with n ✅[^lab] |
+| `direct-eval-scope` | `eval(` called by name inside a function (not `(0, eval)(…)` or `eval?.(…)`), even on a branch that rarely runs; `with (obj) { … }` in sloppy-mode code; expression or template engines that call `eval` inside the hot function | Indirect eval, which runs in the global scope ✅[^mdn-eval], or `Function(...)` built once with the needed values as parameters ✅[^mdn-eval]; `obj[name]` for a dynamic property ✅[^mdn-eval]; for `with`, a temporary variable or destructuring ✅[^mdn-with] | Per call 0 → 2 heap allocations, and variables move from registers to a heap context. MDN says direct eval makes engines disable optimizations related to inlining ✅[^mdn-eval], and that `with` repeats the property lookup each time an identifier is used ✅[^mdn-with]; in the lab a function whose `eval` never ran allocated a function context and an arguments object per call, used 15 context-slot loads and stores, and caused 1,084 scavenges where the plain function caused 0 ✅[^lab] (1,102 on V8 12.4; 542 with pointer compression on in Electron 43, cause not isolated) ✅[^lab-matrix] | `--print-bytecode --print-bytecode-filter=<fn>`: no `CreateFunctionContext` after the fix; `--trace-gc` scavenge count flat with n ✅[^lab] |
 | `proxy-in-hot-loop` | `new Proxy(` objects read in loops: Vue `reactive()` state iterated in a computed value or render over a large list, validation or logging wrappers, ORM or config objects built on `Proxy`, a tracing proxy left on in production | Read the raw object in the hot loop and keep the proxy at the boundary; in Vue 3, `toRaw()` reads without proxy access and tracking overhead, and `markRaw()` skips proxy conversion, which the page says can help when rendering large lists with immutable data sources ✅[^vue-raw]; copy the needed fields to locals once | Per property read an inline load → a call of the trap function. A proxy can intercept and redefine fundamental operations, its `get` trap intercepts property reads, and array methods also invoke `get` and `set` traps ✅[^mdn-proxy]; in the lab 10⁷ reads took 147.8 to 148.9 ms through a `get` trap against 3.6 to 4.1 ms on a plain object in three runs, measured here ✅[^lab] | CPU profile: trap frames under the hot loop before, none after; count trap calls per request: O(1) after the fix, not O(n) |
 | `for-in-over-array` | `for (const k in arr)` or `for (i in list)` over arrays, typed arrays, `arguments` or `NodeList`; `parseInt(k)` or `Number(k)` in the body; `for…in` on a hot path over objects whose prototypes carry enumerable properties | Numeric `for`, `for…of` or `forEach`, which return the index as a number ✅[^mdn-forin]; `Object.keys(obj)` for own keys only ✅[^mdn-forin] | Per element an index read → a property enumeration with a string key. `for…in` also visits inherited enumerable properties ✅[^mdn-forin]; in the lab the key was the string `"0"`, and summing 10⁴ elements 1,000 times took 153.2 to 166.1 ms with `for…in` against 5.0 to 5.3 ms with numeric `for` and 5.9 to 6.8 ms with `for…of` in three runs, measured here ✅[^lab] | Scaling test at n and 2n with both loops; or grep `for (… in` and check the type of the right-hand side |
 
@@ -339,13 +339,13 @@ viaSetPrototypeOf: 1e6 objects, median of 7 runs 76.1 ms, two objects share a ma
 </details>
 
 ## Lookup notes
-- **Sizes decide.** On V8 13.6 the flag defaults `--invocation-count-for-maglev=400` and `--invocation-count-for-turbofan=3000` (the source sets Maglev to 1000 on Android) ✅[^v8-flags] ✅[^lab]; tier-up also depends on feedback and budgets that no run here measured. Code that runs a few times per process (start-up, configuration, a CLI command) never reaches those tiers, so none of these classes is a finding there.
+- **Sizes decide.** On V8 13.6 the flag defaults `--invocation-count-for-maglev=400` and `--invocation-count-for-turbofan=3000` (the source sets Maglev to 1000 on Android) ✅[^v8-flags] ✅[^lab]; V8 12.4, 14.1 and 15.0 print the same two defaults, but Node.js 22 (V8 12.4) has Maglev off by default (`--no-maglev`) ✅[^lab-matrix]; tier-up also depends on feedback and budgets that no run here measured. Code that runs a few times per process (start-up, configuration, a CLI command) never reaches those tiers, so none of these classes is a finding there.
 - **Not a problem when.**
 
 | Class | Not a problem when |
 |---|---|
 | `megamorphic-access-site` | The helper is not hot (an admin page, start-up); the loop body does far more work than the read (I/O, a regex). 2 to 4 shapes stay polymorphic, not megamorphic, but 4 shapes still cost more than one in the lab (45.2 to 54.4 against 10.3 to 11.7 ms) ✅[^lab] |
-| `type-unstable-site` | The second type arrives once at start-up and never again on the hot path; the value is legitimately a double (money in floating point, ratios): doubles throughout are one type |
+| `type-unstable-site` | The second type arrives once at start-up and never again on the hot path; the value is legitimately a double (money in floating point, ratios): doubles throughout are one type. With pointer compression on (Electron 43, V8 15.0), a 32-bit result above 2³⁰ − 1 is a heap number even with `\| 0`, but it caused no deopt in the lab ✅[^lab-matrix] |
 | `oversized-function` | The function runs once (a module body, generated start-up code); it is hot only in small helpers it calls, which are compiled on their own |
 | `direct-eval-scope` | The function is called a handful of times (a REPL, a build script); the eval is indirect, which runs in the global scope and does not read local variables ✅[^mdn-eval] |
 | `proxy-in-hot-loop` | The proxy is read a few times per request (a config object, a handler at the boundary); the loop is over a short list; the framework needs the tracking for correctness, as in a Vue template that must re-render on change |
@@ -360,10 +360,10 @@ viaSetPrototypeOf: 1e6 objects, median of 7 runs 76.1 ms, two objects share a ma
   - Arrays of `{x, y}` objects for numeric work, where typed arrays per field fit → `data-layout-locality` (`problem-classes.md`).
   - `arguments` passed on or written in sloppy mode: no class. The lab shows TurboFan still compiles such functions ✅[^lab]; spreading a large `arguments` or array into a call → `spread-args-unbounded` (`problem-classes-javascript-language.md`).
 - **Corrections found while checking the sources (2026-11-26).**
-  - Older advice says that `try`/`catch`, `arguments`, `eval`, `with`, `for…in` and closures stop a function from being optimized. On V8 13.6 TurboFan compiled every one of them ✅[^lab]. The cost of `eval` and `with` today is per-call allocation and context access (`direct-eval-scope`), not a refusal to optimize; MDN still says `with` "makes optimization impossible" ✅[^mdn-with], which the lab contradicts for V8 13.6 (TurboFan compiled the `with` function in the one-function run).
+  - Older advice says that `try`/`catch`, `arguments`, `eval`, `with`, `for…in` and closures stop a function from being optimized. On V8 13.6 TurboFan compiled every one of them ✅[^lab], and on V8 12.4, 14.1 and 15.0 too (on 14.1 and 15.0 read from bit 32) ✅[^lab-matrix]. The cost of `eval` and `with` today is per-call allocation and context access (`direct-eval-scope`), not a refusal to optimize; MDN still says `with` "makes optimization impossible" ✅[^mdn-with], which the lab contradicts for V8 13.6 (TurboFan compiled the `with` function in the one-function run).
   - `const` against `let`: identical bytecode for the same function on V8 13.6 ✅[^lab]. Not a performance choice.
-  - `forEach` against `for`: on this shape (a closure that adds to a captured `s`), `forEach` took 25.7 ms in all three runs against 5.0 to 5.3 ms for numeric `for`, while `for…of` took 5.9 to 6.8 ms, measured here ✅[^lab]. The old advice is partly true; it is not a class because the cost is a constant factor per element and the fix is a style choice. The gap seen here includes warm-up: a longer run of the same comparison found `forEach` about 1.8 to 1.9 times slower than `for` once the whole function was TurboFan code ([v8-compiler-pipeline-deep-dive.md](../../js-runtime/v8-compiler-pipeline-deep-dive.md)).
-  - MDN says a `__proto__` key in an object literal is "optimized, and can even be more performant than `Object.create`" ✅[^mdn-protochain]. In the lab function, with the prototype held in a variable, the literal took 66.6 to 75.6 ms per 10⁶ objects, about the cost of `setPrototypeOf` and 16 to 22 times `Object.create` ✅[^lab]; this is one shape on V8 13.6, and the MDN sentence is not tested for other forms.
+  - `forEach` against `for`: on this shape (a closure that adds to a captured `s`), `forEach` took 25.7 ms in all three runs against 5.0 to 5.3 ms for numeric `for`, while `for…of` took 5.9 to 6.8 ms, measured here ✅[^lab]; on V8 12.4 (Node.js 22.23.4) the gap was smaller, 9.6 to 12.4 ms against 5.2 to 6.1 ms ✅[^lab-matrix]. The old advice is partly true; it is not a class because the cost is a constant factor per element and the fix is a style choice. The gap seen here includes warm-up: a longer run of the same comparison found `forEach` about 1.8 to 1.9 times slower than `for` once the whole function was TurboFan code ([v8-compiler-pipeline-deep-dive.md](../../js-runtime/v8-compiler-pipeline-deep-dive.md)).
+  - MDN says a `__proto__` key in an object literal is "optimized, and can even be more performant than `Object.create`" ✅[^mdn-protochain]. In the lab function, with the prototype held in a variable, the literal took 66.6 to 75.6 ms per 10⁶ objects, about the cost of `setPrototypeOf` and 16 to 22 times `Object.create` ✅[^lab]; on V8 12.4 the literal took 24.8 to 27.4 ms, still about the cost of `setPrototypeOf` but only 3.3 to 3.8 times `Object.create` ✅[^lab-matrix]; this is one shape on V8 13.6, and the MDN sentence is not tested for other forms.
   - A getter is cheap on a class (about the cost of a data property in the lab) but not in an object literal (dictionary mode) ✅[^lab]: "getters are slow" and "getters are free" are both wrong as general rules.
   - Per the V8 blog post of 5 October 2017, the proxy path made at least 4 jumps between the C++ and JavaScript runtimes before a port to CodeStubAssembler ✅[^v8-proxies]; that post is old, and the lab cost above is what V8 13.6 shows.
 - **What the sources do not say.**
@@ -417,6 +417,70 @@ bytecode identical
 ```
 </details>
 
+- **Other builds and versions (2026-11-27).** Every lab script above was re-run on five more builds ✅[^lab-matrix]:
+
+| Id | Build | What differs from the baseline |
+|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17, linux arm64 Docker, pointer compression off | Baseline: the outputs above |
+| E1 | Node.js 24.22.1 on macOS 26.1 arm64 | Operating system only |
+| E2 | Node.js 24.22.1, linux x64 Docker, emulated on Apple M2 | CPU architecture, emulated; timings not judged |
+| E3 | Node.js 22.23.4, V8 12.4.254.21, macOS arm64 | Older V8 |
+| E4 | Node.js 25.7.0, V8 14.1.146.11, macOS arm64 | Newer V8 |
+| E7 | Electron 43.7.7 run as Node, V8 15.0.245.31, macOS arm64 | Newer V8, pointer compression on (Smis from −2³⁰ to 2³⁰ − 1), V8 sandbox on |
+
+| Lab (claim it backs) | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|
+| mega.sh (`P -> N` above 4 shapes, default 4, cost order 1 < 4 < 8) | same | same | differs | same | differs |
+| overflow.sh (`reason: overflow`, `Math.imul` stays a Smi, mixed sum slower) | same | differs | same | same | same |
+| big.sh (TurboFan refuses above 61,440 bytes, Maglev compiles) | same | differs | differs | differs | differs |
+| evalcost.sh (context and arguments per call, scavenges) | same | differs | differs | differs | differs |
+| access.mjs (literal getter in dictionary mode, proxy cost) | same | differs | same | differs | differs |
+| loops.mjs (`for…in` cost, string key) | same | differs | same | differs | differs |
+| protect.mjs (protectors flip, built-ins slow down) | same | same | differs | differs | differs |
+| setproto.mjs (prototype setting costs, maps shared) | same | same | same | same | same |
+| status.js, constlet.sh (corrections: TurboFan compiles, `let` = `const`) | same | differs | same | differs | differs |
+
+The flag defaults were the same on all six builds: `--max-valid-polymorphic-map-count=4`, `--max-optimized-bytecode-size=61440`, `--invocation-count-for-maglev=400`, `--invocation-count-for-turbofan=3000`. Every timing order held on E1, E3, E4 and E7 in three runs each (two noisy runs re-run alone held too); E2 timings were not judged. What differs:
+  - TurboFan bit (E4, E7): `%GetOptimizationStatus` gives TurboFan as bit 32 and Maglev as bit 16 on V8 14.1 and 15.0, against 64 and 32 on V8 12.4 and 13.6, so every `TurboFan=` line prints `false` there. Read with the new bits, every TurboFan claim held, except that the `forEach` loop function of loops.mjs was not yet TurboFan code at the end.
+  - TurboFan off (E2): this emulated x64 build prints `default: --no-turbofan`, so every `TurboFan=` line is `false`, and the `reason: overflow` deopt line showed in only 1 or 2 of 9 runs. With `--turbofan`, big.mjs and status.js gave the baseline result, and the deopt line showed in 4 of 6 runs (cause not isolated).
+  - `oversized-function`, Maglev: V8 12.4 prints "Maglev is not enabled." (Node.js 22 defaults to `--no-maglev`). On V8 14.1 and 15.0, read with bits 32 and 16, big.mjs prints `Maglev=false` for all four sizes, also for 1,000 and 2,900 statements where TurboFan succeeded: its two functions have the same source. With different source text for the second function, it got Maglev code at 1,000 statements on both builds and at 3,000 on V8 14.1 only. Forced alone, Maglev compiled 3,000 and 6,000 statements on V8 14.1 but not on V8 15.0 (cause not isolated). The TurboFan limit and the bytecode lengths were the same everywhere.
+  - `type-unstable-site`, pointer compression (E7): the doc's script gives the baseline output (the 40-character hash is 1,042,809,472, under 2³⁰). A key whose hash is 1,183,338,240 returned a heap number from both functions on E7 and a Smi on E1, E3 and E4; no deopt either way.
+  - `direct-eval-scope`, scavenges: 1,084 on V8 13.6 and 14.1, 1,102 on V8 12.4, 542 on E7 (cause not isolated). Bytecode, allocations and the 15 context-slot accesses were the same.
+  - Timing ratios that changed: on V8 12.4 `forEach` was about twice numeric `for` (baseline about five times), and the `__proto__` literal 3.3 to 3.8 times `Object.create` (baseline 16 to 22). The `Object.prototype[0]` patch slowed `a.slice()` on V8 13.6 (E0, E1) but not on V8 12.4, 14.1 or 15.0; `a.map(f)` slowed on every build.
+  - Output only, no claim changes: V8 12.4 lists another flag after `--max-valid-polymorphic-map-count` in the `grep -A1`; E7 logs an extra `X -> X` line in the five.mjs IC list; the hash deopt prints once or twice from run to run.
+
+<details><summary>Lab matrix: outputs that differ, and the probes (status-bits.mjs, big-maglev.mjs, overflow-pc.mjs)</summary>
+
+```js
+// status-bits.mjs: raw status after a forced TurboFan and a forced Maglev compile
+const f = function (x) { return x + 1; }, g = function (x) { return x + 2; };
+%PrepareFunctionForOptimization(f); f(1); f(2); %OptimizeFunctionOnNextCall(f); f(3);
+%PrepareFunctionForOptimization(g); g(1); g(2); %OptimizeMaglevOnNextCall(g); g(3);
+const bits = (v) => [...Array(20).keys()].filter((b) => v & (1 << b)).map((b) => 1 << b).join('+');
+console.log(`TurboFan-forced: ${%GetOptimizationStatus(f)} = ${bits(%GetOptimizationStatus(f))} | Maglev-forced: ${%GetOptimizationStatus(g)} = ${bits(%GetOptimizationStatus(g))}`);
+```
+```js
+// big-maglev.mjs <k>: Maglev forced alone on one function of k statements
+const k = Number(process.argv[2]);
+const g = new Function('i', 'let s = 0;\n' + Array.from({ length: k }, (_, j) => `s = (s + i * ${j}) | 0;`).join('\n') + '\nreturn s;');
+%PrepareFunctionForOptimization(g); g(1); g(2); %OptimizeMaglevOnNextCall(g); g(3);
+console.log(`${k} statements, Maglev forced alone: status ${%GetOptimizationStatus(g)}`);
+```
+The different-source probe is big.mjs with a different comment (`/*a*/`, `/*b*/`) at the start of each function body. overflow-pc.mjs is overflow.mjs with `long` replaced by `mid = '(((((('` and the last line printing `hashGrow(mid)` too. Each command is `node --allow-natives-syntax <script>` on the build named; E2 is `docker run --rm --network none --platform linux/amd64 … node:24.22.1-alpine-amd64 node …`.
+```text
+status-bits.mjs   E0, E1, E3: TurboFan-forced: 81 = 1+16+64 | Maglev-forced: 49 = 1+16+32 (E3: 129 = 1+128, "Maglev is not enabled.")
+status-bits.mjs   E4, E7:     TurboFan-forced: 41 = 1+8+32 | Maglev-forced: 25 = 1+8+16
+status-bits.mjs   E2:         TurboFan-forced: 129 = 1+128 | Maglev-forced: 49 = 1+16+32
+big.sh            E3: Maglev is not enabled. / 1000 statements: TurboFan=true Maglev=false … 3000 statements: TurboFan=false Maglev=false
+big.sh, bits 32/16, E4 and E7: 1000 and 2900 statements: TurboFan=true Maglev=false | 3000 and 6000 statements: TurboFan=false Maglev=false
+big.sh, second function with different source text: E4: 1000 and 3000 statements Maglev=true | E7: 1000 Maglev=true, 3000 Maglev=false
+big-maglev.mjs 3000 and 6000   E4: status 25 (Maglev) | E7: status 65 (interpreted)
+overflow-pc.mjs   E1, E3, E4: mid key hash 1183338240 | hashGrow(mid) is a small integer: true | hashInt32(mid) is a small integer: true
+overflow-pc.mjs   E7:         mid key hash 1183338240 | hashGrow(mid) is a small integer: false | hashInt32(mid) is a small integer: false
+protect.mjs       patch=elements, a.slice(): E1 585.8 to 653.9 ms | E3 10.6 to 11.6 ms | E4 1.4 to 2.4 ms | E7 0.7 to 1.7 ms
+```
+</details>
+
 **Calibration state (2026-11-26).** Each class of this catalog has one known-bad sample in round 3 of the review-agent calibration, and some of its "Not a problem when" rows have a trap sample. In that round (one run per arm) the agent with the skill filed all 96 planted problems of the thirteen domain catalogs under the right class id, and without the skill 86 of them. Results per catalog, and the limits of the round: [perf-reviewer-calibration.md](perf-reviewer-calibration.md) §6.5.
 
 ## Takeaways
@@ -425,10 +489,12 @@ bytecode identical
 - Folklore about `try`/`catch`, `arguments`, `const` and closures blocking optimization is out of date for V8 13.6; ask for a lab run or a profile before accepting such a change.
 
 ## Verification status
-- Verified: 61 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- Verified: 71 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Matrix re-run on 2026-11-27: 9 lab scripts on 5 more builds, 117 lab runs (three per script on E1, E3, E4 and E7, one on E2); of 45 script-and-build cells 22 same, 23 differ, 0 could not run, plus four probes. Still not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0.
 
 ## References
-- Lab run — Docker image `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Maglev on) on Apple M2, `--network none`, 2026-11-26; scripts and outputs are in the `<details>` blocks of this doc. No other V8 version, architecture or build was run. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab run — Docker image `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Maglev on) on Apple M2, `--network none`, 2026-11-26; scripts and outputs are in the `<details>` blocks of this doc. Other builds: see the next line. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab matrix — the same scripts plus four probes on E1 (Node.js 24.22.1, macOS 26.1 arm64), E2 (Node.js 24.22.1, linux x64 Docker emulated on Apple M2), E3 (Node.js 22.23.4, V8 12.4.254.21-node.57, macOS arm64), E4 (Node.js 25.7.0, V8 14.1.146.11-node.20, macOS arm64) and E7 (Electron 43.7.7 as Node, V8 15.0.245.31-electron.0, pointer compression and V8 sandbox on, macOS arm64), compared with the baseline E0 above, 2026-11-27. Rank 1 (primary measurement). Backs: Scope; Catalog, type-unstable-site, oversized-function, direct-eval-scope; Lookup notes. [^lab-matrix]
 - [V8 src/runtime/runtime.h, OptimizationStatus](https://github.com/v8/v8/blob/13.6.233.17/src/runtime/runtime.h) — V8 project, tag 13.6.233.17. Rank 1. Backs: Scope, terms. [^v8-runtime]
 - [V8 src/ic/ic.cc, TransitionMarkFromState](https://github.com/v8/v8/blob/13.6.233.17/src/ic/ic.cc) — V8 project, tag 13.6.233.17. Rank 1. Backs: Scope, terms. [^v8-ic]
 - [V8 src/flags/flag-definitions.h](https://github.com/v8/v8/blob/13.6.233.17/src/flags/flag-definitions.h) — V8 project, tag 13.6.233.17. Rank 1. Backs: Catalog, megamorphic-access-site, oversized-function; Lookup notes. [^v8-flags]

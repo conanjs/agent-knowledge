@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: js-runtime
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17 (official build: pointer compression off, 32-bit small integers), image node:24.22.1-alpine, linux arm64, in Docker on an Apple M2", "V8 source at tag 13.6.233.17; older tags only where named", "lab runs of 2026-11-26"]
-last-updated: 2026-11-26
-last-verified: 2026-11-26
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17 (official build: pointer compression off, 32-bit small integers), image node:24.22.1-alpine, linux arm64, in Docker on an Apple M2", "V8 source at tag 13.6.233.17; older tags only where named", "lab runs of 2026-11-26", "matrix re-run 2026-11-27: macOS arm64 Node.js 24.22.1, linux x64 (emulated) Node.js 24.22.1, Node.js 22.23.4 (V8 12.4), Node.js 25.7.0 (V8 14.1), Electron 43.7.7 as Node (V8 15.0, pointer compression on)"]
+last-updated: 2026-11-27
+last-verified: 2026-11-27
 synthesized-into: []
 tags: [v8, node, performance, memory, smi, heap-number, pointer-compression, field-representation, slack-tracking, dictionary-mode, elements-kinds, typed-arrays, strings, cons-string, sliced-string, map, set, proxy]
 ranked-sources: true
@@ -13,7 +13,7 @@ ranked-sources: true
 # How V8 stores values, objects, arrays and strings (Node.js 24)
 
 ## Summary
-**TL;DR:** In Node.js 24.22.1 (V8 13.6), a number is stored either as a small integer inside the pointer itself (a Smi, from -2³¹ to 2³¹-1 in this build) or as a separate 16-byte heap number; an object keeps its first properties inside itself and the rest in a side array, until a `delete`, an accessor in a literal, or too many computed keys turn it into a hash table (dictionary mode) ✅[^lab]. Arrays carry an elements kind that only moves from specific to general (small integers → doubles → anything, packed → holey) ✅[^v8-elements], with one new exception in this build: `fill()` over the whole array makes a holey array packed again ✅[^lab]. Strings are one-byte or two-byte, and `+` and `slice` build ropes and slices that point at other strings, so a 20-character slice can keep a 10 MB parent alive ✅[^lab].
+**TL;DR:** In Node.js 24.22.1 (V8 13.6), a number is stored either as a small integer inside the pointer itself (a Smi, from -2³¹ to 2³¹-1 in this build; from -2³⁰ to 2³⁰-1 where pointer compression is on, as in Electron ✅[^lab-matrix] and, per the V8 team, Chrome ✅[^v8-dev-80]) or as a separate 16-byte heap number; an object keeps its first properties inside itself and the rest in a side array, until a `delete`, an accessor in a literal, or too many computed keys turn it into a hash table (dictionary mode) ✅[^lab]. Arrays carry an elements kind that only moves from specific to general (small integers → doubles → anything, packed → holey) ✅[^v8-elements], with one new exception in this build: `fill()` over the whole array makes a holey array packed again ✅[^lab] (not yet in V8 12.4, Node.js 22 ✅[^lab-matrix]). Strings are one-byte or two-byte, and `+` and `slice` build ropes and slices that point at other strings, so a 20-character slice can keep a 10 MB parent alive ✅[^lab].
 **Use this when:** you want to know what memory layout and which fast or slow mode your objects, arrays, strings, `Map`s and typed arrays get in Node.js 24; you review code that uses `delete`, computed keys, `new Array(n)`, holes, string building or `Proxy`; you want to check a piece of popular V8 advice against a real run.
 **Depth:** tagged values and pointer compression in this build; field representations and double boxing; in-object and out-of-object properties and slack tracking; every way into and out of dictionary mode that was tested, with the thresholds; integer-like keys; the elements-kinds lattice step by step, holes, `new Array(n)`, `Array.from`, `fill`, `length = 0`, sparse arrays; typed arrays and where their bytes live; string representations; `Map` and `Set` against objects; literals, spread, `Object.assign`, classes and prototypes; getters, setters and `Proxy`; bytes per element for each representation; nine corrections of popular advice. Each lab script and its output is embedded. Shapes, transitions and inline caches are in [V8 hidden classes and inline caches](v8-hidden-classes.md) and are not repeated; compiler tiers and deoptimization are in [the compiler pipeline deep dive](v8-compiler-pipeline-deep-dive.md); garbage collection and what keeps memory alive are in [the memory and startup deep dive](v8-memory-and-startup-deep-dive.md).
 
@@ -27,8 +27,8 @@ Think of the V8 heap as a warehouse. Every slot on a shelf is one machine word (
 |---|---|---|---|
 | Tagged value | A machine word that holds either a small integer or a pointer, told apart by its lowest bit ✅[^v8-ptrcomp] | A label that is either a number written on it, or a shelf address | `%DebugPrint(42)` prints `Smi: 0x2a (42)` ✅[^lab] |
 | Smi (small integer) | An integer stored inside the tagged word itself, with no box ✅[^v8-ptrcomp] | Writing the price on the tag instead of in a separate book | `2 ** 31 - 1` is a Smi, `2 ** 31` is not ✅[^lab] |
-| Heap number | A 16-byte box holding one 64-bit floating-point number | A small envelope holding one figure | `1.5` prints as `<HeapNumber 1.5>` ✅[^lab] |
-| Pointer compression | A build option that stores pointers in 32 bits inside a 4 GB region ✅[^v8-ptrcomp] | Writing shelf numbers with fewer digits because the warehouse is small | Off in the official Node.js 24 build: `v8_enable_pointer_compression: 0` ✅[^lab] |
+| Heap number | A 16-byte box holding one 64-bit floating-point number (12 bytes with pointer compression, Electron 43 ✅[^lab-matrix]) | A small envelope holding one figure | `1.5` prints as `<HeapNumber 1.5>` ✅[^lab] |
+| Pointer compression | A build option that stores pointers in 32 bits inside a 4 GB region ✅[^v8-ptrcomp] | Writing shelf numbers with fewer digits because the warehouse is small | Off in the official Node.js 24 build: `v8_enable_pointer_compression: 0` ✅[^lab]; on in Electron 43: `1` ✅[^lab-matrix] (§3.1) |
 | Map (hidden class, shape) | The layout record every heap object points to; explained in [v8-hidden-classes.md](v8-hidden-classes.md) | The floor plan of a box | `{x, y}` and `{y, x}` have different maps ✅[^lab] |
 | Field representation | What kind of value a property slot has held so far: None, Smi, Double, HeapObject or Tagged (anything) ✅[^v8-fields] | A shelf marked "coins only", then "coins or notes" | `x` goes Smi → Double → Tagged in `--trace-generalization` as `s` → `d` → `t` ✅[^lab] |
 | In-object property | A property stored in a slot inside the object itself ✅[^v8-fastprops] | A pocket sewn into the coat | `{}` has 4 in-object slots ✅[^lab] |
@@ -122,7 +122,7 @@ Output:
 
 </details>
 
-Two tracing flags exist but did not show this script's own changes in this release build: `--trace-normalization` printed nothing for a `delete`, and `--trace-elements-transitions` printed two transitions of arrays inside Node.js's startup code, before the script ran, and nothing for the script's `push(4.5)` and `push('x')` ✅[^lab]. The natives are more reliable here.
+Two tracing flags exist but did not show this script's own changes in this release build: `--trace-normalization` printed nothing for a `delete`, and `--trace-elements-transitions` printed two transitions of arrays inside Node.js's startup code, before the script ran, and nothing for the script's `push(4.5)` and `push('x')` ✅[^lab]. Node.js 22.23.4 (V8 12.4) printed one startup transition and Electron 43 none; neither printed anything for the script ✅[^lab-matrix]. The natives are more reliable here.
 
 <details>
 <summary>Lab: <code>silent.mjs</code></summary>
@@ -174,7 +174,7 @@ The map ties these together: it records the field representations, where each pr
 
 **Why it helps.** A Smi needs no allocation and no pointer chase, so integer counters, indexes and small IDs cost nothing beyond their slot.
 
-**Code that keeps it working.** Integers between -2 147 483 648 and 2 147 483 647. **Code that defeats it.** Values like `2 ** 31`, `1.5`, `-0` or `NaN`; each needs a heap number when it is stored in a generic slot ✅[^lab].
+**Code that keeps it working.** Integers between -2 147 483 648 and 2 147 483 647 (between -1 073 741 824 and 1 073 741 823 where pointer compression is on). **Code that defeats it.** Values like `2 ** 31`, `1.5`, `-0` or `NaN`; each needs a heap number when it is stored in a generic slot ✅[^lab].
 
 **See it yourself.**
 
@@ -213,7 +213,132 @@ pointer compression: 0 | 31-bit Smis on 64-bit: 0
 
 </details>
 
-**Since when.** Pointer compression shipped in V8 in 2020; the post of 30 March 2020 reports a V8 heap up to 43 % smaller in its browsing tests (a ceiling, varying by website) ✅[^v8-ptrcomp]; the Node.js 24 build used here does not enable it ✅[^lab].
+**Pointer compression, in plain words.** On a 64-bit machine a full pointer is 8 bytes. Pointer compression keeps the whole V8 heap inside one 4 GB region and stores each pointer in 32 bits, as a position inside that region ✅[^v8-ptrcomp]. Analogy: a full postal address is long, but inside one building a room number is enough. Example: an array of 1 000 000 small integers took 8.0 bytes per element on the official Node.js 24 build and 4.0 in Electron 43, which has pointer compression on ✅[^lab] ✅[^lab-matrix] (§4.1). What it changes:
+
+- **Slot size.** Every tagged slot is 4 bytes instead of 8, so objects, pointer arrays, `Map`s and `Set`s take about half the heap; raw data does not shrink: double arrays stayed at 8 bytes per element and string characters at 1 or 2 bytes ✅[^lab-matrix] (§4.1).
+- **Heap limit.** A heap inside a 4 GB region cannot grow past 4 GB. Node.js's build option says it "limits max heap to 4GB" ✅[^node-configure], and Electron names the 4 GB cap as the main downside ✅[^electron-cage]. The cap that pointer compression puts on the heap was measured on the 16 GiB macOS host: with `--max-old-space-size=8192` and `--max-old-space-size=16384`, `heap_size_limit` followed the flag on Node.js 24.22.1 and 25.7.0 (8,384 and 16,576 MiB) and stayed at 4,192 MiB on Electron 43.7.7 (V8 15.0) and at 4,096 MiB on Electron 38.8.6 (V8 14.0), the two builds with pointer compression on ✅[^lab-matrix]. Both Electron builds also have the V8 sandbox on, so these runs alone do not separate the two; the two sources above name pointer compression.
+- **Small integers.** A Smi must fit, with its tag bit, in the 32-bit compressed word, so its payload drops from 32 bits to 31 ✅[^v8-ptrcomp].
+- **Memory saved, as reported.** The V8 team measured the V8 heap up to 43 % smaller, and Chrome's renderer process memory up to 20 % smaller on desktop, in its browsing tests (post of 30 March 2020; "up to" figures; the renderer figure is for browsing on Windows 10) ✅[^v8-ptrcomp]. The V8 8.0 release post (18 December 2019) gives an average saving of 40 % ✅[^v8-release-80]. These are browser figures; no whole Node.js application was measured here.
+
+**The small-integer width in each case.** The V8 header `include/v8-internal.h` at tag 13.6.233.17 defines two schemes: `SmiTagging<8>` with `kSmiValueSize = 32` and `SmiTagging<4>` with `kSmiValueSize = 31`. The tagged size is 4 bytes when `V8_COMPRESS_POINTERS` is defined and 8 bytes otherwise, and a separate macro, `V8_31BIT_SMIS_ON_64BIT_ARCH`, forces the 31-bit scheme even without compression ✅[^v8-internal]. With n payload bits the range is -2ⁿ⁻¹ to 2ⁿ⁻¹ - 1:
+
+| Build | Smi payload | Smallest Smi | Largest Smi | Seen in the runs |
+|---|---|---|---|---|
+| 64-bit, pointer compression off | 32 bits ✅[^v8-internal] | -2 147 483 648 (-2³¹) | 2 147 483 647 (2³¹ - 1) | Node.js 22.23.4, 24.22.1 (linux arm64, macOS arm64, linux x64) and 25.7.0 ✅[^lab] ✅[^lab-matrix] |
+| pointer compression on | 31 bits ✅[^v8-internal] | -1 073 741 824 (-2³⁰) | 1 073 741 823 (2³⁰ - 1) | Electron 43.7.7 (V8 15.0) and an Electron build with V8 14.0 ✅[^lab-matrix] |
+
+**The default when you run Node.js normally: off.** In Node.js, pointer compression is chosen when Node.js is compiled, not when it runs. The `configure` option is `--experimental-enable-pointer-compression`, marked experimental, and its help text says it "limits max heap to 4GB and breaks ABI compatibility" ✅[^node-configure]. ABI (application binary interface) compatibility is what lets an already-compiled native add-on load; a build with the option needs add-ons compiled for it. The option sets the build variables `v8_enable_pointer_compression` and `v8_enable_31bit_smis_on_64bit_arch` to 1 when it is passed and to 0 otherwise ✅[^node-configure]; there is no run-time flag for it. Every official build run here reports 0 ✅[^lab-matrix]. No official release line has changed that default as far as the changelogs read show: the v24.0.0 and v24.2.0 release notes list only build changes and fixes for pointer-compression builds, and `CHANGELOG_V25.md`, read in full, only removes a build define in 25.1.0 ✅[^node-changelogs]. `CHANGELOG_V24.md` and `CHANGELOG_V26.md` were read only in part when the research notes were written (their first 100 000 characters, of about 824 000 and 548 000). A keyword search of both whole files on 2026-11-27 ("pointer compression", "ptr compression", `V8_COMPRESS_POINTERS`, "Smis") found only build entries in `CHANGELOG_V24.md` (the two above, the removed define, and one that turns off the shared cage on non-64-bit builds) and nothing in `CHANGELOG_V26.md`; that is a search, not a line-by-line read. No run here used a Node.js build with pointer compression on; only Electron was run with it.
+
+**How to check a given binary.**
+
+```sh
+node -p "process.config.variables.v8_enable_pointer_compression"
+```
+
+It prints `0` for off and `1` for on. The Node.js docs say `process.config` holds the configure options the executable was compiled with, the same as its `config.gypi` file ✅[^node-process-config]; they do not list or explain this field, so its meaning comes from `configure.py` ✅[^node-configure]. A second check that does not rely on the build record is the small-integer probe below: `%IsSmi(2 ** 30)` is `true` with compression off and `false` with it on. The second check matters: Electron 43 reports `v8_enable_pointer_compression: 1` but `v8_enable_31bit_smis_on_64bit_arch: 0`, yet its Smis are 31-bit, as the header predicts for 4-byte tagged words ✅[^lab-matrix] ✅[^v8-internal].
+
+**Where it is on.**
+
+- **Chrome:** on by default since Chrome 80; a V8 team member wrote on the v8-dev list on 20 February 2020 that Chrome 80 enabled it, and with it 31-bit Smis ✅[^v8-dev-80]. Chrome was not run here.
+- **Electron:** on since Electron 14, per the Electron blog of 30 June 2022 ✅[^electron-cage]. Measured on 2026-11-27: Electron 43.7.7 (V8 15.0.245.31) and a second Electron build on the same machine (V8 14.0.365.10, Node.js 22.22.0 API), both in Node mode, both with 31-bit Smis and `v8_enable_pointer_compression: 1` ✅[^lab-matrix].
+- **Deno:** off, from its source configuration: Deno's `Cargo.toml` takes its V8 crate with `default-features = false`, and the `rusty_v8` build script passes `v8_enable_pointer_compression=false` unless the Cargo feature of that name, or the sandbox feature, is set ✅[^deno-build]. A run agrees: Deno 2.9.8 (V8 15.0.245.2) in its container image on linux arm64, started with `--v8-flags=--allow-natives-syntax`, gave the 32-bit range with the `smi.js` probe (2³⁰ and 2³¹ − 1 are small integers, 2³¹ is not) ✅[^lab-matrix].
+
+**Node.js builds with it on.** The Node.js project's unofficial-builds site publishes some: `node-v24.22.3-linux-x64-pointer-compression` and `node-v24.22.3-linux-riscv64-pointer-compression` (each as `.tar.gz` and `.tar.xz`, 12 November 2026), and the same two for v26.13.1 (11 November 2026) ✅[^node-unofficial]. Its README also lists an arm64 variant, but the v24.22.3 and v26.13.1 folders hold no arm64 pointer-compression file ✅[^node-unofficial]. None of these builds was downloaded or run here. The official Docker images (`library/node`) have no pointer-compression tag ✅[^docker-node].
+
+**What to take from it.** An integer from 2³⁰ (1 073 741 824) to 2³¹ - 1 (2 147 483 647), or from -2³¹ to -2³⁰ - 1, is a Smi on an official Node.js build and a heap number in Electron ✅[^lab-matrix] (and in Chrome, by the V8 team's statement that Chrome has 31-bit Smis ✅[^v8-dev-80]; Chrome was not run). Code tuned on one can therefore behave differently on the other: a field or array holding such values stays on the Smi path in Node.js and holds boxed numbers in Electron, and pointer-heavy structures take about half the heap in Electron (§4.1).
+
+<details>
+<summary>Lab: <code>smi.js</code> (six builds, 2026-11-27)</summary>
+
+```sh
+docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node --allow-natives-syntax smi.js                                     # E0
+~/.nvm/versions/node/v24.22.1/bin/node --allow-natives-syntax smi.js                                                                              # E1
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax smi.js       # E2
+~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax smi.js                                                                              # E3
+~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax smi.js                                                                               # E4
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax smi.js                                    # E7
+```
+
+```js
+// Which integers are stored as small integers (Smi) in this build?
+const tests = [
+  ['2**30 - 1', 2 ** 30 - 1], ['2**30', 2 ** 30], ['2**31 - 1', 2 ** 31 - 1], ['2**31', 2 ** 31],
+  ['-(2**30)', -(2 ** 30)], ['-(2**30) - 1', -(2 ** 30) - 1], ['-(2**31)', -(2 ** 31)], ['-(2**31) - 1', -(2 ** 31) - 1],
+];
+const where = typeof Deno !== 'undefined' ? `deno ${Deno.version.deno} v8 ${Deno.version.v8} ${Deno.build.os} ${Deno.build.arch}`
+  : `node ${process.version} v8 ${process.versions.v8} ${process.platform} ${process.arch} pointer_compression=${process.config.variables.v8_enable_pointer_compression}`;
+console.log(where);
+for (const [label, v] of tests) console.log(label.padEnd(14), String(v).padStart(12), 'IsSmi =', %IsSmi(v));
+```
+
+Output (one block per build, headed by its id):
+
+```text
+##### E0
+node v24.22.1 v8 13.6.233.17-node.58 linux arm64 pointer_compression=0
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = true
+2**31 - 1        2147483647 IsSmi = true
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = true
+-(2**31)        -2147483648 IsSmi = true
+-(2**31) - 1    -2147483649 IsSmi = false
+##### E1
+node v24.22.1 v8 13.6.233.17-node.58 darwin arm64 pointer_compression=0
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = true
+2**31 - 1        2147483647 IsSmi = true
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = true
+-(2**31)        -2147483648 IsSmi = true
+-(2**31) - 1    -2147483649 IsSmi = false
+##### E2
+node v24.22.1 v8 13.6.233.17-node.58 linux x64 pointer_compression=0
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = true
+2**31 - 1        2147483647 IsSmi = true
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = true
+-(2**31)        -2147483648 IsSmi = true
+-(2**31) - 1    -2147483649 IsSmi = false
+##### E3
+node v22.23.4 v8 12.4.254.21-node.57 darwin arm64 pointer_compression=0
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = true
+2**31 - 1        2147483647 IsSmi = true
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = true
+-(2**31)        -2147483648 IsSmi = true
+-(2**31) - 1    -2147483649 IsSmi = false
+##### E4
+node v25.7.0 v8 14.1.146.11-node.20 darwin arm64 pointer_compression=0
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = true
+2**31 - 1        2147483647 IsSmi = true
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = true
+-(2**31)        -2147483648 IsSmi = true
+-(2**31) - 1    -2147483649 IsSmi = false
+##### E7
+node v24.21.0 v8 15.0.245.31-electron.0 darwin arm64 pointer_compression=1
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = false
+2**31 - 1        2147483647 IsSmi = false
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = false
+-(2**31)        -2147483648 IsSmi = false
+-(2**31) - 1    -2147483649 IsSmi = false
+```
+
+</details>
+
+**Since when.** Pointer compression shipped with V8 8.0 and Chrome 80 (December 2019 to February 2020) ✅[^v8-release-80] ✅[^v8-dev-80]; the official Node.js builds used here do not enable it ✅[^lab] ✅[^lab-matrix].
 
 ### 3.2 Number fields: representations, boxing and generalization
 
@@ -298,7 +423,7 @@ after reading a.x, same map as b: true
 
 </details>
 
-**What it costs.** Each double field adds a 16-byte box per object in this build: `{ x }` costs 32 bytes with an integer and 48 bytes with a double, and two double fields add 32 bytes ✅[^lab]. A review re-run (two runs, 100 000 objects each, list slot subtracted) found the same 16 bytes per double at other sizes: 5 fields 64 bytes with integers and 144 with doubles (80 more), 10 fields 104 and 264 (160 more); a class instance with two fields (after slack tracking) 40 bytes with integers and 72 with doubles; `{ x: 2 ** 31 + i }`, an integer-valued number outside the Smi range, also 48 ✅[^lab].
+**What it costs.** Each double field adds a 16-byte box per object in this build: `{ x }` costs 32 bytes with an integer and 48 bytes with a double, and two double fields add 32 bytes ✅[^lab]. A review re-run (two runs, 100 000 objects each, list slot subtracted) found the same 16 bytes per double at other sizes: 5 fields 64 bytes with integers and 144 with doubles (80 more), 10 fields 104 and 264 (160 more); a class instance with two fields (after slack tracking) 40 bytes with integers and 72 with doubles; `{ x: 2 ** 31 + i }`, an integer-valued number outside the Smi range, also 48 ✅[^lab]. The same sizes were seen on Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0. With pointer compression on (Electron 43, V8 15.0) every size was smaller and the box was 12 bytes: `{ x }` 16 bytes with an integer and 28 with a double, 5 fields 32 and 92, 10 fields 52 and 172, the two-field class 20 and 44, `{ x: 2 ** 31 + i }` 28 (the scripts subtract an 8-byte list slot, which is 4 bytes there; the 4 is added back here) ✅[^lab-matrix]. That fits 4-byte slots plus a 12-byte heap number (4-byte map word, 8-byte value), but the cause was not isolated by a run.
 
 <details>
 <summary>Lab: <code>fieldmem.mjs</code> (memory: may vary by about 0.1 byte or 0.5 MB per run)</summary>
@@ -460,7 +585,7 @@ The last case in that output is a trap: a constructor that writes 30 fields with
 
 ### 3.4 Fast and dictionary mode: what switches an object, and what brings it back
 
-Dictionary mode means the object carries its own hash table of properties ✅[^v8-fastprops]. Reads still work, but they search a table instead of loading a slot at a known offset: in the lab, a million reads of `o.a` took about 0.6 ms on a fast object and about 4 ms on an object made slow by `delete` ✅[^lab] (measured here).
+Dictionary mode means the object carries its own hash table of properties ✅[^v8-fastprops]. Reads still work, but they search a table instead of loading a slot at a known offset: in the lab, a million reads of `o.a` took about 0.6 ms on a fast object and about 4 ms on an object made slow by `delete` ✅[^lab] (measured here); Node.js 22.23.4 and 25.7.0 gave the same picture (0.5 to 0.8 ms against 4.2 to 5.3 ms), but Electron 43 (V8 15.0, pointer compression on) read the dictionary-mode object in 1.41 ms in five runs, about 2.5 times the fast object, cause not isolated ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>dicttime.mjs</code> (timing: the numbers vary per run)</summary>
@@ -493,7 +618,7 @@ dictionary-mode  3.94 ms per 1,000,000 reads (median of 9 after 30 warm-up calls
 
 </details>
 
-**`delete`.** In this build every `delete` of an existing property switched the object to dictionary mode, including deleting the last property added, inside or outside a function, in a literal or in an object built by assignments; assigning `undefined` kept it fast ✅[^lab]. A review re-run on 2026-11-26 repeated the last-property case on objects built by named stores with 1, 2, 10, 50, 100, 500 and 1000 properties, on the first property of 10- and 100-property objects, on a class instance (also after slack tracking) and inside a function after `%OptimizeFunctionOnNextCall`: all went to dictionary mode (`delete-var.mjs` below). The one exception found: deleting a property the object does not have (`delete o.zzz`) left it fast ✅[^lab].
+**`delete`.** In this build every `delete` of an existing property switched the object to dictionary mode, including deleting the last property added, inside or outside a function, in a literal or in an object built by assignments; assigning `undefined` kept it fast ✅[^lab]. A review re-run on 2026-11-26 repeated the last-property case on objects built by named stores with 1, 2, 10, 50, 100, 500 and 1000 properties, on the first property of 10- and 100-property objects, on a class instance (also after slack tracking) and inside a function after `%OptimizeFunctionOnNextCall`: all went to dictionary mode (`delete-var.mjs` below). The one exception found: deleting a property the object does not have (`delete o.zzz`) left it fast ✅[^lab]. The three `delete` scripts gave the same output on V8 12.4 (Node.js 22.23.4), 14.1 and 15.0 ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>delete.mjs</code></summary>
@@ -637,8 +762,8 @@ Older V8 had a fast path that undid the last map transition when the last-added 
 | Computed keys on a literal with 30 keys / 100 keys / 300 keys | the 34th / 103rd / 1st key added |
 | Computed keys on an instance of an empty class | 26 |
 | Computed keys with `--fast-properties-soft-limit=40` (default 12) | 47 |
-| Named stores, one statement per key (`o.k0 = 0; o.k1 = 1; …`), also on top of a 10-key literal (1021 in all) | 1021 |
-| Object literal with N keys | 1021 |
+| Named stores, one statement per key (`o.k0 = 0; o.k1 = 1; …`), also on top of a 10-key literal (1021 in all) | 1021 (also on V8 12.4, 14.1 and 15.0 ✅[^lab-matrix]) |
+| Object literal with N keys | 1021 (V8 12.4 and 13.6); 128 on V8 14.1 (Node.js 25.7.0) and 15.0 (Electron 43) ✅[^lab-matrix] |
 | `Object.fromEntries` | 1021 |
 | `JSON.parse` (Smi, string or object values; 127 keys stayed fast) | 128 |
 
@@ -831,7 +956,7 @@ JSON.parse reviver, 128 keys: fast false
 
 </details>
 
-So code that builds a lookup table with computed string keys (`map['id' + i] = …`) from `{}` gets a dictionary-mode object after about 20 keys (16 added keys on a literal of up to 10 keys, 34 on a 30-key literal, 103 on a 100-key literal; the cause of this dependence on the starting size was not isolated); that is usually what you want for a real dictionary, but not for a record type. The `--max-fast-properties` flag (default 128) did not limit named stores in this run ✅[^lab].
+So code that builds a lookup table with computed string keys (`map['id' + i] = …`) from `{}` gets a dictionary-mode object after about 20 keys (16 added keys on a literal of up to 10 keys, 34 on a 30-key literal, 103 on a 100-key literal; the cause of this dependence on the starting size was not isolated); that is usually what you want for a real dictionary, but not for a record type. The `--max-fast-properties` flag (default 128) did not limit named stores in this run ✅[^lab]. On V8 14.1 (Node.js 25.7.0) and 15.0 (Electron 43), an object literal with 128 or more keys was already in dictionary mode, while named stores and `Object.fromEntries` still stayed fast up to 1020 ✅[^lab-matrix].
 
 **Accessors and `Object.defineProperty`.** ✅[^lab]
 
@@ -927,9 +1052,9 @@ HOLEY_SMI_ELEMENTS     → HOLEY_DOUBLE_ELEMENTS  → HOLEY_ELEMENTS
 - `[1, 2, 3]` is `PACKED_SMI`; `push(4.5)` makes it `PACKED_DOUBLE`; `push('x')` makes it `PACKED_ELEMENTS`.
 - Popping back to integers, `length = 0`, and pushing `1` again leave it `PACKED_ELEMENTS`: the kind never goes back up.
 - `-0`, `NaN`, `Infinity` and `2 ** 31` in an integer literal make it `PACKED_DOUBLE`, as the 2017 post says for the first three ✅[^v8-elements].
-- `[1, undefined, 3]` is `PACKED_ELEMENTS`, not holey: `undefined` is a value, not a hole.
+- `[1, undefined, 3]` is `PACKED_ELEMENTS`, not holey: `undefined` is a value, not a hole. That held on V8 12.4 to 14.1; in Electron 43 (V8 15.0) the natives report `HOLEY_DOUBLE_ELEMENTS` for it, cause not isolated ✅[^lab-matrix].
 - `map`, `filter` and `slice` start a new array at the most specific kind: `[1.5, 2.5].map(Math.round)` is `PACKED_SMI`.
-- `Array.from({ length: 3 })` (values `undefined`) and `[...new Array(3)]` are `PACKED_ELEMENTS`; `'a,b'.split(',')` is `PACKED_ELEMENTS`.
+- `Array.from({ length: 3 })` (values `undefined`) and `[...new Array(3)]` are `PACKED_ELEMENTS`; `'a,b'.split(',')` is `PACKED_ELEMENTS`. In Electron 43 (V8 15.0), `Array.from({ length: 3 })` was `HOLEY_DOUBLE_ELEMENTS` and `[...new Array(3)]` stayed `PACKED_ELEMENTS` ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>kinds.mjs</code></summary>
@@ -1028,7 +1153,7 @@ new Array(3).map(x => 0)                     HOLEY_SMI_ELEMENTS
 
 **What the engine does.** `new Array(n)` creates a holey array ✅[^v8-elements] ✅[^lab]. Writing past the end, or filling an empty array backwards, makes it holey too ✅[^lab]. Filling the holes one by one does not make it packed again: `b[3] = 4; b[4] = 5` leaves `HOLEY_SMI`, and so does `new Array(10)` filled by index ✅[^lab].
 
-**What changed.** The 2017 post said that an array, once holey, stays holey forever ✅[^v8-elements]; an update of 28 February 2025 on the same post adds an exception for `Array.prototype.fill` ✅[^v8-elements]. In this build, `fill(value)` over the whole array turns `HOLEY_SMI` into `PACKED_SMI`, for sizes from 3 to 1 000 000 and for a holey literal; a `fill` that leaves one slot empty keeps it holey ✅[^lab]. A review re-run added sizes 1, 2, 16, 17, 100, 1025, 5 000 000 and 10 000 000 (all became packed), doubles (`PACKED_DOUBLE`), strings and objects (`PACKED_ELEMENTS`), an explicit full range `fill(0, 0, 5)`, an end past the length, and a holey array with a real gap (`a[10] = 1` on `[1, 2, 3]`): all packed. Exceptions: `new Array(0).fill(0)` stays `HOLEY_SMI` (nothing to fill), and `fill(0, 1)`, which skips index 0, stays holey ✅[^lab].
+**What changed.** The 2017 post said that an array, once holey, stays holey forever ✅[^v8-elements]; an update of 28 February 2025 on the same post adds an exception for `Array.prototype.fill` ✅[^v8-elements]. In this build, `fill(value)` over the whole array turns `HOLEY_SMI` into `PACKED_SMI`, for sizes from 3 to 1 000 000 and for a holey literal; a `fill` that leaves one slot empty keeps it holey ✅[^lab]. A review re-run added sizes 1, 2, 16, 17, 100, 1025, 5 000 000 and 10 000 000 (all became packed), doubles (`PACKED_DOUBLE`), strings and objects (`PACKED_ELEMENTS`), an explicit full range `fill(0, 0, 5)`, an end past the length, and a holey array with a real gap (`a[10] = 1` on `[1, 2, 3]`): all packed. Exceptions: `new Array(0).fill(0)` stays `HOLEY_SMI` (nothing to fill), and `fill(0, 1)`, which skips index 0, stays holey ✅[^lab]. The same held on V8 14.1 and 15.0, except that in Electron 43 (V8 15.0) `new Array(5).fill(undefined)` became `HOLEY_DOUBLE`, not `PACKED_ELEMENTS`. On V8 12.4 (Node.js 22.23.4) there is no exception: every `fill` in both scripts left the array holey, as the 2017 post describes ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>fill.mjs</code></summary>
@@ -1192,7 +1317,7 @@ Object.freeze([1, 2, 3])             dictionary: false
 
 ### 3.9 Typed arrays and `ArrayBuffer`
 
-A typed array is a view over an `ArrayBuffer`: a fixed length, one element type, no holes and no kind transitions. In this build a typed array of up to 64 bytes (the source's default `kMaxSizeInHeap`) keeps its data on the V8 heap; above that the bytes are allocated outside it and show up in `process.memoryUsage().arrayBuffers` ✅[^v8-jsab] ✅[^lab], which Node.js documents as memory for `ArrayBuffer`s, also counted in `external` ✅[^node-process]. Writes convert the value to the element type: past the end is ignored, `'abc'` becomes `NaN` in a `Float64Array`, `300` becomes `44` in an `Int8Array` and `255` in a `Uint8ClampedArray` ✅[^lab].
+A typed array is a view over an `ArrayBuffer`: a fixed length, one element type, no holes and no kind transitions. In this build a typed array of up to 64 bytes (the source's default `kMaxSizeInHeap`) keeps its data on the V8 heap; above that the bytes are allocated outside it and show up in `process.memoryUsage().arrayBuffers` ✅[^v8-jsab] ✅[^lab], which Node.js documents as memory for `ArrayBuffer`s, also counted in `external` ✅[^node-process]. In Electron 43's Node mode `arrayBuffers` stayed at 0; the same script reading `external` showed the same 64-byte boundary (0 bytes for 64, 65 for 65, 0 for a `Float64Array(8)`, 72 for 9) ✅[^lab-matrix]. Writes convert the value to the element type: past the end is ignored, `'abc'` becomes `NaN` in a `Float64Array`, `300` becomes `44` in an `Int8Array` and `255` in a `Uint8ClampedArray` ✅[^lab].
 
 <details>
 <summary>Lab: <code>typed.mjs</code></summary>
@@ -1391,7 +1516,7 @@ copy is a sliced string: false
 
 </details>
 
-**String building in a loop.** Because `+=` adds a rope node instead of copying, building a string one character at a time stayed at roughly the same cost per character from 100 000 to 1 600 000 characters (7 to 15 ns per character in four runs), flattening included ✅[^lab] (measured here). A quadratic cost would have grown that per-character time sixteenfold across the range. The conclusion does not extend to larger sizes: in review re-runs of the same loop (three runs) the cost per character rose to 29 to 41 ns at 3 200 000 characters and 37 to 45 ns at 6 400 000, then levelled off at 44 to 54 ns at 12 800 000 (`concat-var.mjs` below, one more run: 34, 38 and 40 ns), a rise of about 3 to 5 times against 100 000 but far from the 128 times a quadratic cost would give. The cause of the rise was not isolated. A pattern that reads the string after every append is different: `s += 'x'; s.charCodeAt(0)` in the loop cost 154, 281, 540 and 935 ns per character at 5 000, 10 000, 20 000 and 40 000 characters in `concat-var.mjs` (116 to 960 ns in an earlier run), roughly doubling with the length, so that pattern is quadratic ✅[^lab].
+**String building in a loop.** Because `+=` adds a rope node instead of copying, building a string one character at a time stayed at roughly the same cost per character from 100 000 to 1 600 000 characters (7 to 15 ns per character in four runs), flattening included ✅[^lab] (measured here). Node.js 25.7.0 and Electron 43 agreed (Electron at 2 to 5 ns); on V8 12.4 (Node.js 22.23.4) the cost was flat only up to 400 000 characters (9 to 22 ns) and rose to 31 to 56 ns at 800 000 and 1 600 000, in five runs ✅[^lab-matrix]. A quadratic cost would have grown that per-character time sixteenfold across the range. The conclusion does not extend to larger sizes: in review re-runs of the same loop (three runs) the cost per character rose to 29 to 41 ns at 3 200 000 characters and 37 to 45 ns at 6 400 000, then levelled off at 44 to 54 ns at 12 800 000 (`concat-var.mjs` below, one more run: 34, 38 and 40 ns), a rise of about 3 to 5 times against 100 000 but far from the 128 times a quadratic cost would give. In Electron 43 the rise was about 7 to 10 times (3 to 6 ns at 100 000, 21 to 34 ns at 6 400 000 and 12 800 000) and on V8 12.4 it started at 1 600 000 ✅[^lab-matrix]. The cause of the rise was not isolated. A pattern that reads the string after every append is different: `s += 'x'; s.charCodeAt(0)` in the loop cost 154, 281, 540 and 935 ns per character at 5 000, 10 000, 20 000 and 40 000 characters in `concat-var.mjs` (116 to 960 ns in an earlier run), roughly doubling with the length, so that pattern is quadratic ✅[^lab].
 
 <details>
 <summary>Lab: <code>concat.mjs</code> (timing: the numbers vary per run)</summary>
@@ -1465,7 +1590,7 @@ read after every append, n =  40000: median 935.3 ns per character (5 runs)
 
 ### 3.11 `Map` and `Set` against plain objects
 
-`Map` and `Set` are built on an ordered hash table that keeps insertion order, compares keys with SameValueZero, and is based on the deterministic hash table attributed to Tyler Close ✅[^v8-ordered]. An object used as a key keeps its hash code in its own properties backing store, and V8 moved it there from a private symbol in 2018 (V8 6.3 and later) ✅[^v8-hash] (post of 29 January 2018). A `Map` never changes mode; an object used as a dictionary does (§3.4). With 100 000 string keys holding small integers, the lab measured about 63 bytes per entry for a dictionary-mode object, 37 for a `Map` and 26 for a `Set`; with integer keys 0 to 99 999, an object (elements) cost about 9 bytes per entry and a `Map` 37 ✅[^lab] (§4.1).
+`Map` and `Set` are built on an ordered hash table that keeps insertion order, compares keys with SameValueZero, and is based on the deterministic hash table attributed to Tyler Close ✅[^v8-ordered]. An object used as a key keeps its hash code in its own properties backing store, and V8 moved it there from a private symbol in 2018 (V8 6.3 and later) ✅[^v8-hash] (post of 29 January 2018). A `Map` never changes mode; an object used as a dictionary does (§3.4). With 100 000 string keys holding small integers, the lab measured about 63 bytes per entry for a dictionary-mode object, 37 for a `Map` and 26 for a `Set`; with integer keys 0 to 99 999, an object (elements) cost about 9 bytes per entry and a `Map` 37 ✅[^lab] (§4.1). In Electron 43, with pointer compression on, each was about half (31.5, 18.4, 13.1, 4.6 and 18.4) ✅[^lab-matrix].
 
 ### 3.12 Literals, spread, `Object.assign`, classes and prototypes
 
@@ -1545,7 +1670,7 @@ Object.freeze changes the map                                  same map: false
 
 ### 3.13 Getters, setters and `Proxy`
 
-A class getter cost the same as a plain property read in the lab, about 0.55 ms per million reads after warm-up ✅[^lab] (measured here); whether the compiler inlines it is covered in [v8-compiler-pipeline-deep-dive.md](v8-compiler-pipeline-deep-dive.md). A `Proxy` is a different object type (`JS_PROXY_TYPE`) ✅[^lab]. Reading `o.a` through one with no traps took about 10 ms per million reads, with a `get` trap about 16 ms ✅[^lab] (measured here). The post of 5 October 2017 reports that porting proxy construction to CodeStubAssembler code (V8 6.3) improved V8's JavaScript performance score for proxy construction by 49 % to 74 % ✅[^v8-proxy]; the post compares only with older V8 and does not say proxies match plain objects, and the lab above shows they do not.
+A class getter cost the same as a plain property read in the lab, about 0.55 ms per million reads after warm-up ✅[^lab] (measured here), and also on V8 12.4; on V8 14.1 (Node.js 25.7.0) the getter took 0.94 to 1.00 ms against 0.56 to 0.57 ms, and in Electron 43 0.70 to 0.74 ms against 0.56 to 0.63 ms, in five runs each ✅[^lab-matrix]; whether the compiler inlines it is covered in [v8-compiler-pipeline-deep-dive.md](v8-compiler-pipeline-deep-dive.md). A `Proxy` is a different object type (`JS_PROXY_TYPE`) ✅[^lab]. Reading `o.a` through one with no traps took about 10 ms per million reads, with a `get` trap about 16 ms ✅[^lab] (measured here). The post of 5 October 2017 reports that porting proxy construction to CodeStubAssembler code (V8 6.3) improved V8's JavaScript performance score for proxy construction by 49 % to 74 % ✅[^v8-proxy]; the post compares only with older V8 and does not say proxies match plain objects, and the lab above shows they do not.
 
 <details>
 <summary>Lab: <code>proxytime.mjs</code> (timing: the numbers vary per run)</summary>
@@ -1590,22 +1715,24 @@ proxy, get trap  15.45 ms per 1,000,000 reads (median of 9 after 30 warm-up call
 
 **Method.** For each case the script forces two full collections (`--expose-gc`, `gc()` twice), reads `process.memoryUsage().heapUsed` (or `arrayBuffers` for typed arrays), builds and keeps the structure, collects twice again and divides the growth by the element count: 1 000 000 for arrays and strings, 100 000 for the keyed collections ✅[^lab]. A warm-up case runs first and is not counted; repeated runs gave the same values to within about 0.5 byte ✅[^lab].
 
-| Representation | Bytes per element | Why |
-|---|---|---|
-| Small integers, `new Array(n).fill(0)`, then by index (`PACKED_SMI`) | 8.0 | one tagged word each, no pointer compression |
-| Small integers, `push` onto `[]` | 10.4 | the backing store grows in steps and keeps spare capacity |
-| Doubles, `PACKED_DOUBLE` | 8.0 | raw 8-byte floats, unboxed |
-| Doubles in a `PACKED_ELEMENTS` array (one string in it) | 24.0 | 8-byte pointer + 16-byte heap number per element |
-| Small integers in a `PACKED_ELEMENTS` array | 8.0 | still Smis, no boxes |
-| `Float64Array` | 8.0 (off-heap) | raw floats in the `ArrayBuffer` |
-| `Int32Array` | 4.0 (off-heap) | raw 32-bit integers |
-| One-byte string | 1.0 | 1 byte per character |
-| Two-byte string | 2.0 | 2 bytes per character |
-| Object as dictionary, 100 000 string keys | 62.9 | hash table entry: key, value, details, plus spare capacity |
-| `Map`, 100 000 string keys | 36.7 | ordered hash table entry plus bucket and chain |
-| `Set`, 100 000 string keys | 26.2 | as `Map`, without the value |
-| Object with integer keys 0 to 99 999 (elements) | 9.3 | a holey Smi row, grown in steps |
-| `Map` with integer keys 0 to 99 999 | 36.7 to 36.8 | same entry size as with string keys |
+| Representation | Bytes per element | Electron 43, pointer compression on ✅[^lab-matrix] | Why |
+|---|---|---|---|
+| Small integers, `new Array(n).fill(0)`, then by index (`PACKED_SMI`) | 8.0 | 4.0 | one tagged word each, no pointer compression |
+| Small integers, `push` onto `[]` | 10.4 | 5.2 | the backing store grows in steps and keeps spare capacity |
+| Doubles, `PACKED_DOUBLE` | 8.0 | 8.0 | raw 8-byte floats, unboxed |
+| Doubles in a `PACKED_ELEMENTS` array (one string in it) | 24.0 | 16.0 | 8-byte pointer + 16-byte heap number per element |
+| Small integers in a `PACKED_ELEMENTS` array | 8.0 | 4.0 | still Smis, no boxes |
+| `Float64Array` | 8.0 (off-heap) | not shown (`arrayBuffers` stays 0) | raw floats in the `ArrayBuffer` |
+| `Int32Array` | 4.0 (off-heap) | not shown (`arrayBuffers` stays 0) | raw 32-bit integers |
+| One-byte string | 1.0 | 1.0 | 1 byte per character |
+| Two-byte string | 2.0 | 2.0 | 2 bytes per character |
+| Object as dictionary, 100 000 string keys | 62.9 | 31.5 | hash table entry: key, value, details, plus spare capacity |
+| `Map`, 100 000 string keys | 36.7 | 18.4 | ordered hash table entry plus bucket and chain |
+| `Set`, 100 000 string keys | 26.2 | 13.1 | as `Map`, without the value |
+| Object with integer keys 0 to 99 999 (elements) | 9.3 | 4.6 | a holey Smi row, grown in steps |
+| `Map` with integer keys 0 to 99 999 | 36.7 to 36.8 | 18.4 | same entry size as with string keys |
+
+Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0 gave the values of the second column to within 0.1 byte ✅[^lab-matrix]. In Electron 43 every pointer-sized cost halved and raw data stayed the same, which fits 4-byte slots and a 12-byte heap number; the cause was not isolated by a run.
 
 <details>
 <summary>Lab: <code>mem.mjs</code> (memory: may vary by about 0.1 byte or 0.5 MB per run)</summary>
@@ -1673,7 +1800,7 @@ The "why" column is this doc's reading of the numbers, based on §3.1, §3.6, §
 
 ### 4.2 A record type, done two ways
 
-A request log record created as `{ id, ms }` in one literal, with `ms` always a fraction, stays on one map with an in-object Smi field `id` and a Double field `ms` (§3.2, §3.3). The same record built as `const r = {}; r[key] = …` in a loop over a field list, then `delete r.tmp`, is in dictionary mode from the `delete` on (§3.4), costs a hash table per object, and is read through a table search: about seven times slower per read in the §3.4 timing (0.52 to 0.59 ms against 3.9 to 4.2 ms across four runs) ✅[^lab] (measured here).
+A request log record created as `{ id, ms }` in one literal, with `ms` always a fraction, stays on one map with an in-object Smi field `id` and a Double field `ms` (§3.2, §3.3). The same record built as `const r = {}; r[key] = …` in a loop over a field list, then `delete r.tmp`, is in dictionary mode from the `delete` on (§3.4), costs a hash table per object, and is read through a table search: about seven times slower per read in the §3.4 timing (0.52 to 0.59 ms against 3.9 to 4.2 ms across four runs) ✅[^lab] (measured here); about 2.5 times in Electron 43 ✅[^lab-matrix].
 
 ## 5. Reference & invariants
 
@@ -1681,14 +1808,14 @@ Thresholds in Node.js 24.22.1 / V8 13.6.233.17, from the lab and the source at t
 
 | Item | Value | Source |
 |---|---|---|
-| Smi range | -2 147 483 648 to 2 147 483 647 | ✅[^lab] |
-| Slot size | 8 bytes (pointer compression off) | ✅[^lab] |
+| Smi range | -2 147 483 648 to 2 147 483 647; -1 073 741 824 to 1 073 741 823 with pointer compression (Electron 43) | ✅[^lab] ✅[^lab-matrix] |
+| Slot size | 8 bytes (pointer compression off); 4 bytes with it on (Electron 43, §4.1) | ✅[^lab] ✅[^lab-matrix] |
 | In-object slots of `{}` | 4 | ✅[^lab] ✅[^v8-jsobjects] |
 | In-object slots of a literal | its key count | ✅[^lab] |
 | Property array growth step | 3 slots | ✅[^v8-jsobjects] ✅[^lab] |
 | Slack tracking | used slots + 8, shrunk after 7 constructions | ✅[^v8-slack] ✅[^lab] |
 | Dictionary mode by computed keys, from `{}` | 20th key | ✅[^lab] |
-| Dictionary mode by named stores or literal keys | 1021st key | ✅[^lab] |
+| Dictionary mode by named stores or literal keys | 1021st key; for literals, 128th key on V8 14.1 and 15.0 | ✅[^lab] ✅[^lab-matrix] |
 | Dictionary mode for `JSON.parse` output | 128 keys | ✅[^lab] |
 | `--fast-properties-soft-limit` / `--max-fast-properties` defaults | 12 / 128 | ✅[^lab] |
 | Elements gap that switches to dictionary elements | 1024 empty slots | ✅[^lab] ✅[^v8-jsobjects] |
@@ -1700,8 +1827,8 @@ Thresholds in Node.js 24.22.1 / V8 13.6.233.17, from the lab and the source at t
 
 Invariants observed in every case tested ✅[^lab]:
 
-- Elements kinds only move down the lattice, except that a whole-array `fill` makes a holey array packed.
-- Dictionary elements can return to fast elements; holey kinds return to packed only through `fill`.
+- Elements kinds only move down the lattice, except that a whole-array `fill` makes a holey array packed (V8 13.6 to 15.0; not on V8 12.4 ✅[^lab-matrix]).
+- Dictionary elements can return to fast elements; holey kinds return to packed only through `fill` (V8 13.6 and later).
 - A dictionary-mode object stays slow under reads and writes, and becomes fast only when used as a prototype or copied.
 - A field representation only widens, and widening applies to every object of the shape.
 
@@ -1712,13 +1839,13 @@ Invariants observed in every case tested ✅[^lab]:
 | Belief | What the lab or the current source shows (Node.js 24.22.1, V8 13.6, 2026-11-26) |
 |---|---|
 | "`delete` always makes an object slow." | True in this build for every delete of an existing property, including the last-added one, at the sizes tried (1 to 1000 properties) ✅[^lab]; a delete of a missing property stayed fast ✅[^lab]. It was not always true: V8 up to 11.9 had a fast path that undid the last transition ✅[^v8-delete-old] ✅[^v8-delete-new]. The object comes back to fast mode when it is used as a prototype or copied with spread ✅[^lab]. |
-| "An array that becomes holey stays holey forever." | The 2017 post said so ✅[^v8-elements]. Since its 2025-02-28 update, `fill` is an exception ✅[^v8-elements], and in this build `new Array(n).fill(0)` is `PACKED_SMI` ✅[^lab]. Filling holes by index still leaves it holey ✅[^lab]. |
+| "An array that becomes holey stays holey forever." | The 2017 post said so ✅[^v8-elements]. Since its 2025-02-28 update, `fill` is an exception ✅[^v8-elements], and in this build `new Array(n).fill(0)` is `PACKED_SMI` ✅[^lab], as on V8 14.1 and 15.0; on V8 12.4 (Node.js 22.23.4) it stays `HOLEY_SMI` ✅[^lab-matrix]. Filling holes by index still leaves it holey ✅[^lab]. |
 | "Holey arrays are much slower." | Summing 1 000 000 Smis took under 1 ms whether the array was packed or holey, when no hole was actually left. In the doc's run the holey median was about 11 % above the packed one in each of 3 rounds; in 3 further runs (9 rounds) it was 8 to 11 % above in 8 rounds and 55 % above (1.15 ms against 0.74 ms) in one, so "within about 25 %" is the typical case, not a bound ✅[^lab] (measured here). The same script at 100 000 elements gave 0.08 ms for both, and at 10 000 000 elements 9.1 to 10.5 ms packed against 9.4 to 10.1 ms holey; at 1 000 and 10 000 elements the timer was too coarse to compare ✅[^lab]. The 2017 post says holey operations "require additional checks and expensive lookups on the prototype chain" but that the difference is usually too small to matter ✅[^v8-elements]. A dictionary-mode object, by contrast, was about seven times slower to read (§3.4). Arrays with real holes left in them were not timed. |
-| "Never use `new Array(n)`; always use a literal and `push`" (the 2017 post's advice ✅[^v8-elements]) and its opposite, "always preallocate with `new Array(n)`". | Building 1 000 000 Smis took 4.1 to 5.7 ms with `push`, 1.2 to 1.3 ms with `new Array(n)` filled by index and 1.8 to 2.0 ms with `new Array(n).fill(0)` first, in four runs: `push` was 3.3 to 4.3 times slower than the preallocated build ✅[^lab] (measured here). The same ratio held at 100 000 elements (0.45 to 0.50 ms against 0.13 ms) and at 10 000 000 (61.8 ms against 13.5 ms, one run); at 1 000 elements every case was 0.00 to 0.02 ms, below what this timer resolves ✅[^lab]. The 2017 post itself says the difference "is usually too small to matter" in real code ✅[^v8-elements]. Preallocation was faster to build and its result is holey, which did not slow the sum above; `push` over-allocates by about 30 % (10.4 against 8.0 bytes per element) ✅[^lab]. Preallocate when you know the length; `fill` first if you want a packed array. Neither "always" holds. |
-| "String concatenation in a loop is quadratic." | Not when the string is only flattened once at the end: `+=` builds a rope, and the per-character cost stayed flat from 100 000 to 1 600 000 characters, flattening included (it rose 3 to 5 times by 6 400 000 characters, not quadratically); it is quadratic when the string is read after every append ✅[^lab] (measured here, §3.10). |
-| "Objects with more than 128 properties become dictionaries." | Only for some ways of building them: `JSON.parse` switched at 128 keys, computed-key stores at about 20, but named stores, literals and `Object.fromEntries` stayed fast up to 1020 keys ✅[^lab]. |
-| "Double fields are stored unboxed in the object." | Not in this build: a Double field points to a 16-byte heap number, 48 bytes against 32 for `{ x }`, and 16 more per extra double field at every size tried (up to 10 fields) ✅[^lab]. The V8 page describes the box under pointer compression ✅[^v8-fields]. Double unboxing was turned off with pointer compression in 2020 ✅[^v8-ptrcomp], and Node.js 24 does not re-enable it even without pointer compression ✅[^lab]. |
-| "`%DebugPrint` shows the elements kind only in a debug build of the d8 shell." | The release Node.js 24 build prints the map, its elements kind, the in-object count and each property's location ✅[^lab] (§1.1, §3.2, §3.3). |
+| "Never use `new Array(n)`; always use a literal and `push`" (the 2017 post's advice ✅[^v8-elements]) and its opposite, "always preallocate with `new Array(n)`". | Building 1 000 000 Smis took 4.1 to 5.7 ms with `push`, 1.2 to 1.3 ms with `new Array(n)` filled by index and 1.8 to 2.0 ms with `new Array(n).fill(0)` first, in four runs: `push` was 3.3 to 4.3 times slower than the preallocated build ✅[^lab] (measured here); 2.9 to 4.3 times on Node.js 22.23.4 and 25.7.0, and 2.2 to 2.9 times in Electron 43 (2.0 to 2.6 ms against 0.78 to 1.19 ms, five runs) ✅[^lab-matrix]. The same ratio held at 100 000 elements (0.45 to 0.50 ms against 0.13 ms) and at 10 000 000 (61.8 ms against 13.5 ms, one run); at 1 000 elements every case was 0.00 to 0.02 ms, below what this timer resolves ✅[^lab]. The 2017 post itself says the difference "is usually too small to matter" in real code ✅[^v8-elements]. Preallocation was faster to build and its result is holey, which did not slow the sum above; `push` over-allocates by about 30 % (10.4 against 8.0 bytes per element) ✅[^lab]. Preallocate when you know the length; `fill` first if you want a packed array. Neither "always" holds. |
+| "String concatenation in a loop is quadratic." | Not when the string is only flattened once at the end: `+=` builds a rope, and the per-character cost stayed flat from 100 000 to 1 600 000 characters, flattening included (it rose 3 to 5 times by 6 400 000 characters, not quadratically); it is quadratic when the string is read after every append ✅[^lab] (measured here, §3.10). On V8 12.4 the flat range ended at 400 000 characters ✅[^lab-matrix]. |
+| "Objects with more than 128 properties become dictionaries." | Only for some ways of building them: `JSON.parse` switched at 128 keys, computed-key stores at about 20, but named stores, literals and `Object.fromEntries` stayed fast up to 1020 keys ✅[^lab]. On V8 14.1 and 15.0 literals also switched at 128 keys ✅[^lab-matrix]. |
+| "Double fields are stored unboxed in the object." | Not in this build: a Double field points to a 16-byte heap number, 48 bytes against 32 for `{ x }`, and 16 more per extra double field at every size tried (up to 10 fields) ✅[^lab]; with pointer compression on (Electron 43) the box is 12 bytes, 28 against 16 ✅[^lab-matrix]. The V8 page describes the box under pointer compression ✅[^v8-fields]. Double unboxing was turned off with pointer compression in 2020 ✅[^v8-ptrcomp], and Node.js 24 does not re-enable it even without pointer compression ✅[^lab]. |
+| "`%DebugPrint` shows the elements kind only in a debug build of the d8 shell." | The release Node.js 24 build prints the map, its elements kind, the in-object count and each property's location ✅[^lab] (§1.1, §3.2, §3.3), and so do Node.js 22.23.4 and 25.7.0. Electron 43 does not: there `%DebugPrint` prints one short line such as `0x… <HeapNumber 1.5>`, and Electron reports `v8_enable_object_print: 0` ✅[^lab-matrix]. |
 | "`é` or other accented letters make a string two-byte." | A character above U+00FF does (U+0100 and up); Latin-1 letters such as `é` and `ÿ` (up to U+00FF) stay one-byte ✅[^lab]. A slice of a two-byte parent stays two-byte even when its own characters are all ASCII ✅[^lab] (§3.10). |
 
 The two timings behind the holey-array and preallocation rows:
@@ -1788,18 +1915,763 @@ n =   1000000: push 4.13 ms, new Array(n) 1.24 ms, new Array(n).fill(0) 1.84 ms 
 - **Computed keys in constructors.** A constructor that loops over a field list with `this[name] = …` produces dictionary-mode instances after about 20 fields from an empty literal, 26 from an instance of an empty class ✅[^lab] (the count depends on how many in-object slots the object starts with, §3.4).
 - **A `JSON.parse` result with 128 or more keys is a dictionary** ✅[^lab]; a `Map` is cheaper per entry for large lookup tables (§4.1) ✅[^lab].
 - **Small slices of big strings.** A slice of 13 characters or more keeps its parent alive ✅[^lab] ✅[^v8-string]; copy it when the parent is large and the slice lives long.
-- **One stray value changes the whole array.** One string in a double array makes every later double a 24-byte box ✅[^lab]; one `NaN` or `-0` makes a Smi array a double array ✅[^lab] ✅[^v8-elements].
+- **One stray value changes the whole array.** One string in a double array makes every later double a 24-byte box ✅[^lab] (16 bytes with pointer compression ✅[^lab-matrix]); one `NaN` or `-0` makes a Smi array a double array ✅[^lab] ✅[^v8-elements].
 - **`Object.assign({}, x)` does not copy the shape**, `{ ...x }` does ✅[^lab]. When many copies flow into the same hot function, this decides how many shapes it sees ([v8-hidden-classes.md](v8-hidden-classes.md)).
 - **Natives are for experiments.** `%HasFastProperties` and the like work only with `--allow-natives-syntax`; this doc uses them in the lab, never in application code.
 
+### 6.3 Other builds and versions (2026-11-27)
+
+Every lab script above was re-run on 2026-11-27 on five more builds, all on one Apple M-series Mac ✅[^lab-matrix]. E0 is the baseline the rest of this doc reports.
+
+| Id | Build | What differs from the baseline |
+|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17-node.58, image `node:24.22.1-alpine`, linux arm64 | the baseline; pointer compression off |
+| E1 | Node.js 24.22.1, same V8, macOS 26.1 arm64 (the host) | operating system |
+| E2 | Node.js 24.22.1, same V8, image `node:24.22.1-alpine-amd64`, linux x64 | CPU architecture, emulated on arm64: timing scripts not run |
+| E3 | Node.js 22.23.4, V8 12.4.254.21-node.57, macOS arm64 | older V8 |
+| E4 | Node.js 25.7.0, V8 14.1.146.11-node.20, macOS arm64 | newer V8, pointer compression still off |
+| E7 | Electron 43.7.7 run as Node (`ELECTRON_RUN_AS_NODE=1`, Visual Studio Code's binary), Node.js 24.21.0 API, V8 15.0.245.31-electron.0, macOS arm64 | pointer compression on, V8 sandbox on, `v8_enable_object_print: 0`, newest V8 |
+
+A difference seen only in E7 can come from pointer compression, the sandbox, the build settings or V8 15.0; where no other run separates them, the text says "cause not isolated". Timings ran three times per build (five where they differed), with other labs running on the machine.
+
+| Script: claim | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|
+| `debugprint.mjs`: `%DebugPrint` kinds of values | same | same | same | same | cannot run |
+| `flags.mjs`: flags and defaults | same | same | same | same | same |
+| `silent.mjs`: tracing flags stay silent | same | same | differs | same | differs |
+| `values.mjs`: Smi range, build flags | same | same | same | same | differs |
+| `gen.mjs`: field generalization trace | same | same | same | same | same |
+| `fields.mjs`: double field is a HeapNumber pointer | same | same | same | same | cannot run |
+| `fieldmem.mjs`: 16-byte box per double field | same | same | same | same | differs |
+| `fieldmem-var.mjs`: box size at more sizes | same | same | same | same | differs |
+| `inobject.mjs`: in-object slots, slack tracking | same | same | same | same | cannot run |
+| `dicttime.mjs`: dictionary reads slower | same | not run | same | same | differs |
+| `delete.mjs`: `delete` makes slow; ways back | same | same | same | same | same |
+| `dellast.mjs`: last-property delete | same | same | same | same | same |
+| `delete-var.mjs`: delete variations | same | same | same | same | same |
+| `limits.mjs`: dictionary thresholds | same | same | same | differs | differs |
+| `limits2.mjs`: JSON.parse 128, fromEntries 1021 | same | same | same | same | same |
+| `soft.mjs`: computed keys: 20 | same | same | same | same | same |
+| `soft.mjs (--fast-properties-soft-limit=40)`: soft limit 40: 47 | same | same | same | same | same |
+| `limits-var.mjs`: threshold variations | same | same | same | differs | differs |
+| `acc.mjs`: accessors and fast mode | same | same | same | same | same |
+| `intkeys.mjs`: integer-like keys | same | same | same | same | same |
+| `kinds.mjs`: elements-kinds lattice | same | same | differs | same | differs |
+| `fill.mjs`: `fill` makes packed | same | same | differs | same | same |
+| `fill-var.mjs`: `fill` variations | same | same | differs | same | differs |
+| `sparse.mjs`: dictionary elements | same | same | same | same | same |
+| `typed.mjs`: typed arrays on heap up to 64 bytes | same | same | same | same | differs |
+| `strtype.mjs`: string representations | same | same | cannot run | same | cannot run |
+| `twobyte.mjs`: one-byte / two-byte boundary | same | same | same | same | cannot run |
+| `slice-keep.mjs`: slice keeps 10 MB parent | same | same | same | same | same |
+| `concat.mjs`: `+=` not quadratic | same | not run | differs | same | same |
+| `concat-var.mjs`: larger sizes, read after append | same | not run | differs | same | differs |
+| `shapes.mjs`: shared maps | same | same | same | same | same |
+| `proxytime.mjs`: getter = plain; Proxy slower | same | not run | same | differs | differs |
+| `mem.mjs`: bytes per element | same | same | same | same | differs |
+| `holey.mjs`: holey sum within about 25 % | same | not run | same | same | same |
+| `prealloc.mjs`: push slower than preallocated | same | not run | same | same | differs |
+
+Totals: 35 runs of 34 scripts on 5 builds, 175 cells: 140 same, 23 differs, 6 cannot run, 6 not run (the timing scripts on E2).
+
+"Cannot run" means: in E7 `%DebugPrint` prints one short line (`0x… <HeapNumber 1.5>`), which fits the `v8_enable_object_print: 0` that Electron reports, so the fields `debugprint.mjs`, `fields.mjs`, `inobject.mjs`, `strtype.mjs` and `twobyte.mjs` read are absent (the other lines of `strtype.mjs` matched); in E3 the native `%StringIsFlat` does not exist (`SyntaxError: StringIsFlat is not defined`), and a copy of `strtype.mjs` without those two calls matched the doc in every other line. "Same" for memory scripts means within the 0.1 byte or 0.5 MB the doc allows, except one line: `fieldmem-var.mjs` gave 32.1 bytes for `{x:i}` on every build, and on E0 again, against 27.9 in the doc, which was noise in the original run. `debugprint.mjs` and `fields.mjs` on E3 and E4 print a few more or fewer words on some lines (`[HeapNumber] in OldSpace`; no `attrs: [WEC]) @ Any` on E3); the fields the doc reads are the same.
+
+What differs:
+
+- **Smi range** (§3.1): -2³¹ to 2³¹ - 1 on E0 to E4; -2³⁰ to 2³⁰ - 1 on E7, where `2 ** 30`, `2 ** 31 - 1` and `-(2 ** 31)` are not Smis. E7 also reports `v8_enable_31bit_smis_on_64bit_arch: 0`.
+- **Tracing flags** (§1.2): two startup transitions printed on E0, one on E3, none on E7; nothing for the script's own changes anywhere.
+- **Object and double-field sizes** (§3.2): `{ x }` 32 bytes with an integer and 48 with a double on E0 to E4; 16 and 28 on E7 (12-byte box), cause not isolated.
+- **Object literal threshold** (§3.4, §5, §6.1): dictionary mode from 1021 keys on V8 12.4 and 13.6; from 128 keys on V8 14.1 (E4) and 15.0 (E7). E4 has pointer compression off, so the change came with V8 14.1 or earlier, not with compression. Named stores, `Object.fromEntries` (1021) and `JSON.parse` (128) did not change.
+- **`fill` exception** (§3.6, §3.7, §5, §6.1): whole-array `fill` makes a holey array packed on V8 13.6, 14.1 and 15.0; on V8 12.4 (E3) every `fill` left it holey.
+- **`undefined` in arrays** (§3.6, §3.7): `[1, undefined, 3]`, `Array.from({ length: 3 })` and `new Array(5).fill(undefined)` are `PACKED_ELEMENTS` on E0 to E4 and `HOLEY_DOUBLE` on E7, cause not isolated.
+- **Typed-array counter** (§3.9): `arrayBuffers` stays 0 on E7; the bytes appear in `external`, with the same 64-byte boundary.
+- **Bytes per element** (§3.11, §4.1): every pointer-sized cost about halves on E7 (Smi array 4.0, `Map` 18.4); double arrays and strings do not change.
+- **Dictionary-mode reads** (§3.4, §4.2): about 7 times slower than a fast object on E0, E1 and E3 and about 9 times on E4; about 2.5 times on E7 (1.41 ms against 0.57 ms), cause not isolated. Every timing in this list is measured here: three runs each, with other labs running on the machine.
+- **String building** (§3.10, §6.1): flat cost per character from 100 000 to 1 600 000 characters on E0, E1, E4 and E7; on E3 flat only to 400 000, then 31 to 56 ns. In `concat-var.mjs` the later rise starts at 1 600 000 on E3 and is 7 to 10 times on E7, against 3 to 5 times on E0. Reading after every append was quadratic everywhere.
+- **Getter cost** (§3.13): same as a plain read on E0, E1 and E3; 1.7 times on E4 and about 1.25 times on E7. The `Proxy` timings matched everywhere.
+- **`push` against preallocation** (§6.1): 3.3 to 4.3 times slower on E0; 2.2 to 2.9 times on E7. The order held everywhere.
+
+<details>
+<summary>Matrix: <code>values.mjs</code> on E7</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax values.mjs
+```
+
+Output:
+
+```text
+0                      Smi: true
+-0                     Smi: false
+2**30                  Smi: false
+2**31 - 1              Smi: false
+2**31                  Smi: false
+-(2**31)               Smi: false
+-(2**31) - 1           Smi: false
+1.5                    Smi: false
+NaN                    Smi: false
+3.0                    Smi: true
+2**53                  Smi: false
+pointer compression: 1 | 31-bit Smis on 64-bit: 0
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>silent.mjs</code> on E3 and E7</summary>
+
+```sh
+~/.nvm/versions/node/v22.23.4/bin/node --trace-normalization --trace-elements-transitions silent.mjs | sed -E 's/0x[0-9a-f]{6,}/0x…/g'
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --trace-normalization --trace-elements-transitions silent.mjs | sed -E 's/0x[0-9a-f]{6,}/0x…/g'
+```
+
+Output:
+
+```text
+# E3
+elements transition [PACKED_SMI_ELEMENTS -> PACKED_ELEMENTS] in from+1888 at <unknown>:<unknown> for 0x… <JSArray[0]> from 0x… <FixedArray[17]> to 0x… <FixedArray[17]>
+before delete o.b
+after delete o.b
+before push(4.5), push('x')
+after push(4.5), push('x')
+# E7
+before delete o.b
+after delete o.b
+before push(4.5), push('x')
+after push(4.5), push('x')
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>fieldmem.mjs</code> and <code>fieldmem-var.mjs</code> on E7</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc fieldmem.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc fieldmem-var.mjs
+```
+
+The scripts count or subtract an 8-byte list slot; with pointer compression the slot is 4 bytes.
+
+Output:
+
+```text
+warm-up (not counted)                    20.1 bytes per object (8 of them are the list slot)
+{ x: i } (small integer field)           20.0 bytes per object (8 of them are the list slot)
+{ x: i + 0.5 } (double field)            32.0 bytes per object (8 of them are the list slot)
+{ x: i, y: i } (two small integers)      24.0 bytes per object (8 of them are the list slot)
+{ x: i + 0.5, y: i + 0.5 } (two doubles) 48.0 bytes per object (8 of them are the list slot)
+warm-up                                      12.1 bytes per object (list slot subtracted)
+{x:i}                                        12.1 bytes per object (list slot subtracted)
+{x:i+.5}                                     24.0 bytes per object (list slot subtracted)
+{a..e: 5 ints}                               28.0 bytes per object (list slot subtracted)
+{a..e: 5 doubles}                            88.0 bytes per object (list slot subtracted)
+{a..j: 10 ints}                              48.2 bytes per object (list slot subtracted)
+{a..j: 10 doubles}                           168.0 bytes per object (list slot subtracted)
+class P, 2 ints (after slack tracking)       16.0 bytes per object (list slot subtracted)
+class Q, 2 doubles (after slack tracking)    40.0 bytes per object (list slot subtracted)
+{x: 2**31} (above Smi, integer-valued double) 24.0 bytes per object (list slot subtracted)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>limits.mjs</code>, <code>limits-var.mjs</code> and the probe <code>litprobe.mjs</code> on E4 and E7</summary>
+
+```sh
+~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax limits.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax limits.mjs
+~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax limits-var.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax limits-var.mjs
+~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax litprobe.mjs   # also on E1, E3, E7
+```
+
+The probe `litprobe.mjs`:
+
+```js
+// First object-literal key count that gives a dictionary-mode object.
+const lit = (c) => new Function(`return {${Array.from({ length: c }, (_, i) => `k${i}: ${i}`).join(',')}}`)();
+let first = 'never (1100)'; for (let c = 1; c <= 1100; c++) if (!%HasFastProperties(lit(c))) { first = c; break; }
+console.log('object literal, first key count in dictionary mode:', first);
+for (const c of [127, 128, 129, 130]) console.log(`literal ${c} keys: fast`, %HasFastProperties(lit(c)));
+```
+
+Output:
+
+```text
+# limits.mjs E4 (E7 identical)
+computed key, o["k" + i] = i       : 20
+named stores o.kN = N,   20 props : fast: true
+named stores o.kN = N,  128 props : fast: true
+named stores o.kN = N,  129 props : fast: true
+named stores o.kN = N,  200 props : fast: true
+named stores o.kN = N, 1020 props : fast: true
+named stores o.kN = N, 1021 props : fast: false
+object literal, 200 keys              : fast: false
+object literal, 1020 keys              : fast: false
+object literal, 1021 keys              : fast: false
+2000 integer keys o[i] = i           : fast properties: true | dictionary elements: false
+2000 keys "id" + i                   : fast properties: false
+JSON.parse of a 200-key object       : fast: false
+Object.fromEntries, 200 keys         : fast: true
+# limits-var.mjs E4 (E7 identical)
+literal with 0 keys, then computed keys: added until slow = 20
+literal with 1 keys, then computed keys: added until slow = 16
+literal with 3 keys, then computed keys: added until slow = 16
+literal with 10 keys, then computed keys: added until slow = 16
+literal with 30 keys, then computed keys: added until slow = 34
+literal with 100 keys, then computed keys: added until slow = 103
+literal with 300 keys, then computed keys: added until slow = 1
+instance of empty class, computed keys: 26
+Object.create({}) , computed keys: 20
+{} , Symbol-free named via Reflect.set: 20
+{} , Object.defineProperty data props: 1021
+named stores 1019: fast true
+named stores 1020: fast true
+named stores 1021: fast false
+named stores 1022: fast false
+named stores 2000: fast false
+10-key literal + 1010 named stores (1020 total): fast true
+10-key literal + 1011 named stores (1021 total): fast false
+literal 1019 keys: fast false
+literal 1020 keys: fast false
+literal 1021 keys: fast false
+literal 1022 keys: fast false
+JSON.parse 126 Smi-valued keys: fast true
+JSON.parse 127 Smi-valued keys: fast true
+JSON.parse 128 Smi-valued keys: fast false
+JSON.parse 129 Smi-valued keys: fast false
+JSON.parse 200 Smi-valued keys: fast false
+JSON.parse 128 string-valued keys: fast false
+JSON.parse 128 nested {} values: fast false
+JSON.parse 100 keys: fast true
+JSON.parse nested 200-key inner object: outer fast true inner fast false
+JSON.parse array of 3 x 200-key objects: each fast false,false,false
+JSON.parse reviver, 128 keys: fast false
+# litprobe.mjs
+== E1
+object literal, first key count in dictionary mode: 1021
+literal 127 keys: fast true
+literal 128 keys: fast true
+literal 129 keys: fast true
+literal 130 keys: fast true
+== E3
+object literal, first key count in dictionary mode: 1021
+literal 127 keys: fast true
+literal 128 keys: fast true
+literal 129 keys: fast true
+literal 130 keys: fast true
+== E4
+object literal, first key count in dictionary mode: 128
+literal 127 keys: fast true
+literal 128 keys: fast false
+literal 129 keys: fast false
+literal 130 keys: fast false
+== E7
+object literal, first key count in dictionary mode: 128
+literal 127 keys: fast true
+literal 128 keys: fast false
+literal 129 keys: fast false
+literal 130 keys: fast false
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>kinds.mjs</code> on E3 and E7</summary>
+
+```sh
+~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax kinds.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax kinds.mjs
+```
+
+Output:
+
+```text
+# E3
+[1, 2, 3]                                    PACKED_SMI_ELEMENTS
+push(4.5)                                    PACKED_DOUBLE_ELEMENTS
+push('x')                                    PACKED_ELEMENTS
+pop twice (only small integers left)         PACKED_ELEMENTS
+length = 0                                   PACKED_ELEMENTS
+then push(1)                                 PACKED_ELEMENTS
+[1, 2, 3], then b[5] = 6                     HOLEY_SMI_ELEMENTS
+fill the holes b[3], b[4]                    HOLEY_SMI_ELEMENTS
+[1, -0]                                      PACKED_DOUBLE_ELEMENTS
+[1, NaN]                                     PACKED_DOUBLE_ELEMENTS
+[1, Infinity]                                PACKED_DOUBLE_ELEMENTS
+[1, 2 ** 31]                                 PACKED_DOUBLE_ELEMENTS
+[]                                           PACKED_SMI_ELEMENTS
+new Array(3)                                 HOLEY_SMI_ELEMENTS
+new Array(3).fill(0)                         HOLEY_SMI_ELEMENTS
+Array(3).fill(1.5)                           HOLEY_DOUBLE_ELEMENTS
+Array.from({ length: 3 }, (_, i) => i)       PACKED_SMI_ELEMENTS
+Array.from({ length: 3 })                    PACKED_ELEMENTS
+Array.of(1, 2, 3)                            PACKED_SMI_ELEMENTS
+[...new Array(3)]                            PACKED_ELEMENTS
+new Array(3).map(x => 0)                     HOLEY_SMI_ELEMENTS
+[] then push 0, 1, 2                         PACKED_SMI_ELEMENTS
+[] then d[i] = i for i = 0..2                PACKED_SMI_ELEMENTS
+[] then e[2], e[1], e[0] (backwards)         HOLEY_SMI_ELEMENTS
+[1, , 3] (hole in the literal)               HOLEY_SMI_ELEMENTS
+[1, undefined, 3]                            PACKED_ELEMENTS
+[1, 2, 3].map(x => x * 1.5)                  PACKED_DOUBLE_ELEMENTS
+[1.5, 2.5].map(x => Math.round(x))           PACKED_SMI_ELEMENTS
+[1, 2, 3].filter(x => x > 1)                 PACKED_SMI_ELEMENTS
+[1, 2, 3].slice()                            PACKED_SMI_ELEMENTS
+[...[1, , 3]] (spread of holey)              PACKED_ELEMENTS
+[1.5, 2.5].concat([1])                       PACKED_DOUBLE_ELEMENTS
+'a,b'.split(',')                             PACKED_ELEMENTS
+# E7
+[1, 2, 3]                                    PACKED_SMI_ELEMENTS
+push(4.5)                                    PACKED_DOUBLE_ELEMENTS
+push('x')                                    PACKED_ELEMENTS
+pop twice (only small integers left)         PACKED_ELEMENTS
+length = 0                                   PACKED_ELEMENTS
+then push(1)                                 PACKED_ELEMENTS
+[1, 2, 3], then b[5] = 6                     HOLEY_SMI_ELEMENTS
+fill the holes b[3], b[4]                    HOLEY_SMI_ELEMENTS
+[1, -0]                                      PACKED_DOUBLE_ELEMENTS
+[1, NaN]                                     PACKED_DOUBLE_ELEMENTS
+[1, Infinity]                                PACKED_DOUBLE_ELEMENTS
+[1, 2 ** 31]                                 PACKED_DOUBLE_ELEMENTS
+[]                                           PACKED_SMI_ELEMENTS
+new Array(3)                                 HOLEY_SMI_ELEMENTS
+new Array(3).fill(0)                         PACKED_SMI_ELEMENTS
+Array(3).fill(1.5)                           PACKED_DOUBLE_ELEMENTS
+Array.from({ length: 3 }, (_, i) => i)       PACKED_SMI_ELEMENTS
+Array.from({ length: 3 })                    HOLEY_DOUBLE_ELEMENTS
+Array.of(1, 2, 3)                            PACKED_SMI_ELEMENTS
+[...new Array(3)]                            PACKED_ELEMENTS
+new Array(3).map(x => 0)                     HOLEY_SMI_ELEMENTS
+[] then push 0, 1, 2                         PACKED_SMI_ELEMENTS
+[] then d[i] = i for i = 0..2                PACKED_SMI_ELEMENTS
+[] then e[2], e[1], e[0] (backwards)         HOLEY_SMI_ELEMENTS
+[1, , 3] (hole in the literal)               HOLEY_SMI_ELEMENTS
+[1, undefined, 3]                            HOLEY_DOUBLE_ELEMENTS
+[1, 2, 3].map(x => x * 1.5)                  PACKED_DOUBLE_ELEMENTS
+[1.5, 2.5].map(x => Math.round(x))           PACKED_SMI_ELEMENTS
+[1, 2, 3].filter(x => x > 1)                 PACKED_SMI_ELEMENTS
+[1, 2, 3].slice()                            PACKED_SMI_ELEMENTS
+[...[1, , 3]] (spread of holey)              PACKED_ELEMENTS
+[1.5, 2.5].concat([1])                       PACKED_DOUBLE_ELEMENTS
+'a,b'.split(',')                             PACKED_ELEMENTS
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>fill.mjs</code> and <code>fill-var.mjs</code> on E3, <code>fill-var.mjs</code> on E7</summary>
+
+```sh
+~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax fill.mjs
+~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax fill-var.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax fill-var.mjs
+```
+
+Output:
+
+```text
+# fill.mjs E3
+new Array(3): HOLEY_SMI_ELEMENTS -> fill(0): HOLEY_SMI_ELEMENTS (same array: true)
+new Array(1000): HOLEY_SMI_ELEMENTS -> fill(0): HOLEY_SMI_ELEMENTS (same array: true)
+new Array(100000): HOLEY_SMI_ELEMENTS -> fill(0): HOLEY_SMI_ELEMENTS (same array: true)
+new Array(10).fill(0, 0, 9) (last slot left empty): HOLEY_SMI_ELEMENTS
+new Array(10), then q[i] = 0 for every i     : HOLEY_SMI_ELEMENTS
+[1, , 3].fill(7) (holey literal)              : HOLEY_SMI_ELEMENTS
+new Array(1e6)                                 : HOLEY_SMI_ELEMENTS
+new Array(1e6).fill(0)                         : HOLEY_SMI_ELEMENTS
+# fill-var.mjs E3
+new Array(0).fill(0)           HOLEY_SMI -> HOLEY_SMI
+new Array(1).fill(0)           HOLEY_SMI -> HOLEY_SMI
+new Array(2).fill(0)           HOLEY_SMI -> HOLEY_SMI
+new Array(16).fill(0)          HOLEY_SMI -> HOLEY_SMI
+new Array(17).fill(0)          HOLEY_SMI -> HOLEY_SMI
+new Array(100).fill(0)         HOLEY_SMI -> HOLEY_SMI
+new Array(1025).fill(0)        HOLEY_SMI -> HOLEY_SMI
+new Array(5000000).fill(0)     HOLEY_SMI -> HOLEY_SMI
+new Array(10000000).fill(0)    HOLEY_SMI -> HOLEY_SMI
+new Array(5).fill(1.5)                               HOLEY_DOUBLE
+new Array(5).fill('x')                               HOLEY_OBJ
+new Array(5).fill({})                                HOLEY_OBJ
+new Array(5).fill(undefined)                         HOLEY_OBJ
+new Array(5).fill(0, 0)                              HOLEY_SMI
+new Array(5).fill(0, 0, 5)                           HOLEY_SMI
+new Array(5).fill(0, 1)                              HOLEY_SMI
+new Array(5).fill(0, -5)                             HOLEY_SMI
+new Array(5).fill(0, 0, 100) (end clamped)           HOLEY_SMI
+[] length=5 fill(0)                                  HOLEY_SMI
+[1,2,3], a[10]=1, fill(0)                            HOLEY_SMI
+holey double literal fill                            HOLEY_DOUBLE
+holey object literal fill                            HOLEY_OBJ
+fill all but last                                    HOLEY_SMI
+fill all but first                                   HOLEY_SMI
+2000, fill all but last                              HOLEY_SMI
+after fill, length=10                                HOLEY_SMI
+after fill, push                                     HOLEY_SMI
+new Array(5), a[10]=1 (len 11), fill                 HOLEY_SMI
+# fill-var.mjs E7
+new Array(0).fill(0)           HOLEY_SMI -> HOLEY_SMI
+new Array(1).fill(0)           HOLEY_SMI -> PACKED_SMI
+new Array(2).fill(0)           HOLEY_SMI -> PACKED_SMI
+new Array(16).fill(0)          HOLEY_SMI -> PACKED_SMI
+new Array(17).fill(0)          HOLEY_SMI -> PACKED_SMI
+new Array(100).fill(0)         HOLEY_SMI -> PACKED_SMI
+new Array(1025).fill(0)        HOLEY_SMI -> PACKED_SMI
+new Array(5000000).fill(0)     HOLEY_SMI -> PACKED_SMI
+new Array(10000000).fill(0)    HOLEY_SMI -> PACKED_SMI
+new Array(5).fill(1.5)                               PACKED_DOUBLE
+new Array(5).fill('x')                               PACKED_OBJ
+new Array(5).fill({})                                PACKED_OBJ
+new Array(5).fill(undefined)                         HOLEY_DOUBLE
+new Array(5).fill(0, 0)                              PACKED_SMI
+new Array(5).fill(0, 0, 5)                           PACKED_SMI
+new Array(5).fill(0, 1)                              HOLEY_SMI
+new Array(5).fill(0, -5)                             PACKED_SMI
+new Array(5).fill(0, 0, 100) (end clamped)           PACKED_SMI
+[] length=5 fill(0)                                  PACKED_SMI
+[1,2,3], a[10]=1, fill(0)                            PACKED_SMI
+holey double literal fill                            PACKED_DOUBLE
+holey object literal fill                            PACKED_OBJ
+fill all but last                                    HOLEY_SMI
+fill all but first                                   HOLEY_SMI
+2000, fill all but last                              HOLEY_SMI
+after fill, length=10                                HOLEY_SMI
+after fill, push                                     PACKED_SMI
+new Array(5), a[10]=1 (len 11), fill                 PACKED_SMI
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>typed.mjs</code> on E7, and <code>typed-external.mjs</code> (the same script reading <code>external</code>)</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc --allow-natives-syntax typed.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc --allow-natives-syntax typed-external.mjs
+```
+
+Output:
+
+```text
+# typed.mjs E7
+new Uint8Array(64)             off-heap bytes per array: 0.0
+new Uint8Array(65)             off-heap bytes per array: 0.0
+new Float64Array(8)            off-heap bytes per array: 0.0
+new Float64Array(9)            off-heap bytes per array: 0.0
+Float64Array elements kind is FLOAT64: true
+write past the end, f[5] = 1 -> f.length: 2 | f[5]: undefined
+f[0] = 'abc' stores: NaN
+Int8Array: i8[0] = 300 stores: 44
+Uint8ClampedArray: c8[0] = 300 stores: 255
+# typed-external.mjs E7 (E1 gives the same four lines)
+new Uint8Array(64)             external bytes per array: 0.0
+new Uint8Array(65)             external bytes per array: 65.0
+new Float64Array(8)            external bytes per array: 0.0
+new Float64Array(9)            external bytes per array: 72.0
+Float64Array elements kind is FLOAT64: true
+write past the end, f[5] = 1 -> f.length: 2 | f[5]: undefined
+f[0] = 'abc' stores: NaN
+Int8Array: i8[0] = 300 stores: 44
+Uint8ClampedArray: c8[0] = 300 stores: 255
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>mem.mjs</code> on E7</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc --allow-natives-syntax mem.mjs
+```
+
+Output:
+
+```text
+warm-up (not counted)                                      4.0 bytes/element (heapUsed)
+small integers, new Array(N).fill(0) then a[i] = i         4.0 bytes/element (heapUsed)
+small integers, [] then push(i)                            5.2 bytes/element (heapUsed)
+doubles, new Array(N).fill(0.5) then a[i] = i + 0.5        8.0 bytes/element (heapUsed)
+doubles in a generic array (a[0] = 'x'), a[i] = i + 0.5    16.0 bytes/element (heapUsed)
+small integers in a generic array (a[0] = "x"), a[i] = i   4.0 bytes/element (heapUsed)
+new Float64Array(N)                                        0.0 bytes/element (arrayBuffers)
+new Int32Array(N)                                          0.0 bytes/element (arrayBuffers)
+one-byte string, N characters (flattened)                  1.0 bytes/element (heapUsed)
+two-byte string, N characters (flattened)                  2.0 bytes/element (heapUsed)
+object as dictionary, K string keys (values small ints)    31.5 bytes/element (heapUsed)
+Map, K string keys (values small ints)                     18.4 bytes/element (heapUsed)
+Set, K string keys                                         13.1 bytes/element (heapUsed)
+object, K integer keys 0..K-1 (elements)                   4.6 bytes/element (heapUsed)
+Map, K integer keys 0..K-1                                 18.4 bytes/element (heapUsed)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>dicttime.mjs</code> on E7 (timing)</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax dicttime.mjs
+```
+
+Output:
+
+```text
+# run 1
+fast object fast: true | deleted-from object fast: false
+fast object      0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+dictionary-mode  1.41 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 2
+fast object fast: true | deleted-from object fast: false
+fast object      0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+dictionary-mode  1.41 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 3
+fast object fast: true | deleted-from object fast: false
+fast object      0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+dictionary-mode  1.41 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 4
+fast object fast: true | deleted-from object fast: false
+fast object      0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+dictionary-mode  1.41 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 5
+fast object fast: true | deleted-from object fast: false
+fast object      0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+dictionary-mode  1.41 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>concat.mjs</code> on E3 (timing)</summary>
+
+```sh
+~/.nvm/versions/node/v22.23.4/bin/node concat.mjs
+```
+
+Output:
+
+```text
+# run 1
+n =    100000: median 10.4 ns per character (7 runs)
+n =    200000: median 12.9 ns per character (7 runs)
+n =    400000: median 10.4 ns per character (7 runs)
+n =    800000: median 35.8 ns per character (7 runs)
+n =   1600000: median 46.5 ns per character (7 runs)
+# run 2
+n =    100000: median 12.7 ns per character (7 runs)
+n =    200000: median 22.3 ns per character (7 runs)
+n =    400000: median 18.7 ns per character (7 runs)
+n =    800000: median 47.3 ns per character (7 runs)
+n =   1600000: median 55.7 ns per character (7 runs)
+# run 3
+n =    100000: median 9.4 ns per character (7 runs)
+n =    200000: median 11.8 ns per character (7 runs)
+n =    400000: median 9.6 ns per character (7 runs)
+n =    800000: median 30.8 ns per character (7 runs)
+n =   1600000: median 35.1 ns per character (7 runs)
+# run 4
+n =    100000: median 12.0 ns per character (7 runs)
+n =    200000: median 14.1 ns per character (7 runs)
+n =    400000: median 10.0 ns per character (7 runs)
+n =    800000: median 33.1 ns per character (7 runs)
+n =   1600000: median 37.4 ns per character (7 runs)
+# run 5
+n =    100000: median 9.7 ns per character (7 runs)
+n =    200000: median 12.4 ns per character (7 runs)
+n =    400000: median 10.0 ns per character (7 runs)
+n =    800000: median 32.8 ns per character (7 runs)
+n =   1600000: median 40.7 ns per character (7 runs)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>concat-var.mjs</code> on E3 and E7 (timing)</summary>
+
+```sh
+~/.nvm/versions/node/v22.23.4/bin/node concat-var.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" concat-var.mjs
+```
+
+Output:
+
+```text
+## E3
+# run 1
+flatten once, n =    100000: median 12.8 ns per character (5 runs)
+flatten once, n =   1600000: median 46.9 ns per character (5 runs)
+flatten once, n =   3200000: median 52.6 ns per character (5 runs)
+flatten once, n =   6400000: median 53.2 ns per character (5 runs)
+flatten once, n =  12800000: median 57.6 ns per character (5 runs)
+read after every append, n =   5000: median 195.9 ns per character (5 runs)
+read after every append, n =  10000: median 360.5 ns per character (5 runs)
+read after every append, n =  20000: median 689.0 ns per character (5 runs)
+read after every append, n =  40000: median 1246.6 ns per character (5 runs)
+# run 2
+flatten once, n =    100000: median 16.2 ns per character (5 runs)
+flatten once, n =   1600000: median 44.2 ns per character (5 runs)
+flatten once, n =   3200000: median 48.6 ns per character (5 runs)
+flatten once, n =   6400000: median 53.2 ns per character (5 runs)
+flatten once, n =  12800000: median 64.1 ns per character (5 runs)
+read after every append, n =   5000: median 312.1 ns per character (5 runs)
+read after every append, n =  10000: median 441.2 ns per character (5 runs)
+read after every append, n =  20000: median 701.2 ns per character (5 runs)
+read after every append, n =  40000: median 1065.8 ns per character (5 runs)
+# run 3
+flatten once, n =    100000: median 9.4 ns per character (5 runs)
+flatten once, n =   1600000: median 37.3 ns per character (5 runs)
+flatten once, n =   3200000: median 43.2 ns per character (5 runs)
+flatten once, n =   6400000: median 40.9 ns per character (5 runs)
+flatten once, n =  12800000: median 46.5 ns per character (5 runs)
+read after every append, n =   5000: median 170.7 ns per character (5 runs)
+read after every append, n =  10000: median 264.5 ns per character (5 runs)
+read after every append, n =  20000: median 509.1 ns per character (5 runs)
+read after every append, n =  40000: median 943.7 ns per character (5 runs)
+## E7
+# run 1
+flatten once, n =    100000: median 3.1 ns per character (5 runs)
+flatten once, n =   1600000: median 3.2 ns per character (5 runs)
+flatten once, n =   3200000: median 14.2 ns per character (5 runs)
+flatten once, n =   6400000: median 23.8 ns per character (5 runs)
+flatten once, n =  12800000: median 22.8 ns per character (5 runs)
+read after every append, n =   5000: median 127.5 ns per character (5 runs)
+read after every append, n =  10000: median 214.6 ns per character (5 runs)
+read after every append, n =  20000: median 446.9 ns per character (5 runs)
+read after every append, n =  40000: median 824.2 ns per character (5 runs)
+# run 2
+flatten once, n =    100000: median 5.6 ns per character (5 runs)
+flatten once, n =   1600000: median 5.0 ns per character (5 runs)
+flatten once, n =   3200000: median 15.8 ns per character (5 runs)
+flatten once, n =   6400000: median 22.3 ns per character (5 runs)
+flatten once, n =  12800000: median 33.8 ns per character (5 runs)
+read after every append, n =   5000: median 127.0 ns per character (5 runs)
+read after every append, n =  10000: median 255.4 ns per character (5 runs)
+read after every append, n =  20000: median 498.3 ns per character (5 runs)
+read after every append, n =  40000: median 924.6 ns per character (5 runs)
+# run 3
+flatten once, n =    100000: median 2.8 ns per character (5 runs)
+flatten once, n =   1600000: median 2.8 ns per character (5 runs)
+flatten once, n =   3200000: median 13.2 ns per character (5 runs)
+flatten once, n =   6400000: median 23.2 ns per character (5 runs)
+flatten once, n =  12800000: median 21.5 ns per character (5 runs)
+read after every append, n =   5000: median 145.9 ns per character (5 runs)
+read after every append, n =  10000: median 286.0 ns per character (5 runs)
+read after every append, n =  20000: median 524.8 ns per character (5 runs)
+read after every append, n =  40000: median 966.4 ns per character (5 runs)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>proxytime.mjs</code> on E4 and E7 (timing)</summary>
+
+```sh
+~/.nvm/versions/node/v25.7.0/bin/node proxytime.mjs
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" proxytime.mjs
+```
+
+Output:
+
+```text
+## E4
+# run 1
+plain            0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.94 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.58 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  16.92 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 2
+plain            0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.94 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.55 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  17.44 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 3
+plain            0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.94 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.39 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  16.65 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 4
+plain            0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.94 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.42 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  16.67 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 5
+plain            0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           1.00 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  17.99 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+## E7
+# run 1
+plain            0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.70 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.25 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  16.20 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 2
+plain            0.60 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.72 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.34 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  15.97 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 3
+plain            0.56 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.74 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.48 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  15.82 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 4
+plain            0.57 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.70 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.45 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  16.04 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+# run 5
+plain            0.63 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+getter           0.71 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, no traps  10.33 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+proxy, get trap  15.77 ms per 1,000,000 reads (median of 9 after 30 warm-up calls)
+```
+
+</details>
+
+<details>
+<summary>Matrix: <code>prealloc.mjs</code> on E7 (timing)</summary>
+
+```sh
+ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" prealloc.mjs
+```
+
+Output:
+
+```text
+# run 1
+n =      1000: push 0.01 ms, new Array(n) 0.01 ms, new Array(n).fill(0) 0.00 ms (median of 9)
+n =    100000: push 0.20 ms, new Array(n) 0.06 ms, new Array(n).fill(0) 0.11 ms (median of 9)
+n =   1000000: push 2.04 ms, new Array(n) 0.78 ms, new Array(n).fill(0) 1.25 ms (median of 9)
+# run 2
+n =      1000: push 0.01 ms, new Array(n) 0.00 ms, new Array(n).fill(0) 0.00 ms (median of 9)
+n =    100000: push 0.20 ms, new Array(n) 0.06 ms, new Array(n).fill(0) 0.11 ms (median of 9)
+n =   1000000: push 2.06 ms, new Array(n) 0.80 ms, new Array(n).fill(0) 1.31 ms (median of 9)
+# run 3
+n =      1000: push 0.02 ms, new Array(n) 0.00 ms, new Array(n).fill(0) 0.01 ms (median of 9)
+n =    100000: push 0.20 ms, new Array(n) 0.06 ms, new Array(n).fill(0) 0.12 ms (median of 9)
+n =   1000000: push 2.28 ms, new Array(n) 0.78 ms, new Array(n).fill(0) 1.26 ms (median of 9)
+# run 4
+n =      1000: push 0.00 ms, new Array(n) 0.01 ms, new Array(n).fill(0) 0.01 ms (median of 9)
+n =    100000: push 0.19 ms, new Array(n) 0.06 ms, new Array(n).fill(0) 0.12 ms (median of 9)
+n =   1000000: push 2.21 ms, new Array(n) 0.82 ms, new Array(n).fill(0) 1.27 ms (median of 9)
+# run 5
+n =      1000: push 0.00 ms, new Array(n) 0.01 ms, new Array(n).fill(0) 0.00 ms (median of 9)
+n =    100000: push 0.20 ms, new Array(n) 0.06 ms, new Array(n).fill(0) 0.11 ms (median of 9)
+n =   1000000: push 2.63 ms, new Array(n) 1.19 ms, new Array(n).fill(0) 1.27 ms (median of 9)
+```
+
+</details>
+
+
 ## Verification status
 
-- **Measured** on 2026-11-26, Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine` on arm64 with `--network none`: every ✅[^lab] claim; 34 scripts in 35 runs, each embedded with its command and output. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: none of those was run. Each script was run at least twice; deterministic outputs matched byte for byte; timings and some memory figures varied as noted. An independent review on the same day re-ran all 29 runs of the original 28 scripts: every deterministic output matched byte for byte; the timing and memory outputs matched in conclusion, with the one exception of a single holey-sum round (§6.1). The review then added six variation scripts (`delete-var`, `fill-var`, `limits-var`, `fieldmem-var`, `twobyte`, `concat-var`) and re-ran `holey.mjs` and `prealloc.mjs` with other sizes (those two edits are described in §6.1, not embedded).
+- **Measured** on 2026-11-26, Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine` on arm64 with `--network none`: every ✅[^lab] claim; 34 scripts in 35 runs, each embedded with its command and output. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: none of those was run in the 2026-11-26 lab (the matrix of 2026-11-27, §6.3, re-ran the scripts on macOS, emulated x64 and V8 12.4 to 15.0). Each script was run at least twice; deterministic outputs matched byte for byte; timings and some memory figures varied as noted. An independent review on the same day re-ran all 29 runs of the original 28 scripts: every deterministic output matched byte for byte; the timing and memory outputs matched in conclusion, with the one exception of a single holey-sum round (§6.1). The review then added six variation scripts (`delete-var`, `fill-var`, `limits-var`, `fieldmem-var`, `twobyte`, `concat-var`) and re-ran `holey.mjs` and `prealloc.mjs` with other sizes (those two edits are described in §6.1, not embedded).
+- **Matrix re-run on 2026-11-27** (§6.3): 34 scripts in 35 runs on E1, E2, E3, E4 and E7, 175 cells: 140 same, 23 differs, 6 cannot run (5 `%DebugPrint` scripts on E7, `strtype.mjs` on E3), 6 not run (timing on emulated E2); timings three times per build and five where they differed, 227 runs in all, plus the probes `smi.js` (E0 to E4 and E7), `litprobe.mjs`, `typed-external.mjs` and `strtype-noflat.mjs`. Still not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0; Chrome, the unofficial Node.js pointer-compression builds, and any Node.js build with pointer compression on (Deno 2.9.8 ran only the `smi.js` probe).
 - **Read only** (source or docs, not run): the 43 % heap saving of pointer compression (2020), the 2017 proxy benchmark gains, the 2018 hash-code storage change, the 21 elements kinds, the source constants quoted in §5 (each also observed in the lab except the maximum string length and the 4 preallocated slots). The review re-opened every source cited, and the `DeleteObjectPropertyFast` check was repeated at seven tags.
-- **Not checked:** a build with pointer compression on (only the official build was available), V8 versions before 13.6 in the lab (the `delete` history comes from the source only), the exact commit that removed the delete fast path and the one that added the `fill` exception.
+- **Not checked:** a Node.js build with pointer compression on (only Electron was run with it), V8 versions before 12.4 in the lab (the `delete` history before 12.0 comes from the source only), the exact commit that removed the delete fast path and the one that added the `fill` exception.
 
 ## References
-
 - [V8 source: src/objects/string.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/src/objects/string.h) — V8 project, 2025. Rank 1. Backs: §1.1, §3.10, §5, §6.2 (string kinds, minimum cons and slice length, slices keep the parent, maximum length). [^v8-string]
 - [V8 source: src/objects/js-objects.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/src/objects/js-objects.h) — V8 project, 2025. Rank 1. Backs: §3.3, §3.8, §5 (4 unused fields of the initial Object map, property array step 3, maximum gap 1024). [^v8-jsobjects]
 - [V8 source: src/objects/js-array.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/src/objects/js-array.h) — V8 project, 2025. Rank 1. Backs: §1.1, §3.8, §5 (slow elements are a hash table, maximum fast array length, 4 preallocated slots). [^v8-jsarray]
@@ -1810,6 +2682,13 @@ n =   1000000: push 4.13 ms, new Array(n) 1.24 ms, new Array(n).fill(0) 1.84 ms 
 - [Field Representations and Elements Kinds](https://github.com/v8/v8/blob/main/docs/objects/fields-and-elements.md) — V8 project docs, living, read 2026-11-26. Rank 1. Backs: §1.1, §3.2, §3.6, §6.1 (representation lattice, generalization of the tree, boxed double fields, one-way elements transitions). [^v8-fields]
 - [Maps (Hidden Classes) in V8](https://v8.dev/docs/hidden-classes) — V8 team, living. Rank 1. Backs: §2 (every heap object points to a map). [^v8-hidden]
 - [Node.js v24 process documentation: process.memoryUsage()](https://nodejs.org/docs/latest-v24.x/api/process.html) — Node.js project, v24.x, read 2026-11-26. Rank 1. Backs: §3.9 (`arrayBuffers`, `external`, `heapUsed`). [^node-process]
+- [V8 source: include/v8-internal.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/include/v8-internal.h) — V8 project, 2025. Rank 1. Backs: §3.1 (`SmiTagging<4>` 31 bits, `SmiTagging<8>` 32 bits, tagged size under `V8_COMPRESS_POINTERS`, `V8_31BIT_SMIS_ON_64BIT_ARCH`). [^v8-internal]
+- [Node.js source: configure.py](https://github.com/nodejs/node/blob/main/configure.py) — Node.js project, main and v24.x, read 2026-11-27. Rank 1. Backs: §3.1 (`--experimental-enable-pointer-compression`, help text, the two build variables). [^node-configure]
+- [Node.js process documentation: process.config](https://nodejs.org/api/process.html) — Node.js project, v26.13.1 docs, read 2026-11-27. Rank 1. Backs: §3.1 (`process.config` is the configure options; the field is not documented). [^node-process-config]
+- Node.js release notes and changelogs: [v24.0.0](https://nodejs.org/en/blog/release/v24.0.0), [v24.2.0](https://nodejs.org/en/blog/release/v24.2.0), [CHANGELOG_V25.md](https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V25.md) (read in full), CHANGELOG_V24.md and CHANGELOG_V26.md (first 100 000 characters read; whole files searched by keyword on 2026-11-27) — Node.js project, read 2026-11-27. Rank 1. Backs: §3.1 (no default change found). [^node-changelogs]
+- [Deno: Cargo.toml](https://github.com/denoland/deno/blob/main/Cargo.toml) and [rusty_v8: build.rs](https://github.com/denoland/rusty_v8/blob/main/build.rs) — Deno project, main, read 2026-11-27. Rank 1. Backs: §3.1 (V8 crate without default features; `v8_enable_pointer_compression=false` unless the feature is set). [^deno-build]
+- [Node.js unofficial-builds: README](https://github.com/nodejs/unofficial-builds/blob/main/README.md) and release folders [v24.22.3](https://unofficial-builds.nodejs.org/download/release/v24.22.3/) and [v26.13.1](https://unofficial-builds.nodejs.org/download/release/v26.13.1/) — Node.js project, read 2026-11-27. Rank 1. Backs: §3.1 (pointer-compression builds and their file names). [^node-unofficial]
+- [Docker official images: library/node](https://github.com/docker-library/official-images/blob/master/library/node) — Docker official images, Node.js Docker team, master, read 2026-11-27. Rank 1. Backs: §3.1 (no pointer-compression tag). [^docker-node]
 - [Pointer compression in V8](https://v8.dev/blog/pointer-compression) — V8 team (Igor Sheludko, Santiago Aboy Solanes), 2020-03-30. Rank 4. Backs: §1.1, §3.1, §3.2, §6.1 (Smi width, tag bit, 4 GB range, 43 %, double unboxing disabled). [^v8-ptrcomp]
 - [The story of a V8 performance cliff in React](https://v8.dev/blog/react-cliff) — V8 team (Benedikt Meurer, Mathias Bynens), 2019-08-28. Rank 4. Backs: §3.2 (deprecation and migration, initial values, `null`). [^v8-react]
 - [Fast properties in V8](https://v8.dev/blog/fast-properties) — V8 team (Camillo Bruni), 2017-08-30. Rank 4. Backs: §1.1, §3.3, §3.4, §3.5, §3.12 (in-object count, dictionary properties, elements kept apart, map holds the prototype). [^v8-fastprops]
@@ -1817,7 +2696,11 @@ n =   1000000: push 4.13 ms, new Array(n) 1.24 ms, new Array(n).fill(0) 1.84 ms 
 - [Elements kinds in V8](https://v8.dev/blog/elements-kinds) — V8 team (Mathias Bynens), 2017-09-12, updated 2025-02-28. Rank 4. Backs: §1.1, §3.6, §3.7, §6.1, §6.2 (21 kinds, the lattice, holey forever and the `fill` exception, `-0`/`NaN`/`Infinity`, literal and `push` advice). [^v8-elements]
 - [Optimizing hash tables: hiding the hash code](https://v8.dev/blog/hash-code) — V8 team (Sathya Gunasekaran), 2018-01-29. Rank 4. Backs: §3.11. [^v8-hash]
 - [Optimizing ES2015 proxies in V8](https://v8.dev/blog/optimizing-proxies) — V8 team (Maya Armyanova), 2017-10-05. Rank 4. Backs: §3.13. [^v8-proxy]
+- [V8 release v8.0](https://v8.dev/blog/v8-release-80) — V8 team, 2019-12-18. Rank 4. Backs: §3.1 (average saving of 40 %, timed with Chrome 80). [^v8-release-80]
+- [v8-dev list: 31-bit Smis and pointer compression](https://groups.google.com/g/v8-dev/c/AI0RcAj-Z4g/m/Juj4UbcdAwAJ) — Santiago Aboy Solanes (V8 team), 2020-02-20. Rank 4. Backs: §3.1 (Chrome 80 enabled pointer compression and 31-bit Smis by default). [^v8-dev-80]
+- [Electron and the V8 Memory Cage](https://www.electronjs.org/blog/v8-memory-cage) — Electron project (nornagon), 2022-06-30. Rank 4. Backs: §3.1 (on since Electron 14, 4 GB heap cap, up to 40 % smaller heap). [^electron-cage]
 - Lab: 34 scripts (35 runs) on Node.js 24.22.1 (V8 13.6.233.17-node.58), image `node:24.22.1-alpine`, arm64, `--network none`, 2026-11-26; each script, command and output is embedded next to the claim it backs. [^lab]
+- Lab matrix: the same scripts and the probe `smi.js` on six environments (E0 Node.js 24.22.1 linux arm64; E1 Node.js 24.22.1 macOS arm64; E2 Node.js 24.22.1 linux x64, emulated; E3 Node.js 22.23.4, V8 12.4; E4 Node.js 25.7.0, V8 14.1; E7 Electron 43.7.7 as Node, V8 15.0, pointer compression on), 2026-11-27. Rank 1 (primary measurement). Backs: §1.1, §1.2, §3.1 to §3.13, §4, §5, §6.1 and §6.3. One more probe: `smi.js` on Deno 2.9.8 (V8 15.0.245.2), image `denoland/deno:alpine-2.9.8`, linux arm64. The heap-limit runs with `--max-old-space-size` also used a second Electron build with pointer compression on: Electron 38.8.6 run as Node (V8 14.0.365.10), macOS arm64. [^lab-matrix]
 
 ## Related
 

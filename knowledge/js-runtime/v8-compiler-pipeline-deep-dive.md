@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: js-runtime
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17-node.58, linux arm64, pointer compression off (image node:24.22.1-alpine in Docker on an Apple M2)", "V8 source at tag 13.6.233.17", "lab runs of 2026-11-26"]
-last-updated: 2026-11-26
-last-verified: 2026-11-26
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17-node.58, linux arm64, pointer compression off (image node:24.22.1-alpine in Docker on an Apple M2)", "V8 source at tag 13.6.233.17", "lab runs of 2026-11-26", "matrix re-run of 2026-11-27: macOS 26.1 arm64 with Node.js 24.22.1, 22.23.4 (V8 12.4) and 25.7.0 (V8 14.1), linux x64 emulated with Node.js 24.22.1, Electron 43.7.7 as Node (V8 15.0, pointer compression on)"]
+last-updated: 2026-11-27
+last-verified: 2026-11-27
 synthesized-into: []
 tags: [v8, nodejs, jit, ignition, sparkplug, maglev, turbofan, turboshaft, inline-caches, deoptimization, osr, inlining, escape-analysis, performance]
 ranked-sources: true
@@ -13,7 +13,7 @@ ranked-sources: true
 # V8's compiler pipeline in Node.js 24: tiers, feedback, deoptimization and what keeps code fast
 
 ## Summary
-**TL;DR:** In Node.js 24.22.1 (V8 13.6), every function starts as bytecode in the Ignition interpreter. Hot functions move up to three compilers in turn: Sparkplug, Maglev and TurboFan ✅[^lab]. Maglev and TurboFan guess types from the feedback that the lower tiers collected. When a guess fails, the code deoptimizes: it jumps back to the interpreter at the same bytecode, and V8 records the new case ✅[^lab] ✅[^maglev]. The lab shows that the old advice about `try`/`catch`, `arguments`, generators, `eval` and "600-character functions" no longer holds in this version: for the small functions tried here, TurboFan compiled all of them, both when optimization was forced after warm-up (status bit 6 read after `%OptimizeFunctionOnNextCall`) and in natural tier-up with inlining switched off (§3.8) ✅[^lab]. What still costs, and can be seen with a flag, is code that keeps the compilers' guesses wrong: many object shapes at one site, small integers that overflow, reads past the end of an array, and branches that never ran before optimization ✅[^lab].
+**TL;DR:** In Node.js 24.22.1 (V8 13.6), every function starts as bytecode in the Ignition interpreter. Hot functions move up to three compilers in turn: Sparkplug, Maglev and TurboFan ✅[^lab]. The defaults differ on other builds: Node.js 22.23.4 (V8 12.4) starts with Maglev off, and the emulated linux x64 build of Node.js 24.22.1 starts with TurboFan off (seen in an emulated x64 container; native x64 was not run) ✅[^lab-matrix]. Maglev and TurboFan guess types from the feedback that the lower tiers collected. When a guess fails, the code deoptimizes: it jumps back to the interpreter at the same bytecode, and V8 records the new case ✅[^lab] ✅[^maglev]. The lab shows that the old advice about `try`/`catch`, `arguments`, generators, `eval` and "600-character functions" no longer holds in this version: for the small functions tried here, TurboFan compiled all of them, both when optimization was forced after warm-up (status bit 6 read after `%OptimizeFunctionOnNextCall`) and in natural tier-up with inlining switched off (§3.8) ✅[^lab]. The same held on V8 12.4, 14.1 and 15.0, where the TurboFan bit is bit 5 on 14.1 and 15.0 ✅[^lab-matrix]. What still costs, and can be seen with a flag, is code that keeps the compilers' guesses wrong: many object shapes at one site, small integers that overflow, reads past the end of an array, and branches that never ran before optimization ✅[^lab].
 
 **Use this when:**
 - you want to know which compiler runs a hot function, and why it moved up or fell back;
@@ -37,7 +37,7 @@ ranked-sources: true
 | Map (hidden class) | V8's internal description of an object's shape: which properties, in which order | The layout plan of a shelf | `{ x }` and `{ y, x }` have different maps (§3.2) |
 | IC (inline cache) | A fast path at one property access or call site, built from the maps seen there | A cashier who remembers the price of the items regular customers buy | State `1` after one map, `P` after two to four, `N` after five (§3.1) |
 | Monomorphic, polymorphic, megamorphic | One map seen at a site; a few (2 to 4 here); too many | A shop with one product, a short menu, a whole supermarket | `LoadIC line 5 key x: P -> N` when the 5th map arrives (§3.1) |
-| Smi (small integer) | An integer stored directly in a pointer-sized value, without a heap object | Coins kept in the pocket instead of a wallet | Up to 2**31 − 1 in this build (§3.2) |
+| Smi (small integer) | An integer stored directly in a pointer-sized value, without a heap object | Coins kept in the pocket instead of a wallet | Up to 2**31 − 1 in this build; up to 2**30 − 1 with pointer compression on (Electron 43, V8 15.0) ✅[^lab-matrix] (§3.2) |
 | Speculative optimization | Compiling for the types seen so far, with a check that bails out if a new type shows up | Laying out only the tools you used yesterday, with an alarm for surprises | `inc(a)` compiled for small integers (§3.2) |
 | Deoptimization (deopt) | Leaving optimized code and continuing in the interpreter at the same point | Leaving the motorway at the next exit when the road ahead is closed | `reason: overflow` when `inc(2 ** 31 - 1)` overflows (§3.2) |
 | Eager / lazy deopt | Eager: a check inside the optimized code fails now. Lazy: something else invalidated the code; the function leaves it when control returns to it | Eager: you see the closed road. Lazy: the radio says the road is closed, and you leave at the next exit | `deopt-eager, reason: wrong map`; `deopt-lazy` after `P.prototype.m` was replaced (§3.2) |
@@ -47,7 +47,7 @@ ranked-sources: true
 | Escape analysis | Proving that an object never leaves a function, so it need not be allocated at all | Doing a sum in your head instead of on paper you would then throw away | 10 million `{ x, y }` objects, 0 scavenges (§3.6) |
 | Scavenge | A collection of the young generation of the heap (GC = garbage collection) | Emptying the small desk bin, not the building's skip | "more than 20" scavenges once escape analysis is off (§3.6) |
 | Built-in | A function that ships inside V8, such as `Array.prototype.forEach` | A tool that came in the box | `forEach`'s callback inlined into the caller (§3.9) |
-| Natives syntax | Test-only functions such as `%GetOptimizationStatus(f)`, enabled by `--allow-natives-syntax` | The service panel behind a machine's cover | Status `81` = `IsFunction|Optimized|TurboFanned` (§4.1) |
+| Natives syntax | Test-only functions such as `%GetOptimizationStatus(f)`, enabled by `--allow-natives-syntax` | The service panel behind a machine's cover | Status `81` = `IsFunction|Optimized|TurboFanned` on V8 13.6; the same state reads `41` on V8 14.1 and 15.0 ✅[^lab-matrix] (§4.1) |
 
 ### 1.2 The pipeline in one picture
 
@@ -83,9 +83,9 @@ V8 does not make a function's bytecode when the file loads, but on the function'
 | Maglev | A fast optimizing compiler that "generates good enough code, fast enough" ✅[^maglev] | Uses feedback to emit shape checks and cheap field loads; "Maglev code needs to be able to deoptimize" ✅[^maglev] | Blog of 2023-12-05 ✅[^maglev] |
 | TurboFan | V8's "optimizing compiler focused on peak performance" ✅[^maglev] | Inlines, removes allocations, specializes on feedback. Since the post of 2025-03-25, "the whole JavaScript backend of Turbofan uses Turboshaft instead" of the older Sea of Nodes graph ✅[^sea-of-nodes] | Default since V8 5.9 (post of 2017-05-15) ✅[^launch-tf] |
 
-The Maglev post (2023-12-05) puts Maglev's compile speed at "roughly 10x slower than Sparkplug, and 10x faster than TurboFan" ✅[^maglev]. All four tiers, and the Turboshaft phases, are on by default in this build ✅[^lab].
+The Maglev post (2023-12-05) puts Maglev's compile speed at "roughly 10x slower than Sparkplug, and 10x faster than TurboFan" ✅[^maglev]. All four tiers, and the Turboshaft phases, are on by default in this build ✅[^lab]. Not on every build: `--v8-options` prints `--no-maglev` on V8 12.4 (Node.js 22.23.4), and `--no-turbofan` on the emulated linux x64 build of Node.js 24.22.1 (the same V8 as the baseline; there even `%OptimizeFunctionOnNextCall` left functions without TurboFan code, and `--turbofan` turned it back on; cause not isolated) ✅[^lab-matrix].
 
-**What triggers tier-up in 13.6.** V8 gives each function a budget. The budget is a flag value times the function's bytecode length: `invocation_count_for_maglev * bytecode_length` for Maglev and `invocation_count_for_turbofan * bytecode_length` for TurboFan ✅[^tiering]. The defaults in this build are 400 and 3000, and 8 for allocating the feedback vector; each is the default that `node --v8-options` prints for the flag named above ✅[^lab]. Sparkplug has no number of its own: the tiering code tests whether the function already has a feedback vector and can be compiled to baseline code, and the budget for that first step is the feedback-allocation budget ✅[^tiering]. A function whose bytecode is longer than `--max-optimized-bytecode-size` (61440 bytes here) gets no TurboFan code: the source returns a huge budget for it and rejects it in `ShouldOptimize` ✅[^tiering]. In the lab (`toobig.mjs`, below), a function of 3 250 statements (60 988 bytes of bytecode) was TurboFan code after forced optimization and one of 3 400 statements (63 838 bytes) was not, until the flag was raised to 200 000 ✅[^lab]. When an inline cache changes state, V8 raises the budget to `--minimum-invocations-after-ic-update` (500) times the bytecode length (capped), only if that is larger than the current budget, so optimization waits ✅[^tiering] ✅[^lab].
+**What triggers tier-up in 13.6.** V8 gives each function a budget. The budget is a flag value times the function's bytecode length: `invocation_count_for_maglev * bytecode_length` for Maglev and `invocation_count_for_turbofan * bytecode_length` for TurboFan ✅[^tiering]. The defaults in this build are 400 and 3000, and 8 for allocating the feedback vector; each is the default that `node --v8-options` prints for the flag named above ✅[^lab]. The 400, 3000 and 61440 were the same on all six builds of the matrix ✅[^lab-matrix]. Sparkplug has no number of its own: the tiering code tests whether the function already has a feedback vector and can be compiled to baseline code, and the budget for that first step is the feedback-allocation budget ✅[^tiering]. A function whose bytecode is longer than `--max-optimized-bytecode-size` (61440 bytes here) gets no TurboFan code: the source returns a huge budget for it and rejects it in `ShouldOptimize` ✅[^tiering]. In the lab (`toobig.mjs`, below), a function of 3 250 statements (60 988 bytes of bytecode) was TurboFan code after forced optimization and one of 3 400 statements (63 838 bytes) was not, until the flag was raised to 200 000 ✅[^lab]. When an inline cache changes state, V8 raises the budget to `--minimum-invocations-after-ic-update` (500) times the bytecode length (capped), only if that is larger than the current budget, so optimization waits ✅[^tiering] ✅[^lab].
 
 <details><summary>Script <code>toobig.mjs</code>: a function over <code>--max-optimized-bytecode-size</code></summary>
 
@@ -184,7 +184,7 @@ Run: `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpin
 ```
 </details>
 
-The names say "invocation count", but the lab shows that a function with a loop reaches them in fewer calls. `sum` runs an 8-step loop per call. With `--single-threaded`, it reached Sparkplug at call 28, Maglev at call 70 and TurboFan at call 1957, not at 400 and 3000 calls ✅[^lab]. This fits a budget that the running bytecode, loop iterations included, uses up (an inference from the source and the lab, not stated in the source). A function without a loop needs more calls, not fewer: in the check `natural.mjs` (§3.8; `--single-threaded`, inlining switched off, 40 000 calls) a loop-free `function plain(a) { return a < 0 ? 0 : a; }` first had TurboFan code at call 11 321, and a function with a 20-step loop at call 938 ✅[^lab]. So "400 and 3000" are budget factors, not call counts. Without Maglev, TurboFan took over at call 403 for `sum`. With the default flags, compilation runs on background threads, and the call at which each tier appears changed from run to run: the last line of the output below differs between runs ✅[^lab].
+The names say "invocation count", but the lab shows that a function with a loop reaches them in fewer calls. `sum` runs an 8-step loop per call. With `--single-threaded`, it reached Sparkplug at call 28, Maglev at call 70 and TurboFan at call 1957, not at 400 and 3000 calls ✅[^lab]. Those call numbers are for V8 13.6. On V8 14.1 (Node.js 25.7.0) TurboFan came at call 3090; in Electron 43 (V8 15.0) Sparkplug came at call 21 and TurboFan at call 3091; on V8 12.4 (Node.js 22.23.4), where Maglev is off, the function went from Ignition to TurboFan at call 403 and showed no Sparkplug step ✅[^lab-matrix]. This fits a budget that the running bytecode, loop iterations included, uses up (an inference from the source and the lab, not stated in the source). A function without a loop needs more calls, not fewer: in the check `natural.mjs` (§3.8; `--single-threaded`, inlining switched off, 40 000 calls) a loop-free `function plain(a) { return a < 0 ? 0 : a; }` first had TurboFan code at call 11 321, and a function with a 20-step loop at call 938 ✅[^lab]. The order held on the other builds, with other numbers: 17 866 and 1 485 on V8 14.1 and 15.0, 3 011 and 182 on V8 12.4 ✅[^lab-matrix]. So "400 and 3000" are budget factors, not call counts. Without Maglev, TurboFan took over at call 403 for `sum`. With the default flags, compilation runs on background threads, and the call at which each tier appears changed from run to run: the last line of the output below differs between runs ✅[^lab].
 
 <details><summary>Script <code>tierup.mjs</code>: natural tier-up, without <code>%Optimize…</code> calls</summary>
 
@@ -409,12 +409,12 @@ The script below forces TurboFan on six small functions, then calls each with a 
 | Case | Line that fails (`deoptimize at`) | Call that causes it | Reason printed | Kind |
 |---|---|---|---|---|
 | `wrongMap` | 5:33, `o.x` | line 9, `getX({ y: 0, x: 4 })`: a new shape | `wrong map` | eager |
-| `smiOverflow` | 12:32, `a + 1` | line 16, `inc(2 ** 31 - 1)`: the sum leaves the small-integer range | `overflow` | eager |
+| `smiOverflow` | 12:32, `a + 1` | line 16, `inc(2 ** 31 - 1)`: the sum leaves the small-integer range | `overflow`; in Electron 43 (V8 15.0, pointer compression on) `not a Smi`, because 2 ** 31 − 1 is not a small integer there ✅[^lab-matrix] | eager |
 | `outOfBounds` | 19:33, `a[i]` | line 24, `at(arr, 3)` on a 3-item array | `out of bounds` | eager |
 | `noFeedback` | 27:49, `o.y` | line 31, `pick(…, true)`: a branch that never ran before optimization | `Insufficient type feedback for generic named access` | eager |
 | `notASmi` | 34:33, `n >> 1` | line 38, `half(7.5)` where only small integers were seen | `not a Smi` | eager |
 | `wrongCallTarget` | 41:31, `fn()` | line 46, `run(b)` after only `a` was seen | `wrong call target` | eager |
-| `lazy` | (no location printed) | line 58, `callM(o, change)`: `change` replaces `P.prototype.m` while `callM` runs | `(unknown)`, after `marking dependent code … reason: dependent field type constness changed` | lazy |
+| `lazy` | (no location printed) | line 58, `callM(o, change)`: `change` replaces `P.prototype.m` while `callM` runs | `(unknown)`, after `marking dependent code … reason: dependent field type constness changed` (on V8 12.4: `reason: code dependencies` ✅[^lab-matrix]) | lazy |
 
 <details><summary>Script <code>deopt.mjs</code>: seven deoptimizations and their reasons</summary>
 
@@ -518,7 +518,7 @@ Run: `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpin
 ```
 </details>
 
-The `smiOverflow` case uses 2 ** 31 − 1 because that is the largest small integer in this build: `%IsSmi(2 ** 31 - 1)` is `true` and `%IsSmi(2 ** 31)` is `false` ✅[^lab]. Why this build has 32-bit small integers (a sign and 31 value bits, because pointer compression is off) is covered in `js-runtime/v8-object-and-value-representation-deep-dive.md`.
+The `smiOverflow` case uses 2 ** 31 − 1 because that is the largest small integer in this build: `%IsSmi(2 ** 31 - 1)` is `true` and `%IsSmi(2 ** 31)` is `false` ✅[^lab]. The same on V8 12.4 and 14.1. With pointer compression on (Electron 43, V8 15.0) the largest small integer is 2 ** 30 − 1, and the case changes: `inc(2 ** 31 - 1)` deopts with `not a Smi`, because its argument is already a heap number, and `inc(2 ** 30 - 1)` does not deopt at all: the result, 2 ** 30, comes back as a heap number (`%IsSmi` false) and `inc` stays TurboFan code ✅[^lab-matrix]. So on that build the `overflow` deopt was not seen at the small-integer limit. Why this build has 32-bit small integers (a sign and 31 value bits, because pointer compression is off) is covered in `js-runtime/v8-object-and-value-representation-deep-dive.md`.
 
 <details><summary>Script <code>smi.mjs</code>: the small-integer range of this build</summary>
 
@@ -535,11 +535,11 @@ Run: `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpin
 
 **Eager and lazy.** An eager deopt happens at a failed check inside the optimized code, as in the first six cases. A lazy deopt starts outside it: other code breaks an assumption the optimized code depends on, here that `P.prototype.m` stays the same function. V8 marks the code for deoptimization at once (`marking dependent code`), and `callM` leaves it when control comes back into its frame (`kind: deopt-lazy`) ✅[^lab]. Functions not on the stack are unlinked on their next call: since the post of 2017-10-04, "V8 postpones it for the next invocation of such functions" ✅[^lazy-unlink].
 
-**What keeps optimized code valid:** run the hot code during warm-up with the same kinds of values it will see later. Keep numbers in one representation (integers stay integers, or doubles from the start). Keep reads inside the array. Do not change prototypes or methods after start-up. **What defeats it:** counters that grow past 2 ** 31 − 1 in code compiled for small integers; a rare branch that first runs after optimization; replacing a method on a class prototype while the program runs.
+**What keeps optimized code valid:** run the hot code during warm-up with the same kinds of values it will see later. Keep numbers in one representation (integers stay integers, or doubles from the start). Keep reads inside the array. Do not change prototypes or methods after start-up. **What defeats it:** counters that grow past 2 ** 31 − 1 in code compiled for small integers (with pointer compression off; in Electron 43, a value already past 2 ** 30 − 1 deopted with `not a Smi` ✅[^lab-matrix]); a rare branch that first runs after optimization; replacing a method on a class prototype while the program runs.
 
 ### 3.3 Deoptimization loops, and how V8 limits them
 
-A deopt loop would be optimize, deopt, optimize, deopt, without end. This build has no `--max-deopt-count` flag ✅[^lab], and the tiering code (`tiering-manager.cc`) contains no deoptimization counter such as `deopt_count` or `max_deopt` ✅[^tiering]. The limit comes from the feedback: each deopt adds the new case, and the IC states only move one way, towards megamorphic (§3.1). The lab (`--single-threaded`, so that compile timing does not vary) calls `getX` 20 000 times with 1 shape, then 2, up to 8 shapes. It deopted once (`wrong map`) for each new shape from 2 to 5. Each time it was compiled again by Maglev and then TurboFan. From the 6th shape on there were no more deopts and no more compiles, because the load had become megamorphic and the optimized code uses the generic path ✅[^lab]. A variation (`deoptloop-var.mjs`, below) ran 24 combinations: four site kinds (a named load, a named store, two loads in one function, a method call), three ways of making the shapes (a different first property, the same five properties added in different orders, eight different classes) and two phase lengths (20 000 and 3 000 calls). All 24 deopted once in each of phases 2 to 5 and never in phases 6 to 8 ✅[^lab]. With the default flags (background compilation; the same script with `'--single-threaded', ` deleted from its `spawnSync` call), two runs of the 24 combinations gave 43 of 48 with that same pattern; the other five had a second deopt in one or two of phases 2 to 5, and none had a deopt in phases 6 to 8 ✅[^lab]. So "one deopt per new shape, none after the fifth" holds for these site kinds with `--single-threaded`, and with the default flags the count in each phase can be one higher.
+A deopt loop would be optimize, deopt, optimize, deopt, without end. This build has no `--max-deopt-count` flag ✅[^lab], and the tiering code (`tiering-manager.cc`) contains no deoptimization counter such as `deopt_count` or `max_deopt` ✅[^tiering]. The limit comes from the feedback: each deopt adds the new case, and the IC states only move one way, towards megamorphic (§3.1). The lab (`--single-threaded`, so that compile timing does not vary) calls `getX` 20 000 times with 1 shape, then 2, up to 8 shapes. It deopted once (`wrong map`) for each new shape from 2 to 5. Each time it was compiled again by Maglev and then TurboFan. From the 6th shape on there were no more deopts and no more compiles, because the load had become megamorphic and the optimized code uses the generic path ✅[^lab]. The deopts were the same on every build of the matrix, but the recompiles were not: on V8 14.1 and 15.0 each phase from 1 to 5 ended in Maglev code, and TurboFan code came only in phase 6; on V8 12.4 (Maglev off) each recompile went straight to TurboFan ✅[^lab-matrix]. A variation (`deoptloop-var.mjs`, below) ran 24 combinations: four site kinds (a named load, a named store, two loads in one function, a method call), three ways of making the shapes (a different first property, the same five properties added in different orders, eight different classes) and two phase lengths (20 000 and 3 000 calls). All 24 deopted once in each of phases 2 to 5 and never in phases 6 to 8 ✅[^lab]. The same on V8 14.1 and 15.0. On V8 12.4 the twelve runs with 3 000 calls per phase had no deopt in phase 2 (one in each of phases 3 to 5), and none after phase 5 ✅[^lab-matrix]. With the default flags (background compilation; the same script with `'--single-threaded', ` deleted from its `spawnSync` call), two runs of the 24 combinations gave 43 of 48 with that same pattern; the other five had a second deopt in one or two of phases 2 to 5, and none had a deopt in phases 6 to 8 ✅[^lab]. So "one deopt per new shape, none after the fifth" holds for these site kinds with `--single-threaded`, and with the default flags the count in each phase can be one higher.
 
 <details><summary>Script <code>deoptloop.mjs</code>: deopts per new shape</summary>
 
@@ -674,7 +674,7 @@ So in these experiments a site that has seen five maps stops deopting on new map
 
 ### 3.4 On-stack replacement for hot loops
 
-A function called once with a long loop never reaches its call-count budget. V8 handles it with OSR: it raises an "OSR urgency" counter on the feedback vector step by step ✅[^tiering], V8 compiles optimized code for the loop, and the running frame jumps into it ✅[^lab]. With 1 000 iterations, `longLoop` was only marked for Maglev. With 5 000 000 iterations it was compiled by Maglev for OSR at bytecode offset 35 and entered (`[OSR - entry. function: longLoop, osr offset: 35]`) ✅[^lab]. No TurboFan OSR followed in that call, although the urgency was raised 284 more times. This build has `--no-osr-from-maglev` by default ✅[^lab], so a loop that entered Maglev through OSR stays in Maglev for that call (an inference from the flag and the trace).
+A function called once with a long loop never reaches its call-count budget. V8 handles it with OSR: it raises an "OSR urgency" counter on the feedback vector step by step ✅[^tiering], V8 compiles optimized code for the loop, and the running frame jumps into it ✅[^lab]. With 1 000 iterations, `longLoop` was only marked for Maglev. With 5 000 000 iterations it was compiled by Maglev for OSR at bytecode offset 35 and entered (`[OSR - entry. function: longLoop, osr offset: 35]`) ✅[^lab]. No TurboFan OSR followed in that call, although the urgency was raised 284 more times. This build has `--no-osr-from-maglev` by default ✅[^lab], so a loop that entered Maglev through OSR stays in Maglev for that call (an inference from the flag and the trace). On V8 14.1 and 15.0 the trace was the same with 177 repeats instead of 284. On V8 12.4, which has Maglev off and `--osr-from-maglev` on, the 1 000-iteration run marked nothing, and the 5 000 000-iteration run compiled and entered TurboFan OSR code at the same offset 35, with no repeats after it ✅[^lab-matrix].
 
 <details><summary>Script <code>osr.mjs</code>: OSR of a function called once</summary>
 
@@ -730,9 +730,9 @@ This matters for benchmarks. A function with a `for` or `for…of` loop over one
 ### 3.5 Inlining and its limits
 
 TurboFan inlines a callee when the call site's feedback names a target, the callee has a feedback vector, and its bytecode fits the size limits ✅[^inl-heur] ✅[^lab]:
-- **Size, not source length.** The 460 is the default of the V8 flag `--max-inlined-bytecode-size`, printed by `node --v8-options` (script in §2.2) with the help text "maximum size of bytecode for a single inlining" ✅[^lab]; `js-inlining-heuristic.cc` itself only reads the `-small`, `-cumulative` and `-absolute` variants ✅[^inl-heur]. A callee over the limit is rejected, and the trace prints `reason: 5`, which is `kExceedsBytecodeLimit` in the `Inlineability` enum (the sixth entry, counting from 0) ✅[^sfi-h]. The script `inline-var.mjs` below checks the limit on one family of callees (`let t = a;` and *k* statements of `t = (t * 3 + 1) | 0;`, then `return t;`) with the TurboFan trace, after 20 warm-up calls and a forced optimization of the caller: bytecode of 446 and 456 bytes was inlined, 466, 486, 506 and 706 bytes was not (`reason: 5`), and with `--max-inlined-bytecode-size=2000` all of them were inlined ✅[^lab]. The same family with a comment of 2 000 characters, one of 20 000 characters, a 5 000-character block comment plus a 5 000-character line comment inside a body, and a 3 000-character variable name all gave callees of 6 to 13 bytes of bytecode that were inlined ✅[^lab]. So the limit is on bytecode, not on source text, for these callees (arithmetic bodies and comments, one call site, TurboFan, this build). Maglev has its own flag, `--max-maglev-inlined-bytecode-size`, also 460 here; no Maglev inlining run was made. Callees up to `--max-inlined-bytecode-size-small` (27 bytes) take the "small function" path ✅[^inl-heur] ✅[^lab].
+- **Size, not source length.** The 460 is the default of the V8 flag `--max-inlined-bytecode-size`, printed by `node --v8-options` (script in §2.2) with the help text "maximum size of bytecode for a single inlining" ✅[^lab]; `js-inlining-heuristic.cc` itself only reads the `-small`, `-cumulative` and `-absolute` variants ✅[^inl-heur]. A callee over the limit is rejected, and the trace prints `reason: 5`, which is `kExceedsBytecodeLimit` in the `Inlineability` enum (the sixth entry, counting from 0) ✅[^sfi-h]. The script `inline-var.mjs` below checks the limit on one family of callees (`let t = a;` and *k* statements of `t = (t * 3 + 1) | 0;`, then `return t;`) with the TurboFan trace, after 20 warm-up calls and a forced optimization of the caller: bytecode of 446 and 456 bytes was inlined, 466, 486, 506 and 706 bytes was not (`reason: 5`), and with `--max-inlined-bytecode-size=2000` all of them were inlined ✅[^lab]. The verdicts and the bytecode lengths were the same on V8 12.4, 14.1 and 15.0, but V8 14.1 and 15.0 print the reason as a name, `reason: exceeds bytecode limit`, not `reason: 5` ✅[^lab-matrix]. The same family with a comment of 2 000 characters, one of 20 000 characters, a 5 000-character block comment plus a 5 000-character line comment inside a body, and a 3 000-character variable name all gave callees of 6 to 13 bytes of bytecode that were inlined ✅[^lab]. So the limit is on bytecode, not on source text, for these callees (arithmetic bodies and comments, one call site, TurboFan, this build). Maglev has its own flag, `--max-maglev-inlined-bytecode-size`, also 460 here; no Maglev inlining run was made. Callees up to `--max-inlined-bytecode-size-small` (27 bytes) take the "small function" path ✅[^inl-heur] ✅[^lab]. On V8 12.4, 14.1 and 15.0 the Maglev limit's default is 100, and on V8 15.0 the small-function limit is 30 ✅[^lab-matrix].
 - **Budget per caller.** All inlined callees of one optimized function share `--max-inlined-bytecode-size-cumulative` (920 bytes) ✅[^inl-heur] ✅[^lab].
-- **Known target.** Two different functions passed to one call site: nothing was inlined. Two closures made by one factory share one function body, and were inlined. A method call `o.m()` on objects of two classes inlined both `m` methods (polymorphic inlining, `--polymorphic-inlining` on by default) ✅[^lab].
+- **Known target.** Two different functions passed to one call site: nothing was inlined. Two closures made by one factory share one function body, and were inlined. A method call `o.m()` on objects of two classes inlined both `m` methods (polymorphic inlining, `--polymorphic-inlining` on by default) ✅[^lab]. V8 14.1 and 15.0 have no `--polymorphic-inlining` flag, and still inlined both methods ✅[^lab-matrix].
 
 <details><summary>Script <code>inline.mjs</code>: what TurboFan inlines</summary>
 
@@ -900,7 +900,7 @@ arith70            callee bytecode length:   706  ->  inlined
 
 ### 3.6 Escape analysis: objects that are never allocated
 
-When TurboFan has inlined enough to see an object's whole life, and the object never leaves the function, it does not allocate it. The V8 source describes the tracked object as one that "represents an allocation site and tracks the Variables associated with its fields" ✅[^escape-h]. If the code later deopts, the object is built at that moment for the interpreter frame. The lab creates 10 million `{ x, y }` objects in an optimized loop. With escape analysis on (the default), the run had 0 scavenges. With `--no-turbo-escape`, or when each object is also stored in an outside array, it had more than 20 ✅[^lab]. Maglev has its own `--maglev-escape-analysis`, also on by default ✅[^lab].
+When TurboFan has inlined enough to see an object's whole life, and the object never leaves the function, it does not allocate it. The V8 source describes the tracked object as one that "represents an allocation site and tracks the Variables associated with its fields" ✅[^escape-h]. If the code later deopts, the object is built at that moment for the interpreter frame. The lab creates 10 million `{ x, y }` objects in an optimized loop. With escape analysis on (the default), the run had 0 scavenges. With `--no-turbo-escape`, or when each object is also stored in an outside array, it had more than 20 ✅[^lab]. Maglev has its own `--maglev-escape-analysis`, also on by default ✅[^lab] (off on V8 12.4 ✅[^lab-matrix]).
 
 <details><summary>Script <code>escape.mjs</code>: allocations removed, or not</summary>
 
@@ -946,7 +946,7 @@ The inputs are doubles from the first call, so that `p.x * p.x` cannot leave the
 
 ### 3.7 Calls: argument counts, rest parameters, `arguments`, bound functions, closures
 
-Calling with fewer arguments assigns `undefined` to the missing parameters; extra arguments are ignored ✅[^adaptor]. Before V8 8.9, V8 handled the mismatch with an extra "arguments adaptor frame"; the post of 2021-02-15 shows the new layout in v8.9 and says removing the frame helps "get rid of almost the entire overhead" ✅[^adaptor]. In the lab (`calls.mjs`: 50 warm-up calls, forced optimization of the calling function, 1 000 further calls, status bit 6 of the caller), each of these targets was inlined into a TurboFan caller and none deoptimized: fewer arguments, more arguments, rest parameters, `arguments.length` and `arguments[0]`, `arguments` stored in an outside variable, sloppy-mode `arguments` aliasing a reassigned parameter, a bound function, and a closure ✅[^lab].
+Calling with fewer arguments assigns `undefined` to the missing parameters; extra arguments are ignored ✅[^adaptor]. Before V8 8.9, V8 handled the mismatch with an extra "arguments adaptor frame"; the post of 2021-02-15 shows the new layout in v8.9 and says removing the frame helps "get rid of almost the entire overhead" ✅[^adaptor]. In the lab (`calls.mjs`: 50 warm-up calls, forced optimization of the calling function, 1 000 further calls, status bit 6 of the caller, which is bit 5 on V8 14.1 and 15.0 ✅[^lab-matrix]), each of these targets was inlined into a TurboFan caller and none deoptimized: fewer arguments, more arguments, rest parameters, `arguments.length` and `arguments[0]`, `arguments` stored in an outside variable, sloppy-mode `arguments` aliasing a reassigned parameter, a bound function, and a closure ✅[^lab].
 
 <details><summary>Script <code>calls.mjs</code>: call shapes and language features at one call site</summary>
 
@@ -1013,7 +1013,7 @@ asyncFn           caller TurboFan; target inlined: af; deopts: none
 ```
 </details>
 
-In `calls.mjs` the target arrives as a parameter. With `f.apply(null, [1, 2, 3])`, `f(...[1, 2, 3])` and `f.call(null, 1, 2, 3)` the target was not inlined, though the caller was optimized ✅[^lab]. The likely reason is that the call site's feedback records `apply` or `call`, not `f` (an inference). The second script uses a fixed target, `sum3`, in a CommonJS file. There `sum3.call(…)`, a bound `sum3`, and spread or `apply` of an array literal were inlined. Spread or `apply` of an array held in a variable, `apply` with `arguments`, and forwarding rest parameters with `sum3(...xs)` were not inlined; the caller was still TurboFan code ✅[^lab].
+In `calls.mjs` the target arrives as a parameter. With `f.apply(null, [1, 2, 3])`, `f(...[1, 2, 3])` and `f.call(null, 1, 2, 3)` the target was not inlined, though the caller was optimized ✅[^lab]. The likely reason is that the call site's feedback records `apply` or `call`, not `f` (an inference). The second script uses a fixed target, `sum3`, in a CommonJS file. There `sum3.call(…)`, a bound `sum3`, and spread or `apply` of an array literal were inlined. Spread or `apply` of an array held in a variable, `apply` with `arguments`, and forwarding rest parameters with `sum3(...xs)` were not inlined; the caller was still TurboFan code ✅[^lab]. The same on V8 12.4 and 14.1. In Electron 43 (V8 15.0, pointer compression on) spread and `apply` of an array held in a variable were inlined too; `apply` with `arguments` and rest forwarding were still not (cause not isolated) ✅[^lab-matrix].
 
 <details><summary>Script <code>callforms.js</code>: <code>call</code>, <code>apply</code>, spread and bound calls to one known function</summary>
 
@@ -1070,7 +1070,7 @@ spreadRest      TurboFan, sum3 inlined: no
 
 ### 3.8 `try`/`catch`, generators and `async` functions in the optimizing tiers
 
-The 2017 launch post says Crankshaft, TurboFan's predecessor, "was not designed to optimize JavaScript code using structured exception handling", and that TurboFan was designed "to optimize all of the language features" ✅[^launch-tf]. The lab checks it for V8 13.6 in two ways. **Forced** (`self.mjs`, and the `caller` functions of `calls.mjs`): after 20 to 50 warm-up calls, `%OptimizeFunctionOnNextCall` and one more call, then the status bit `TurboFanned` (bit 6, value 64) of the function itself, read after 100 further calls. Each of these functions had the bit set: `try`/`catch`, a `try`/`catch` that throws on every call, `try`/`finally`, a generator, an `async` function with `await`, a loop over `arguments`, `for…of`, `for…in`, a function that calls `eval`, and a sloppy-mode function with a `with` statement ✅[^lab]. **Natural tier-up** (`natural.mjs`, below; no `%Optimize…` call, `--single-threaded`, `--no-turbo-inlining --no-maglev-inlining`): the status bit was read after every call of up to 40 000 calls. Sixteen subjects reached TurboFan code, between call 1 465 and call 15 991, and two controls without any of the features did the same (a loop-free function at call 11 321, one with a loop at call 938). The subjects were `try`/`catch` (three forms: plain, around a loop, throwing on every call), `try`/`finally`, `arguments` read in a loop, `arguments` stored in an outer variable, sloppy-mode `arguments` aliasing a reassigned parameter, `arguments` passed to `Math.max.apply` in strict mode, two generators (one resumed with a value), `for…in` over 2 and over 8 properties, `eval` of an expression using a parameter and of one using a local variable, and `with` over an object with and without a local variable read ✅[^lab]. Natural tier-up needs the inlining flags: with the two inlining flags deleted from the script, 12 of the 16 subjects stayed at Sparkplug or Maglev for all 40 000 calls, because TurboFan inlined them into the small `use` arrow function and they no longer ran on their own (a first run of the script, without the controls). So both claims are about the function's own code, for small functions, on this build. The list of bailout reasons in this version has no entry for any of these features ✅[^bailout-reason].
+The 2017 launch post says Crankshaft, TurboFan's predecessor, "was not designed to optimize JavaScript code using structured exception handling", and that TurboFan was designed "to optimize all of the language features" ✅[^launch-tf]. The lab checks it for V8 13.6 in two ways. **Forced** (`self.mjs`, and the `caller` functions of `calls.mjs`): after 20 to 50 warm-up calls, `%OptimizeFunctionOnNextCall` and one more call, then the status bit `TurboFanned` (bit 6, value 64, on V8 13.6 and 12.4; bit 5, value 32, on V8 14.1 and 15.0 ✅[^lab-matrix]) of the function itself, read after 100 further calls. Each of these functions had the bit set: `try`/`catch`, a `try`/`catch` that throws on every call, `try`/`finally`, a generator, an `async` function with `await`, a loop over `arguments`, `for…of`, `for…in`, a function that calls `eval`, and a sloppy-mode function with a `with` statement ✅[^lab]. **Natural tier-up** (`natural.mjs`, below; no `%Optimize…` call, `--single-threaded`, `--no-turbo-inlining --no-maglev-inlining`): the status bit was read after every call of up to 40 000 calls. Sixteen subjects reached TurboFan code, between call 1 465 and call 15 991, and two controls without any of the features did the same (a loop-free function at call 11 321, one with a loop at call 938). The subjects were `try`/`catch` (three forms: plain, around a loop, throwing on every call), `try`/`finally`, `arguments` read in a loop, `arguments` stored in an outer variable, sloppy-mode `arguments` aliasing a reassigned parameter, `arguments` passed to `Math.max.apply` in strict mode, two generators (one resumed with a value), `for…in` over 2 and over 8 properties, `eval` of an expression using a parameter and of one using a local variable, and `with` over an object with and without a local variable read ✅[^lab]. On V8 12.4, 14.1 and 15.0 every subject also reached TurboFan code, forced and natural, at other calls: between call 290 and call 4 458 on V8 12.4 (Maglev off), and between call 2 320 and call 25 222 on V8 14.1 and 15.0 ✅[^lab-matrix]. Natural tier-up needs the inlining flags: with the two inlining flags deleted from the script, 12 of the 16 subjects stayed at Sparkplug or Maglev for all 40 000 calls, because TurboFan inlined them into the small `use` arrow function and they no longer ran on their own (a first run of the script, without the controls). So both claims are about the function's own code, for small functions, on this build. The list of bailout reasons in this version has no entry for any of these features ✅[^bailout-reason].
 
 <details><summary>Script <code>self.mjs</code>: does TurboFan compile the function itself?</summary>
 
@@ -1186,7 +1186,7 @@ For `async` functions, the post of 2018-11-12 reports that "async/await outperfo
 
 ### 3.9 Built-in functions and their fast paths
 
-Array methods are built-ins, but TurboFan can inline the method and its callback into the caller. The flag `--turbo-inline-array-builtins` is on by default ✅[^lab]. The release post of 2017-12-19 says "calls to Array.prototype.map and Array.prototype.filter are now inlined for many cases" ✅[^release64]. In the lab, the callbacks of `forEach`, `map`, `reduce`, `filter` and `find` were inlined into a TurboFan caller; the comparator of `sort` was not ✅[^lab]. The `map` case deoptimized once, with `wrong map` at the `.length` read of the array that `map` returned, and stayed TurboFan code after the second optimization ✅[^lab]. Calls through `call`, `apply` and spread are in §3.7.
+Array methods are built-ins, but TurboFan can inline the method and its callback into the caller. The flag `--turbo-inline-array-builtins` is on by default ✅[^lab]. The release post of 2017-12-19 says "calls to Array.prototype.map and Array.prototype.filter are now inlined for many cases" ✅[^release64]. In the lab, the callbacks of `forEach`, `map`, `reduce`, `filter` and `find` were inlined into a TurboFan caller; the comparator of `sort` was not ✅[^lab]. The same on V8 12.4 and 14.1; in Electron 43 (V8 15.0, pointer compression on) the `sort` comparator was inlined too (cause not isolated) ✅[^lab-matrix]. The `map` case deoptimized once, with `wrong map` at the `.length` read of the array that `map` returned, and stayed TurboFan code after the second optimization ✅[^lab]. Calls through `call`, `apply` and spread are in §3.7.
 
 <details><summary>Script <code>builtins-inline.mjs</code>: callbacks of array built-ins</summary>
 
@@ -1253,6 +1253,8 @@ sort     caller TurboFan, after a second optimization TurboFan; callback inlined
 
 The last line matches the source: bit 1 is set when `!isolate->use_optimizer()`, a check for the whole isolate, while `%NeverOptimizeFunction` disables optimization of the one function ✅[^runtime-test]. In the same way, `MaybeDeopted` (bit 3) is set only under `--deopt-every-n-times`, and `LiteMode` (bit 13) only in lite or jitless mode ✅[^runtime-test].
 
+**Other versions.** The bit numbers above are for V8 13.6. On V8 12.4 (Node.js 22.23.4) `tiers.mjs` printed the same numbers, except the two Maglev lines: Maglev is off there, so the function stayed Sparkplug code. On V8 14.1 (Node.js 25.7.0) and V8 15.0 (Electron 43) the layout is different. Found by experiment, not read from those versions' `runtime.h`: `--always-turbofan` is a bad option there and `AlwaysOptimize` is gone; `--deopt-every-n-times` sets bit 2, and every bit from `MaybeDeopted` up sits one place lower than in 13.6. With that layout (the 13.6 names with `AlwaysOptimize` removed) both scripts decode to the same states as in 13.6: TurboFan code is `41` (`IsFunction|Optimized|TurboFanned`, bits 0, 3 and 5), Ignition `65`, Sparkplug `16385`, never called `131073` ✅[^lab-matrix]. A script that tests `& 64` for TurboFan reads `Interpreted` on those versions.
+
 <details><summary>Script <code>tiers.mjs</code>: every tier's status bits</summary>
 
 ```js
@@ -1313,7 +1315,7 @@ after %NeverOptimizeFunction          129 IsFunction|Interpreted
 ```
 </details>
 
-**The bits `tiers.mjs` did not reach.** A second script (`bits-extra.mjs`, below) makes the other bits appear, by a concurrent optimization request, by reading the status from inside a running function, and by flags. In the runs, `%OptimizeFunctionOnNextCall(f, 'concurrent')` gave `MarkedForConcurrentOptimization` (bit 9), the next call gave `OptimizingConcurrently` (bit 10), and the finished compile gave `81`. A function that read its own status while running showed `TopmostFrameIsTurboFanned` (bit 12) in TurboFan code, `TopmostFrameIsMaglev` (bit 19) in Maglev code and `TopmostFrameIsBaseline` (bit 17) in Sparkplug code. `--always-turbofan` added `AlwaysOptimize` (bit 2), `--deopt-every-n-times=100` added `MaybeDeopted` (bit 3), and both `--lite-mode` and `--jitless` gave `NeverOptimize|LiteMode` (bits 1 and 13), which matches `!isolate->use_optimizer()` being true when the optimizer is off. The two flags `--optimize-on-next-call-optimizes-to-maglev` and `--optimize-maglev-optimizes-to-turbofan` set bits 20 and 21; with the first, a concurrent request set `MarkedForConcurrentMaglevOptimization` (bit 23). Bit 14, `MarkedForDeoptimization`, was not seen: after `%DeoptimizeFunction` the status showed no optimized code at all (`129`) ✅[^lab] ✅[^runtime-test]. These runs are for one tiny function on this build.
+**The bits `tiers.mjs` did not reach.** A second script (`bits-extra.mjs`, below) makes the other bits appear, by a concurrent optimization request, by reading the status from inside a running function, and by flags. In the runs, `%OptimizeFunctionOnNextCall(f, 'concurrent')` gave `MarkedForConcurrentOptimization` (bit 9), the next call gave `OptimizingConcurrently` (bit 10), and the finished compile gave `81`. A function that read its own status while running showed `TopmostFrameIsTurboFanned` (bit 12) in TurboFan code, `TopmostFrameIsMaglev` (bit 19) in Maglev code and `TopmostFrameIsBaseline` (bit 17) in Sparkplug code. `--always-turbofan` added `AlwaysOptimize` (bit 2), `--deopt-every-n-times=100` added `MaybeDeopted` (bit 3), and both `--lite-mode` and `--jitless` gave `NeverOptimize|LiteMode` (bits 1 and 13), which matches `!isolate->use_optimizer()` being true when the optimizer is off. The two flags `--optimize-on-next-call-optimizes-to-maglev` and `--optimize-maglev-optimizes-to-turbofan` set bits 20 and 21; with the first, a concurrent request set `MarkedForConcurrentMaglevOptimization` (bit 23). Bit 14, `MarkedForDeoptimization`, was not seen: after `%DeoptimizeFunction` the status showed no optimized code at all (`129`) ✅[^lab] ✅[^runtime-test]. These runs are for one tiny function on this build. On V8 12.4 `--optimize-maglev-optimizes-to-turbofan` does not exist, and bits 19, 20, 22 and 23 did not appear (Maglev is off). On V8 14.1 and 15.0, decoded with the layout above, every bit appeared as here except `AlwaysOptimize`, which is gone ✅[^lab-matrix].
 
 <details><summary>Script <code>bits-extra.mjs</code>: the status bits that <code>tiers.mjs</code> did not reach</summary>
 
@@ -1415,7 +1417,7 @@ The script `loops-bench.mjs` (below) sums an array of small integers with `for (
 | `forEach` | 101.1 to 103.8 (Sparkplug) | 19.3 to 21.5 (TurboFan) |
 | `reduce` | 99.4 to 102.5 (Sparkplug) | 8.5 to 9.4 (TurboFan) |
 
-Measured here, for this one function body (`s += v` over small integers): in A, `for…of` took 9.5 to 10.0 times as long as the index loop, `forEach` 6.7 to 7.1 times and `reduce` 6.6 to 7.0 times. In B, `for…of` took 1.15 to 1.22 times as long, `forEach` 1.84 to 1.94 times, and `reduce` 0.81 to 0.85 times (faster than the index loop) ✅[^lab]. The order of the four forms was the same in all four runs. Which code ran in A: `--trace-osr` on a copy of the script with workload B removed printed 201 `OSR - entry` lines each for the `for` loop and the `for…of` loop and none for `forEach` and `reduce`, so only the first two ran their loop in on-stack-replacement code ✅[^lab]. `forEach` and `reduce` loop inside the built-in, which calls the callback once per item; the enclosing function was not TurboFan code, so the callback cannot have been inlined into it (an inference; the inlining of those callbacks into TurboFan callers is §3.9). The point is that the answer to "is `forEach` slower than `for`" depends on which tier runs the code. In B, the `forEach` callback adds into `s`, a variable of the outer function, which may explain part of its gap (an inference; the lab did not isolate it).
+Measured here, for this one function body (`s += v` over small integers): in A, `for…of` took 9.5 to 10.0 times as long as the index loop, `forEach` 6.7 to 7.1 times and `reduce` 6.6 to 7.0 times. In B, `for…of` took 1.15 to 1.22 times as long, `forEach` 1.84 to 1.94 times, and `reduce` 0.81 to 0.85 times (faster than the index loop) ✅[^lab]. The order of the four forms was the same in all four runs. On macOS with Node.js 24.22.1 and with V8 12.4 the order and the ratios were about the same (three runs each). Not on the newer versions (four runs each): on V8 14.1, in B, `for…of` was faster than the index loop (0.93 to 0.95) and `forEach` took 2.8 to 2.9 times as long; in Electron 43 (V8 15.0), in A, the index loop and `for…of` were TurboFan code at entry and `for…of` took 0.83 times as long as the index loop, and in B `forEach` took 2.7 to 2.8 times as long and `reduce` 1.01 to 1.02 times ✅[^lab-matrix]. Which code ran in A: `--trace-osr` on a copy of the script with workload B removed printed 201 `OSR - entry` lines each for the `for` loop and the `for…of` loop and none for `forEach` and `reduce`, so only the first two ran their loop in on-stack-replacement code ✅[^lab]. `forEach` and `reduce` loop inside the built-in, which calls the callback once per item; the enclosing function was not TurboFan code, so the callback cannot have been inlined into it (an inference; the inlining of those callbacks into TurboFan callers is §3.9). The point is that the answer to "is `forEach` slower than `for`" depends on which tier runs the code. In B, the `forEach` callback adds into `s`, a variable of the outer function, which may explain part of its gap (an inference; the lab did not isolate it).
 
 <details><summary>Script <code>loops-bench.mjs</code>: timing, measured here</summary>
 
@@ -1480,7 +1482,7 @@ checksum 79200000000
 | odd squares, 1e4 x 2 000 | 1.30 to 1.41 | 1.28 to 1.40 | all TurboFan |
 | odd squares, 100 x 200 000 | 1.41 to 1.45 | 1.28 to 1.35 | all TurboFan |
 
-What holds across these cases: when all three functions end as TurboFan code, `forEach` was 1.3 to 1.9 times slower than the index loop. What does not: `reduce` was faster than the index loop only for the plain sum (0.82 to 0.89) and slower for the second body (1.28 to 1.40), so "`reduce` faster than `for`" is true of that one body; and between the two workload kinds there is a middle one (100 000 items x 200 calls) where `for` reached TurboFan while `forEach` and `reduce` stayed in Maglev, and they were 3 to 45 times slower. The tier column is the status after the run (the same in all three runs), so a function that reached TurboFan late shows TurboFan.
+What holds across these cases: when all three functions end as TurboFan code, `forEach` was 1.3 to 1.9 times slower than the index loop. What does not: `reduce` was faster than the index loop only for the plain sum (0.82 to 0.89) and slower for the second body (1.28 to 1.40), so "`reduce` faster than `for`" is true of that one body; and between the two workload kinds there is a middle one (100 000 items x 200 calls) where `for` reached TurboFan while `forEach` and `reduce` stayed in Maglev, and they were 3 to 45 times slower. The tier column is the status after the run (the same in all three runs), so a function that reached TurboFan late shows TurboFan. On the other macOS builds (V8 12.4, 14.1 and 15.0, four runs each) these conclusions changed ✅[^lab-matrix]. On V8 12.4 (Maglev off) the middle workload ended all TurboFan, with `forEach` at 1.8 to 1.9 and `reduce` at 0.8 to 0.9, and for the second body the index loop was the slowest form (`forEach` and `reduce` 0.82 to 0.85). On V8 14.1, with all three as TurboFan code, `forEach` took 2.2 to 3.0 times as long, and `reduce` was faster than the index loop for both bodies (0.80 to 0.96). In Electron 43 (V8 15.0), `forEach` took 2.7 to 3.2 times as long for the sum and 4.6 to 6.3 times for the second body, and `reduce` 1.0 for the sum and 1.2 to 1.5 for the second body. On macOS with Node.js 24.22.1 (three runs) the table above held, with `forEach` at 1.4 to 2.1 when all three were TurboFan code.
 
 <details><summary>Script <code>loops-var.mjs</code>: other bodies and sizes, measured here</summary>
 
@@ -1533,7 +1535,7 @@ checksum 5920200000000
 ```
 </details>
 
-How long a function needs before the numbers settle is a separate result. The script `warmup.mjs` times 25 rounds of 2 000 calls over 10 000 items. In all three runs the first five rounds (10 000 calls) took 51 to 76 ms for `forEach` and 95 to 111 ms for `reduce`, against 9 to 12 ms for `for` (its first round: 14 to 20 ms). The sixth round was in between, and from the seventh round (after 12 000 calls) `forEach` mostly took 19 to 21 ms and `reduce` 8 to 10 ms, with an occasional 12 or 13 ms or 25 ms round. So a benchmark that stops before about 10 000 calls of this function measures the code before TurboFan optimized the callbacks ✅[^lab]. This holds for this one body and size on this build.
+How long a function needs before the numbers settle is a separate result. The script `warmup.mjs` times 25 rounds of 2 000 calls over 10 000 items. In all three runs the first five rounds (10 000 calls) took 51 to 76 ms for `forEach` and 95 to 111 ms for `reduce`, against 9 to 12 ms for `for` (its first round: 14 to 20 ms). The sixth round was in between, and from the seventh round (after 12 000 calls) `forEach` mostly took 19 to 21 ms and `reduce` 8 to 10 ms, with an occasional 12 or 13 ms or 25 ms round. So a benchmark that stops before about 10 000 calls of this function measures the code before TurboFan optimized the callbacks ✅[^lab]. This holds for this one body and size on this build. The point at which the numbers settle moved with the version: from the third round (after 4 000 calls) on V8 12.4, and from the tenth round (after 18 000 calls) on V8 14.1 and 15.0, where `forEach` then took 30 to 39 ms per round ✅[^lab-matrix].
 
 <details><summary>Script <code>warmup.mjs</code>: when do <code>forEach</code> and <code>reduce</code> settle?</summary>
 
@@ -1568,40 +1570,40 @@ reduce   104 97 98 99 97 58 9 9 8 8 8 8 8 9 8 12 9 9 9 8 13 8 9 8 8
 
 ### 5.1 `%GetOptimizationStatus` bits in V8 13.6
 
-Names, bit numbers and order from `enum class OptimizationStatus` in `src/runtime/runtime.h` at tag 13.6.233.17 ✅[^runtime-h]; "Set when" from `Runtime_GetOptimizationStatus` in `src/runtime/runtime-test.cc` at the same tag ✅[^runtime-test]; "Seen" says which script showed the bit: `tiers.mjs` or `bits-extra.mjs` (§4.1) ✅[^lab].
+Names, bit numbers and order from `enum class OptimizationStatus` in `src/runtime/runtime.h` at tag 13.6.233.17 ✅[^runtime-h]; "Set when" from `Runtime_GetOptimizationStatus` in `src/runtime/runtime-test.cc` at the same tag ✅[^runtime-test]; "Seen" says which script showed the bit: `tiers.mjs` or `bits-extra.mjs` (§4.1) ✅[^lab]. The last column was found by experiment on V8 14.1 (Node.js 25.7.0) and V8 15.0 (Electron 43): the same two scripts, decoded with this layout, gave the same states as on 13.6, and `--always-turbofan` is a bad option there ✅[^lab-matrix]. V8 12.4 (Node.js 22.23.4) printed the 13.6 values for every bit it showed (bits 19 to 23 were not seen there) ✅[^lab-matrix].
 
-| Bit | Value | Name | Set when | Seen |
-|---|---|---|---|---|
-| 0 | 1 | IsFunction | the argument is a function | yes (`tiers.mjs`) |
-| 1 | 2 | NeverOptimize | the isolate does not use the optimizer | yes, with `--lite-mode` and `--jitless` (`bits-extra.mjs`) |
-| 2 | 4 | AlwaysOptimize | `--always-turbofan` or `--prepare-always-turbofan` | yes, with `--always-turbofan` (`bits-extra.mjs`) |
-| 3 | 8 | MaybeDeopted | `--deopt-every-n-times` | yes (`bits-extra.mjs`) |
-| 4 | 16 | Optimized | optimized code is attached and not marked for deopt | yes (`tiers.mjs`) |
-| 5 | 32 | Maglevved | that code is Maglev code | yes (`tiers.mjs`) |
-| 6 | 64 | TurboFanned | that code is TurboFan code | yes (`tiers.mjs`) |
-| 7 | 128 | Interpreted | the active tier is Ignition | yes (`tiers.mjs`) |
-| 8 | 256 | MarkedForOptimization | a synchronous TurboFan request is pending | yes (`tiers.mjs`) |
-| 9 | 512 | MarkedForConcurrentOptimization | a concurrent TurboFan request is pending | yes (`bits-extra.mjs`) |
-| 10 | 1024 | OptimizingConcurrently | a background compile is running (`tiering_in_progress()`) | yes (`bits-extra.mjs`) |
-| 11 | 2048 | IsExecuting | a frame of the function is on the stack | yes (`tiers.mjs`) |
-| 12 | 4096 | TopmostFrameIsTurboFanned | that frame is TurboFan code | yes (`bits-extra.mjs`) |
-| 13 | 8192 | LiteMode | `--lite-mode`, `--jitless`, or no TurboFan in the build | yes, with both flags (`bits-extra.mjs`) |
-| 14 | 16384 | MarkedForDeoptimization | the attached optimized code is marked for deopt | no (not reached by the runs) |
-| 15 | 32768 | Baseline | Sparkplug code is attached | yes (`tiers.mjs`) |
-| 16 | 65536 | TopmostFrameIsInterpreted | the frame is interpreted | yes (`tiers.mjs`) |
-| 17 | 131072 | TopmostFrameIsBaseline | the frame is Sparkplug code | yes (`bits-extra.mjs`) |
-| 18 | 262144 | IsLazy | the function is not compiled yet | yes (`tiers.mjs`) |
-| 19 | 524288 | TopmostFrameIsMaglev | the frame is Maglev code | yes (`bits-extra.mjs`) |
-| 20 | 1048576 | OptimizeOnNextCallOptimizesToMaglev | the flag `--optimize-on-next-call-optimizes-to-maglev` is on | yes (`bits-extra.mjs`) |
-| 21 | 2097152 | OptimizeMaglevOptimizesToTurbofan | the flag `--optimize-maglev-optimizes-to-turbofan` is on | yes (`bits-extra.mjs`) |
-| 22 | 4194304 | MarkedForMaglevOptimization | a Maglev request is pending | yes (`tiers.mjs`) |
-| 23 | 8388608 | MarkedForConcurrentMaglevOptimization | a concurrent Maglev request is pending | yes, with the flag of bit 20 (`bits-extra.mjs`) |
+| Bit | Value | Name | Set when | Seen | V8 14.1 and 15.0: bit (value) |
+|---|---|---|---|---|---|
+| 0 | 1 | IsFunction | the argument is a function | yes (`tiers.mjs`) | 0 (1) |
+| 1 | 2 | NeverOptimize | the isolate does not use the optimizer | yes, with `--lite-mode` and `--jitless` (`bits-extra.mjs`) | 1 (2) |
+| 2 | 4 | AlwaysOptimize | `--always-turbofan` or `--prepare-always-turbofan` | yes, with `--always-turbofan` (`bits-extra.mjs`) | gone |
+| 3 | 8 | MaybeDeopted | `--deopt-every-n-times` | yes (`bits-extra.mjs`) | 2 (4) |
+| 4 | 16 | Optimized | optimized code is attached and not marked for deopt | yes (`tiers.mjs`) | 3 (8) |
+| 5 | 32 | Maglevved | that code is Maglev code | yes (`tiers.mjs`) | 4 (16) |
+| 6 | 64 | TurboFanned | that code is TurboFan code | yes (`tiers.mjs`) | 5 (32) |
+| 7 | 128 | Interpreted | the active tier is Ignition | yes (`tiers.mjs`) | 6 (64) |
+| 8 | 256 | MarkedForOptimization | a synchronous TurboFan request is pending | yes (`tiers.mjs`) | 7 (128) |
+| 9 | 512 | MarkedForConcurrentOptimization | a concurrent TurboFan request is pending | yes (`bits-extra.mjs`) | 8 (256) |
+| 10 | 1024 | OptimizingConcurrently | a background compile is running (`tiering_in_progress()`) | yes (`bits-extra.mjs`) | 9 (512) |
+| 11 | 2048 | IsExecuting | a frame of the function is on the stack | yes (`tiers.mjs`) | 10 (1024) |
+| 12 | 4096 | TopmostFrameIsTurboFanned | that frame is TurboFan code | yes (`bits-extra.mjs`) | 11 (2048) |
+| 13 | 8192 | LiteMode | `--lite-mode`, `--jitless`, or no TurboFan in the build | yes, with both flags (`bits-extra.mjs`) | 12 (4096) |
+| 14 | 16384 | MarkedForDeoptimization | the attached optimized code is marked for deopt | no (not reached by the runs) | 13 (8192), by position only: not seen |
+| 15 | 32768 | Baseline | Sparkplug code is attached | yes (`tiers.mjs`) | 14 (16384) |
+| 16 | 65536 | TopmostFrameIsInterpreted | the frame is interpreted | yes (`tiers.mjs`) | 15 (32768) |
+| 17 | 131072 | TopmostFrameIsBaseline | the frame is Sparkplug code | yes (`bits-extra.mjs`) | 16 (65536) |
+| 18 | 262144 | IsLazy | the function is not compiled yet | yes (`tiers.mjs`) | 17 (131072) |
+| 19 | 524288 | TopmostFrameIsMaglev | the frame is Maglev code | yes (`bits-extra.mjs`) | 18 (262144) |
+| 20 | 1048576 | OptimizeOnNextCallOptimizesToMaglev | the flag `--optimize-on-next-call-optimizes-to-maglev` is on | yes (`bits-extra.mjs`) | 19 (524288) |
+| 21 | 2097152 | OptimizeMaglevOptimizesToTurbofan | the flag `--optimize-maglev-optimizes-to-turbofan` is on | yes (`bits-extra.mjs`) | 20 (1048576) |
+| 22 | 4194304 | MarkedForMaglevOptimization | a Maglev request is pending | yes (`tiers.mjs`) | 21 (2097152) |
+| 23 | 8388608 | MarkedForConcurrentMaglevOptimization | a concurrent Maglev request is pending | yes, with the flag of bit 20 (`bits-extra.mjs`) | 22 (4194304) |
 
-These bits are an interface for V8's own tests: the source comment says they "must be in sync with bits defined in test/mjsunit/mjsunit.js" ✅[^runtime-h]. This table is for tag 13.6.233.17 only; no other version's table was compared, so decode with the table of the version you run.
+These bits are an interface for V8's own tests: the source comment says they "must be in sync with bits defined in test/mjsunit/mjsunit.js" ✅[^runtime-h]. The names and the "Set when" column are for tag 13.6.233.17; no other version's `runtime.h` was read. The 14.1 and 15.0 column comes from runs only, so decode with the table of the version you run, and check it with `tiers.mjs` first.
 
 ### 5.2 Tiering flags in this build
 
-All defaults below were read from `node --v8-options` (script in §2.2) ✅[^lab].
+All defaults below were read from `node --v8-options` (script in §2.2) ✅[^lab]. The defaults on the other builds of the matrix are in §6.4 ("Other builds and versions"); nine of the flags of `flags.mjs` differ on at least one build ✅[^lab-matrix].
 
 | Flag | Default | Effect |
 |---|---|---|
@@ -1651,7 +1653,7 @@ All of these flags exist in this build ✅[^lab]. Node.js 24 ships V8 13.6: the 
 | "A `try`/`catch` prevents optimization" | The bluebird "Optimization killers" wiki listed "Functions that contain a try-catch statement" as not optimizable ✅[^bluebird]; it was true of Crankshaft ✅[^launch-tf] | For small functions on this build, TurboFan code existed for `try`/`catch`, `try`/`catch` that throws on every call, a `try`/`catch` around a loop and `try`/`finally`, both after forced optimization (status bit) and in natural tier-up (`natural.mjs`, inlining off); a `try`/`catch` function was also inlined into its caller ✅[^lab]. The wiki itself now opens with "All this is wrong in TurboFan. (Node 8+)" ✅[^bluebird] |
 | "`arguments` prevents optimization; never leak it" | The same wiki: "The `arguments` object must not be passed or leaked anywhere." ✅[^bluebird] | `arguments` read, looped over, stored in an outside variable, aliased in sloppy mode, and passed to `Math.max.apply` in strict mode: TurboFan code after forced optimization and in natural tier-up (the forced runs also inlined them with no deopt) ✅[^lab] |
 | "Functions over 600 characters are not inlined" | Crankshaft's rule, as written in 2013: "Large functions (>600 source characters including whitespace or 196 AST nodes) will not be inlined." ✅[^conrod] | TurboFan dropped source size in 2016: "The source size is not a real indicator for whether or not to inline a certain function." ✅[^cr-2361813002]. Callees with comments of 2 000 and 20 000 characters were inlined; the limit is the flag `--max-inlined-bytecode-size`, 460 bytes of bytecode by default: 456 bytes inlined, 466 not (§3.5) ✅[^lab] |
-| "`forEach` is slower than `for`" | Common micro-benchmarks | Depends on the tier and the size (§4.2, measured here on Node.js 24.22.1, sum of small integers): 6.7 to 7.1 times slower with 1 000 000 items and 20 calls (only the `for` loop in OSR code), 1.84 to 1.94 times with 1 000 items and 20 000 calls (all TurboFan), over four runs. With another body and other sizes the ratio ranged from 1.3 to 8 (and up to 45 for `reduce` in one middle case). `reduce` was faster than the index loop (0.81 to 0.89) for the plain sum in the TurboFan workloads, and slower (1.28 to 1.40) for a body with a condition ✅[^lab] |
+| "`forEach` is slower than `for`" | Common micro-benchmarks | Depends on the tier and the size (§4.2, measured here on Node.js 24.22.1, sum of small integers): 6.7 to 7.1 times slower with 1 000 000 items and 20 calls (only the `for` loop in OSR code), 1.84 to 1.94 times with 1 000 items and 20 000 calls (all TurboFan), over four runs. With another body and other sizes the ratio ranged from 1.3 to 8 (and up to 45 for `reduce` in one middle case). `reduce` was faster than the index loop (0.81 to 0.89) for the plain sum in the TurboFan workloads, and slower (1.28 to 1.40) for a body with a condition ✅[^lab]. On V8 14.1 and 15.0 the TurboFan `forEach` ratio was 2.2 to 6.3, and on V8 12.4 `forEach` and `reduce` beat the index loop for the body with a condition (§4.2) ✅[^lab-matrix] |
 | "Generators, `for…of` and `for…in` are not optimized" | The same wiki, with notes that they were optimized in later versions ✅[^bluebird] | TurboFan code, forced and natural, for the small generators and `for…in` loops tried; `for…of` forced only ✅[^lab] |
 | "`eval` and `with` are never optimizable" | The same wiki listed both under "likely never optimizable" ✅[^bluebird] | Simple functions with either (an `eval` of an expression using a parameter or a local variable; a `with` over an object, with and without a local variable read) were TurboFan code, forced and natural ✅[^lab]. What `eval` does to the variables around it was not measured |
 | "Calling with the wrong number of arguments is slow" | The arguments adaptor frame, removed in V8 8.9 ✅[^adaptor] | Fewer and more arguments: inlined, no deopt ✅[^lab] |
@@ -1663,22 +1665,502 @@ All of these flags exist in this build ✅[^lab]. Node.js 24 ships V8 13.6: the 
 ### 6.2 Pitfalls when measuring
 
 - **Forcing optimization too early.** `%OptimizeFunctionOnNextCall` after 2 calls optimizes a function whose callees have no feedback vector yet, so nothing is inlined (§2.3) ✅[^lab]. Warm up with tens of calls first.
-- **Integers that overflow in the benchmark itself.** An integer that grows past 2 ** 31 − 1 in code compiled for small integers deopts with `overflow` (§3.2) ✅[^lab]. Feed the values the measurement will use during warm-up.
+- **Integers that overflow in the benchmark itself.** An integer that grows past 2 ** 31 − 1 in code compiled for small integers deopts with `overflow` (§3.2) ✅[^lab]. With pointer compression on (Electron 43, V8 15.0), an argument past 2 ** 30 − 1 deopted with `not a Smi` instead ✅[^lab-matrix]. Feed the values the measurement will use during warm-up.
 - **Call counts vary between runs.** With the default flags, background compilation moves the call at which each tier appears; `--single-threaded` makes it repeat (§2.2) ✅[^lab].
-- **One-call benchmarks measure OSR code.** In workload A of §4.2 every function stayed Sparkplug code at entry and its loop ran in OSR code ✅[^lab].
-- **The status bits are a test interface.** The table of §5.1 was checked for V8 13.6.233.17 only; use it on another version only after comparing its `runtime.h` ✅[^runtime-h].
+- **One-call benchmarks measure OSR code.** In workload A of §4.2 every function stayed Sparkplug code at entry and its loop ran in OSR code ✅[^lab]. In Electron 43 (V8 15.0) the index loop and `for…of` were TurboFan code at entry after the same 200 calls ✅[^lab-matrix].
+- **The status bits are a test interface.** The table of §5.1 was checked for V8 13.6.233.17 only; use it on another version only after comparing its `runtime.h` ✅[^runtime-h]. The matrix shows why: on V8 14.1 and 15.0 every bit from `MaybeDeopted` up moved down one, so `& 64` there reads `Interpreted`, not `TurboFanned`, and twelve of this doc's scripts print wrong tiers or bit names there as written ✅[^lab-matrix].
 - **Natives change what they measure.** `%PrepareFunctionForOptimization` and `%OptimizeFunctionOnNextCall` force a path that real code may not take; §2.2 and §3.3 use natural tier-up for that reason.
 
 ### 6.3 Trade-offs of the tiers
 
 Higher tiers compile slower: Maglev about 10 times slower than Sparkplug and 10 times faster than TurboFan, per the post of 2023-12-05 ✅[^maglev]. V8 therefore spends TurboFan time only on code that has used up a large budget (§2.2) ✅[^tiering]. Deoptimization is the price of guessing: each one throws away compiled code, and the function has to earn its budget again (§3.3) ✅[^lab].
 
+### 6.4 Other builds and versions (2026-11-27)
+
+Every embedded script ran again on five more builds, on 2026-11-27, with the flags of its `Run:` line; only the `node` command changed. The baseline (E0) is the build of the rest of this doc.
+
+| Id | Build | What differs from the baseline | Run `<flags> <script>` with |
+|---|---|---|---|
+| E0 | Node.js 24.22.1, V8 13.6.233.17-node.58, linux arm64 in Docker (`node:24.22.1-alpine`), pointer compression off | (baseline) | `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node` |
+| E1 | Node.js 24.22.1, same V8, macOS 26.1 arm64 (the Apple M2 host) | the operating system | `~/.nvm/versions/node/v24.22.1/bin/node` |
+| E2 | Node.js 24.22.1, same V8, linux x64 in Docker, emulated on the arm64 machine | the CPU architecture, emulated; TurboFan is off by default there | `docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node` |
+| E3 | Node.js 22.23.4, V8 12.4.254.21-node.57, macOS arm64 | an older V8; Maglev is off by default | `~/.nvm/versions/node/v22.23.4/bin/node` |
+| E4 | Node.js 25.7.0, V8 14.1.146.11-node.20, macOS arm64 | a newer V8 | `~/.nvm/versions/node/v25.7.0/bin/node` |
+| E7 | Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0.245.31-electron.0), macOS arm64 | a newer V8, pointer compression on (small integers up to 2 ** 30 − 1), the V8 sandbox on; not a Node.js release | `ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code"` |
+
+A difference seen only in E7 can come from V8 15.0, from pointer compression or from the sandbox; it is marked "cause not isolated". A difference seen in both E4 and E7 is not caused by pointer compression, since E4 has it off. The timing scripts did not run on E2, because the emulation changes the times.
+
+**Two kinds of variant runs**, made because two build facts hide every other result (they are not scripts of this doc):
+- *14.1 masks.* On V8 14.1 and 15.0 the `%GetOptimizationStatus` bits moved (§4.1, §5.1), so the twelve scripts that test `& 64` print wrong tiers there. Each was run again on E4 and E7 as a copy with `& 64` changed to `& 32`, `& 32` to `& 16`, `& 32768` to `& 16384`, `& 128` to `& 64`, and `'AlwaysOptimize',` deleted from `BITS`. On E4 and E7 the timing scripts ran only as these copies; that changes only their tier column.
+- *`--turbofan` on E2.* TurboFan is off by default on E2, so every TurboFan script was run again there as a copy with `'--turbofan', ` added at the start of every `spawnSync` argument list, and with `--turbofan` on the command line.
+
+**Tier-up and inlining defaults, from `--v8-options`**, printed on each build ✅[^lab-matrix]. The first eight rows are the same on all six builds; the rest are the flags of `flags.mjs` whose default is not:
+
+| Flag | E0, E1 | E2 | E3 (V8 12.4) | E4 (V8 14.1) | E7 (V8 15.0) |
+|---|---|---|---|---|---|
+| `--invocation-count-for-maglev` | 400 | 400 | 400 | 400 | 400 |
+| `--invocation-count-for-turbofan` | 3000 | 3000 | 3000 | 3000 | 3000 |
+| `--invocation-count-for-feedback-allocation` | 8 | 8 | 8 | 8 | 8 |
+| `--minimum-invocations-after-ic-update` | 500 | 500 | 500 | 500 | 500 |
+| `--max-inlined-bytecode-size` | 460 | 460 | 460 | 460 | 460 |
+| `--max-inlined-bytecode-size-cumulative` | 920 | 920 | 920 | 920 | 920 |
+| `--max-optimized-bytecode-size` | 61440 | 61440 | 61440 | 61440 | 61440 |
+| `--max-valid-polymorphic-map-count` | 4 | 4 | 4 | 4 | 4 |
+| `--maglev` | on | on | off | on | on |
+| `--turbofan` | on | off | on | on | on |
+| `--concurrent-sparkplug` | on | on | off | on | on |
+| `--osr-from-maglev` | off | off | on | off | off |
+| `--invocation-count-for-osr` | 500 | 500 | 800 | 500 | 500 |
+| `--polymorphic-inlining` | on | on | on | no such flag | no such flag |
+| `--max-inlined-bytecode-size-small` | 27 | 27 | 27 | 27 | 30 |
+| `--max-maglev-inlined-bytecode-size` | 460 | 460 | 100 | 100 | 100 |
+| `--maglev-escape-analysis` | on | on | off | on | on |
+
+Also, `--always-turbofan` does not exist on E4 and E7, and `--optimize-maglev-optimizes-to-turbofan` does not exist on E3 ✅[^lab-matrix].
+
+**Matrix.** `same`: every line that does not depend on time or addresses matched the doc (for traces: the same reasons, kinds and offsets; the `opt id` and the code-kind spelling were ignored). `differs`: see the list below. For timing scripts, `same` means the order and roughly the ratios held, over three runs per build, plus a fourth run alone where the result differed.
+
+| Script | Claim it backs | E1 | E2 | E3 | E4 | E7 |
+|---|---|---|---|---|---|---|
+| `flags.mjs` | flag defaults (§2.2, §5.2) | same | differs | differs | differs | differs |
+| `toobig.mjs` | no TurboFan over 61 440 bytes (§2.2) | same | differs | same | differs | differs |
+| `tierup.mjs` | calls at each tier-up (§2.2) | same | differs | differs | differs | differs |
+| `fv.mjs` | calls until a feedback vector (§2.3) | same | same | same | same | cannot run |
+| `feedback.mjs` | inlining needs a feedback vector (§2.3) | same | differs | same | same | same |
+| `ic.mjs` | IC states `0 1 P N` (§3.1) | same | same | same | same | same |
+| `deoptframe.mjs` | a deopt rebuilds an interpreter frame (§3.2) | same | differs | same | same | same |
+| `deopt.mjs` | seven deopt reasons (§3.2) | same | differs | differs | same | differs |
+| `smi.mjs` | small-integer range (§3.2) | same | same | same | same | differs |
+| `deoptloop.mjs` | one deopt per new shape, up to 5 (§3.3) | same | differs | differs | differs | differs |
+| `deoptloop-var.mjs` | the same for 24 combinations (§3.3) | same | same | differs | same | same |
+| `osr.mjs` | Maglev OSR of a loop (§3.4) | same | differs | differs | differs | differs |
+| `inline.mjs` | what TurboFan inlines (§3.5) | same | differs | same | differs | differs |
+| `inline-var.mjs` | limit of 460 bytes of bytecode (§3.5) | same | differs | differs | differs | differs |
+| `escape.mjs` | allocations removed (§3.6) | same | differs | same | differs | differs |
+| `calls.mjs` | call shapes inlined (§3.7) | same | differs | same | differs | differs |
+| `callforms.js` | `call`, `apply`, spread (§3.7) | same | differs | same | differs | differs |
+| `self.mjs` | old "killers" get TurboFan code, forced (§3.8) | same | differs | same | differs | differs |
+| `natural.mjs` | the same, natural tier-up (§3.8) | same | differs | differs | differs | differs |
+| `builtins-inline.mjs` | array built-in callbacks (§3.9) | same | differs | same | differs | differs |
+| `tiers.mjs` | status bits per tier (§4.1) | same | differs | differs | differs | differs |
+| `bits-extra.mjs` | the other status bits (§4.1) | same | differs | differs | differs | differs |
+| `loops-bench.mjs` | loop forms timed (§4.2) | same | not run | same | differs | differs |
+| `loops-var.mjs` | other bodies and sizes timed (§4.2) | same | not run | differs | differs | differs |
+| `warmup.mjs` | when the callbacks settle (§4.2) | same | not run | differs | differs | differs |
+
+Most `differs` on E2, E4 and E7 come from the two build facts above. With TurboFan on (the `--turbofan` copies), every E2 script gave the baseline output except `deoptframe.mjs` (frame sizes) and one line of `bits-extra.mjs`. With the 14.1 masks, `toobig.mjs`, `escape.mjs`, `calls.mjs` and `self.mjs` gave the baseline output on E4 and E7, and `callforms.js` and `builtins-inline.mjs` on E4 ✅[^lab-matrix].
+
+**What differs**
+- **TurboFan is off by default on the emulated x64 build (E2).** Baseline: TurboFan on, and every forced or natural optimization above ends in TurboFan code. E2: `--v8-options` prints `--no-turbofan`, `%OptimizeFunctionOnNextCall` leaves the function interpreted (`tiers.mjs` stops at Maglev, `self.mjs` prints `not optimized`), no TurboFan deopt or inlining is traced, and `bits-extra.mjs` loops forever in its wait for bit 6 (stopped after two minutes). The emulated CPU reports itself as `VirtualApple`; why V8 turns TurboFan off there was not isolated. This was seen on an emulated x64 container only; native x64 hardware was not run, so it is unknown whether a native x64 build also starts with TurboFan off. With `--turbofan`, the results match the baseline, except below ✅[^lab-matrix].
+
+<details><summary><code>self.mjs</code> and <code>tiers.mjs</code> on E2, as written</summary>
+
+`docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax self.mjs`
+
+```text
+tryCatch        not optimized
+tryCatchThrows  not optimized
+tryFinally      not optimized
+generator       not optimized
+asyncFn         not optimized
+argumentsObj    not optimized
+forOf           not optimized
+forIn           not optimized
+withEval        not optimized
+withStatement   not optimized
+```
+
+`docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax tiers.mjs`
+
+```text
+never called                       262145 IsFunction|IsLazy
+called once (Ignition)                129 IsFunction|Interpreted
+after %CompileBaseline              32769 IsFunction|Baseline
+marked for Maglev, not yet called  4227073 IsFunction|Baseline|MarkedForMaglevOptimization
+after Maglev                           49 IsFunction|Optimized|Maglevved
+marked for TurboFan, not yet called     49 IsFunction|Optimized|Maglevved
+after TurboFan                         49 IsFunction|Optimized|Maglevved
+after add("x", "y")                     1 IsFunction
+one more call                       32769 IsFunction|Baseline
+inside selfCheck (on the stack)     67713 IsFunction|Interpreted|IsExecuting|TopmostFrameIsInterpreted
+after %NeverOptimizeFunction          129 IsFunction|Interpreted
+```
+</details>
+
+- **x64 frame sizes (E2 with `--turbofan`).** Baseline (arm64, all of E0, E1, E3, E4, E7): `translating interpreted frame getX => bytecode_offset=0, variable_frame_size=16, frame_size=96`. E2: the same frame at the same offset, with `variable_frame_size=8, frame_size=88`. In the same run, the `bits-extra.mjs` line for a function running in Maglev code showed `TurboFanned` with `TopmostFrameIsMaglev` ✅[^lab-matrix].
+
+<details><summary><code>deoptframe.mjs</code> on E2 with <code>--turbofan</code></summary>
+
+`docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax --turbofan deoptframe.tf.mjs`
+
+```text
+[bailout (kind: deopt-eager, reason: wrong map): begin. deoptimizing <JSFunction getX>, <Code TURBOFAN_JS>, opt id 0, bytecode offset 0, deopt exit 1]
+reading input frame getX => bytecode_offset=0, args=2, height=0, retval=0(#0)
+translating interpreted frame getX => bytecode_offset=0, variable_frame_size=8, frame_size=88
+[bailout end. took … ms]
+```
+</details>
+
+- **Maglev is off on V8 12.4 (E3).** Baseline: Ignition, Sparkplug, Maglev, TurboFan. E3: `tiers.mjs` prints `Maglev is not enabled.`; with `--single-threaded`, `sum` went from Ignition straight to TurboFan at call 403 (Sparkplug at call 1 605 only when TurboFan was off too); OSR compiled TurboFan code, not Maglev code; `deoptloop.mjs` recompiled straight to TurboFan after each deopt (the deopts were the same); natural tier-up came earlier (subjects between call 290 and call 4 458) ✅[^lab-matrix].
+
+<details><summary><code>tierup.mjs</code> and <code>osr.mjs</code> on E3</summary>
+
+`~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax tierup.mjs`
+
+```text
+--single-threaded:             call 1: Ignition -> call 403: TurboFan
+--single-threaded --no-maglev: call 1: Ignition -> call 403: TurboFan
+--single-threaded --no-maglev --no-turbofan: call 1: Ignition -> call 1605: Sparkplug
+default flags (order only):    Ignition -> Sparkplug -> TurboFan
+```
+
+`~/.nvm/versions/node/v22.23.4/bin/node osr.mjs`
+
+```text
+--- n = 1000
+result 496491
+--- n = 5000000
+[marking <JSFunction longLoop> for optimization to TURBOFAN, ConcurrencyMode::kConcurrent, reason: hot and stable]
+[OSR - setting osr urgency. function: longLoop]
+[OSR - compilation started. function: longLoop, osr offset: 35, mode: ConcurrencyMode::kSynchronous]
+[compiling method <JSFunction longLoop> (target TURBOFAN) OSR, mode: ConcurrencyMode::kSynchronous]
+[completed compiling <JSFunction longLoop> (target TURBOFAN) OSR
+[OSR - available (compilation completed or cache hit). function: longLoop, osr offset: 35, mode: ConcurrencyMode::kSynchronous]
+[OSR - entry. function: longLoop, osr offset: 35]
+result 840
+```
+</details>
+
+- **`deoptloop-var.mjs` on V8 12.4 (E3).** Baseline: `0 1 1 1 1 0 0 0` for all 24 combinations. E3: the twelve runs with 20 000 calls per phase are the same; the twelve with 3 000 calls per phase print `0 0 1 1 1 0 0 0`: no deopt in phase 2, and still none after phase 5 ✅[^lab-matrix].
+
+<details><summary><code>deoptloop-var.mjs</code> on E3 (the 3 000-call lines)</summary>
+
+`~/.nvm/versions/node/v22.23.4/bin/node deoptloop-var.mjs`
+
+```text
+load       firstKey  3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+load       order     3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+load       classes   3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+store      firstKey  3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+store      order     3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+store      classes   3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+twoLoads   firstKey  3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+twoLoads   order     3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+twoLoads   classes   3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+methodCall firstKey  3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+methodCall order     3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+methodCall classes   3000 calls/phase  deopts in phases 1..8: 0 0 1 1 1 0 0 0
+```
+</details>
+
+- **Deopt reasons on V8 12.4 (E3).** Baseline: the `lazy` case is marked with `reason: dependent field type constness changed`, and `noFeedback` deopts at `27:49`. E3: `reason: code dependencies`, and `27:30` (the start of the `if`); the other five reasons, kinds and bytecode offsets are the same. V8 12.4 also names the code `TURBOFAN`, not `TURBOFAN_JS` ✅[^lab-matrix].
+
+<details><summary><code>deopt.mjs</code> on E3 (the two cases that differ)</summary>
+
+`~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax deopt.mjs`
+
+```text
+--- noFeedback
+[bailout (kind: deopt-eager, reason: Insufficient type feedback for generic named access): begin. deoptimizing <JSFunction pick>, <Code TURBOFAN>, opt id 0, bytecode offset 4, deopt exit 0]
+;;; deoptimize at <deopt.mjs:27:30>
+--- lazy
+[marking dependent code <Code TURBOFAN> (<SharedFunctionInfo callM>) (opt id 0) for deoptimization, reason: code dependencies]
+[bailout (kind: deopt-lazy, reason: (unknown)): begin. deoptimizing <JSFunction callM>, <Code TURBOFAN>, opt id 0, bytecode offset 10, deopt exit 7]
+```
+</details>
+
+- **The status bits moved on V8 14.1 and 15.0 (E4, E7).** Baseline: TurboFan code is `81` = bits 0, 4, 6. E4 and E7: `41`. Found by experiment: `--always-turbofan` is a bad option, `--deopt-every-n-times` sets bit 2, and decoding with the 13.6 names minus `AlwaysOptimize` gives the same states as on 13.6 for every line of `tiers.mjs` and `bits-extra.mjs` (§4.1, §5.1). As written, the twelve scripts that test `& 64` print wrong tiers there ✅[^lab-matrix].
+
+<details><summary><code>tiers.mjs</code> on E4, as written and with the 14.1 names (E7 printed the same)</summary>
+
+`~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax tiers.mjs`
+
+```text
+never called                       131073 IsFunction|TopmostFrameIsBaseline
+called once (Ignition)                 65 IsFunction|TurboFanned
+after %CompileBaseline              16385 IsFunction|MarkedForDeoptimization
+marked for Maglev, not yet called  2113537 IsFunction|MarkedForDeoptimization|OptimizeMaglevOptimizesToTurbofan
+after Maglev                           25 IsFunction|MaybeDeopted|Optimized
+marked for TurboFan, not yet called    153 IsFunction|MaybeDeopted|Optimized|Interpreted
+after TurboFan                         41 IsFunction|MaybeDeopted|Maglevved
+after add("x", "y")                     1 IsFunction
+one more call                       16385 IsFunction|MarkedForDeoptimization
+inside selfCheck (on the stack)     33857 IsFunction|TurboFanned|OptimizingConcurrently|Baseline
+after %NeverOptimizeFunction           65 IsFunction|TurboFanned
+```
+
+`~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax tiers.b14.mjs`
+
+```text
+never called                       131073 IsFunction|IsLazy
+called once (Ignition)                 65 IsFunction|Interpreted
+after %CompileBaseline              16385 IsFunction|Baseline
+marked for Maglev, not yet called  2113537 IsFunction|Baseline|MarkedForMaglevOptimization
+after Maglev                           25 IsFunction|Optimized|Maglevved
+marked for TurboFan, not yet called    153 IsFunction|Optimized|Maglevved|MarkedForOptimization
+after TurboFan                         41 IsFunction|Optimized|TurboFanned
+after add("x", "y")                     1 IsFunction
+one more call                       16385 IsFunction|Baseline
+inside selfCheck (on the stack)     33857 IsFunction|Interpreted|IsExecuting|TopmostFrameIsInterpreted
+after %NeverOptimizeFunction           65 IsFunction|Interpreted
+```
+</details>
+
+- **Tier-up call numbers (E4, E7, with the 14.1 masks).** These are for the function `sum` of `tierup.mjs` (an 8-step loop per call); another function reaches each tier at other call counts (§2.2). Baseline: `--single-threaded` gives Sparkplug at call 28, Maglev at 70, TurboFan at 1957. E4: TurboFan at 3090. E7: Sparkplug at 21, TurboFan at 3091. In `natural.mjs` every subject still reached TurboFan code, between call 2 320 and call 25 222 (baseline: 1 465 to 15 991) ✅[^lab-matrix].
+
+<details><summary><code>tierup.mjs</code> with the 14.1 masks on E4 and E7</summary>
+
+`~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax tierup.b14.mjs`
+
+```text
+--single-threaded:             call 1: Ignition -> call 28: Sparkplug -> call 70: Maglev -> call 3090: TurboFan
+--single-threaded --no-maglev: call 1: Ignition -> call 28: Sparkplug -> call 403: TurboFan
+--single-threaded --no-maglev --no-turbofan: call 1: Ignition -> call 28: Sparkplug
+default flags (order only):    Ignition -> Sparkplug -> Maglev -> TurboFan
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax tierup.b14.mjs`
+
+```text
+--single-threaded:             call 1: Ignition -> call 21: Sparkplug -> call 70: Maglev -> call 3091: TurboFan
+--single-threaded --no-maglev: call 1: Ignition -> call 21: Sparkplug -> call 403: TurboFan
+--single-threaded --no-maglev --no-turbofan: call 1: Ignition -> call 21: Sparkplug
+default flags (order only):    Ignition -> Sparkplug -> Maglev -> TurboFan
+```
+</details>
+
+- **Recompiles after a deopt (E4, E7).** Baseline: after each of the deopts in phases 2 to 5, Maglev and then TurboFan compiled `getX` again. E4 and E7: the same deopts, but each phase from 1 to 5 ended with Maglev code; TurboFan code came only in phase 6 ✅[^lab-matrix].
+
+<details><summary><code>deoptloop.mjs</code> on E4 (E7 printed the same)</summary>
+
+`~/.nvm/versions/node/v25.7.0/bin/node deoptloop.mjs`
+
+```text
+phase 1: 1 shape(s)
+  target MAGLEV
+phase 2: 2 shape(s)
+  reason: wrong map
+  target MAGLEV
+phase 3: 3 shape(s)
+  reason: wrong map
+  target MAGLEV
+phase 4: 4 shape(s)
+  reason: wrong map
+  target MAGLEV
+phase 5: 5 shape(s)
+  reason: wrong map
+  target MAGLEV
+phase 6: 6 shape(s)
+  target TURBOFAN_JS
+phase 7: 7 shape(s)
+phase 8: 8 shape(s)
+```
+</details>
+
+- **OSR urgency (E4, E7).** Baseline: `[OSR - setting osr urgency. function: longLoop]   (x284)` after the Maglev OSR entry. E4 and E7: the same trace, with `(x177)` ✅[^lab-matrix].
+- **Inlining trace text (E4, E7).** Baseline: `Cannot consider … for inlining (reason: 5)`. E4 and E7: `(reason: exceeds bytecode limit)`, so `inline-var.mjs`, which looks for `reason: <number>`, prints `not considered`; the verdicts are the same. The bytecode lengths are the same on E3 and E4 too, read directly from `--print-bytecode` (6, 13, 9, 306, 446, 456, 466, 706); the script's length column printed `10` there because the block before `run` was another function ✅[^lab-matrix]. In E7, `twoClassesOneMethodName` printed its two `Considering` lines twice.
+
+<details><summary><code>inline-var.mjs</code> on E7</summary>
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax inline-var.mjs`
+
+```text
+--- flags: (default)
+comment2000        callee bytecode length:     6  ->  inlined
+comment20000       callee bytecode length:     6  ->  inlined
+commentInsideBody  callee bytecode length:    13  ->  inlined
+longNames          callee bytecode length:     9  ->  inlined
+arith30            callee bytecode length:   306  ->  inlined
+arith40            callee bytecode length:   406  ->  inlined
+arith44            callee bytecode length:   446  ->  inlined
+arith45            callee bytecode length:   456  ->  inlined
+arith46            callee bytecode length:   466  ->  not considered
+arith48            callee bytecode length:   486  ->  not considered
+arith50            callee bytecode length:   506  ->  not considered
+arith70            callee bytecode length:   706  ->  not considered
+--- flags: --max-inlined-bytecode-size=2000
+comment2000        callee bytecode length:     6  ->  inlined
+comment20000       callee bytecode length:     6  ->  inlined
+commentInsideBody  callee bytecode length:    13  ->  inlined
+longNames          callee bytecode length:     9  ->  inlined
+arith30            callee bytecode length:   306  ->  inlined
+arith40            callee bytecode length:   406  ->  inlined
+arith44            callee bytecode length:   446  ->  inlined
+arith45            callee bytecode length:   456  ->  inlined
+arith46            callee bytecode length:   466  ->  inlined
+arith48            callee bytecode length:   486  ->  inlined
+arith50            callee bytecode length:   506  ->  inlined
+arith70            callee bytecode length:   706  ->  inlined
+```
+</details>
+
+- **`fv.mjs` cannot run in E7.** Its `%DebugPrint` prints only one line (`<JSFunction f (sfi = …)>`), with no feedback-vector field, so the script finds none at any call count ✅[^lab-matrix].
+- **Small integers and the `smiOverflow` case (E7).** Baseline: `%IsSmi(2 ** 31 - 1)` is `true`, and `inc(2 ** 31 - 1)` deopts with `overflow`. E7: `%IsSmi(2 ** 30)` is `false`; `inc(2 ** 31 - 1)` deopts with `not a Smi` (deopt exit 0), because the argument is a heap number. Re-checked with the largest small integer of E7: `inc(2 ** 30 - 1)` did not deopt; the result, 2 ** 30, is a heap number and `inc` stayed TurboFan code. On E4, `inc(2 ** 31 - 1)` gave `overflow` as in the baseline ✅[^lab-matrix].
+
+<details><summary><code>smi.mjs</code> and <code>deopt.mjs</code> on E7, and the 2 ** 30 − 1 check</summary>
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax smi.mjs`
+
+```text
+2**30-1 Smi: true 2**30 Smi: false 2**31-1 Smi: false 2**31 Smi: false
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax deopt.mjs`
+
+```text
+--- smiOverflow
+[bailout (kind: deopt-eager, reason: not a Smi): begin. deoptimizing <JSFunction inc>, <Code TURBOFAN_JS>, opt id 0, bytecode offset 2, deopt exit 0]
+;;; deoptimize at <deopt.mjs:12:32>
+```
+
+The 2 ** 30 − 1 check, `smi30.js` (`deopt.mjs`'s `inc`, called once more with 2 ** 30 − 1):
+
+```js
+function inc(a) { return a + 1; }
+%PrepareFunctionForOptimization(inc);
+inc(1); inc(2);
+%OptimizeFunctionOnNextCall(inc); inc(3);
+const r = inc(2 ** 30 - 1);
+console.log('result', r, 'IsSmi(result)', %IsSmi(r), 'status', %GetOptimizationStatus(inc));
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax --trace-deopt smi30.js` (no deopt line is printed):
+
+```text
+result 1073741824 IsSmi(result) false status 41
+```
+</details>
+
+- **More inlining in E7 (cause not isolated).** Baseline, and E3 and E4: spread and `apply` of an array in a variable were not inlined, nor was the `sort` comparator. E7 (with the 14.1 masks): `spreadVariable` and `applyVariable` inlined `sum3`, and the `sort` comparator was inlined ✅[^lab-matrix].
+
+<details><summary><code>callforms.js</code> and <code>builtins-inline.mjs</code> with the 14.1 masks on E7</summary>
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax callforms.b14.js`
+
+```text
+direct          TurboFan, sum3 inlined: yes
+callMethod      TurboFan, sum3 inlined: yes
+boundFn         TurboFan, sum3 inlined: yes
+spreadLiteral   TurboFan, sum3 inlined: yes
+applyLiteral    TurboFan, sum3 inlined: yes
+spreadVariable  TurboFan, sum3 inlined: yes
+applyVariable   TurboFan, sum3 inlined: yes
+applyArguments  TurboFan, sum3 inlined: no
+spreadRest      TurboFan, sum3 inlined: no
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax builtins-inline.b14.mjs`
+
+```text
+forEach  caller TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: none
+map      caller not TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: wrong map
+reduce   caller TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: none
+filter   caller TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: none
+find     caller TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: none
+sort     caller TurboFan, after a second optimization TurboFan; callback inlined: yes; deopts: none
+```
+</details>
+
+- **Loop timings (E4, E7; four runs each).** Baseline B: `for…of` 1.15 to 1.22, `forEach` 1.84 to 1.94, `reduce` 0.81 to 0.85 times the index loop. E4: `for…of` 0.92 to 0.95, `forEach` 2.82 to 2.94, `reduce` 0.81 to 0.83; workload A as in the baseline. E7: in A, the index loop and `for…of` were TurboFan code at entry and `for…of` took 0.83 to 0.93 times as long; in B, `for…of` 0.95 to 0.99, `forEach` 2.70 to 2.82, `reduce` 1.00 to 1.02. Measured here, ranges over the first agent's four runs and a review's three more ✅[^lab-matrix].
+
+<details><summary><code>loops-bench.mjs</code> with the 14.1 masks, one run each on E4 and E7</summary>
+
+`~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax loops-bench.b14.mjs`
+
+```text
+A: 1e6 items x 20 calls
+  for (let i ...)  median   15.5 ms per round   entry tier after: Sparkplug
+  for...of         median  143.4 ms per round   entry tier after: Sparkplug
+  forEach          median  108.0 ms per round   entry tier after: Sparkplug
+  reduce           median  104.1 ms per round   entry tier after: Sparkplug
+B: 1e3 items x 20000 calls
+  for (let i ...)  median   11.3 ms per round   entry tier after: TurboFan
+  for...of         median   10.5 ms per round   entry tier after: TurboFan
+  forEach          median   32.0 ms per round   entry tier after: TurboFan
+  reduce           median    9.1 ms per round   entry tier after: TurboFan
+checksum 79200000000
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax loops-bench.b14.mjs`
+
+```text
+A: 1e6 items x 20 calls
+  for (let i ...)  median   16.1 ms per round   entry tier after: TurboFan
+  for...of         median   13.3 ms per round   entry tier after: TurboFan
+  forEach          median  103.1 ms per round   entry tier after: Sparkplug
+  reduce           median   97.7 ms per round   entry tier after: Sparkplug
+B: 1e3 items x 20000 calls
+  for (let i ...)  median   13.7 ms per round   entry tier after: TurboFan
+  for...of         median   13.2 ms per round   entry tier after: TurboFan
+  forEach          median   37.8 ms per round   entry tier after: TurboFan
+  reduce           median   13.8 ms per round   entry tier after: TurboFan
+checksum 79200000000
+```
+</details>
+
+- **`loops-var.mjs` (E3, E4, E7; four runs each).** Baseline: with all three as TurboFan code, `forEach` 1.30 to 1.90, `reduce` 0.82 to 0.89 for the sum and 1.28 to 1.40 for odd squares; the middle workload left `forEach` and `reduce` in Maglev. E3: the middle workload ended all TurboFan; for odd squares the index loop was slowest (`forEach` and `reduce` 0.82 to 0.86). E4: `forEach` 2.16 to 3.02, `reduce` 0.80 to 0.96 for both bodies. E7: `forEach` 2.70 to 3.19 (sum) and 4.60 to 6.29 (odd squares), `reduce` 0.99 to 1.03 and 1.22 to 1.46. Measured here: ranges over the first agent's four runs and a review's three more ✅[^lab-matrix].
+
+<details><summary><code>loops-var.mjs</code>, one run each on E3 and E7</summary>
+
+`~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax loops-var.mjs`
+
+```text
+sum          1000000 items x      5 calls: for    3.8 ms, forEach   25.4 ms (x6.66), reduce   24.6 ms (x6.46); tiers after: Sparkplug/Sparkplug/Sparkplug
+sum           100000 items x    200 calls: for   10.9 ms, forEach   19.7 ms (x1.82), reduce    9.1 ms (x0.84); tiers after: TurboFan/TurboFan/TurboFan
+sum            10000 items x   2000 calls: for   10.8 ms, forEach   19.7 ms (x1.83), reduce    9.1 ms (x0.85); tiers after: TurboFan/TurboFan/TurboFan
+sum              100 items x 200000 calls: for   12.5 ms, forEach   19.7 ms (x1.58), reduce   11.1 ms (x0.89); tiers after: TurboFan/TurboFan/TurboFan
+odd squares  1000000 items x      5 calls: for    4.9 ms, forEach   24.7 ms (x5.01), reduce   26.6 ms (x5.39); tiers after: Sparkplug/Ignition/Ignition
+odd squares   100000 items x    200 calls: for   18.4 ms, forEach   15.2 ms (x0.83), reduce   15.1 ms (x0.82); tiers after: TurboFan/TurboFan/TurboFan
+odd squares    10000 items x   2000 calls: for   18.9 ms, forEach   15.8 ms (x0.84), reduce   15.7 ms (x0.83); tiers after: TurboFan/TurboFan/TurboFan
+odd squares      100 items x 200000 calls: for   20.4 ms, forEach   17.2 ms (x0.84), reduce   16.8 ms (x0.82); tiers after: TurboFan/TurboFan/TurboFan
+checksum 5920200000000
+```
+
+`ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax loops-var.b14.mjs`
+
+```text
+sum          1000000 items x      5 calls: for    4.0 ms, forEach   25.8 ms (x6.40), reduce   24.4 ms (x6.05); tiers after: TurboFan/Sparkplug/Sparkplug
+sum           100000 items x    200 calls: for   13.8 ms, forEach   58.0 ms (x4.21), reduce   97.9 ms (x7.09); tiers after: TurboFan/Maglev/Maglev
+sum            10000 items x   2000 calls: for   13.9 ms, forEach   38.3 ms (x2.76), reduce   13.9 ms (x1.00); tiers after: TurboFan/TurboFan/TurboFan
+sum              100 items x 200000 calls: for   12.3 ms, forEach   38.9 ms (x3.17), reduce   12.4 ms (x1.01); tiers after: TurboFan/TurboFan/TurboFan
+odd squares  1000000 items x      5 calls: for   14.1 ms, forEach   27.7 ms (x1.96), reduce   27.6 ms (x1.96); tiers after: TurboFan/Ignition/Ignition
+odd squares   100000 items x    200 calls: for   10.9 ms, forEach   85.5 ms (x7.84), reduce  105.8 ms (x9.70); tiers after: TurboFan/Maglev/Maglev
+odd squares    10000 items x   2000 calls: for   10.6 ms, forEach   66.7 ms (x6.29), reduce   15.1 ms (x1.43); tiers after: TurboFan/TurboFan/TurboFan
+odd squares      100 items x 200000 calls: for   13.2 ms, forEach   64.3 ms (x4.87), reduce   17.0 ms (x1.29); tiers after: TurboFan/TurboFan/TurboFan
+checksum 5920200000000
+```
+</details>
+
+- **Warm-up length (E3, E4, E7).** Baseline: the callbacks settle from round 7 (after 12 000 calls). E3: from round 3 (after 4 000 calls). E4 and E7: from round 10 (after 18 000 calls), at 30 to 31 ms (E4) and 36 to 39 ms (E7) per round for `forEach` ✅[^lab-matrix].
+
+<details><summary><code>warmup.mjs</code>, one run each on E3 and E4</summary>
+
+`~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax warmup.mjs`
+
+```text
+for      12 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 12 11 11 11 11
+forEach  105 64 21 20 20 20 21 20 20 20 20 20 20 20 21 21 21 21 21 21 21 21 20 21 21
+reduce   102 57 9 9 9 9 10 9 9 9 9 9 9 9 10 9 10 10 10 11 9 9 10 10 9
+```
+
+`~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax warmup.mjs`
+
+```text
+for      12 10 11 10 10 10 11 10 11 11 11 11 10 10 10 10 10 10 10 10 10 10 12 10 10
+forEach  71 57 57 59 53 53 53 54 44 32 39 34 31 31 31 31 30 31 31 30 30 36 40 31 31
+reduce   100 96 99 97 96 96 97 97 76 9 12 9 9 9 9 9 19 9 9 9 9 10 9 9 9
+```
+</details>
+
+- **Flag defaults (E2, E3, E4, E7).** See the defaults table above ✅[^lab-matrix].
+
 ## Verification status
 
-- **Measured** on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in the image `node:24.22.1-alpine`, linux arm64 under Docker on an Apple M2, with `--network none`. Twenty-five scripts, all embedded above with their output. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: none of those was run. A second reader re-ran the first seventeen on the same day: the sixteen that print no timing gave the quoted output exactly; `loops-bench.mjs` was run three more times (§4.2). The eight added in that review (`toobig.mjs`, `fv.mjs`, `inline-var.mjs`, `deoptloop-var.mjs`, `natural.mjs`, `bits-extra.mjs`, `loops-var.mjs`, `warmup.mjs`) are variations that test whether a conclusion holds for another function body or size; all but the two timing scripts (`loops-var.mjs`, `warmup.mjs`) repeated their output on a second run (`deoptloop-var.mjs` also on a default-flags variant, §3.3).
+- **Measured** on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in the image `node:24.22.1-alpine`, linux arm64 under Docker on an Apple M2, with `--network none`. Twenty-five scripts, all embedded above with their output. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: the matrix re-run of 2026-11-27 (next bullet) checked five such builds. A second reader re-ran the first seventeen on the same day: the sixteen that print no timing gave the quoted output exactly; `loops-bench.mjs` was run three more times (§4.2). The eight added in that review (`toobig.mjs`, `fv.mjs`, `inline-var.mjs`, `deoptloop-var.mjs`, `natural.mjs`, `bits-extra.mjs`, `loops-var.mjs`, `warmup.mjs`) are variations that test whether a conclusion holds for another function body or size; all but the two timing scripts (`loops-var.mjs`, `warmup.mjs`) repeated their output on a second run (`deoptloop-var.mjs` also on a default-flags variant, §3.3).
+- **Matrix re-run on 2026-11-27** (§6.4, "Other builds and versions"): 25 scripts on five more builds, 125 script-and-build cells: 53 same, 68 differ, 1 could not run (`fv.mjs` in Electron 43), 3 not run (the timing scripts on emulated x64). 152 script runs in all: 110 non-timing runs (22 scripts once on each build) and 42 timing runs (3 scripts three times on each macOS build, plus 6 reruns alone); 16 of the timing runs, on V8 14.1 and 15.0, used the 14.1 status-bit masks. Plus 41 variant runs: the 14.1 masks on V8 14.1 and 15.0, `--turbofan` on emulated x64, the 2 ** 30 − 1 overflow check. Most differences come from three build facts: TurboFan off by default on emulated x64, Maglev off by default on V8 12.4, and the status bits moved on V8 14.1 and 15.0. Still not run: Windows; a linux build with pointer compression (Electron 43 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0.
 - **Read only:** the V8 source at tag 13.6.233.17 (`runtime.h`, `runtime-test.cc`, `deoptimize-reason.h`, `bailout-reason.h`, `tiering-manager.cc`, `ic.cc`, `shared-function-info.h`, `js-inlining-heuristic.cc`, `escape-analysis.h`), v8.dev posts and docs, the Node.js 24.0.0 release notes, and three Rank 6 sources that record the old beliefs (§6.1). The V8 source files were re-read at tag 13.6.233.17 in the review.
-- **Not checked:** call-site IC states (`--log-ic` logs no call sites here); whether a polymorphic (`P`) site is slower than a monomorphic one (not timed here); Maglev inlining; the bit `MarkedForDeoptimization`; functions larger than a few hundred bytes of bytecode with the features of §3.8; TurboFan OSR from a loop that did not first enter Maglev; Turboshaft's own phases (there is no trace of them in the scripts above); the speed of `await`; the effect of `eval` on surrounding variables; any platform other than linux arm64.
-- Verified: 161 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- **Not checked:** call-site IC states (`--log-ic` logs no call sites here); whether a polymorphic (`P`) site is slower than a monomorphic one (not timed here); Maglev inlining; the bit `MarkedForDeoptimization`; functions larger than a few hundred bytes of bytecode with the features of §3.8; TurboFan OSR from a loop that did not first enter Maglev; Turboshaft's own phases (there is no trace of them in the scripts above); the speed of `await`; the effect of `eval` on surrounding variables; Windows, native x64 hardware and linux with pointer compression (see the matrix bullet).
+- Verified: 217 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
 
 ## References
 - [src/runtime/runtime.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/src/runtime/runtime.h) — V8 project, 2025. Rank 1. Backs: §4.1, §5.1 (the status bits). [^runtime-h]
@@ -1706,6 +2188,7 @@ Higher tiers compile slower: Maglev about 10 times slower than Sparkplug and 10 
 - [A tour of V8: Crankshaft, the optimizing compiler](https://www.jayconrod.com/posts/54/a-tour-of-v8--crankshaft--the-optimizing-compiler) — Jay Conrod (personal blog), 2013. Rank 6. Backs: §6.1, the 600-character rule. [^conrod]
 - [[turbofan] Don't take into account source size for inlining heuristics](https://codereview.chromium.org/2361813002) — Chromium code review (Benedikt Meurer), 2016. Rank 6. Backs: §6.1. [^cr-2361813002]
 - Lab: the twenty-five scripts embedded in this doc (`flags.mjs`, `toobig.mjs`, `tierup.mjs`, `fv.mjs`, `feedback.mjs`, `ic.mjs`, `deoptframe.mjs`, `deopt.mjs`, `smi.mjs`, `deoptloop.mjs`, `deoptloop-var.mjs`, `osr.mjs`, `inline.mjs`, `inline-var.mjs`, `escape.mjs`, `calls.mjs`, `callforms.js`, `self.mjs`, `natural.mjs`, `builtins-inline.mjs`, `tiers.mjs`, `bits-extra.mjs`, and the timings `loops-bench.mjs`, `loops-var.mjs`, `warmup.mjs`), run on 2026-11-26 in `node:24.22.1-alpine` (Node.js 24.22.1, V8 13.6.233.17-node.58, linux arm64, Docker on an Apple M2) with `--network none`; outputs quoted in each `<details>` block. [^lab]
+- Lab matrix: the same twenty-five scripts re-run on 2026-11-27 on six builds: E0 the baseline above; E1 macOS 26.1 arm64 with Node.js 24.22.1; E2 linux x64 emulated in Docker (`node:24.22.1-alpine-amd64`, Node.js 24.22.1); E3 macOS arm64 with Node.js 22.23.4 (V8 12.4.254.21-node.57); E4 macOS arm64 with Node.js 25.7.0 (V8 14.1.146.11-node.20); E7 Electron 43.7.7 run as Node on macOS arm64 (V8 15.0.245.31-electron.0, pointer compression and the V8 sandbox on). Rank 1, primary measurement; outputs of the differences quoted in §6.4. [^lab-matrix]
 
 ## Related
 - `js-runtime/v8-hidden-classes.md` — object shapes (maps), transitions, inline caches and dictionary mode, which §3.1 builds on.
