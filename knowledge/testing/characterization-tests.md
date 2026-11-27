@@ -5,7 +5,7 @@ topic: testing
 status: verified
 applies-to: ["any language", "Node.js 24 (examples)", "Spec Kit 1.2.3"]
 last-verified: 2026-10-29
-last-updated: 2026-11-14
+last-updated: 2026-11-27
 tags: [characterization-test, legacy-code, bdd, gherkin, brownfield, spec-kit, mutation, node-test]
 ---
 
@@ -79,18 +79,13 @@ The knowledge validator in agent-config, migrated on 2026-10-29 (`specs/001-know
 - A pinned behavior that looks wrong is a finding to decide, never a test to "correct".
 - Prove coverage by sabotage: every check switched off must make a test fail.
 
-## Used by
-| Where | Id / path | How |
-|---|---|---|
-| foundation rule | TST-13 | Source: |
-| foundation rule | TST-14 | Source: |
-
 ## Verification status
 - Verified: 17 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-10-29
+- Re-checked on 2026-11-27: the Spec Kit reference's URL, title and How it works 3.
 
 ## References
 - [Empirical Characterization Testing](https://blog.ploeh.dk/2025/11/03/empirical-characterization-testing/) — Mark Seemann, 2025-11-03; cites Michael Feathers, *Working Effectively with Legacy Code* (2004), ch. 13. Backs: How it works 1–2. [^1]
-- [Adopting Spec Kit in an Existing Project](https://github.github.io/spec-kit/guides/existing-projects.html) — GitHub, living. Backs: How it works 3. [^2]
+- [How to adopt Spec Kit in an existing project](https://github.github.com/spec-kit/how-to/existing-projects.html) — GitHub, living; title and How it works 3 re-checked 2026-11-27. Backs: How it works 3. [^2]
 - [Gherkin: Reference](https://cucumber.io/docs/gherkin/reference/) — Cucumber, living. Backs: How it works 4. [^3]
 - [Test runner — Running tests from the command line](https://nodejs.org/api/test.html#running-tests-from-the-command-line) — Node.js, living. Backs: How it works 6. [^4]
 - [Configuration](https://github.com/cucumber/cucumber-js/blob/main/docs/configuration.md) — Cucumber.js, living. Backs: How it works 4 (config file names, `paths`, `import`, `strict`, `parallel`). [^5]

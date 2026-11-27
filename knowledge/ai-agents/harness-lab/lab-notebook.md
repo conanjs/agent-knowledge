@@ -28,7 +28,7 @@ What the experiments showed:
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** thirty-four experiments (E1–E34; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** thirty-five experiments (E1–E35; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -906,6 +906,21 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ---
 
+### E35. The learning loop's reflector on real incidents, and the first eval (2026-11-27)
+- **Question:** given the six incidents E34 left (three recorded by the build script, three written by the person running it), does a read-only reflector agent propose useful harness fixes, and does an eval built from the worst incident reproduce it?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; `learn.mjs reflect` starts the `reflector` agent (`tools: Read, Grep, Glob, Write`; a hook lets it write only `learning/proposals/<date>.md` in the archkit repository) with `--setting-sources project,local`, auto memory off, and the incident file of E34's repository;
+  - the eval `test-author-scope`: a fresh clone of E34's branch at the commit before any test was written, the card `001-US1` as written then (before the scenarios were clarified), the `test-author` agent run as `build-task.mjs` runs it; the grader passes when the tests fail on the old code and pass once E34's known-good implementation of `--title` is copied in. Two runs.
+- **Result** ✅[^lab]:
+  - **Reflector:** 8 requests, 128,145 tokens, $0.15. Three proposals, each with incidents, cause (with file and line), the change, its cost and an eval: P1 a test-author prompt line, "Assert only what the scenario names … the repository's existing rules … still hold" (incidents #2–#4); P2 a `fixers` entry in `repo.json` that the implementer may run (#5); P3 the shell rule on a line of its own with its reason (#6). For #1 (the uncommitted Spec Kit state file) it answered "no change": the script had been fixed and a test covers it. It said which evidence was gone (the failed attempt's gate logs had been replaced by the rerun).
+  - **Eval before any fix:** 2 of 2 runs passed (94,121 and 215,042 tokens, $0.16 and $0.18). In both, the new tests failed on the old code (3 of the 5 acceptance scenarios) and all 166 scenarios passed with the known-good code.
+- **Conclusion** (one reflector run; two eval runs):
+  - The reflector's proposals were specific and honest about missing evidence; whether they are right is V's decision, and none was applied.
+  - The over-assertion of E34 did not happen again in two runs with the same prompt and card, so it is intermittent at an unknown rate. Two runs cannot show that P1 is needed; more runs, or a run after P1 to compare, are the next measurement.
+  - Two of the test-author's five scenarios passed before any code existed in every run, as the reply of E34's first test-author (session a176abbe) also said, because the tool already exits 1 on an unknown option. The red check counts only the whole suite, so it did not notice.
+
+---
+
 ## 4. Four ways to orchestrate, compared
 
 | Way | What the orchestrator is | Cost of orchestration | Measured |
@@ -949,7 +964,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 to 2026-11-27 (E24–E34 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24 to 2026-11-27 (E24–E35 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -965,7 +980,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E34 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E35 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
