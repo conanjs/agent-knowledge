@@ -22,13 +22,14 @@ What the experiments showed:
 - Asking an agent to list its tools is not evidence of what it has.
 - Fixed steps are cheaper and steadier in a script than in a model or a workflow (E24, E28, E31).
 - Path-scoped rules reach a worker when it touches their area, and they changed the code when legacy code showed the wrong conventions (E30, E32).
+- On one card (Sonnet, 2.1.332), a one-line prompt fix cut tests that assert a whole file after a write from 5 of 5 runs to 1 of 5, while the pass rates could not tell the two prompts apart (E36).
 
 **Use this when:**
 - you build or change an agent harness on Claude Code (subagents, plugin agents, hooks, headless runs);
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** thirty-five experiments (E1–E35; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** thirty-six experiments (E1–E36; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -915,10 +916,39 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - **Reflector:** 8 requests, 128,145 tokens, $0.15. Three proposals, each with incidents, cause (with file and line), the change, its cost and an eval: P1 a test-author prompt line, "Assert only what the scenario names … the repository's existing rules … still hold" (incidents #2–#4); P2 a `fixers` entry in `repo.json` that the implementer may run (#5); P3 the shell rule on a line of its own with its reason (#6). For #1 (the uncommitted Spec Kit state file) it answered "no change": the script had been fixed and a test covers it. It said which evidence was gone (the failed attempt's gate logs had been replaced by the rerun).
   - **Eval before any fix:** 2 of 2 runs passed (94,121 and 215,042 tokens, $0.16 and $0.18). In both, the new tests failed on the old code (3 of the 5 acceptance scenarios) and all 166 scenarios passed with the known-good code.
 - **Conclusion** (one reflector run; two eval runs):
-  - The reflector's proposals were specific and honest about missing evidence; whether they are right is V's decision, and none was applied.
-  - The over-assertion of E34 did not happen again in two runs with the same prompt and card, so it is intermittent at an unknown rate. Two runs cannot show that P1 is needed; more runs, or a run after P1 to compare, are the next measurement.
+  - The reflector's proposals were specific and honest about missing evidence; whether they are right is V's decision, and none was applied in these runs (V accepted P2 and P3 later the same day, and P1 after E36 measured it).
+  - E34's failure did not happen again in two runs with the same prompt and card, so it is intermittent at an unknown rate. Two runs cannot show that P1 is needed; more runs, or a run after P1 to compare, are the next measurement. E36 made both, and found that one of these two runs had already asserted the whole file after a write; it passed only because the expected file had no `## Done` section.
   - Two of the test-author's five scenarios passed before any code existed in every run, as the reply of E34's first test-author (session a176abbe) also said, because the tool already exits 1 on an unknown option. The red check counts only the whole suite, so it did not notice.
 
+---
+
+### E36. Measuring a prompt fix: five runs with it and five without (2026-11-27)
+- **Question:** E35's proposal P1 adds one line to the test-author's prompt, so that its tests assert only what a scenario names. E35's two runs without that line had not repeated E34's failure: a test that asserts the whole `TRACKER.md` after a write, including a `## Done` section, and so fails on correct code. With more runs, does that failure come back without P1, and does P1 change how the tests are written?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet (`claude-sonnet-5-5`); E35's eval `test-author-scope` with the same fixture, card, agent and grader; 5 runs per arm, both arms started at the same time;
+  - each run as the eval runner starts it: `claude -p … --agent archkit-build:test-author --setting-sources project,local --permission-mode acceptEdits --allowedTools Read Grep Glob Edit Write "Bash(pnpm run test-tools:*)"`, with auto memory off;
+  - arm A: the test-author prompt as it stood in archkit after P3, which puts the shell rule on a line of its own and was approved the same day;
+  - arm B: a copy of the plugin that differs from arm A only by P1's line, placed after "Do not test what no scenario asks for.": "Assert only what the scenario names (the heading and fields it lists, not the whole file); the repository's existing rules (schema docs, existing scenarios) still hold, so do not assert a state they forbid.";
+  - besides the grade, each run's final feature file was rebuilt from the Write and Edit calls in its transcript, and its scenarios were counted. A counted scenario expects exit code 0, so the tool wrote the file, and then asserts the whole `TRACKER.md` with `contains exactly`; this document calls it a whole-file assertion after a write. E34's failing test had that shape, with a `## Done` section in the expected file.
+  - command: `node build/evals/run.mjs test-author-scope --runs 5`, with `--plugin-dir <copy>/build` for arm B.
+- **Result** ✅[^lab]:
+
+| Arm | Passed | Runs with a whole-file assertion after a write | Cumulative input per run (tokens) | Cost per run |
+|---|---|---|---|---|
+| E35, before any fix (2 runs) | 2 of 2 | 1 of 2 (2 scenarios) | 94,121 and 215,042 | $0.159 and $0.181 |
+| A, without P1 | 4 of 5 | 5 of 5 (6 scenarios) | 93,779 to 222,539, mean 136,251 | $0.106 to $0.186, mean $0.156 |
+| B, with P1 | 5 of 5 | 1 of 5 (2 scenarios) | 95,989 to 166,860, mean 142,022 | $0.112 to $0.191, mean $0.155 |
+
+  - The one failed run (arm A, run 5) repeated E34's failure. After a successful rename, its first scenario asserted the whole `TRACKER.md`, including a `## Done` section that the tracker's rule TR-12 moves to `TRACKER.done.md` on every edit. With the known-good code, that scenario was the only one of 166 to fail. The other whole-file assertions after a write, in both arms and in E35, expected a file with no `## Done` section, and they passed.
+  - In 3 of the 10 runs, all five acceptance scenarios failed before any code existed. E35's two runs had left two of them passing.
+  - The grader had reported an empty list of failing scenarios for the failed run, because its pattern matched only node:test output and not the "Failed scenarios:" list of cucumber-js. It was fixed after the runs and checked by grading that run's test again on a rebuilt fixture. The verdict uses only exit codes, so no pass count changed.
+  - No tool call was denied in E35's or E36's runs, and none wrote a file through the shell (the only redirect was `2>&1`). Besides the test command, piped to `tail` or `grep` in every run, the shell calls were read-only: `cat`, `cat -A`, `sed -n`, `ls`, `head`, `grep`, `git status --short`, some after a `cd` into the fixture. They were not denied, although `--allowedTools` names only the test command, and the reason was not checked. E34's denied heredoc writes, the incident behind P3, did not happen on this fixture, so P3 has no measured effect.
+- **Conclusion** (one fixture and card, Sonnet, 2.1.332; 10 runs, plus E35's 2):
+  - Arm A against arm B is the clean comparison: the two ran at the same time and differed only by P1's line. A whole-file assertion after a write appeared in 5 of 5 runs without P1 and in 1 of 5 with it (Fisher's exact test, two-sided, p = 0.048). Adding E35's two runs, whose prompt was from before P3, gives 6 of 7 against 1 of 5 (p = 0.072), on the assumption that P3 does not change how assertions are written.
+  - E34's failure itself came back in 1 of 5 runs without P1 (1 of 7 with E35's runs) and in 0 of 5 with it. Pass rates this close cannot be told apart at this size: 4 of 5 against 5 of 5 gives p = 1.0.
+  - *(The author's reading:)* P1 changes what it says it changes, at no measurable cost per run. The failure it prevents is rare on this card: the case for it is E34's incident plus one repeat in seven runs.
+  - On the same runs, counting the behaviour a fix targets showed a difference that pass or fail alone did not.
+  - V accepted P1 after these runs; the line is now in archkit's test-author prompt.
 ---
 
 ## 4. Four ways to orchestrate, compared
@@ -949,6 +979,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 11. **Keep fixed steps in code, not in an agent.** In E28 a model ran the red check and the commits; two of four runs failed, once on a misread field and once on a rewritten command. In `build-task.mjs` the same steps cost no tokens; its first runs also found defects (a commit that failed on ignored paths in E24, untracked documents and paths misread from task text in E27), but each was fixed once in code, and the later runs passed (E24, E26, E27, E29). The comparison rests on one small card for the workflow (E28).
 12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each). With the build phase as one script call, the build session fell to 43,769 tokens (E31).
 13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area, and not otherwise (E30). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
+14. **Measure a prompt fix with repeated runs, and count the behaviour it targets.** A failure that happens once in several runs needs more than two runs to show up: E35 saw it in 0 of 2 runs, E36's arm without the fix in 1 of 5. At five runs per arm the pass rates could not separate the prompts (4 of 5 against 5 of 5), while whole-file assertions after a write went from 5 of 5 runs to 1 of 5 (E36).
 
 ---
 
@@ -958,13 +989,14 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **One task through the harness:** in a project with `.archkit/tasks/<id>.json`, run `node <plugin>/scripts/build-task.mjs .archkit/tasks/<id>.json [--review]`. It prints the run record with each session's id, turns, seconds and cost.
 - **Tokens per agent:** `python3 -I <plugin>/scripts/measure.py <session-id> …`. It reads `~/.claude/projects/**/<session-id>.jsonl` and the `subagents/` folder beside it. Request size = input + cache-creation + cache-read tokens; repeated message ids are one request.
 - **The start-up block:** `claude -p "/context"`, with or without `--agent <name>`.
+- **An eval case (E35, E36):** `node build/evals/run.mjs <case> --runs <n> [--plugin-dir <dir>]` in the archkit repository. It clones the case's fixture for each run, runs the agent as `build-task.mjs` does, grades the result and prints one JSON summary with each run's session id.
 - **Which hook fires, and with what input:** pass `--settings '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"cat > <file>"}]}]}}'` and read the file.
 
 ---
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 to 2026-11-27 (E24–E35 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24 to 2026-11-27 (E24–E36 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -976,11 +1008,12 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - about 5,000 tokens of a default session's first request, after E11's two causes;
   - why no project `CLAUDE.md` loads in folders under `/private/tmp/…` (E12);
   - an earlier manual check in the home folder that saw no loaded instructions, which E18 and E20 could not reproduce; E20 shows one way to get that result (Enter on the trust prompt's default "No, exit");
-  - the docs text on external-import approval was not read for this notebook; the rule rests on E15–E17.
+  - the docs text on external-import approval was not read for this notebook; the rule rests on E15–E17;
+  - why read-only shell commands (`cat`, `sed -n`, `ls`, `git status --short`) were not denied in E36's runs, whose `--allowedTools` names only the test command.
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E35 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E36 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
