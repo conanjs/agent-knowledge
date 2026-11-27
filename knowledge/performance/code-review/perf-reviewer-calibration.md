@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: performance/code-review
 status: verified
-applies-to: ["Claude Code 2.1.332, headless -p, Sonnet for the reviewer and Haiku for the loading probes, one macOS machine (Apple M2)", "Node.js 24.22.1; ESLint 10.15.0 with the typescript-eslint parser", "runs of 2026-11-25; one trap sample, the index-only arm and round 3 run on 2026-11-26"]
-last-verified: 2026-11-26
-last-updated: 2026-11-26
+applies-to: ["Claude Code 2.1.332, headless -p, Sonnet for the reviewer and Haiku for the loading probes, one macOS machine (Apple M2)", "Node.js 24.22.1; ESLint 10.15.0 with the typescript-eslint parser", "runs of 2026-11-25; one trap sample, the index-only arm and round 3 run on 2026-11-26; three repaired samples re-run on 2026-11-27"]
+last-verified: 2026-11-27
+last-updated: 2026-11-27
 synthesized-into: []
 tags: [performance, code-review, agent, claude-code, skills, progressive-disclosure, calibration, false-positives, token-cost, lint, benchmark]
 ---
@@ -22,7 +22,7 @@ Later the same day the index grew to 39 classes and a second round ran 39 more s
 
 On 2026-11-26 a third arm ran once on all 58 samples: the index without the reference files. It found the same problems with the same fixes and stayed clean on all 18 good samples. The class id was right for 42 of 43 planted problems, and two findings sat a few lines away from the answer key's lines. On the round-2 samples it used 11 % less input than the full skill, so most of the skill's extra cost is the index: 65 % of the tokens (§6.4).
 
-Later that day the index grew to 135 classes and a third round ran 127 new samples: one per new class and 31 traps (one run per arm). With the skill the agent filed all 96 planted problems under the right class id and raised nothing on the 29 sound traps. Without it the class id was right for 86 of 96, and three sound traps drew findings. Both arms found every defect and a correct fix. A review with the skill now costs 0.084 USD against 0.023 without it (§6.5).
+Later that day the index grew to 135 classes and a third round ran 127 new samples: one per new class and 31 traps (one run per arm). With the skill the agent filed all 96 planted problems under the right class id and raised nothing on the sound traps. Without it the class id was right for 86 of 96, and three sound traps drew findings. Both arms found every defect and a correct fix in that run; two flawed traps and one sample were repaired and re-run the next day. A review with the skill now costs 0.084 USD against 0.023 without it (§6.5).
 
 **Use this when:**
 - you build or change a review agent and want measured accuracy, false positives and cost;
@@ -549,7 +549,20 @@ The whole round cost 14.83 USD (S 11.92 for 145 runs, N 2.91 for 127), plus 0.26
 **Corrections to the answer key after the run**, each found by the hand reading and applied before the scores above:
 - three entries accepted too few places: B100 (the call that captures the stack, ten lines below the anchor), B126 (the missing CPU request is in the Deployment, the key named only the autoscaler file) and B119 (the method declaration in the `.proto` file);
 - three fix patterns rejected a correct fix worded differently (B97, B133, B83).
-- The two flawed traps and a second real problem in B128 are marked in `expected.json`; the samples were not changed, so a later round can repeat this one.
+- The two flawed traps and a second real problem in B128 were marked in `expected.json`, and the three samples were repaired the next day (below). The copies that round 3 ran are kept in `results/2026-11-26-round3/samples-as-run/`.
+
+**Repaired samples, re-run on 2026-11-27** ✅[^lab-cal]. Both arms ran once on the three repaired samples, with the skill text as corrected after round 3:
+
+| Sample | Repair | S | N |
+|---|---|---|---|
+| G41 (trap) | the worker and the main thread look terms up in a `Set` built once | clean | clean |
+| G23 (trap) | the workload gives 12 partitions and 12 instances, about 1.3 records per second for each | clean | clean |
+| B128 (bad) | keys are 8 characters, so the hash leaves the small-integer range but stays exact and no longer sends every key to one shard | found, with the right class and fix | clean: nothing reported |
+
+- **All 31 traps are sound now.** S raised nothing on any of them; N raised findings on three (G24, G25, G46).
+- **N did not report B128.** Its reply names the cause (the arithmetic "runs in doubles, not int32") and calls it a constant factor, although the workload marks the path as hot. N's count stays 86 of 96: 9 wrong class ids and 1 problem not reported. S has the index's rule for such classes ("Only when the workload asks for it") and the reference file, and reported it.
+- The lint rules flag neither G41 nor B128 now. The six replies were read here; all were pure JSON. Cost: 0.35 USD.
+- These three results come from a second run, a day after the other 124.
 
 **Limits.**
 - One run per arm. §6.4 showed one label changing between two runs that had read the same text.
@@ -557,11 +570,11 @@ The whole round cost 14.83 USD (S 11.92 for 145 runs, N 2.91 for 127), plus 0.26
 - The samples are small, one problem each, with a stated workload, and were written by agents. No person read all 127.
 - The hand reading was done by an agent, not by a person; three of its verdicts on fixes were re-read here.
 - N was not run on the old samples with 135 ids, and S was not re-run on the old bad samples.
-- The skill text changed after the run: the `object-shape-instability` row and reference file lost a signal (`new Array(n)` filled by index) that a measurement contradicted, and the `for-in-over-array` reference gained a sentence. No run has used the changed text.
+- The skill text changed after the run: the `object-shape-instability` row and reference file lost a signal (`new Array(n)` filled by index) that a measurement contradicted, and the `for-in-over-array` reference gained a sentence. Only the re-run of the three repaired samples has used the changed text.
 
 **Reading** *(synthesis)*:
-- **With 135 classes the skill changes what a program receives.** The class id was right for 96 of 96 planted problems with it and 86 of 96 without it; on the 29 sound traps it raised nothing, against findings on 3 without it. With 39 classes the same comparison was 43 of 43 against 39 of 43, and no trap separated the arms (§6.3, §6.4).
-- **Detection did not change.** With or without the skill, Sonnet found every planted defect and proposed a correct fix, as in rounds 1 and 2.
+- **With 135 classes the skill changes what a program receives.** The class id was right for 96 of 96 planted problems with it and 86 of 96 without it; on the traps it raised nothing (29 sound ones in the round, the two repaired ones in the re-run), against findings on 3 without it. With 39 classes the same comparison was 43 of 43 against 39 of 43, and no trap separated the arms (§6.3, §6.4).
+- **Detection barely changed.** In the round, with or without the skill, Sonnet found every planted defect and proposed a correct fix, as in rounds 1 and 2. The one exception came in the re-run: without the skill it saw the cause of B128 and chose not to report it.
 - **The price went up as §6.4 predicts.** A review with the skill costs 0.084 USD against 0.023 without it, 3.7 times; the index carries most of that, and it is sent again in every request after the first.
 - **The untested lever is a smaller index per kind of repository** (client, server, data): the agent of a front-end repository does not need the rows on brokers or migrations.
 
@@ -773,7 +786,7 @@ cd bench && sh run-all.sh
 
 ## 11. Verification
 
-- **Measured on 2026-11-25** on one machine: every ✅[^lab-probe] and ✅[^lab-cal] result, except the G14 trap of §6.3, arm I of §6.4 and round 3 of §6.5, all run on 2026-11-26. Raw CLI output, per-run metadata and `scores.json` are in the plugin's `calibration/perf-reviewer/results/2026-11-25/`. Each S sample ran twice and each N sample once, so the numbers show size, not spread.
+- **Measured on 2026-11-25** on one machine: every ✅[^lab-probe] and ✅[^lab-cal] result, except the G14 trap of §6.3, arm I of §6.4 and round 3 of §6.5, all run on 2026-11-26, and the three repaired samples of §6.5, run on 2026-11-27. Raw CLI output, per-run metadata and `scores.json` are in the plugin's `calibration/perf-reviewer/results/2026-11-25/`. Each S sample ran twice and each N sample once, so the numbers show size, not spread.
 - **Checked against the Claude Code docs on 2026-11-25:** the `skills` field, the plugin-agent fields, path-variable substitution, and `--allowedTools Read` in headless mode.
 - **Read on 2026-11-25:** the studies in §8, in their abstracts or full text through a page reader that returns extracted text. The numbers are as quoted there. For Mytkowicz et al. the text read was the submission draft.
 - **Re-checked on 2026-11-26 by an independent reviewer:** every table in §6–§6.3 recomputed from the `scores.json` files; §7.1, §7.3 and the Map-lookup table re-run or compared with `bench/results-2026-11-25.txt`; the study numbers re-read in the papers' text (SWE-Perf's 2.26 % and 10.85 % in Table 2 of its HTML version; Mytkowicz et al.'s 33 % and 300 % were not on the landing page and were not re-read); the ESLint tables were not re-run.
@@ -796,7 +809,7 @@ cd bench && sh run-all.sh
 ## References
 
 - Local experiments: the loading probes of §3, a throwaway plugin and a project-level agent, run with Claude Code 2.1.332 and Haiku, 2026-11-25. Sessions 38ea613a, 17de3294, a7fd634a and d5946330 (§3); ab8874d3, 96116e54, 89b962e6, 1baa10c7, 766bcb4f and 3d6fcd06 (§3.1). Sizes from `measure.py` over their transcripts; the tool definitions and the skill listing read from the recorded requests. Backs: §3. [^lab-probe]
-- Local calibration: `archkit-build` plugin, `calibration/perf-reviewer/` (samples, `expected.json`, `run.mjs`, `score.mjs`, `lint-samples.mjs`, `bench/`) and `tests/`. Run with Claude Code 2.1.332 and Sonnet, Node.js 24.22.1, ESLint 10.15.0, on an Apple M2, 2026-11-25; the G14 trap of §6.3 and arm I of §6.4 ran on 2026-11-26 (`results/2026-11-26-skip-scan/`, `results/2026-11-26-index-only/`, `variants/index-only/`), and so did round 3 of §6.5 (`results/2026-11-26-round3/`, samples B39 to B134 and G20 to G50). Backs: §3.2, §6, §7. [^lab-cal]
+- Local calibration: `archkit-build` plugin, `calibration/perf-reviewer/` (samples, `expected.json`, `run.mjs`, `score.mjs`, `lint-samples.mjs`, `bench/`) and `tests/`. Run with Claude Code 2.1.332 and Sonnet, Node.js 24.22.1, ESLint 10.15.0, on an Apple M2, 2026-11-25; the G14 trap of §6.3 and arm I of §6.4 ran on 2026-11-26 (`results/2026-11-26-skip-scan/`, `results/2026-11-26-index-only/`, `variants/index-only/`), and so did round 3 of §6.5 (`results/2026-11-26-round3/`, samples B39 to B134 and G20 to G50); the three repaired samples ran on 2026-11-27 (`results/2026-11-27-repaired/`). Backs: §3.2, §6, §7. [^lab-cal]
 - [Harness lab notebook](../../ai-agents/harness-lab/lab-notebook.md) — the earlier experiments on tool allowlists (E2, E8), reviewer calibration (E4), characters per token in a recorded request (E11), `CLAUDE.md` loading by folder (E12) and the settings layer (E13). Backs: §2, §3.2, §5. [^lab-notebook]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §3, the `skills` field. [^cc-sub]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-25. Backs: §3, plugin-agent fields and path variables. [^cc-plugins]

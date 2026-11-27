@@ -349,7 +349,7 @@ ES2022 | microtask turns for 1000 awaits: 1001 | private-field helper calls for 
 - Verified: 60 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
 
 ## References
-- Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, Apple M2 under Docker), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
+- Lab: `node:24.22.1-alpine` image (Node.js v24.22.1, V8 13.6.233.17-node.58, linux arm64, pointer compression off, Apple M2 under Docker; no other version or build was run), TypeScript 5.9.3 for the TypeScript script, run 2026-11-26; scripts and output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, all classes; Lookup notes. [^lab]
 - [Stack trace API](https://v8.dev/docs/stack-trace-api) — V8, living. Rank 1. Backs: Catalog, stack-capture-per-call. [^v8-stack]
 - [Errors: Error.stackTraceLimit and new Error()](https://nodejs.org/docs/latest-v24.x/api/errors.html) — Node.js, v24.22.3 docs. Rank 1. Backs: Catalog, stack-capture-per-call. [^node-errors]
 - [TSConfig Reference: target](https://www.typescriptlang.org/tsconfig/target.html) — TypeScript, living. Rank 1. Backs: Catalog, ts-downlevel-emit. [^ts-target]

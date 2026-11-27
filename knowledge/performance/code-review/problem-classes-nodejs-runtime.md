@@ -256,7 +256,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 - Verified: 52 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
 
 ## References
-- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, Apple M2 under Docker, `--network none`), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
+- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`; no other version or platform was run), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
 - [Command-line API: UV_THREADPOOL_SIZE, --enable-source-maps, --no-async-context-frame, --inspect](https://nodejs.org/docs/latest-v24.x/api/cli.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation, async-hook-per-resource, source-maps-on-hot-stacks; Lookup notes. [^node-cli]
 - [Thread pool work scheduling](https://docs.libuv.org/en/v1.x/threadpool.html) — libuv project, v1.x, living. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes. [^libuv-tp]
 - [DNS: Implementation considerations](https://nodejs.org/docs/latest-v24.x/api/dns.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes, corrections. [^node-dns]
