@@ -3,7 +3,7 @@ schema: knowledge-doc/v1
 type: reference
 topic: performance/code-review
 status: verified
-applies-to: ["Node.js 24 (API docs v24.22.3, read 2026-11-26; lab on Node.js 24.22.1 with V8 13.6.233.17 and libuv 1.52.1)", "libuv 1.x documentation (living)", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (Node.js 24.21.0 API)"]
+applies-to: ["Node.js 24 (API docs v24.22.3, read 2026-11-26; lab on Node.js 24.22.1 with V8 13.6.233.17 and libuv 1.52.1)", "libuv 1.x documentation (living)", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (Node.js 24.21.0 API)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)"]
 last-verified: 2026-11-27
 last-updated: 2026-11-27
 tags: [performance, code-review, nodejs, event-loop, libuv, thread-pool, buffers, worker-threads, async-hooks, source-maps]
@@ -233,7 +233,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 </details>
 
 - **Corrections found while checking the sources (2026-11-26).**
-  - The `Buffer` pool default is 64 KiB (65,536 bytes) from Node.js 24.18.0; before that it was 8,192 ✅[^node-buffer]; lab run 4 shows 65,536 on 24.22.1 ✅[^lab]. Node.js 25.7.0 printed 8,192, like 22.23.4 ✅[^lab-matrix], so a newer major version does not imply the larger pool: read `Buffer.poolSize` on the version in use.
+  - The `Buffer` pool default is 64 KiB (65,536 bytes) from Node.js 24.18.0; before that it was 8,192 ✅[^node-buffer]; lab run 4 shows 65,536 on 24.22.1 ✅[^lab], and 24.22.3 printed 65,536 too ✅[^lab-matrix]. Node.js 25.7.0 printed 8,192, like 22.23.4 ✅[^lab-matrix], so a newer major version does not imply the larger pool: read `Buffer.poolSize` on the version in use.
   - Setting `process.env.UV_THREADPOOL_SIZE` inside the program "is not guaranteed to work", because the pool may already exist ✅[^node-cli]. Set it in the environment of the process.
   - `dns.lookup` reads `/etc/hosts` and runs on the pool; `dns.resolve*` always queries the network and ignores `/etc/hosts` ✅[^node-dns], so switching changes behaviour, not only cost.
   - `AsyncLocalStorage` on Node.js 24 uses the `async_hooks`-based implementation only with `--no-async-context-frame` ✅[^node-cli]; advice that it is slow because of `async_hooks` describes that older implementation.
@@ -245,7 +245,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
   - The Node.js "Don't block the event loop" guide names the pool size k and gives no default; the default 4 comes from the CLI page ✅[^node-cli] and libuv ✅[^libuv-tp].
   - `--inspect` in production is a security issue, not a performance class: binding the inspector to a public address allows remote code execution ✅[^node-cli].
 
-**Other builds and versions (2026-11-27).** The five scripts above ran again, unchanged, on five more builds. `threadpool.mjs` ran 3 times per build with the pool unset and 3 times with `UV_THREADPOOL_SIZE=8`, with 8 CPUs visible in every build, and gave the same output each time; the other scripts ran once. No script prints a time, so all ran on the emulated x64 build too. E7 is Electron's Node mode: its thread pool, worker messages and `Buffer` are Electron's build, and its results say nothing about a Node.js release.
+**Other builds and versions (2026-11-27).** The five scripts above ran again, unchanged, on six more builds. `threadpool.mjs` ran 3 times per build with the pool unset and 3 times with `UV_THREADPOOL_SIZE=8`, with 8 CPUs visible in every build, and gave the same output each time; the other scripts ran once (on E9, `threadpool.mjs` once unset and once with 8). No script prints a time, so all ran on the emulated x64 build too. E7 is Electron's Node mode: its thread pool, worker messages and `Buffer` are Electron's build, and its results say nothing about a Node.js release. E9 has pointer compression on, as E7 has, in a Node.js build: it gave E0's output for all five scripts, so on that build (V8 13.6, emulated) pointer compression changed none of these results ✅[^lab-matrix].
 
 | Id | Build | Differs from E0 |
 |---|---|---|
@@ -255,14 +255,15 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 | E3 | Node.js 22.23.4, V8 12.4.254.21, libuv 1.51.0, macOS arm64 | older Node.js, V8 and libuv |
 | E4 | Node.js 25.7.0, V8 14.1.146.11, libuv 1.51.0, macOS arm64 | newer Node.js and V8, older libuv |
 | E7 | Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0.245.31, libuv 1.52.1), macOS arm64 | Electron, pointer compression on, V8 sandbox on |
+| E9 | Node.js 24.22.3, V8 13.6.233.17-node.63, libuv 1.52.1, linux x64 container emulated on arm64: the Node.js project's unofficial pointer-compression build | against E2: pointer compression on only (sandbox off), and a newer 24.22 patch |
 
-| Script (claim) | E1 | E2 | E3 | E4 | E7 |
-|---|---|---|---|---|---|
-| `threadpool.mjs` (a read and a lookup wait behind 4 hashes with p = 4, not with p = 8) | same | same | same | same | same |
-| `starve.mjs` (`nextTick` and `queueMicrotask` steps run before a 0 ms timer) | same | same | same | same | same |
-| `hooks.mjs` (`init` calls with and without `trackPromises`) | same | same | differs | same | same |
-| `buffers.mjs` (pool block size, view retention, own copy) | same | same | differs | differs | same |
-| `transfer.mjs` (clone, transfer, pooled `Buffer` backing) | same | same | differs | differs | same |
+| Script (claim) | E1 | E2 | E3 | E4 | E7 | E9 |
+|---|---|---|---|---|---|---|
+| `threadpool.mjs` (a read and a lookup wait behind 4 hashes with p = 4, not with p = 8) | same | same | same | same | same | same |
+| `starve.mjs` (`nextTick` and `queueMicrotask` steps run before a 0 ms timer) | same | same | same | same | same | same |
+| `hooks.mjs` (`init` calls with and without `trackPromises`) | same | same | differs | same | same | same |
+| `buffers.mjs` (pool block size, view retention, own copy) | same | same | differs | differs | same | same |
+| `transfer.mjs` (clone, transfer, pooled `Buffer` backing) | same | same | differs | differs | same | same |
 
 What differs:
 - `hooks.mjs`, E3: with `trackPromises: false` the hook got 0 `init` calls on E0 and 2003 on Node.js 22.23.4: the option is not honoured there. The default hook got 2004 on both. Side check, not a script: `node --help` on 22.23.4 lists `--experimental-async-context-frame` and no `--no-async-context-frame`; 24.22.1 and 25.7.0 list `--no-async-context-frame`.
@@ -300,12 +301,12 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 - A `Buffer` you keep or post is only as small as its backing `ArrayBuffer`: copy kept slices out, and transfer large buffers to workers. [rule-candidate]
 
 ## Verification status
-- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
-- Matrix re-run on 2026-11-27: 5 scripts on 5 more builds, 25 script-and-build results (50 process runs, `threadpool.mjs` 6 times per build): 20 same, 5 differ, 0 could not run. Not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0; another CPU count or `UV_THREADPOOL_SIZE` than 8 CPUs with 4 and 8 threads.
+- Verified: 61 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Matrix re-run on 2026-11-27: 5 scripts on 6 more builds, 30 script-and-build results (56 process runs, `threadpool.mjs` 6 times per build and 2 on E9): 25 same, 5 differ, 0 could not run. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64; V8 versions outside 12.4 to 15.0; another CPU count or `UV_THREADPOOL_SIZE` than 8 CPUs with 4 and 8 threads.
 
 ## References
 - Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
-- Lab matrix: the five scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4; Node.js 25.7.0; Electron 43.7.7 as Node with the Node.js 24.21.0 API), 8 CPUs; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, async-hook-per-resource and retained-buffer-view; Lookup notes. [^lab-matrix]
+- Lab matrix: the five scripts re-run on 2026-11-27 in six environments (E0 above; Node.js 24.22.1 on macOS 26.1 arm64 and on linux x64 emulated; Node.js 22.23.4; Node.js 25.7.0; Electron 43.7.7 as Node with the Node.js 24.21.0 API), then E9 (Node.js 24.22.3, V8 13.6.233.17-node.63, linux x64 emulated, pointer compression on, sandbox off), 8 CPUs; table and differing output in Lookup notes. Rank 1 (primary measurement). Backs: Catalog, async-hook-per-resource and retained-buffer-view; Lookup notes. [^lab-matrix]
 - [Command-line API: UV_THREADPOOL_SIZE, --enable-source-maps, --no-async-context-frame, --inspect](https://nodejs.org/docs/latest-v24.x/api/cli.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation, async-hook-per-resource, source-maps-on-hot-stacks; Lookup notes. [^node-cli]
 - [Thread pool work scheduling](https://docs.libuv.org/en/v1.x/threadpool.html) — libuv project, v1.x, living. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes. [^libuv-tp]
 - [DNS: Implementation considerations](https://nodejs.org/docs/latest-v24.x/api/dns.html) — Node.js project, v24.22.3. Rank 1. Backs: Catalog, threadpool-saturation; Lookup notes, corrections. [^node-dns]
