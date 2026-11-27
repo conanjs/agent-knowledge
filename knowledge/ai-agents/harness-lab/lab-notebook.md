@@ -3,7 +3,7 @@ schema: deep-dive/v1
 topic: ai-agents/harness-lab
 status: verified
 applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-27"]
-last-verified: 2026-11-26
+last-verified: 2026-11-27
 last-updated: 2026-11-27
 synthesized-into: []
 tags: [lab-notebook, claude-code, subagents, plugins, hooks, orchestrator, evaluator, token-cost, experiments]
@@ -23,13 +23,15 @@ What the experiments showed:
 - Fixed steps are cheaper and steadier in a script than in a model or a workflow (E24, E28, E31).
 - Path-scoped rules reach a worker when it touches their area, and they changed the code when legacy code showed the wrong conventions (E30, E32).
 - On one card (Sonnet, 2.1.332), a one-line prompt fix cut tests that assert a whole file after a write from 5 of 5 runs to 1 of 5, while the pass rates could not tell the two prompts apart (E36).
+- In `acceptEdits` mode, a headless session with the workers' flags could create and delete files through the shell, which `--allowedTools` did not allow; `default` mode denied them (2.1.332, one run per mode; E37).
+- The orchestrator stopped for approval after the spec on its own, and resumed headless calls carried on from each approval; it skipped its pattern step until told (one run; E38).
 
 **Use this when:**
 - you build or change an agent harness on Claude Code (subagents, plugin agents, hooks, headless runs);
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** thirty-six experiments (E1–E36; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** thirty-eight experiments (E1–E38; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -695,7 +697,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **Conclusion** (one card, one run):
   - Two workers with separate roles completed a card without a model orchestrating them; the tests were committed before the implementer started, so the gate's scope check would have reported any change to them.
   - Each worker started at about 6,200–6,400 tokens with the user layer off, more than the 4,800 measured for the implementer in E13; the agents' prompts and tool lists are larger now.
-  - The `usage` totals in `claude -p --output-format json` equal the sum of every request's size in the transcript, so a run record can take cumulative input from that output.
+  - The `usage` totals in `claude -p --output-format json` equal the sum of every request's size in the transcript, so a run record can take cumulative input from that output. This holds for one call: in a resumed session, `usage` covers only the last call (E38).
 
 ---
 
@@ -748,7 +750,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 | Part | Requests or sessions | Cumulative input | Cost |
 |---|---|---|---|
 | Orchestrator, first run | 18 requests | 827,948 | $0.463 |
-| Orchestrator, resumed | 3 requests | 210,063 | about $0.051 *(the second run's `total_cost_usd`, $0.514, appears to include the first: inferred from the difference)* |
+| Orchestrator, resumed | 3 requests | 210,063 | about $0.051 *(the second run's `total_cost_usd`, $0.514, appears to include the first: inferred from the difference, and measured in E38)* |
 | Workers, the failed provider attempt | 2 sessions | 116,400 | $0.085 |
 | Workers, the two passing cards | 4 sessions | 164,652 | $0.124 |
 
@@ -898,7 +900,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 | 001-US3 | 181,458 | 284,426 | 29,139 | 495,023, $0.351 |
 
   - Afterwards the repository's full `verify-before-commit` passed with 177 scenarios: 161 before, 13 acceptance scenarios in `tests/acceptance/`, and 3 that the US3 implementer added to the module's own new feature file. A manual run renamed an item and replaced three secret-looking strings with `[redacted]`.
-  - Eight tool calls needed approval and were denied: test-authors writing files through shell heredocs and chained commands, and the US3 implementer running `prettier --write`, which was not among its commands, so it fixed the formatting by hand (32 turns).
+  - Nine tool calls needed approval and were denied (2, 2, 1 and 4 in the four sessions; this said eight until E37 counted the run records): test-authors writing files through shell heredocs and chained commands, and the US3 implementer running `prettier --write`, which was not among its commands, so it fixed the formatting by hand (32 turns).
   - Whole run: 2,278,193 tokens and about $1.73; the orchestrator's planning took 36 % of the tokens and about 30 % of the cost.
 - **Conclusion** (one feature, one repository, three attempts at the build):
   - The chain built three stories on a real repository, and the reviewer ran. Each stop happened before damage: nothing was committed by a failed card. *(The author's reading:)* the stops came from the harness (a state file the script did not commit) and from a model's behaviour (a test that asserted more than its scenario); the proposed fixes for the second are recorded as incidents and were not tried.
@@ -942,13 +944,110 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - The one failed run (arm A, run 5) repeated E34's failure. After a successful rename, its first scenario asserted the whole `TRACKER.md`, including a `## Done` section that the tracker's rule TR-12 moves to `TRACKER.done.md` on every edit. With the known-good code, that scenario was the only one of 166 to fail. The other whole-file assertions after a write, in both arms and in E35, expected a file with no `## Done` section, and they passed.
   - In 3 of the 10 runs, all five acceptance scenarios failed before any code existed. E35's two runs had left two of them passing.
   - The grader had reported an empty list of failing scenarios for the failed run, because its pattern matched only node:test output and not the "Failed scenarios:" list of cucumber-js. It was fixed after the runs and checked by grading that run's test again on a rebuilt fixture. The verdict uses only exit codes, so no pass count changed.
-  - No tool call was denied in E35's or E36's runs, and none wrote a file through the shell (the only redirect was `2>&1`). Besides the test command, piped to `tail` or `grep` in every run, the shell calls were read-only: `cat`, `cat -A`, `sed -n`, `ls`, `head`, `grep`, `git status --short`, some after a `cd` into the fixture. They were not denied, although `--allowedTools` names only the test command, and the reason was not checked. E34's denied heredoc writes, the incident behind P3, did not happen on this fixture, so P3 has no measured effect.
+  - No tool call was denied in E35's or E36's runs, and none wrote a file through the shell (the only redirect was `2>&1`). Besides the test command, piped to `tail` or `grep` in every run, the shell calls were read-only: `cat`, `cat -A`, `sed -n`, `ls`, `head`, `grep`, `git status --short`, some after a `cd` into the fixture. They were not denied, although `--allowedTools` names only the test command; E37 found why. E34's denied heredoc writes, the incident behind P3, did not happen on this fixture, so P3 has no measured effect.
 - **Conclusion** (one fixture and card, Sonnet, 2.1.332; 10 runs, plus E35's 2):
   - Arm A against arm B is the clean comparison: the two ran at the same time and differed only by P1's line. A whole-file assertion after a write appeared in 5 of 5 runs without P1 and in 1 of 5 with it (Fisher's exact test, two-sided, p = 0.048). Adding E35's two runs, whose prompt was from before P3, gives 6 of 7 against 1 of 5 (p = 0.072), on the assumption that P3 does not change how assertions are written.
   - E34's failure itself came back in 1 of 5 runs without P1 (1 of 7 with E35's runs) and in 0 of 5 with it. Pass rates this close cannot be told apart at this size: 4 of 5 against 5 of 5 gives p = 1.0.
   - *(The author's reading:)* P1 changes what it says it changes, at no measurable cost per run. The failure it prevents is rare on this card: the case for it is E34's incident plus one repeat in seven runs.
   - On the same runs, counting the behaviour a fix targets showed a difference that pass or fail alone did not.
   - V accepted P1 after these runs; the line is now in archkit's test-author prompt.
+---
+
+### E37. Which shell commands a headless session runs without a rule, by permission mode (2026-11-27)
+- **Question:** in E36's runs the test-author used read-only shell commands that `--allowedTools` did not name, and none was denied. Which shell commands does a headless session with the workers' flags run without a rule, in `acceptEdits` mode (the mode `build-task.mjs` gave its workers) and in `default` mode (which the docs now also call Manual mode)? Can such a session write files through the shell, which the path guard does not see, since `guard.mjs` checks only Edit and Write?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; a scratch git repository holding `a.txt` and a `package.json` whose `test-tools` script prints one line;
+  - the flags of E36's runs, without `--agent` and `--plugin-dir`: `--setting-sources project,local --allowedTools Read Grep Glob Edit Write "Bash(pnpm run test-tools:*)"`, with auto memory off;
+  - the prompt asked for 17 commands, one Bash call each, in order, with no retries; once with `--permission-mode acceptEdits` and once with `default`, each in a fresh copy of the repository. A third run, in `default` mode, asked for a Write of a new file in a new folder, an Edit, `touch`, the test command and a redirect.
+- **Result** ✅[^lab]:
+
+| Command | `acceptEdits` | `default` |
+|---|---|---|
+| `cat a.txt`, `sed -n 1p a.txt`, `ls`, `git status --short`, `grep -n alpha a.txt`, `cd <repo> && cat a.txt` | ran | ran |
+| `pnpm run test-tools 2>&1 \| tail -3` | ran | ran |
+| `pnpm run test-tools && touch chained.txt` | ran | denied |
+| `touch new.txt`, `mkdir newdir`, `cp a.txt copy.txt` | ran | denied |
+| `echo hi > redirect.txt`, a heredoc into `heredoc.txt` (both new files) | ran | denied |
+| `rm package.json` | ran: the file was deleted | denied |
+| `sed -i '' 's/alpha/beta/' a.txt`, `node -e` writing a file, `git add -A` | denied | denied |
+
+  - In the third run, in `default` mode, the Write, the Edit and the test command ran, and `touch` and the redirect were denied. Each run cost $0.06 to $0.07.
+  - In `acceptEdits` the `sed -i` call was refused with "sed command requires approval (contains potentially dangerous operations)".
+  - **What the docs say** ✅[^cc_perm] ✅[^cc_modes]:
+    - Claude Code "recognizes a built-in set of Bash commands as read-only and runs them without a permission prompt in every mode", among them `ls`, `cat`, `echo`, `head`, `tail`, `grep`, `cd` and read-only forms of `git`, and "The set is not configurable". The same sentence makes an exception for paths outside the working directories, and the page lists cases where such commands still prompt in `default` mode: commands it cannot parse, unquoted globs on commands with write-capable flags, `cd` combined with `git`, and `cd` combined with a redirect.
+    - An output redirect's target is checked "as if Claude wrote or read that file directly". *(Inference from that and the next point:)* a redirect into the working folder counts as a file edit, which `acceptEdits` approves.
+    - "In addition to file edits, `acceptEdits` mode auto-approves common filesystem Bash commands: `mkdir`, `touch`, `rm`, `rmdir`, `mv`, `cp`, and `sed`", inside the working directory or `additionalDirectories`.
+    - For a compound command, "Every subcommand must be allowed".
+  - E34's nine denied shell calls, read again from their transcripts and run records (2, 2, 1 and 4 per session), were of these kinds:
+    - a `cd` followed by a write through a redirect: "Commands that change directories and write via output redirection require explicit approval";
+    - a heredoc chained after `mkdir` that the parser could not read;
+    - chains of read-only commands with a `grep` pattern, including a pipe through `grep -v "^$"`;
+    - `npx prettier --write` or `pnpm exec prettier --write`, which no rule allowed.
+  - **Fix** (archkit commit `184b6c6`):
+    - `build-task.mjs` starts the test-author and the implementer with `--permission-mode default`, and so does the eval runner;
+    - the test-author's shell line now says that any command that writes a file is denied, and that the read-only commands still run;
+    - a fake-claude test fails with `acceptEdits` and passes with `default`.
+  - **Regression eval after the fix, with P1 to P3 merged:** `test-author-scope`, 5 runs.
+    - 5 of 5 passed, with no denial.
+    - No run had a whole-file assertion after a write.
+    - Cumulative input 94,219 to 214,223 tokens (mean 147,721); cost $0.113 to $0.178 (mean $0.162).
+- **Conclusion** (2.1.332, headless, one run per mode, without the plugin's hooks):
+  - In `acceptEdits` mode a session with the workers' flags could create, copy and delete files inside the working folder through the shell, with no rule. A path guard on Edit and Write never saw those calls. `default` mode denied them, and Write, Edit and the allowed check still ran. This matches the docs, except that the docs list `sed`, while `sed -i` was refused here.
+  - `--allowedTools` does not limit the read-only set, apart from the exceptions the docs list (E38 and E34 each had a chain of read-only commands that needed approval). The docs name `ask` or `deny` rules as the way to require a prompt for one of them ✅[^cc_perm].
+  - *(The author's reading:)* the read-only commands are harmless here, since the workers may read anyway; the gap was the writes.
+
+---
+
+### E38. A second feature on the real repository, with approval stops and proposed patterns (2026-11-27)
+- **Question:** on the repository of E34, with P1 to P3 and E37's fix merged, does the orchestrator stop for approval after the spec when nothing tells it the approvals are delegated? Does the route for proposed patterns work? In that route the orchestrator writes `.archkit/patterns/proposed/<id>.md` and stops, and the person installs an approved proposal with `patterns.mjs install <id>`. And do both cards pass?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; the same worktree and branch as E34;
+  - the request, in two parts:
+    - the tracker CLI gets `--reopen T-<n> --next "<step>"`, which moves a closed or dropped item from `TRACKER.done.md` back to Open;
+    - and `--done [--since YYYY-MM-DD]`, which lists the closed and dropped items, newest first.
+    - Unlike E34's request, it said nothing about approvals.
+  - **Planning:** one orchestrator session, continued with `claude -p … --resume <session id>` after each stop. The user had delegated the approvals to the agent running this lab. It read the spec's scenarios and requirements and the plan's summary, and approved each in a resumed call, about 20 s after the stop. The approval for the spec ended "Go on with the plan, and stop again for approval after it."
+  - **Build:** a fresh orchestrator session, prompted "Build specs/002-tracker-reopen-done. The five pattern proposals in .archkit/patterns/proposed/ are waiting for V; build without them." It calls `build-feature.mjs --next` once per card.
+  - **Units:** "turns" are the CLI's `num_turns`; "requests" are model requests counted from the transcript (§6), the unit E34 used.
+- **Result** ✅[^lab]:
+
+| Planning call | What it did | Turns | Requests | Seconds | Input (tokens) |
+|---|---|---|---|---|---|
+| 1 | Spec (2 stories, 15 scenarios, 5 stated assumptions); stopped for approval on its own | 19 | 6 | 56 | 225,918 |
+| 2 | Plan, research, contract, quickstart; stopped, as the approval asked | 8 | 4 | 54 | 243,357 |
+| 3 | Tasks; two cards, `002-US2` after `002-US1`; no patterns | 5 | 4 | 17 | 292,901 |
+| 4 | After a correction: five pattern proposals, checked; stopped | 20 | 6 | 68 | 554,979 |
+
+  - **Planning in all:** 52 turns, 20 requests, 195 s, 1,317,155 tokens and $0.80.
+  - **How resumed calls report usage:** the CLI's `usage` covers only the last call, while `total_cost_usd` and `modelUsage` add up every call so far. For example, `modelUsage` after call 2 was 469,275 tokens, which is 225,918 + 243,357. The input column above is `usage`.
+  - **Patterns:**
+    - `repo.json` had none, and the orchestrator's prompt says to propose up to six when planning for such a repository. Call 3 proposed none and said: "You did not ask for that, and the work is two edits to existing files."
+    - The correction quoted the prompt and ended "Propose them now as that section says, check them, and stop for approval."
+    - Call 4 made 11 Read calls and wrote five proposals of 10 to 13 lines each to `.archkit/patterns/proposed/`. `patterns.mjs proposed` reported no problems, and the orchestrator stopped.
+    - Its one denied call was `patterns.mjs --help`. `bash-guard.mjs`, the orchestrator's shell hook, refuses it because only `check` and `proposed` are allowed.
+    - The proposals were left for the user to install, and the build was told to go without them. The script's docs commit (`bf55dac`) put all five on the branch.
+  - **Build:** 8 turns, 7 requests, 202 s, 99,366 tokens and $0.054 for the session around the script, with two `--next` calls. Both cards passed at their first gate attempt:
+
+| Card | Test-author | Implementer | Card total |
+|---|---|---|---|
+| 002-US1 | 252,635, 18 turns, 1 denial | 161,611, 13 turns, 1 denial | 414,246, $0.345 |
+| 002-US2 | 129,375, 13 turns | 116,701, 10 turns | 246,076, $0.240 |
+
+  - **The two denials:**
+    - a test-author command that chained read-only commands (`sed -n`, `ls`, `head` with a glob, `cd`, `cat` and more), for which Claude Code asked approval of several parts; which part needed it was not isolated;
+    - the implementer's attempt to edit `tracker.mjs` through a `python3 - <<'E'` heredoc.
+    - Each cost a turn. The implementer made its other changes with Edit, before and after.
+  - **Afterwards:** the repository's full `verify-before-commit` passed with 192 scenarios (E34's 177 and 15 new acceptance scenarios). A manual run:
+    - listed a closed item and a dropped item, and filtered them by `--since`;
+    - reopened the dropped one, with status open, its next step and today's date;
+    - refused an unknown id with exit 1.
+  - **Whole run:** 2,076,843 tokens and $1.44. The script recorded one incident, the two denials. The missed pattern step was added as a second incident by hand, with `learn.mjs note`.
+- **Conclusion** (one feature, one repository, one run, resumed headless calls):
+  - The orchestrator stopped after the spec on its own, as its prompt says. The later stops were also asked for in the resumed prompts, so they do not test the prompt.
+  - The approvals were typed into resumed headless calls by the lab's agent, under the user's delegation. An approval typed by the user in an interactive session is still untested.
+  - The route for proposed patterns worked when each step was asked for: proposals went to the allowed folder, `patterns.mjs proposed` checked them, then the orchestrator stopped. Installing one was not tried.
+  - The orchestrator skipped its pattern step until corrected. *(The author's reading:)* it read the step as optional because the request did not mention patterns. This is one instance, recorded as an incident; no fix was tried.
+  - Resuming sends the whole conversation again. The fourth call was 42 % of the planning input, mostly because each of its 6 requests carried the earlier conversation: its first request was already 78,090 tokens, and the reading for the patterns took it to 105,096.
 ---
 
 ## 4. Four ways to orchestrate, compared
@@ -980,6 +1079,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each). With the build phase as one script call, the build session fell to 43,769 tokens (E31).
 13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area, and not otherwise (E30). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
 14. **Measure a prompt fix with repeated runs, and count the behaviour it targets.** A failure that happens once in several runs needs more than two runs to show up: E35 saw it in 0 of 2 runs, E36's arm without the fix in 1 of 5. At five runs per arm the pass rates could not separate the prompts (4 of 5 against 5 of 5), while whole-file assertions after a write went from 5 of 5 runs to 1 of 5 (E36).
+15. **Check what the permission mode allows beyond `--allowedTools`.** Claude Code's read-only commands run in every mode, apart from the cases its docs list. `acceptEdits` also approves `mkdir`, `touch`, `rm`, `cp`, `mv` and `sed` inside the working folder, and redirects into it, whose targets are checked like file edits. A path guard that watches only Edit and Write misses those writes. Run workers in `default` mode, or guard the shell too (E37).
 
 ---
 
@@ -996,27 +1096,31 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 to 2026-11-27 (E24–E36 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
-- **Checked against the Claude Code docs on 2026-11-24 and 2026-11-25:**
+- **Measured on 2026-11-24 to 2026-11-27 (E24–E38 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Checked against the Claude Code docs on 2026-11-24 to 2026-11-27:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
   - hooks inside subagents and `agent_type`;
   - the plugin layout;
   - on 2026-11-26: the trust condition for project marketplace settings (E25) and the dynamic-workflows page (E28).
+  - on 2026-11-27: the read-only command set and compound commands (permissions page), and what `acceptEdits` approves (permission-modes page), for E37.
 - **Synthesis, not a sourced claim:** the conclusion lines, §4's last paragraph, and §5.
 - **Not settled:**
   - about 5,000 tokens of a default session's first request, after E11's two causes;
   - why no project `CLAUDE.md` loads in folders under `/private/tmp/…` (E12);
   - an earlier manual check in the home folder that saw no loaded instructions, which E18 and E20 could not reproduce; E20 shows one way to get that result (Enter on the trust prompt's default "No, exit");
   - the docs text on external-import approval was not read for this notebook; the rule rests on E15–E17;
-  - why read-only shell commands (`cat`, `sed -n`, `ls`, `git status --short`) were not denied in E36's runs, whose `--allowedTools` names only the test command.
+  - why `sed -i ''` was refused in `acceptEdits` mode in E37 ("contains potentially dangerous operations"), although the docs list `sed` among the commands that mode approves;
+  - an approval typed by the user in an interactive orchestrator session (E38's approvals went into resumed headless calls), and `patterns.mjs install` run on a real proposal.
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E36 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E38 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
+- [Configure permissions](https://code.claude.com/docs/en/permissions) — Anthropic, living, read 2026-11-27. Backs: E37 the read-only command set runs in every mode and is not configurable; every subcommand of a compound command must be allowed. [^cc_perm]
+- [Choose a permission mode](https://code.claude.com/docs/en/permission-modes) — Anthropic, living, read 2026-11-27. Backs: E37 the filesystem commands `acceptEdits` approves, inside the working directory. [^cc_modes]
 - [Run Claude Code programmatically](https://code.claude.com/docs/en/headless) — Anthropic, living, read 2026-11-26. Backs: E33 `claude -p` loads auto memory unless `--bare` is given. [^cc_headless]
 - [Orchestrate subagents at scale with dynamic workflows](https://code.claude.com/docs/en/workflows) — Anthropic, living, read 2026-11-26. Backs: E28 a workflow script has no filesystem or shell access. [^cc_wf]
 - [Settings files and precedence](https://code.claude.com/docs/en/settings) — Anthropic, living, read 2026-11-26. Backs: E25 project marketplace keys apply after the folder is trusted. [^cc_settings]
