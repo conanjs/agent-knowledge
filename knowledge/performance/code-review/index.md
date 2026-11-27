@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: subtopic
 topic: performance/code-review
-last-updated: 2026-11-26
+last-updated: 2026-11-27
 ---
 
 # Performance code review
@@ -20,8 +20,8 @@ How to find performance problems by reading code, before anything is slow: catal
 | [problem-classes-data-pipelines.md](problem-classes-data-pipelines.md) | reference | Seven classes for pandas, Polars, DuckDB, Spark and SQL batch code: row-multiplying joins, unpruned file reads, small files, wasteful column types, shuffle-heavy aggregation, exact distinct counts and full-scan sampling | verified |
 | [problem-classes-ml-and-llm-applications.md](problem-classes-ml-and-llm-applications.md) | reference | Seven classes for machine-learning and large-language-model application code: starved input pipelines, per-step tensor reads, per-item inference, cache-breaking prompt order, offline work on the real-time API, unbounded conversation history and exact vector scans, with provider facts dated 2026-11-26 | verified |
 | [problem-classes-network-and-delivery.md](problem-classes-network-and-delivery.md) | reference | Nine network and delivery classes: HTTP caching, compression, CORS preflights, small socket writes, connection fan-out, slow hashing on every request, and object-store transfers and listing | verified |
-| [problem-classes-javascript-engine.md](problem-classes-javascript-engine.md) | reference | Eight JavaScript code shapes that stop V8 13.6 from specializing hot code (megamorphic sites, type changes, oversized functions, `eval`, `Proxy`, `for…in` over arrays, patched or per-object prototypes), each shown in a Node.js 24 lab run, with corrections to outdated V8 advice | verified |
-| [problem-classes-javascript-language.md](problem-classes-javascript-language.md) | reference | Six JavaScript and TypeScript classes (chained array passes, a full pass for the first match, sort keys recomputed, `await` on plain values, stack capture per call, TypeScript downlevel helpers), each with a cost count measured on Node.js 24.22.1 | verified |
+| [problem-classes-javascript-engine.md](problem-classes-javascript-engine.md) | reference | Eight JavaScript code shapes that stop V8 13.6 from specializing hot code (megamorphic sites, type changes, oversized functions, `eval`, `Proxy`, `for…in` over arrays, patched or per-object prototypes), each shown in a Node.js 24 lab run, with corrections to outdated V8 advice, and Chrome 158's ratios beside the baseline's | verified |
+| [problem-classes-javascript-language.md](problem-classes-javascript-language.md) | reference | Six JavaScript and TypeScript classes (chained array passes, a full pass for the first match, sort keys recomputed, `await` on plain values, stack capture per call, TypeScript downlevel helpers), each with a cost count measured on Node.js 24.22.1 and re-run on other builds, Chrome 158 among them | verified |
 | [problem-classes-nodejs-runtime.md](problem-classes-nodejs-runtime.md) | reference | Six Node.js 24 runtime classes: the libuv thread pool, microtask starvation, async hooks, retained Buffer views, worker message copies and source-map stack cost, five backed by lab runs | verified |
 | [problem-classes-orm-and-migrations.md](problem-classes-orm-and-migrations.md) | reference | Nine ORM and migration classes, from sibling-collection joins and tracking overhead to table-rewriting DDL, blocking index builds and in-migration backfills, with the locks each PostgreSQL 19 and MySQL 8.4 statement takes | verified |
 | [problem-classes-api-and-rpc.md](problem-classes-api-and-rpc.md) | reference | Three gRPC classes (stream-limit queueing, connection pinning behind L4 balancers, bulk unary messages), plus the API-specific signal for every shape that belongs to an existing class | verified |
