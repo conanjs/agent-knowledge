@@ -5,7 +5,7 @@ topic: performance/code-review
 status: verified
 applies-to: ["Node.js 24 (API docs v24.22.3, read 2026-11-26; lab on Node.js 24.22.1 with V8 13.6.233.17 and libuv 1.52.1)", "libuv 1.x documentation (living)", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (Node.js 24.21.0 API)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)", "and one trial in Google Chrome 158.0.8127.89 (V8 15.8, headless page)"]
 last-verified: 2026-11-27
-last-updated: 2026-11-27
+last-updated: 2026-11-28
 tags: [performance, code-review, nodejs, event-loop, libuv, thread-pool, buffers, worker-threads, async-hooks, source-maps]
 ranked-sources: true
 ---
@@ -303,7 +303,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 
 ## Verification status
 - Verified: 62 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
-- Matrix re-run on 2026-11-27: 5 scripts on 6 more builds, 30 script-and-build results (56 process runs, `threadpool.mjs` 6 times per build and 2 on E9): 25 same, 5 differ, 0 could not run. In Chrome 158 (E10): 4 scripts cannot run (Node.js APIs), 1 same (the `queueMicrotask` trial alone, which also gave the baseline line on E1). Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari (other engines: out of scope of this doc); V8 versions outside 12.4 to 15.8 (15.8 for one trial only); another CPU count or `UV_THREADPOOL_SIZE` than 8 CPUs with 4 and 8 threads.
+- Matrix re-run on 2026-11-27: 5 scripts on 6 more builds, 30 script-and-build results (56 process runs, `threadpool.mjs` 6 times per build and 2 on E9): 25 same, 5 differ, 0 could not run. In Chrome 158 (E10): 4 scripts cannot run (Node.js APIs), 1 same (the `queueMicrotask` trial alone, which also gave the baseline line on E1). Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari themselves, and this doc's own scripts on their engines (an engine-neutral cross-check of the rules on SpiderMonkey and JavaScriptCore, run on 2026-11-28, is in `../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md`); V8 versions outside 12.4 to 15.8 (15.8 for one trial only); another CPU count or `UV_THREADPOOL_SIZE` than 8 CPUs with 4 and 8 threads.
 
 ## References
 - Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26; scripts and exact output in Lookup notes. Rank 1. Backs: Lookup notes, lab runs 1–5 and corrections. [^lab]
@@ -327,6 +327,7 @@ received clone: 1048576 | received transfer: 1048576 | received 5-byte pooled Bu
 - [lib/internal/timers.js](https://github.com/nodejs/node/blob/v24.x/lib/internal/timers.js) — Node.js project source, v24.x branch. Rank 1. Backs: Lookup notes, corrections. [^node-timers-src]
 
 ## Related
+- [../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md](../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md) — which of the rules measured on V8 also hold on SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS framework's shell, Bun, a WebKit page): 33 engine-neutral checks.
 - [problem-classes.md](problem-classes.md) — the first catalog; `blocking-in-async`, `concurrency-backpressure` and `allocation-gc` cover the neighbouring Node.js shapes.
 - [perf-reviewer-calibration.md](perf-reviewer-calibration.md) — the review agent built on these catalogs, and how it scored.
 - [problem-classes-network-and-delivery.md](problem-classes-network-and-delivery.md) — `slow-hash-per-request` and `small-socket-writes`.
