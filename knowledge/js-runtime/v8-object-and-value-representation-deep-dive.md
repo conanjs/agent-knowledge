@@ -2,7 +2,7 @@
 schema: deep-dive/v1
 topic: js-runtime
 status: verified
-applies-to: ["Node.js 24.22.1 with V8 13.6.233.17 (official build: pointer compression off, 32-bit small integers), image node:24.22.1-alpine, linux arm64, in Docker on an Apple M2", "V8 source at tag 13.6.233.17; older tags only where named", "lab runs of 2026-11-26", "matrix re-run 2026-11-27: macOS arm64 Node.js 24.22.1, linux x64 (emulated) Node.js 24.22.1, Node.js 22.23.4 (V8 12.4), Node.js 25.7.0 (V8 14.1), Electron 43.7.7 as Node (V8 15.0, pointer compression on)"]
+applies-to: ["Node.js 24.22.1 with V8 13.6.233.17 (official build: pointer compression off, 32-bit small integers), image node:24.22.1-alpine, linux arm64, in Docker on an Apple M2", "V8 source at tag 13.6.233.17; older tags only where named", "lab runs of 2026-11-26", "matrix re-run 2026-11-27: macOS arm64 Node.js 24.22.1, linux x64 (emulated) Node.js 24.22.1, Node.js 22.23.4 (V8 12.4), Node.js 25.7.0 (V8 14.1), Electron 43.7.7 as Node (V8 15.0, pointer compression on), and the unofficial Node.js 24.22.3 linux x64 build with pointer compression on and the sandbox off (emulated)"]
 last-updated: 2026-11-27
 last-verified: 2026-11-27
 synthesized-into: []
@@ -27,8 +27,8 @@ Think of the V8 heap as a warehouse. Every slot on a shelf is one machine word (
 |---|---|---|---|
 | Tagged value | A machine word that holds either a small integer or a pointer, told apart by its lowest bit ✅[^v8-ptrcomp] | A label that is either a number written on it, or a shelf address | `%DebugPrint(42)` prints `Smi: 0x2a (42)` ✅[^lab] |
 | Smi (small integer) | An integer stored inside the tagged word itself, with no box ✅[^v8-ptrcomp] | Writing the price on the tag instead of in a separate book | `2 ** 31 - 1` is a Smi, `2 ** 31` is not ✅[^lab] |
-| Heap number | A 16-byte box holding one 64-bit floating-point number (12 bytes with pointer compression, Electron 43 ✅[^lab-matrix]) | A small envelope holding one figure | `1.5` prints as `<HeapNumber 1.5>` ✅[^lab] |
-| Pointer compression | A build option that stores pointers in 32 bits inside a 4 GB region ✅[^v8-ptrcomp] | Writing shelf numbers with fewer digits because the warehouse is small | Off in the official Node.js 24 build: `v8_enable_pointer_compression: 0` ✅[^lab]; on in Electron 43: `1` ✅[^lab-matrix] (§3.1) |
+| Heap number | A 16-byte box holding one 64-bit floating-point number (12 bytes with pointer compression: Electron 43 and the Node.js 24.22.3 pointer-compression build ✅[^lab-matrix]) | A small envelope holding one figure | `1.5` prints as `<HeapNumber 1.5>` ✅[^lab] |
+| Pointer compression | A build option that stores pointers in 32 bits inside a 4 GB region ✅[^v8-ptrcomp] | Writing shelf numbers with fewer digits because the warehouse is small | Off in the official Node.js 24 build: `v8_enable_pointer_compression: 0` ✅[^lab]; on in Electron 43 and in the unofficial Node.js 24.22.3 pointer-compression build: `1` ✅[^lab-matrix] (§3.1) |
 | Map (hidden class, shape) | The layout record every heap object points to; explained in [v8-hidden-classes.md](v8-hidden-classes.md) | The floor plan of a box | `{x, y}` and `{y, x}` have different maps ✅[^lab] |
 | Field representation | What kind of value a property slot has held so far: None, Smi, Double, HeapObject or Tagged (anything) ✅[^v8-fields] | A shelf marked "coins only", then "coins or notes" | `x` goes Smi → Double → Tagged in `--trace-generalization` as `s` → `d` → `t` ✅[^lab] |
 | In-object property | A property stored in a slot inside the object itself ✅[^v8-fastprops] | A pocket sewn into the coat | `{}` has 4 in-object slots ✅[^lab] |
@@ -122,7 +122,7 @@ Output:
 
 </details>
 
-Two tracing flags exist but did not show this script's own changes in this release build: `--trace-normalization` printed nothing for a `delete`, and `--trace-elements-transitions` printed two transitions of arrays inside Node.js's startup code, before the script ran, and nothing for the script's `push(4.5)` and `push('x')` ✅[^lab]. Node.js 22.23.4 (V8 12.4) printed one startup transition and Electron 43 none; neither printed anything for the script ✅[^lab-matrix]. The natives are more reliable here.
+Two tracing flags exist but did not show this script's own changes in this release build: `--trace-normalization` printed nothing for a `delete`, and `--trace-elements-transitions` printed two transitions of arrays inside Node.js's startup code, before the script ran, and nothing for the script's `push(4.5)` and `push('x')` ✅[^lab]. Node.js 22.23.4 (V8 12.4) printed one startup transition and Electron 43 none; neither printed anything for the script ✅[^lab-matrix]. The Node.js 24.22.3 build with pointer compression on printed the same two startup lines as the baseline, so Electron's silence does not come from pointer compression ✅[^lab-matrix]. The natives are more reliable here.
 
 <details>
 <summary>Lab: <code>silent.mjs</code></summary>
@@ -170,6 +170,20 @@ The map ties these together: it records the field representations, where each pr
 
 ### 3.1 Tagged values: small integers and heap numbers
 
+#### What pointer compression is for
+
+**The problem.** In 2014 Chrome switched from a 32-bit to a 64-bit process, and every pointer grew from 4 bytes to 8 ✅[^v8-ptrcomp]. A pointer is one kind of tagged value: a slot that holds either a small integer or an address (§1.1). The V8 team found that on real websites tagged values took about 70 % of the V8 heap, the memory where V8 keeps JavaScript objects ✅[^v8-ptrcomp]; V8's design document says tagged fields "make up the majority of V8 heap memory" ✅[^v8-ptrcomp-design]. So the move to 64-bit almost doubled most of the heap.
+
+**The answer.** Keep the whole heap inside one reserved block of 4 GB (gigabytes: 2³² bytes) of addresses, called the cage, and store in each slot only a 4-byte offset from the start of the cage instead of the full 8-byte address ✅[^v8-ptrcomp] ✅[^v8-ptrcomp-design]. Reading a slot adds the cage's start address (the base) back: that is decompression. Writing a slot keeps only the offset: that is compression.
+
+**Analogy.** A full postal address is long. When everyone you write to lives in the same building, the room number is enough. The building is the cage, the room number is the 4-byte offset, and the building's street address is the base, written down once.
+
+**Worked example (measured here).** The script `fieldmem.mjs` (§3.2) keeps 1 000 000 objects `{ x, y }`, each with two small-integer fields, in an array. On the official Node.js 24.22.1 build (linux x64, pointer compression off) each object plus its array slot took 48.0 bytes; on the unofficial Node.js 24.22.3 build with pointer compression on (same V8 13.6, same emulated x64 machine) it took 24.0 bytes ✅[^lab-matrix]. Both numbers fit the same 6 tagged words, at 8 or at 4 bytes: 6 × 8 = 48 and 6 × 4 = 24 (three header words of the object, its two fields, and the array slot; the lab measures bytes, not words). For the million objects that is 1 000 000 × 48 = 48 000 000 bytes (about 45.8 MiB) against 1 000 000 × 24 = 24 000 000 bytes (about 22.9 MiB); a MiB (mebibyte) is 1 048 576 bytes.
+
+What it gives, what it costs and why Chrome has it on while the official Node.js builds have it off are at the end of this section, after the mechanism.
+
+#### How it works: tagged words, small integers and heap numbers
+
 **What the engine does.** Every value slot is one tagged word. On 64-bit machines without pointer compression, V8 uses 32 bits of that word for the Smi payload ✅[^v8-ptrcomp]; with pointer compression the payload is 31 bits ✅[^v8-ptrcomp]. The official Node.js 24.22.1 build has pointer compression off, so a slot is 8 bytes and Smis are 32-bit ✅[^lab]. Any number that is not an integer in that range, including `-0` and `NaN`, lives in a heap number box ✅[^lab].
 
 **Why it helps.** A Smi needs no allocation and no pointer chase, so integer counters, indexes and small IDs cost nothing beyond their slot.
@@ -213,10 +227,10 @@ pointer compression: 0 | 31-bit Smis on 64-bit: 0
 
 </details>
 
-**Pointer compression, in plain words.** On a 64-bit machine a full pointer is 8 bytes. Pointer compression keeps the whole V8 heap inside one 4 GB region and stores each pointer in 32 bits, as a position inside that region ✅[^v8-ptrcomp]. Analogy: a full postal address is long, but inside one building a room number is enough. Example: an array of 1 000 000 small integers took 8.0 bytes per element on the official Node.js 24 build and 4.0 in Electron 43, which has pointer compression on ✅[^lab] ✅[^lab-matrix] (§4.1). What it changes:
+**Pointer compression, in plain words.** On a 64-bit machine a full pointer is 8 bytes. Pointer compression keeps the whole V8 heap inside one 4 GB region and stores each pointer in 32 bits, as a position inside that region ✅[^v8-ptrcomp]. Analogy: a full postal address is long, but inside one building a room number is enough. Example: an array of 1 000 000 small integers took 8.0 bytes per element on the official Node.js 24 build and 4.0 in Electron 43 and in the unofficial Node.js 24.22.3 build, both with pointer compression on ✅[^lab] ✅[^lab-matrix] (§4.1). What it changes:
 
 - **Slot size.** Every tagged slot is 4 bytes instead of 8, so objects, pointer arrays, `Map`s and `Set`s take about half the heap; raw data does not shrink: double arrays stayed at 8 bytes per element and string characters at 1 or 2 bytes ✅[^lab-matrix] (§4.1).
-- **Heap limit.** A heap inside a 4 GB region cannot grow past 4 GB. Node.js's build option says it "limits max heap to 4GB" ✅[^node-configure], and Electron names the 4 GB cap as the main downside ✅[^electron-cage]. The cap that pointer compression puts on the heap was measured on the 16 GiB macOS host: with `--max-old-space-size=8192` and `--max-old-space-size=16384`, `heap_size_limit` followed the flag on Node.js 24.22.1 and 25.7.0 (8,384 and 16,576 MiB) and stayed at 4,192 MiB on Electron 43.7.7 (V8 15.0) and at 4,096 MiB on Electron 38.8.6 (V8 14.0), the two builds with pointer compression on ✅[^lab-matrix]. Both Electron builds also have the V8 sandbox on, so these runs alone do not separate the two; the two sources above name pointer compression.
+- **Heap limit.** A heap inside a 4 GB region cannot grow past 4 GB. Node.js's build option says it "limits max heap to 4GB" ✅[^node-configure], and Electron names the 4 GB cap as the main downside ✅[^electron-cage]. The cap that pointer compression puts on the heap was measured on the 16 GiB macOS host: with `--max-old-space-size=8192` and `--max-old-space-size=16384`, `heap_size_limit` followed the flag on Node.js 24.22.1 and 25.7.0 (8,384 and 16,576 MiB) and stayed at 4,192 MiB on Electron 43.7.7 (V8 15.0) and at 4,096 MiB on Electron 38.8.6 (V8 14.0), the two builds with pointer compression on ✅[^lab-matrix]. Both Electron builds also have the V8 sandbox on, so those runs alone do not separate the two; the unofficial Node.js 24.22.3 build with pointer compression on and the sandbox off does: about 4,096 MiB (4,095.75) with `--max-old-space-size=8192`, against 8,384 MiB on the official Node.js 24.22.1 build on the same emulated linux x64 machine ✅[^lab-matrix].
 - **Small integers.** A Smi must fit, with its tag bit, in the 32-bit compressed word, so its payload drops from 32 bits to 31 ✅[^v8-ptrcomp].
 - **Memory saved, as reported.** The V8 team measured the V8 heap up to 43 % smaller, and Chrome's renderer process memory up to 20 % smaller on desktop, in its browsing tests (post of 30 March 2020; "up to" figures; the renderer figure is for browsing on Windows 10) ✅[^v8-ptrcomp]. The V8 8.0 release post (18 December 2019) gives an average saving of 40 % ✅[^v8-release-80]. These are browser figures; no whole Node.js application was measured here.
 
@@ -225,9 +239,9 @@ pointer compression: 0 | 31-bit Smis on 64-bit: 0
 | Build | Smi payload | Smallest Smi | Largest Smi | Seen in the runs |
 |---|---|---|---|---|
 | 64-bit, pointer compression off | 32 bits ✅[^v8-internal] | -2 147 483 648 (-2³¹) | 2 147 483 647 (2³¹ - 1) | Node.js 22.23.4, 24.22.1 (linux arm64, macOS arm64, linux x64) and 25.7.0 ✅[^lab] ✅[^lab-matrix] |
-| pointer compression on | 31 bits ✅[^v8-internal] | -1 073 741 824 (-2³⁰) | 1 073 741 823 (2³⁰ - 1) | Electron 43.7.7 (V8 15.0) and an Electron build with V8 14.0 ✅[^lab-matrix] |
+| pointer compression on | 31 bits ✅[^v8-internal] | -1 073 741 824 (-2³⁰) | 1 073 741 823 (2³⁰ - 1) | Electron 43.7.7 (V8 15.0), an Electron build with V8 14.0, and the unofficial Node.js 24.22.3 pointer-compression build (linux x64, V8 13.6) ✅[^lab-matrix] |
 
-**The default when you run Node.js normally: off.** In Node.js, pointer compression is chosen when Node.js is compiled, not when it runs. The `configure` option is `--experimental-enable-pointer-compression`, marked experimental, and its help text says it "limits max heap to 4GB and breaks ABI compatibility" ✅[^node-configure]. ABI (application binary interface) compatibility is what lets an already-compiled native add-on load; a build with the option needs add-ons compiled for it. The option sets the build variables `v8_enable_pointer_compression` and `v8_enable_31bit_smis_on_64bit_arch` to 1 when it is passed and to 0 otherwise ✅[^node-configure]; there is no run-time flag for it. Every official build run here reports 0 ✅[^lab-matrix]. No official release line has changed that default as far as the changelogs read show: the v24.0.0 and v24.2.0 release notes list only build changes and fixes for pointer-compression builds, and `CHANGELOG_V25.md`, read in full, only removes a build define in 25.1.0 ✅[^node-changelogs]. `CHANGELOG_V24.md` and `CHANGELOG_V26.md` were read only in part when the research notes were written (their first 100 000 characters, of about 824 000 and 548 000). A keyword search of both whole files on 2026-11-27 ("pointer compression", "ptr compression", `V8_COMPRESS_POINTERS`, "Smis") found only build entries in `CHANGELOG_V24.md` (the two above, the removed define, and one that turns off the shared cage on non-64-bit builds) and nothing in `CHANGELOG_V26.md`; that is a search, not a line-by-line read. No run here used a Node.js build with pointer compression on; only Electron was run with it.
+**The default when you run Node.js normally: off.** In Node.js, pointer compression is chosen when Node.js is compiled, not when it runs. The `configure` option is `--experimental-enable-pointer-compression`, marked experimental, and its help text says it "limits max heap to 4GB and breaks ABI compatibility" ✅[^node-configure]. ABI (application binary interface) compatibility is what lets an already-compiled native add-on load; a build with the option needs add-ons compiled for it. The option sets the build variables `v8_enable_pointer_compression` and `v8_enable_31bit_smis_on_64bit_arch` to 1 when it is passed and to 0 otherwise ✅[^node-configure]; there is no run-time flag for it. Every official build run here reports 0 ✅[^lab-matrix]. No official release line has changed that default as far as the changelogs read show: the v24.0.0 and v24.2.0 release notes list only build changes and fixes for pointer-compression builds, and `CHANGELOG_V25.md`, read in full, only removes a build define in 25.1.0 ✅[^node-changelogs]. `CHANGELOG_V24.md` and `CHANGELOG_V26.md` were read only in part when the research notes were written (their first 100 000 characters, of about 824 000 and 548 000). A keyword search of both whole files on 2026-11-27 ("pointer compression", "ptr compression", `V8_COMPRESS_POINTERS`, "Smis") found only build entries in `CHANGELOG_V24.md` (the two above, the removed define, and one that turns off the shared cage on non-64-bit builds) and nothing in `CHANGELOG_V26.md`; that is a search, not a line-by-line read. One Node.js build with pointer compression on was run here: the unofficial build described under "Node.js builds with it on" below.
 
 **How to check a given binary.**
 
@@ -235,7 +249,7 @@ pointer compression: 0 | 31-bit Smis on 64-bit: 0
 node -p "process.config.variables.v8_enable_pointer_compression"
 ```
 
-It prints `0` for off and `1` for on. The Node.js docs say `process.config` holds the configure options the executable was compiled with, the same as its `config.gypi` file ✅[^node-process-config]; they do not list or explain this field, so its meaning comes from `configure.py` ✅[^node-configure]. A second check that does not rely on the build record is the small-integer probe below: `%IsSmi(2 ** 30)` is `true` with compression off and `false` with it on. The second check matters: Electron 43 reports `v8_enable_pointer_compression: 1` but `v8_enable_31bit_smis_on_64bit_arch: 0`, yet its Smis are 31-bit, as the header predicts for 4-byte tagged words ✅[^lab-matrix] ✅[^v8-internal].
+It prints `0` for off and `1` for on. The Node.js docs say `process.config` holds the configure options the executable was compiled with, the same as its `config.gypi` file ✅[^node-process-config]; they do not list or explain this field, so its meaning comes from `configure.py` ✅[^node-configure]. A second check that does not rely on the build record is the small-integer probe below: `%IsSmi(2 ** 30)` is `true` with compression off and `false` with it on. The second check matters: Electron 43 reports `v8_enable_pointer_compression: 1` but `v8_enable_31bit_smis_on_64bit_arch: 0`, yet its Smis are 31-bit, as the header predicts for 4-byte tagged words ✅[^lab-matrix] ✅[^v8-internal]. The unofficial Node.js 24.22.3 pointer-compression build reports both variables as `1`, as `configure.py` sets them ✅[^lab-matrix] ✅[^node-configure].
 
 **Where it is on.**
 
@@ -243,12 +257,12 @@ It prints `0` for off and `1` for on. The Node.js docs say `process.config` hold
 - **Electron:** on since Electron 14, per the Electron blog of 30 June 2022 ✅[^electron-cage]. Measured on 2026-11-27: Electron 43.7.7 (V8 15.0.245.31) and a second Electron build on the same machine (V8 14.0.365.10, Node.js 22.22.0 API), both in Node mode, both with 31-bit Smis and `v8_enable_pointer_compression: 1` ✅[^lab-matrix].
 - **Deno:** off, from its source configuration: Deno's `Cargo.toml` takes its V8 crate with `default-features = false`, and the `rusty_v8` build script passes `v8_enable_pointer_compression=false` unless the Cargo feature of that name, or the sandbox feature, is set ✅[^deno-build]. A run agrees: Deno 2.9.8 (V8 15.0.245.2) in its container image on linux arm64, started with `--v8-flags=--allow-natives-syntax`, gave the 32-bit range with the `smi.js` probe (2³⁰ and 2³¹ − 1 are small integers, 2³¹ is not) ✅[^lab-matrix].
 
-**Node.js builds with it on.** The Node.js project's unofficial-builds site publishes some: `node-v24.22.3-linux-x64-pointer-compression` and `node-v24.22.3-linux-riscv64-pointer-compression` (each as `.tar.gz` and `.tar.xz`, 12 November 2026), and the same two for v26.13.1 (11 November 2026) ✅[^node-unofficial]. Its README also lists an arm64 variant, but the v24.22.3 and v26.13.1 folders hold no arm64 pointer-compression file ✅[^node-unofficial]. None of these builds was downloaded or run here. The official Docker images (`library/node`) have no pointer-compression tag ✅[^docker-node].
+**Node.js builds with it on.** The Node.js project's unofficial-builds site publishes some: `node-v24.22.3-linux-x64-pointer-compression` and `node-v24.22.3-linux-riscv64-pointer-compression` (each as `.tar.gz` and `.tar.xz`, 12 November 2026), and the same two for v26.13.1 (11 November 2026) ✅[^node-unofficial]. Its README also lists an arm64 variant, but the v24.22.3 and v26.13.1 folders hold no arm64 pointer-compression file ✅[^node-unofficial]. One of them was downloaded and run here: `node-v24.22.3-linux-x64-pointer-compression` (the `.tar.xz` file), its SHA-256 checksum checked against the folder's `SHASUMS256.txt`, run on 2026-11-27 in a Debian 13 x64 container without network, under emulation on the arm64 host. Its `process.config.variables` showed `v8_enable_pointer_compression: 1`, `v8_enable_31bit_smis_on_64bit_arch: 1` and `v8_enable_sandbox: 0` ✅[^lab-matrix]; §6.3 calls it E9. The official Docker images (`library/node`) have no pointer-compression tag ✅[^docker-node].
 
-**What to take from it.** An integer from 2³⁰ (1 073 741 824) to 2³¹ - 1 (2 147 483 647), or from -2³¹ to -2³⁰ - 1, is a Smi on an official Node.js build and a heap number in Electron ✅[^lab-matrix] (and in Chrome, by the V8 team's statement that Chrome has 31-bit Smis ✅[^v8-dev-80]; Chrome was not run). Code tuned on one can therefore behave differently on the other: a field or array holding such values stays on the Smi path in Node.js and holds boxed numbers in Electron, and pointer-heavy structures take about half the heap in Electron (§4.1).
+**What to take from it.** An integer from 2³⁰ (1 073 741 824) to 2³¹ - 1 (2 147 483 647), or from -2³¹ to -2³⁰ - 1, is a Smi on an official Node.js build and a heap number in Electron and in the Node.js 24.22.3 pointer-compression build ✅[^lab-matrix] (and in Chrome, by the V8 team's statement that Chrome has 31-bit Smis ✅[^v8-dev-80]; Chrome was not run). Code tuned on one can therefore behave differently on the other: a field or array holding such values stays on the Smi path in Node.js and holds boxed numbers in Electron, and pointer-heavy structures take about half the heap in Electron and in that build (§4.1).
 
 <details>
-<summary>Lab: <code>smi.js</code> (six builds, 2026-11-27)</summary>
+<summary>Lab: <code>smi.js</code> (seven builds, 2026-11-27)</summary>
 
 ```sh
 docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node --allow-natives-syntax smi.js                                     # E0
@@ -257,6 +271,7 @@ docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work n
 ~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax smi.js                                                                              # E3
 ~/.nvm/versions/node/v25.7.0/bin/node --allow-natives-syntax smi.js                                                                               # E4
 ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax smi.js                                    # E7
+node --allow-natives-syntax smi.js   # E9: the unofficial node-v24.22.3-linux-x64-pointer-compression build, in a linux/amd64 Debian 13 container, --network none
 ```
 
 ```js
@@ -334,11 +349,94 @@ node v24.21.0 v8 15.0.245.31-electron.0 darwin arm64 pointer_compression=1
 -(2**30) - 1    -1073741825 IsSmi = false
 -(2**31)        -2147483648 IsSmi = false
 -(2**31) - 1    -2147483649 IsSmi = false
+##### E9
+node v24.22.3 v8 13.6.233.17-node.63 linux x64 pointer_compression=1
+2**30 - 1        1073741823 IsSmi = true
+2**30            1073741824 IsSmi = false
+2**31 - 1        2147483647 IsSmi = false
+2**31            2147483648 IsSmi = false
+-(2**30)        -1073741824 IsSmi = true
+-(2**30) - 1    -1073741825 IsSmi = false
+-(2**31)        -2147483648 IsSmi = false
+-(2**31) - 1    -2147483649 IsSmi = false
 ```
 
 </details>
 
 **Since when.** Pointer compression shipped with V8 8.0 and Chrome 80 (December 2019 to February 2020) ✅[^v8-release-80] ✅[^v8-dev-80]; the official Node.js builds used here do not enable it ✅[^lab] ✅[^lab-matrix].
+
+#### What pointer compression gives
+
+- **Memory, in V8's figures.** The V8 team's post of 30 March 2020 measured the V8 heap up to 43 % smaller and Chrome's renderer process memory up to 20 % smaller on desktop, on browsing user stories that it found representative of real websites ✅[^v8-ptrcomp]. V8's design document puts the saving at "roughly 30% to 40% of total heap memory" ✅[^v8-ptrcomp-design].
+- **Speed, in V8's figures.** On real websites Chrome spent less CPU time and less garbage-collection time ✅[^v8-ptrcomp]. On Octane, a peak-performance benchmark, a gap remained after the team's optimizations, which the post explains by two optimizations for 64-bit builds that had to be turned off; on low-end Arm64 devices the team saw almost no difference in either direction ✅[^v8-ptrcomp]. The design document adds that smaller tagged fields improve CPU cache use and memory bandwidth ✅[^v8-ptrcomp-design]. All of these are Chrome measurements; none is a Node.js server.
+- **Bytes measured here.** The same scripts on the same emulated linux x64 machine, Node.js 24.22.1 with pointer compression off (E2) against the unofficial Node.js 24.22.3 build with it on (E9), both with V8 13.6 and the V8 sandbox off, on 2026-11-27 ✅[^lab-matrix]:
+
+| Data (1 000 000 array elements; 100 000 entries for the keyed collections) | Off (E2) | On (E9) | Halves? |
+|---|---|---|---|
+| Small integers in an array, by index | 8.0 bytes | 4.0 | yes: one tagged slot each |
+| Small integers, `push` onto `[]` | 10.4 | 5.2 | yes |
+| Object `{ x, y }`, two small integers, with its array slot | 48.0 | 24.0 | yes: six tagged words |
+| Object `{ x }` with a double field, with its array slot | 56.0 | 32.1 | partly: the slots halve, the heap number box goes from 16 to 12 bytes |
+| Doubles in a generic (`PACKED_ELEMENTS`) array | 24.0 | 16.0 | partly: pointer 8 → 4, box 16 → 12 |
+| Object as dictionary, string keys | 63.0 | 31.5 | yes |
+| `Map` entry, string keys | 36.7 | 18.4 | yes |
+| `Set` entry, string keys | 26.2 | 13.1 | yes |
+| Doubles in a `PACKED_DOUBLE` array | 8.0 | 8.0 | no: raw 8-byte floats, not tagged values |
+| `Float64Array` / `Int32Array` contents (in `arrayBuffers`) | 8.0 / 4.0 | 8.0 / 4.0 | no: an `ArrayBuffer` holds raw bytes |
+| One-byte / two-byte string characters | 1.0 / 2.0 | 1.0 / 2.0 | no: character data is not tagged |
+
+So the saving is large for pointer-heavy data (objects, arrays of objects or small integers, `Map`, `Set`, dictionaries) and zero for raw data (double arrays, typed arrays, string characters). Measured Node.js application numbers from outside the project are in §6.4.
+
+#### What pointer compression costs
+
+- **A little work on every access.** V8 decompresses a value on every load and compresses it on every store ✅[^v8-ptrcomp]. The design document says the current code keeps the base in a dedicated register, so decompression needs no extra memory load ✅[^v8-ptrcomp-design]. Not measured here: E9 runs only under emulation, where timings mean nothing.
+- **At most 4 GB of heap per cage.** Measured here with `--max-old-space-size=8192`: `heap_size_limit` was about 4,096 MiB on E9 (4,095.75) against 8,384 MiB on E2 ✅[^lab-matrix]. Both have the sandbox off, so this cap comes from pointer compression. V8's post says that embedders needing bigger heaps cannot use pointer compression with a 4 GB maximum, and names Node.js as one that may need them ✅[^v8-ptrcomp]; Electron's post also states the 4 GB limit on the V8 heap ✅[^electron-cage]. V8's build file has an option for 8 GB heaps, `v8_enable_pointer_compression_8gb` ✅[^v8-build-gn], but a contributor wrote on a Node.js pull request in October 2025 that such heaps are not supported by V8 yet (§6.4).
+- **Fewer small integers.** The small-integer payload shrinks from 32 to 31 bits, so integers from 2³⁰ (1 073 741 824) up to 2³¹ − 1 (2 147 483 647), and from −2³¹ up to −2³⁰ − 1, become heap numbers: measured on E9 with `values.mjs` and `smi.js`, against E2 ✅[^lab-matrix]. Each such value in a generic slot then costs a 12-byte heap number: `{ x: 2 ** 31 }` took 12 bytes more than `{ x: i }` on E9 (`fieldmem-var.mjs`) ✅[^lab-matrix].
+- **Native add-ons.** Node.js's build option says it "breaks ABI compatibility" ✅[^node-configure]: an add-on compiled against V8's own C++ headers (the application binary interface, ABI) for a build without pointer compression is not compatible with a build that has it (this doc's reading of the help text). That add-ons built on Node-API (Node.js's stable C interface for add-ons) are unaffected, and that add-ons built on NAN (Native Abstractions for Node.js) do not work, is stated only by one vendor's post ✅[^platformatic]; no Node.js page read for this doc says it.
+- **Not the same thing as the V8 sandbox.** The pages read do not say that the sandbox requires pointer compression. V8's build file makes the sandbox's default depend on it: the sandbox is on by default only when shared-cage pointer compression and the external code space are on (and the target is not Fuchsia) ✅[^v8-build-gn], and the design document places the 4 GB cage at the start of the sandbox's 1 TB (terabyte) reservation ✅[^v8-ptrcomp-design]. Node.js's `configure.py` has a separate option, `--experimental-pointer-compression-shared-cage`, whose help text says it enables the V8 sandbox and requires `--experimental-enable-pointer-compression` ✅[^node-configure]. E9 has pointer compression on and the sandbox off, which is how §6.3 separates the two.
+
+<details>
+<summary>Lab: build facts and heap limit on E9 and E2 (2026-11-27)</summary>
+
+```sh
+node --max-old-space-size=8192 -p "const c=process.config.variables; JSON.stringify({v:process.version,v8:process.versions.v8,arch:process.arch,pc:c.v8_enable_pointer_compression,smi31:c.v8_enable_31bit_smis_on_64bit_arch,sandbox:c.v8_enable_sandbox,objprint:c.v8_enable_object_print,limitMiB:require('v8').getHeapStatistics().heap_size_limit/1048576})"
+# E9: the unofficial build in a linux/amd64 Debian 13 container; E2: image node:24.22.1-alpine-amd64; both --network none
+```
+
+Output:
+
+```text
+# E9
+{"v":"v24.22.3","v8":"13.6.233.17-node.63","arch":"x64","pc":1,"smi31":1,"sandbox":0,"objprint":1,"limitMiB":4095.75}
+# E2
+{"v":"v24.22.1","v8":"13.6.233.17-node.58","arch":"x64","pc":0,"smi31":0,"sandbox":0,"objprint":1,"limitMiB":8384}
+```
+
+</details>
+
+#### Is it good or bad?
+
+This part is this doc's synthesis of the facts above, not a source's verdict. Neither: pointer compression trades address space and a little computation for memory.
+
+- **A clear win** when each cage's heap stays well under 4 GB, the data is pointer-heavy (objects, arrays of objects, `Map`s; the table above: about half the bytes), and memory is the scarce resource (the cases measured by others: Chrome's renderer in V8's figures, and one vendor's Node.js application in §6.4).
+- **A loss, or not possible,** when one process (one cage) needs more than 4 GB of V8 heap (the 4,096 MiB cap above), or when the program loads native add-ons compiled against V8's binary interface for a build without it (the ABI break above).
+- **Little gain** when the memory is mostly raw data: double arrays, typed arrays and long strings do not shrink.
+
+#### Why Chrome has it on
+
+V8's post gives two reasons: V8 in Chrome already had a 2 GB or 4 GB limit on the V8 heap, depending on the device, so the 4 GB cap cost Chrome nothing, and the saving was large (up to 43 % of the V8 heap) ✅[^v8-ptrcomp]. Chrome turned it on by default in Chrome 80 ✅[^v8-dev-80]. Two reasons often given, many tabs in one browser and one vendor shipping one binary, are not stated on the pages read; if they matter, that is this doc's inference, not a sourced reason.
+
+#### Why the official Node.js builds have it off (as of 2026-11-27)
+
+- **What the rank-1 and rank-4 pages say.** The build option's own help text names two costs: it "limits max heap to 4GB and breaks ABI compatibility" ✅[^node-configure]. V8's post names Node.js as an embedder that "may require bigger heaps" ✅[^v8-ptrcomp]. The project's threads say that until 2025 every thread of a Node.js process shared one cage (§6.4); Node.js 25.1.0 (release notes of 28 October 2025) lists "initial enablement of IsolateGroups" (pull request 60254) ✅[^node-v2510]. An isolate is one independent V8 heap and JavaScript world (a Node.js worker thread has its own); an isolate group is a set of isolates, and V8's design document says each isolate group has its own 4 GB cage ✅[^v8-ptrcomp-design]. This doc's inference: a build with pointer compression can then give each worker thread its own 4 GB (the plan in issue 55735, §6.4).
+- **The status as of 2026-11-27.** Pointer compression is still a compile-time option, off unless `--experimental-enable-pointer-compression` is passed to `configure.py` ✅[^node-configure]; its help text and the option's `[Experimental]` label were unchanged on the `main` branch on 2026-11-27 ✅[^node-configure]; every official build run here reports `v8_enable_pointer_compression: 0` ✅[^lab-matrix]; no release note read announces it on by default ✅[^node-changelogs] ✅[^node-v2510].
+- **The project's own discussion** (servers with heaps far above 4 GB, the shared cage, the add-on break, some compute overhead, the cost of building, testing and supporting a second set of binaries, and the pull request author's doubt about turning it on by default) is in GitHub issues and pull requests, which this knowledge base ranks 6; it is summarized with dates in §6.4.
+
+#### What this means when you write JavaScript
+
+- Your code cannot turn pointer compression on or off: it is a build option, so it is fixed when the binary is built (this doc's inference from the option being in `configure.py`). In Node.js, check it with `process.config.variables.v8_enable_pointer_compression` (`1` on, `0` off).
+- In Chrome and Electron assume it is on: integers at or above 2³⁰ are not small integers there, and one cage's heap tops out near 4 GB ✅[^v8-dev-80] ✅[^v8-ptrcomp] ✅[^electron-cage] ✅[^lab-matrix] (Electron 43 was run; Chrome was not).
+- A memory estimate measured on an official Node.js build is up to about twice what the same pointer-heavy data takes in a build with pointer compression, such as Chrome; for double arrays, typed arrays and string characters it is the same (the table above; Chrome itself was not run, so for Chrome this is an inference from the E2 and E9 runs and the V8 team's statement that Chrome has it on).
 
 ### 3.2 Number fields: representations, boxing and generalization
 
@@ -423,7 +521,7 @@ after reading a.x, same map as b: true
 
 </details>
 
-**What it costs.** Each double field adds a 16-byte box per object in this build: `{ x }` costs 32 bytes with an integer and 48 bytes with a double, and two double fields add 32 bytes ✅[^lab]. A review re-run (two runs, 100 000 objects each, list slot subtracted) found the same 16 bytes per double at other sizes: 5 fields 64 bytes with integers and 144 with doubles (80 more), 10 fields 104 and 264 (160 more); a class instance with two fields (after slack tracking) 40 bytes with integers and 72 with doubles; `{ x: 2 ** 31 + i }`, an integer-valued number outside the Smi range, also 48 ✅[^lab]. The same sizes were seen on Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0. With pointer compression on (Electron 43, V8 15.0) every size was smaller and the box was 12 bytes: `{ x }` 16 bytes with an integer and 28 with a double, 5 fields 32 and 92, 10 fields 52 and 172, the two-field class 20 and 44, `{ x: 2 ** 31 + i }` 28 (the scripts subtract an 8-byte list slot, which is 4 bytes there; the 4 is added back here) ✅[^lab-matrix]. That fits 4-byte slots plus a 12-byte heap number (4-byte map word, 8-byte value), but the cause was not isolated by a run.
+**What it costs.** Each double field adds a 16-byte box per object in this build: `{ x }` costs 32 bytes with an integer and 48 bytes with a double, and two double fields add 32 bytes ✅[^lab]. A review re-run (two runs, 100 000 objects each, list slot subtracted) found the same 16 bytes per double at other sizes: 5 fields 64 bytes with integers and 144 with doubles (80 more), 10 fields 104 and 264 (160 more); a class instance with two fields (after slack tracking) 40 bytes with integers and 72 with doubles; `{ x: 2 ** 31 + i }`, an integer-valued number outside the Smi range, also 48 ✅[^lab]. The same sizes were seen on Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0. With pointer compression on (Electron 43, V8 15.0) every size was smaller and the box was 12 bytes: `{ x }` 16 bytes with an integer and 28 with a double, 5 fields 32 and 92, 10 fields 52 and 172, the two-field class 20 and 44, `{ x: 2 ** 31 + i }` 28 (the scripts subtract an 8-byte list slot, which is 4 bytes there; the 4 is added back here) ✅[^lab-matrix]. That fits 4-byte slots plus a 12-byte heap number (4-byte map word, 8-byte value). The unofficial Node.js 24.22.3 build with pointer compression on and the sandbox off (V8 13.6, linux x64, emulated) gave the same sizes as Electron to within 0.2 byte, and the official Node.js 24.22.1 build on the same machine gave the sizes above, so on V8 13.6 with the sandbox off pointer compression is the cause of the smaller sizes ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>fieldmem.mjs</code> (memory: may vary by about 0.1 byte or 0.5 MB per run)</summary>
@@ -1052,9 +1150,9 @@ HOLEY_SMI_ELEMENTS     → HOLEY_DOUBLE_ELEMENTS  → HOLEY_ELEMENTS
 - `[1, 2, 3]` is `PACKED_SMI`; `push(4.5)` makes it `PACKED_DOUBLE`; `push('x')` makes it `PACKED_ELEMENTS`.
 - Popping back to integers, `length = 0`, and pushing `1` again leave it `PACKED_ELEMENTS`: the kind never goes back up.
 - `-0`, `NaN`, `Infinity` and `2 ** 31` in an integer literal make it `PACKED_DOUBLE`, as the 2017 post says for the first three ✅[^v8-elements].
-- `[1, undefined, 3]` is `PACKED_ELEMENTS`, not holey: `undefined` is a value, not a hole. That held on V8 12.4 to 14.1; in Electron 43 (V8 15.0) the natives report `HOLEY_DOUBLE_ELEMENTS` for it, cause not isolated ✅[^lab-matrix].
+- `[1, undefined, 3]` is `PACKED_ELEMENTS`, not holey: `undefined` is a value, not a hole. That held on V8 12.4 to 14.1; in Electron 43 (V8 15.0) the natives report `HOLEY_DOUBLE_ELEMENTS` for it. The Node.js 24.22.3 build with pointer compression on reports `PACKED_ELEMENTS`, as the baseline does, so pointer compression is not the cause; V8 15.0, the V8 sandbox or Electron's own build settings remain, cause not isolated among them ✅[^lab-matrix].
 - `map`, `filter` and `slice` start a new array at the most specific kind: `[1.5, 2.5].map(Math.round)` is `PACKED_SMI`.
-- `Array.from({ length: 3 })` (values `undefined`) and `[...new Array(3)]` are `PACKED_ELEMENTS`; `'a,b'.split(',')` is `PACKED_ELEMENTS`. In Electron 43 (V8 15.0), `Array.from({ length: 3 })` was `HOLEY_DOUBLE_ELEMENTS` and `[...new Array(3)]` stayed `PACKED_ELEMENTS` ✅[^lab-matrix].
+- `Array.from({ length: 3 })` (values `undefined`) and `[...new Array(3)]` are `PACKED_ELEMENTS`; `'a,b'.split(',')` is `PACKED_ELEMENTS`. In Electron 43 (V8 15.0), `Array.from({ length: 3 })` was `HOLEY_DOUBLE_ELEMENTS` and `[...new Array(3)]` stayed `PACKED_ELEMENTS`; the Node.js 24.22.3 build with pointer compression on gave `PACKED_ELEMENTS` for `Array.from({ length: 3 })`, as the baseline does ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>kinds.mjs</code></summary>
@@ -1317,7 +1415,7 @@ Object.freeze([1, 2, 3])             dictionary: false
 
 ### 3.9 Typed arrays and `ArrayBuffer`
 
-A typed array is a view over an `ArrayBuffer`: a fixed length, one element type, no holes and no kind transitions. In this build a typed array of up to 64 bytes (the source's default `kMaxSizeInHeap`) keeps its data on the V8 heap; above that the bytes are allocated outside it and show up in `process.memoryUsage().arrayBuffers` ✅[^v8-jsab] ✅[^lab], which Node.js documents as memory for `ArrayBuffer`s, also counted in `external` ✅[^node-process]. In Electron 43's Node mode `arrayBuffers` stayed at 0; the same script reading `external` showed the same 64-byte boundary (0 bytes for 64, 65 for 65, 0 for a `Float64Array(8)`, 72 for 9) ✅[^lab-matrix]. Writes convert the value to the element type: past the end is ignored, `'abc'` becomes `NaN` in a `Float64Array`, `300` becomes `44` in an `Int8Array` and `255` in a `Uint8ClampedArray` ✅[^lab].
+A typed array is a view over an `ArrayBuffer`: a fixed length, one element type, no holes and no kind transitions. In this build a typed array of up to 64 bytes (the source's default `kMaxSizeInHeap`) keeps its data on the V8 heap; above that the bytes are allocated outside it and show up in `process.memoryUsage().arrayBuffers` ✅[^v8-jsab] ✅[^lab], which Node.js documents as memory for `ArrayBuffer`s, also counted in `external` ✅[^node-process]. In Electron 43's Node mode `arrayBuffers` stayed at 0; the same script reading `external` showed the same 64-byte boundary (0 bytes for 64, 65 for 65, 0 for a `Float64Array(8)`, 72 for 9) ✅[^lab-matrix]. The Node.js 24.22.3 build with pointer compression on and the sandbox off counted the bytes in `arrayBuffers` as the baseline does, so pointer compression is not the cause ✅[^lab-matrix]; the sandbox, V8 15.0 or Electron's build remain. Writes convert the value to the element type: past the end is ignored, `'abc'` becomes `NaN` in a `Float64Array`, `300` becomes `44` in an `Int8Array` and `255` in a `Uint8ClampedArray` ✅[^lab].
 
 <details>
 <summary>Lab: <code>typed.mjs</code></summary>
@@ -1715,15 +1813,15 @@ proxy, get trap  15.45 ms per 1,000,000 reads (median of 9 after 30 warm-up call
 
 **Method.** For each case the script forces two full collections (`--expose-gc`, `gc()` twice), reads `process.memoryUsage().heapUsed` (or `arrayBuffers` for typed arrays), builds and keeps the structure, collects twice again and divides the growth by the element count: 1 000 000 for arrays and strings, 100 000 for the keyed collections ✅[^lab]. A warm-up case runs first and is not counted; repeated runs gave the same values to within about 0.5 byte ✅[^lab].
 
-| Representation | Bytes per element | Electron 43, pointer compression on ✅[^lab-matrix] | Why |
+| Representation | Bytes per element | Electron 43 and Node.js 24.22.3 (E9), pointer compression on ✅[^lab-matrix] | Why |
 |---|---|---|---|
 | Small integers, `new Array(n).fill(0)`, then by index (`PACKED_SMI`) | 8.0 | 4.0 | one tagged word each, no pointer compression |
 | Small integers, `push` onto `[]` | 10.4 | 5.2 | the backing store grows in steps and keeps spare capacity |
 | Doubles, `PACKED_DOUBLE` | 8.0 | 8.0 | raw 8-byte floats, unboxed |
 | Doubles in a `PACKED_ELEMENTS` array (one string in it) | 24.0 | 16.0 | 8-byte pointer + 16-byte heap number per element |
 | Small integers in a `PACKED_ELEMENTS` array | 8.0 | 4.0 | still Smis, no boxes |
-| `Float64Array` | 8.0 (off-heap) | not shown (`arrayBuffers` stays 0) | raw floats in the `ArrayBuffer` |
-| `Int32Array` | 4.0 (off-heap) | not shown (`arrayBuffers` stays 0) | raw 32-bit integers |
+| `Float64Array` | 8.0 (off-heap) | 8.0 on E9; not shown in Electron (`arrayBuffers` stays 0) | raw floats in the `ArrayBuffer` |
+| `Int32Array` | 4.0 (off-heap) | 4.0 on E9; not shown in Electron (`arrayBuffers` stays 0) | raw 32-bit integers |
 | One-byte string | 1.0 | 1.0 | 1 byte per character |
 | Two-byte string | 2.0 | 2.0 | 2 bytes per character |
 | Object as dictionary, 100 000 string keys | 62.9 | 31.5 | hash table entry: key, value, details, plus spare capacity |
@@ -1732,7 +1830,7 @@ proxy, get trap  15.45 ms per 1,000,000 reads (median of 9 after 30 warm-up call
 | Object with integer keys 0 to 99 999 (elements) | 9.3 | 4.6 | a holey Smi row, grown in steps |
 | `Map` with integer keys 0 to 99 999 | 36.7 to 36.8 | 18.4 | same entry size as with string keys |
 
-Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0 gave the values of the second column to within 0.1 byte ✅[^lab-matrix]. In Electron 43 every pointer-sized cost halved and raw data stayed the same, which fits 4-byte slots and a 12-byte heap number; the cause was not isolated by a run.
+Node.js 22.23.4, 24.22.1 (macOS, linux x64) and 25.7.0 gave the values of the second column to within 0.1 byte ✅[^lab-matrix]. In Electron 43 every pointer-sized cost halved and raw data stayed the same, which fits 4-byte slots and a 12-byte heap number. The unofficial Node.js 24.22.3 build with pointer compression on and the sandbox off (E9, V8 13.6) gave the same values as Electron to within 0.1 byte, while the official 24.22.1 build on the same emulated machine gave the second column, so on V8 13.6 with the sandbox off pointer compression is the cause of the halving ✅[^lab-matrix].
 
 <details>
 <summary>Lab: <code>mem.mjs</code> (memory: may vary by about 0.1 byte or 0.5 MB per run)</summary>
@@ -1808,8 +1906,8 @@ Thresholds in Node.js 24.22.1 / V8 13.6.233.17, from the lab and the source at t
 
 | Item | Value | Source |
 |---|---|---|
-| Smi range | -2 147 483 648 to 2 147 483 647; -1 073 741 824 to 1 073 741 823 with pointer compression (Electron 43) | ✅[^lab] ✅[^lab-matrix] |
-| Slot size | 8 bytes (pointer compression off); 4 bytes with it on (Electron 43, §4.1) | ✅[^lab] ✅[^lab-matrix] |
+| Smi range | -2 147 483 648 to 2 147 483 647; -1 073 741 824 to 1 073 741 823 with pointer compression (Electron 43, Node.js 24.22.3 pointer-compression build) | ✅[^lab] ✅[^lab-matrix] |
+| Slot size | 8 bytes (pointer compression off); 4 bytes with it on (Electron 43, Node.js 24.22.3 pointer-compression build, §4.1) | ✅[^lab] ✅[^lab-matrix] |
 | In-object slots of `{}` | 4 | ✅[^lab] ✅[^v8-jsobjects] |
 | In-object slots of a literal | its key count | ✅[^lab] |
 | Property array growth step | 3 slots | ✅[^v8-jsobjects] ✅[^lab] |
@@ -1844,8 +1942,8 @@ Invariants observed in every case tested ✅[^lab]:
 | "Never use `new Array(n)`; always use a literal and `push`" (the 2017 post's advice ✅[^v8-elements]) and its opposite, "always preallocate with `new Array(n)`". | Building 1 000 000 Smis took 4.1 to 5.7 ms with `push`, 1.2 to 1.3 ms with `new Array(n)` filled by index and 1.8 to 2.0 ms with `new Array(n).fill(0)` first, in four runs: `push` was 3.3 to 4.3 times slower than the preallocated build ✅[^lab] (measured here); 2.9 to 4.3 times on Node.js 22.23.4 and 25.7.0, and 2.2 to 2.9 times in Electron 43 (2.0 to 2.6 ms against 0.78 to 1.19 ms, five runs) ✅[^lab-matrix]. The same ratio held at 100 000 elements (0.45 to 0.50 ms against 0.13 ms) and at 10 000 000 (61.8 ms against 13.5 ms, one run); at 1 000 elements every case was 0.00 to 0.02 ms, below what this timer resolves ✅[^lab]. The 2017 post itself says the difference "is usually too small to matter" in real code ✅[^v8-elements]. Preallocation was faster to build and its result is holey, which did not slow the sum above; `push` over-allocates by about 30 % (10.4 against 8.0 bytes per element) ✅[^lab]. Preallocate when you know the length; `fill` first if you want a packed array. Neither "always" holds. |
 | "String concatenation in a loop is quadratic." | Not when the string is only flattened once at the end: `+=` builds a rope, and the per-character cost stayed flat from 100 000 to 1 600 000 characters, flattening included (it rose 3 to 5 times by 6 400 000 characters, not quadratically); it is quadratic when the string is read after every append ✅[^lab] (measured here, §3.10). On V8 12.4 the flat range ended at 400 000 characters ✅[^lab-matrix]. |
 | "Objects with more than 128 properties become dictionaries." | Only for some ways of building them: `JSON.parse` switched at 128 keys, computed-key stores at about 20, but named stores, literals and `Object.fromEntries` stayed fast up to 1020 keys ✅[^lab]. On V8 14.1 and 15.0 literals also switched at 128 keys ✅[^lab-matrix]. |
-| "Double fields are stored unboxed in the object." | Not in this build: a Double field points to a 16-byte heap number, 48 bytes against 32 for `{ x }`, and 16 more per extra double field at every size tried (up to 10 fields) ✅[^lab]; with pointer compression on (Electron 43) the box is 12 bytes, 28 against 16 ✅[^lab-matrix]. The V8 page describes the box under pointer compression ✅[^v8-fields]. Double unboxing was turned off with pointer compression in 2020 ✅[^v8-ptrcomp], and Node.js 24 does not re-enable it even without pointer compression ✅[^lab]. |
-| "`%DebugPrint` shows the elements kind only in a debug build of the d8 shell." | The release Node.js 24 build prints the map, its elements kind, the in-object count and each property's location ✅[^lab] (§1.1, §3.2, §3.3), and so do Node.js 22.23.4 and 25.7.0. Electron 43 does not: there `%DebugPrint` prints one short line such as `0x… <HeapNumber 1.5>`, and Electron reports `v8_enable_object_print: 0` ✅[^lab-matrix]. |
+| "Double fields are stored unboxed in the object." | Not in this build: a Double field points to a 16-byte heap number, 48 bytes against 32 for `{ x }`, and 16 more per extra double field at every size tried (up to 10 fields) ✅[^lab]; with pointer compression on (Electron 43, and the Node.js 24.22.3 pointer-compression build) the box is 12 bytes, 28 against 16 ✅[^lab-matrix]. The V8 page describes the box under pointer compression ✅[^v8-fields]. Double unboxing was turned off with pointer compression in 2020 ✅[^v8-ptrcomp], and Node.js 24 does not re-enable it even without pointer compression ✅[^lab]. |
+| "`%DebugPrint` shows the elements kind only in a debug build of the d8 shell." | The release Node.js 24 build prints the map, its elements kind, the in-object count and each property's location ✅[^lab] (§1.1, §3.2, §3.3), and so do Node.js 22.23.4 and 25.7.0. Electron 43 does not: there `%DebugPrint` prints one short line such as `0x… <HeapNumber 1.5>`, and Electron reports `v8_enable_object_print: 0` ✅[^lab-matrix]. The Node.js 24.22.3 build with pointer compression on prints the full output, so the short form is Electron's build setting, not pointer compression ✅[^lab-matrix]. |
 | "`é` or other accented letters make a string two-byte." | A character above U+00FF does (U+0100 and up); Latin-1 letters such as `é` and `ÿ` (up to U+00FF) stay one-byte ✅[^lab]. A slice of a two-byte parent stays two-byte even when its own characters are all ASCII ✅[^lab] (§3.10). |
 
 The two timings behind the holey-array and preallocation rows:
@@ -1921,7 +2019,7 @@ n =   1000000: push 4.13 ms, new Array(n) 1.24 ms, new Array(n).fill(0) 1.84 ms 
 
 ### 6.3 Other builds and versions (2026-11-27)
 
-Every lab script above was re-run on 2026-11-27 on five more builds, all on one Apple M-series Mac ✅[^lab-matrix]. E0 is the baseline the rest of this doc reports.
+Every lab script above was re-run on 2026-11-27 on six more builds, all on one Apple M-series Mac ✅[^lab-matrix]. E0 is the baseline the rest of this doc reports.
 
 | Id | Build | What differs from the baseline |
 |---|---|---|
@@ -1931,68 +2029,69 @@ Every lab script above was re-run on 2026-11-27 on five more builds, all on one 
 | E3 | Node.js 22.23.4, V8 12.4.254.21-node.57, macOS arm64 | older V8 |
 | E4 | Node.js 25.7.0, V8 14.1.146.11-node.20, macOS arm64 | newer V8, pointer compression still off |
 | E7 | Electron 43.7.7 run as Node (`ELECTRON_RUN_AS_NODE=1`, Visual Studio Code's binary), Node.js 24.21.0 API, V8 15.0.245.31-electron.0, macOS arm64 | pointer compression on, V8 sandbox on, `v8_enable_object_print: 0`, newest V8 |
+| E9 | Node.js 24.22.3, V8 13.6.233.17-node.63, the Node.js project's unofficial build `node-v24.22.3-linux-x64-pointer-compression`, in a Debian 13 container, linux x64 | pointer compression **on**, sandbox off; differs from E2 in that one way; emulated like E2, so timing scripts not run |
 
-A difference seen only in E7 can come from pointer compression, the sandbox, the build settings or V8 15.0; where no other run separates them, the text says "cause not isolated". Timings ran three times per build (five where they differed), with other labs running on the machine.
+A difference seen only in E7 can come from pointer compression, the sandbox, the build settings or V8 15.0. E9 separates pointer compression: where E9 shows what E7 showed and E2 the baseline, pointer compression is the cause; where E9 shows the baseline, it is not. Where no run separates the rest, the text says "cause not isolated". E2 and E9 both default to `--no-turbofan` under emulation, so `delete-var.mjs`, which asks for an optimized function, was also run with `--turbofan` on both (same output as the doc). Timings ran three times per build (five where they differed), with other labs running on the machine.
 
-| Script: claim | E1 | E2 | E3 | E4 | E7 |
-|---|---|---|---|---|---|
-| `debugprint.mjs`: `%DebugPrint` kinds of values | same | same | same | same | cannot run |
-| `flags.mjs`: flags and defaults | same | same | same | same | same |
-| `silent.mjs`: tracing flags stay silent | same | same | differs | same | differs |
-| `values.mjs`: Smi range, build flags | same | same | same | same | differs |
-| `gen.mjs`: field generalization trace | same | same | same | same | same |
-| `fields.mjs`: double field is a HeapNumber pointer | same | same | same | same | cannot run |
-| `fieldmem.mjs`: 16-byte box per double field | same | same | same | same | differs |
-| `fieldmem-var.mjs`: box size at more sizes | same | same | same | same | differs |
-| `inobject.mjs`: in-object slots, slack tracking | same | same | same | same | cannot run |
-| `dicttime.mjs`: dictionary reads slower | same | not run | same | same | differs |
-| `delete.mjs`: `delete` makes slow; ways back | same | same | same | same | same |
-| `dellast.mjs`: last-property delete | same | same | same | same | same |
-| `delete-var.mjs`: delete variations | same | same | same | same | same |
-| `limits.mjs`: dictionary thresholds | same | same | same | differs | differs |
-| `limits2.mjs`: JSON.parse 128, fromEntries 1021 | same | same | same | same | same |
-| `soft.mjs`: computed keys: 20 | same | same | same | same | same |
-| `soft.mjs (--fast-properties-soft-limit=40)`: soft limit 40: 47 | same | same | same | same | same |
-| `limits-var.mjs`: threshold variations | same | same | same | differs | differs |
-| `acc.mjs`: accessors and fast mode | same | same | same | same | same |
-| `intkeys.mjs`: integer-like keys | same | same | same | same | same |
-| `kinds.mjs`: elements-kinds lattice | same | same | differs | same | differs |
-| `fill.mjs`: `fill` makes packed | same | same | differs | same | same |
-| `fill-var.mjs`: `fill` variations | same | same | differs | same | differs |
-| `sparse.mjs`: dictionary elements | same | same | same | same | same |
-| `typed.mjs`: typed arrays on heap up to 64 bytes | same | same | same | same | differs |
-| `strtype.mjs`: string representations | same | same | cannot run | same | cannot run |
-| `twobyte.mjs`: one-byte / two-byte boundary | same | same | same | same | cannot run |
-| `slice-keep.mjs`: slice keeps 10 MB parent | same | same | same | same | same |
-| `concat.mjs`: `+=` not quadratic | same | not run | differs | same | same |
-| `concat-var.mjs`: larger sizes, read after append | same | not run | differs | same | differs |
-| `shapes.mjs`: shared maps | same | same | same | same | same |
-| `proxytime.mjs`: getter = plain; Proxy slower | same | not run | same | differs | differs |
-| `mem.mjs`: bytes per element | same | same | same | same | differs |
-| `holey.mjs`: holey sum within about 25 % | same | not run | same | same | same |
-| `prealloc.mjs`: push slower than preallocated | same | not run | same | same | differs |
+| Script: claim | E1 | E2 | E3 | E4 | E7 | E9 |
+|---|---|---|---|---|---|---|
+| `debugprint.mjs`: `%DebugPrint` kinds of values | same | same | same | same | cannot run | same |
+| `flags.mjs`: flags and defaults | same | same | same | same | same | same |
+| `silent.mjs`: tracing flags stay silent | same | same | differs | same | differs | same |
+| `values.mjs`: Smi range, build flags | same | same | same | same | differs | differs |
+| `gen.mjs`: field generalization trace | same | same | same | same | same | same |
+| `fields.mjs`: double field is a HeapNumber pointer | same | same | same | same | cannot run | same |
+| `fieldmem.mjs`: 16-byte box per double field | same | same | same | same | differs | differs |
+| `fieldmem-var.mjs`: box size at more sizes | same | same | same | same | differs | differs |
+| `inobject.mjs`: in-object slots, slack tracking | same | same | same | same | cannot run | same |
+| `dicttime.mjs`: dictionary reads slower | same | not run | same | same | differs | not run |
+| `delete.mjs`: `delete` makes slow; ways back | same | same | same | same | same | same |
+| `dellast.mjs`: last-property delete | same | same | same | same | same | same |
+| `delete-var.mjs`: delete variations | same | same | same | same | same | same |
+| `limits.mjs`: dictionary thresholds | same | same | same | differs | differs | same |
+| `limits2.mjs`: JSON.parse 128, fromEntries 1021 | same | same | same | same | same | same |
+| `soft.mjs`: computed keys: 20 | same | same | same | same | same | same |
+| `soft.mjs (--fast-properties-soft-limit=40)`: soft limit 40: 47 | same | same | same | same | same | same |
+| `limits-var.mjs`: threshold variations | same | same | same | differs | differs | same |
+| `acc.mjs`: accessors and fast mode | same | same | same | same | same | same |
+| `intkeys.mjs`: integer-like keys | same | same | same | same | same | same |
+| `kinds.mjs`: elements-kinds lattice | same | same | differs | same | differs | same |
+| `fill.mjs`: `fill` makes packed | same | same | differs | same | same | same |
+| `fill-var.mjs`: `fill` variations | same | same | differs | same | differs | same |
+| `sparse.mjs`: dictionary elements | same | same | same | same | same | same |
+| `typed.mjs`: typed arrays on heap up to 64 bytes | same | same | same | same | differs | same |
+| `strtype.mjs`: string representations | same | same | cannot run | same | cannot run | same |
+| `twobyte.mjs`: one-byte / two-byte boundary | same | same | same | same | cannot run | same |
+| `slice-keep.mjs`: slice keeps 10 MB parent | same | same | same | same | same | same |
+| `concat.mjs`: `+=` not quadratic | same | not run | differs | same | same | not run |
+| `concat-var.mjs`: larger sizes, read after append | same | not run | differs | same | differs | not run |
+| `shapes.mjs`: shared maps | same | same | same | same | same | same |
+| `proxytime.mjs`: getter = plain; Proxy slower | same | not run | same | differs | differs | not run |
+| `mem.mjs`: bytes per element | same | same | same | same | differs | differs |
+| `holey.mjs`: holey sum within about 25 % | same | not run | same | same | same | not run |
+| `prealloc.mjs`: push slower than preallocated | same | not run | same | same | differs | not run |
 
-Totals: 35 runs of 34 scripts on 5 builds, 175 cells: 140 same, 23 differs, 6 cannot run, 6 not run (the timing scripts on E2).
+Totals: 35 runs of 34 scripts on 6 builds, 210 cells: 165 same, 27 differs, 6 cannot run, 12 not run (the timing scripts on E2 and E9). The E9 column alone: 29 run, 25 same, 4 differs, 0 cannot run, 6 not run.
 
-"Cannot run" means: in E7 `%DebugPrint` prints one short line (`0x… <HeapNumber 1.5>`), which fits the `v8_enable_object_print: 0` that Electron reports, so the fields `debugprint.mjs`, `fields.mjs`, `inobject.mjs`, `strtype.mjs` and `twobyte.mjs` read are absent (the other lines of `strtype.mjs` matched); in E3 the native `%StringIsFlat` does not exist (`SyntaxError: StringIsFlat is not defined`), and a copy of `strtype.mjs` without those two calls matched the doc in every other line. "Same" for memory scripts means within the 0.1 byte or 0.5 MB the doc allows, except one line: `fieldmem-var.mjs` gave 32.1 bytes for `{x:i}` on every build, and on E0 again, against 27.9 in the doc, which was noise in the original run. `debugprint.mjs` and `fields.mjs` on E3 and E4 print a few more or fewer words on some lines (`[HeapNumber] in OldSpace`; no `attrs: [WEC]) @ Any` on E3); the fields the doc reads are the same.
+"Cannot run" means: in E7 `%DebugPrint` prints one short line (`0x… <HeapNumber 1.5>`), which fits the `v8_enable_object_print: 0` that Electron reports, so the fields `debugprint.mjs`, `fields.mjs`, `inobject.mjs`, `strtype.mjs` and `twobyte.mjs` read are absent (the other lines of `strtype.mjs` matched); on E9, which has pointer compression on and reports `v8_enable_object_print: 1`, all five ran and matched the doc (for example `{}` has 4 in-object slots there too), so the short form is Electron's build setting; in E3 the native `%StringIsFlat` does not exist (`SyntaxError: StringIsFlat is not defined`), and a copy of `strtype.mjs` without those two calls matched the doc in every other line. "Same" for memory scripts means within the 0.1 byte or 0.5 MB the doc allows, except one line: `fieldmem-var.mjs` gave 32.1 bytes for `{x:i}` on every build, and on E0 again, against 27.9 in the doc, which was noise in the original run. `debugprint.mjs` and `fields.mjs` on E3 and E4 print a few more or fewer words on some lines (`[HeapNumber] in OldSpace`; no `attrs: [WEC]) @ Any` on E3); the fields the doc reads are the same.
 
 What differs:
 
-- **Smi range** (§3.1): -2³¹ to 2³¹ - 1 on E0 to E4; -2³⁰ to 2³⁰ - 1 on E7, where `2 ** 30`, `2 ** 31 - 1` and `-(2 ** 31)` are not Smis. E7 also reports `v8_enable_31bit_smis_on_64bit_arch: 0`.
-- **Tracing flags** (§1.2): two startup transitions printed on E0, one on E3, none on E7; nothing for the script's own changes anywhere.
-- **Object and double-field sizes** (§3.2): `{ x }` 32 bytes with an integer and 48 with a double on E0 to E4; 16 and 28 on E7 (12-byte box), cause not isolated.
+- **Smi range** (§3.1): -2³¹ to 2³¹ - 1 on E0 to E4; -2³⁰ to 2³⁰ - 1 on E7 and E9, where `2 ** 30`, `2 ** 31 - 1` and `-(2 ** 31)` are not Smis. E7 also reports `v8_enable_31bit_smis_on_64bit_arch: 0`; E9 reports `1`.
+- **Tracing flags** (§1.2): two startup transitions printed on E0 and E9, one on E3, none on E7; nothing for the script's own changes anywhere. E9 matches the baseline, so E7's silence is not pointer compression.
+- **Object and double-field sizes** (§3.2): `{ x }` 32 bytes with an integer and 48 with a double on E0 to E4; 16 and 28 on E7 and E9 (12-byte box). E9 shows what E7 showed and E2 the baseline: pointer compression is the cause (isolated on V8 13.6, the same Node.js 24 line, sandbox off).
 - **Object literal threshold** (§3.4, §5, §6.1): dictionary mode from 1021 keys on V8 12.4 and 13.6; from 128 keys on V8 14.1 (E4) and 15.0 (E7). E4 has pointer compression off, so the change came with V8 14.1 or earlier, not with compression. Named stores, `Object.fromEntries` (1021) and `JSON.parse` (128) did not change.
 - **`fill` exception** (§3.6, §3.7, §5, §6.1): whole-array `fill` makes a holey array packed on V8 13.6, 14.1 and 15.0; on V8 12.4 (E3) every `fill` left it holey.
-- **`undefined` in arrays** (§3.6, §3.7): `[1, undefined, 3]`, `Array.from({ length: 3 })` and `new Array(5).fill(undefined)` are `PACKED_ELEMENTS` on E0 to E4 and `HOLEY_DOUBLE` on E7, cause not isolated.
-- **Typed-array counter** (§3.9): `arrayBuffers` stays 0 on E7; the bytes appear in `external`, with the same 64-byte boundary.
-- **Bytes per element** (§3.11, §4.1): every pointer-sized cost about halves on E7 (Smi array 4.0, `Map` 18.4); double arrays and strings do not change.
-- **Dictionary-mode reads** (§3.4, §4.2): about 7 times slower than a fast object on E0, E1 and E3 and about 9 times on E4; about 2.5 times on E7 (1.41 ms against 0.57 ms), cause not isolated. Every timing in this list is measured here: three runs each, with other labs running on the machine.
+- **`undefined` in arrays** (§3.6, §3.7): `[1, undefined, 3]`, `Array.from({ length: 3 })` and `new Array(5).fill(undefined)` are `PACKED_ELEMENTS` on E0 to E4 and E9 and `HOLEY_DOUBLE` on E7. E9 shows the baseline, so pointer compression is not the cause; V8 15.0, the sandbox or Electron's build remain, cause not isolated among them.
+- **Typed-array counter** (§3.9): `arrayBuffers` stays 0 on E7; the bytes appear in `external`, with the same 64-byte boundary. E9 counts them in `arrayBuffers` like the baseline, so pointer compression is not the cause; the sandbox, V8 15.0 or Electron's build remain.
+- **Bytes per element** (§3.11, §4.1): every pointer-sized cost about halves on E7 and E9 (Smi array 4.0, `Map` 18.4); double arrays and strings do not change. E9 matches E7 to within 0.1 byte and E2 the baseline: pointer compression is the cause.
+- **Dictionary-mode reads** (§3.4, §4.2): about 7 times slower than a fast object on E0, E1 and E3 and about 9 times on E4; about 2.5 times on E7 (1.41 ms against 0.57 ms), cause not isolated: a timing script, not settled by E9, which runs only under emulation where timings are not meaningful. Every timing in this list is measured here: three runs each, with other labs running on the machine.
 - **String building** (§3.10, §6.1): flat cost per character from 100 000 to 1 600 000 characters on E0, E1, E4 and E7; on E3 flat only to 400 000, then 31 to 56 ns. In `concat-var.mjs` the later rise starts at 1 600 000 on E3 and is 7 to 10 times on E7, against 3 to 5 times on E0. Reading after every append was quadratic everywhere.
 - **Getter cost** (§3.13): same as a plain read on E0, E1 and E3; 1.7 times on E4 and about 1.25 times on E7. The `Proxy` timings matched everywhere.
 - **`push` against preallocation** (§6.1): 3.3 to 4.3 times slower on E0; 2.2 to 2.9 times on E7. The order held everywhere.
 
 <details>
-<summary>Matrix: <code>values.mjs</code> on E7</summary>
+<summary>Matrix: <code>values.mjs</code> on E7, E9 and E2</summary>
 
 ```sh
 ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --allow-natives-syntax values.mjs
@@ -2015,10 +2114,36 @@ NaN                    Smi: false
 pointer compression: 1 | 31-bit Smis on 64-bit: 0
 ```
 
+On E9 and E2 (the same flags):
+
+```sh
+node --allow-natives-syntax values.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax values.mjs   # E2
+```
+
+```text
+# E9
+0                      Smi: true
+-0                     Smi: false
+2**30                  Smi: false
+2**31 - 1              Smi: false
+2**31                  Smi: false
+-(2**31)               Smi: false
+-(2**31) - 1           Smi: false
+1.5                    Smi: false
+NaN                    Smi: false
+3.0                    Smi: true
+2**53                  Smi: false
+pointer compression: 1 | 31-bit Smis on 64-bit: 1
+# E2: the baseline output above, including
+2**30                  Smi: true
+pointer compression: 0 | 31-bit Smis on 64-bit: 0
+```
+
 </details>
 
 <details>
-<summary>Matrix: <code>silent.mjs</code> on E3 and E7</summary>
+<summary>Matrix: <code>silent.mjs</code> on E3, E7 and E9</summary>
 
 ```sh
 ~/.nvm/versions/node/v22.23.4/bin/node --trace-normalization --trace-elements-transitions silent.mjs | sed -E 's/0x[0-9a-f]{6,}/0x…/g'
@@ -2041,10 +2166,21 @@ before push(4.5), push('x')
 after push(4.5), push('x')
 ```
 
+On E9 the output was byte for byte the baseline output in §1.2, two startup transition lines included (E2 too), so only its first line is shown:
+
+```sh
+node --trace-normalization --trace-elements-transitions silent.mjs | sed -E 's/0x[0-9a-f]{6,}/0x…/g'   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+```
+
+```text
+elements transition [PACKED_SMI_ELEMENTS -> PACKED_ELEMENTS] in from+0 at <unknown>:<unknown> for 0x… <JSArray[0]> from 0x… <FixedArray[17]> to 0x… <FixedArray[17]>
+(and a second identical line, then the four script lines)
+```
+
 </details>
 
 <details>
-<summary>Matrix: <code>fieldmem.mjs</code> and <code>fieldmem-var.mjs</code> on E7</summary>
+<summary>Matrix: <code>fieldmem.mjs</code> and <code>fieldmem-var.mjs</code> on E7, E9 and E2</summary>
 
 ```sh
 ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc fieldmem.mjs
@@ -2071,6 +2207,50 @@ warm-up                                      12.1 bytes per object (list slot su
 class P, 2 ints (after slack tracking)       16.0 bytes per object (list slot subtracted)
 class Q, 2 doubles (after slack tracking)    40.0 bytes per object (list slot subtracted)
 {x: 2**31} (above Smi, integer-valued double) 24.0 bytes per object (list slot subtracted)
+```
+
+On E9 and E2 (the same flags; on E9 the list slot is 4 bytes, as on E7):
+
+```sh
+node --expose-gc fieldmem.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+node --expose-gc fieldmem-var.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --expose-gc fieldmem.mjs   # E2
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --expose-gc fieldmem-var.mjs   # E2
+```
+
+```text
+# E9
+warm-up (not counted)                    20.0 bytes per object (8 of them are the list slot)
+{ x: i } (small integer field)           20.1 bytes per object (8 of them are the list slot)
+{ x: i + 0.5 } (double field)            32.1 bytes per object (8 of them are the list slot)
+{ x: i, y: i } (two small integers)      24.0 bytes per object (8 of them are the list slot)
+{ x: i + 0.5, y: i + 0.5 } (two doubles) 48.0 bytes per object (8 of them are the list slot)
+warm-up                                      12.0 bytes per object (list slot subtracted)
+{x:i}                                        12.1 bytes per object (list slot subtracted)
+{x:i+.5}                                     24.0 bytes per object (list slot subtracted)
+{a..e: 5 ints}                               28.0 bytes per object (list slot subtracted)
+{a..e: 5 doubles}                            88.0 bytes per object (list slot subtracted)
+{a..j: 10 ints}                              48.1 bytes per object (list slot subtracted)
+{a..j: 10 doubles}                           168.2 bytes per object (list slot subtracted)
+class P, 2 ints (after slack tracking)       16.0 bytes per object (list slot subtracted)
+class Q, 2 doubles (after slack tracking)    40.0 bytes per object (list slot subtracted)
+{x: 2**31} (above Smi, integer-valued double) 24.0 bytes per object (list slot subtracted)
+# E2
+warm-up (not counted)                    40.0 bytes per object (8 of them are the list slot)
+{ x: i } (small integer field)           40.1 bytes per object (8 of them are the list slot)
+{ x: i + 0.5 } (double field)            56.0 bytes per object (8 of them are the list slot)
+{ x: i, y: i } (two small integers)      48.1 bytes per object (8 of them are the list slot)
+{ x: i + 0.5, y: i + 0.5 } (two doubles) 80.0 bytes per object (8 of them are the list slot)
+warm-up                                      32.1 bytes per object (list slot subtracted)
+{x:i}                                        32.1 bytes per object (list slot subtracted)
+{x:i+.5}                                     48.1 bytes per object (list slot subtracted)
+{a..e: 5 ints}                               64.0 bytes per object (list slot subtracted)
+{a..e: 5 doubles}                            144.1 bytes per object (list slot subtracted)
+{a..j: 10 ints}                              104.1 bytes per object (list slot subtracted)
+{a..j: 10 doubles}                           264.1 bytes per object (list slot subtracted)
+class P, 2 ints (after slack tracking)       40.0 bytes per object (list slot subtracted)
+class Q, 2 doubles (after slack tracking)    72.0 bytes per object (list slot subtracted)
+{x: 2**31} (above Smi, integer-valued double) 48.0 bytes per object (list slot subtracted)
 ```
 
 </details>
@@ -2178,7 +2358,7 @@ literal 130 keys: fast false
 </details>
 
 <details>
-<summary>Matrix: <code>kinds.mjs</code> on E3 and E7</summary>
+<summary>Matrix: <code>kinds.mjs</code> on E3, E7, E9 and E2</summary>
 
 ```sh
 ~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax kinds.mjs
@@ -2258,10 +2438,26 @@ new Array(3).map(x => 0)                     HOLEY_SMI_ELEMENTS
 'a,b'.split(',')                             PACKED_ELEMENTS
 ```
 
+On E9 and E2 every line matched the doc; the lines that differ on E7:
+
+```sh
+node --allow-natives-syntax kinds.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax kinds.mjs   # E2
+```
+
+```text
+# E9
+Array.from({ length: 3 })                    PACKED_ELEMENTS
+[1, undefined, 3]                            PACKED_ELEMENTS
+# E2
+Array.from({ length: 3 })                    PACKED_ELEMENTS
+[1, undefined, 3]                            PACKED_ELEMENTS
+```
+
 </details>
 
 <details>
-<summary>Matrix: <code>fill.mjs</code> and <code>fill-var.mjs</code> on E3, <code>fill-var.mjs</code> on E7</summary>
+<summary>Matrix: <code>fill.mjs</code> and <code>fill-var.mjs</code> on E3, <code>fill-var.mjs</code> on E7, E9 and E2</summary>
 
 ```sh
 ~/.nvm/versions/node/v22.23.4/bin/node --allow-natives-syntax fill.mjs
@@ -2341,10 +2537,24 @@ after fill, push                                     PACKED_SMI
 new Array(5), a[10]=1 (len 11), fill                 PACKED_SMI
 ```
 
+On E9 and E2 every line of `fill-var.mjs` matched the doc; the line that differs on E7:
+
+```sh
+node --allow-natives-syntax fill-var.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --allow-natives-syntax fill-var.mjs   # E2
+```
+
+```text
+# E9
+new Array(5).fill(undefined)                         PACKED_OBJ
+# E2
+new Array(5).fill(undefined)                         PACKED_OBJ
+```
+
 </details>
 
 <details>
-<summary>Matrix: <code>typed.mjs</code> on E7, and <code>typed-external.mjs</code> (the same script reading <code>external</code>)</summary>
+<summary>Matrix: <code>typed.mjs</code> on E7, E9 and E2, and <code>typed-external.mjs</code> (the same script reading <code>external</code>)</summary>
 
 ```sh
 ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc --allow-natives-syntax typed.mjs
@@ -2376,10 +2586,20 @@ Int8Array: i8[0] = 300 stores: 44
 Uint8ClampedArray: c8[0] = 300 stores: 255
 ```
 
+On E9 the output was byte for byte the doc's output in §3.9 (E2 too), so it is not repeated; its first off-heap line, the one that reads 0 on E7:
+
+```sh
+node --expose-gc --allow-natives-syntax typed.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+```
+
+```text
+new Uint8Array(65)             off-heap bytes per array: 65.0
+```
+
 </details>
 
 <details>
-<summary>Matrix: <code>mem.mjs</code> on E7</summary>
+<summary>Matrix: <code>mem.mjs</code> on E7, E9 and E2</summary>
 
 ```sh
 ELECTRON_RUN_AS_NODE=1 "/Applications/Visual Studio Code.app/Contents/MacOS/Code" --expose-gc --allow-natives-syntax mem.mjs
@@ -2403,6 +2623,48 @@ Map, K string keys (values small ints)                     18.4 bytes/element (h
 Set, K string keys                                         13.1 bytes/element (heapUsed)
 object, K integer keys 0..K-1 (elements)                   4.6 bytes/element (heapUsed)
 Map, K integer keys 0..K-1                                 18.4 bytes/element (heapUsed)
+```
+
+On E9 and E2 (the same flags):
+
+```sh
+node --expose-gc --allow-natives-syntax mem.mjs   # E9, in the linux/amd64 Debian 13 container with the unofficial build, --network none
+docker run --rm --network none --platform linux/amd64 -v "$PWD:/work" -w /work node:24.22.1-alpine-amd64 node --expose-gc --allow-natives-syntax mem.mjs   # E2
+```
+
+```text
+# E9
+warm-up (not counted)                                      4.0 bytes/element (heapUsed)
+small integers, new Array(N).fill(0) then a[i] = i         4.0 bytes/element (heapUsed)
+small integers, [] then push(i)                            5.2 bytes/element (heapUsed)
+doubles, new Array(N).fill(0.5) then a[i] = i + 0.5        8.0 bytes/element (heapUsed)
+doubles in a generic array (a[0] = 'x'), a[i] = i + 0.5    16.0 bytes/element (heapUsed)
+small integers in a generic array (a[0] = "x"), a[i] = i   4.0 bytes/element (heapUsed)
+new Float64Array(N)                                        8.0 bytes/element (arrayBuffers)
+new Int32Array(N)                                          4.0 bytes/element (arrayBuffers)
+one-byte string, N characters (flattened)                  1.0 bytes/element (heapUsed)
+two-byte string, N characters (flattened)                  2.0 bytes/element (heapUsed)
+object as dictionary, K string keys (values small ints)    31.5 bytes/element (heapUsed)
+Map, K string keys (values small ints)                     18.4 bytes/element (heapUsed)
+Set, K string keys                                         13.1 bytes/element (heapUsed)
+object, K integer keys 0..K-1 (elements)                   4.6 bytes/element (heapUsed)
+Map, K integer keys 0..K-1                                 18.4 bytes/element (heapUsed)
+# E2
+warm-up (not counted)                                      8.0 bytes/element (heapUsed)
+small integers, new Array(N).fill(0) then a[i] = i         8.0 bytes/element (heapUsed)
+small integers, [] then push(i)                            10.4 bytes/element (heapUsed)
+doubles, new Array(N).fill(0.5) then a[i] = i + 0.5        8.0 bytes/element (heapUsed)
+doubles in a generic array (a[0] = 'x'), a[i] = i + 0.5    24.0 bytes/element (heapUsed)
+small integers in a generic array (a[0] = "x"), a[i] = i   8.0 bytes/element (heapUsed)
+new Float64Array(N)                                        8.0 bytes/element (arrayBuffers)
+new Int32Array(N)                                          4.0 bytes/element (arrayBuffers)
+one-byte string, N characters (flattened)                  1.0 bytes/element (heapUsed)
+two-byte string, N characters (flattened)                  2.0 bytes/element (heapUsed)
+object as dictionary, K string keys (values small ints)    63.0 bytes/element (heapUsed)
+Map, K string keys (values small ints)                     36.7 bytes/element (heapUsed)
+Set, K string keys                                         26.2 bytes/element (heapUsed)
+object, K integer keys 0..K-1 (elements)                   9.3 bytes/element (heapUsed)
+Map, K integer keys 0..K-1                                 36.7 bytes/element (heapUsed)
 ```
 
 </details>
@@ -2663,13 +2925,35 @@ n =   1000000: push 2.63 ms, new Array(n) 1.19 ms, new Array(n).fill(0) 1.27 ms 
 
 </details>
 
+### 6.4 Pointer compression in Node.js: the project's discussion and outside numbers (as of 2026-11-27)
+
+§3.1 gives the mechanism, the costs and the status from rank-1 and rank-4 pages. This part adds what the Node.js project's own threads say. They are GitHub issues and pull requests, which this knowledge base ranks 6 whoever writes in them, so each statement below says who wrote it (by role) and when. All were read on 2026-11-27.
+
+**Why the official builds have it off, in the project's threads:**
+
+- **2019: the add-on break and the 4 GB limit.** Issue 26756, "Pointer compression and Node modules", was opened on 18 March 2019 by a user the page labels Member (hashseed): "Different ABI, so Node modules for non-pointer-compressed builds are incompatible with pointer-compressed builds." He also hoped it "will pay for itself due to fewer cache misses" ✅[^node-issue-26756]. The next day three other participants (two labelled Member, one Contributor) wrote that they saw a benefit in the option "but not on by default, or even on in our distribution builds", that turning it on by default "sounds like a regression", and that "the limit of 4G means it is probably not viable for Node.js in the short term" ✅[^node-issue-26756].
+- **2019 to 2023: overhead, big heaps and the cost of a second build.** The Technical Steering Committee issue 790, "Looking for feedback: Pointer compression in Node.js", opened on 6 December 2019, says that it "breaks native addon compatibility" and that the memory estimates "are based on statistics gathered in Chrome for typical websites"; on 9 December 2019 its author added: "The extra shifts are likely to introduce some performance overhead, though." ✅[^node-tsc-790]. A participant called `--max-old-space-size` "the only practical escape hatch to unblock the entire company's workflow"; another wrote: "I think this will benefit a vast majority of users." (both 6 December 2019) ✅[^node-tsc-790]. On 17 February 2023 a member wrote: "The discussion always come down to the cost of building/testing/shipping releases." ✅[^node-tsc-790].
+- **2023 to 2024: a second download that nobody kept up.** Build working group issue 3204, "Path to adding a Tier 2 build with pointer compression enabled" (22 February 2023 to 25 September 2024): a concern about "confusion to end users in producing a second Linux download" (23 February 2023); "Nobody appears to be paying any attention to it." (5 August 2024); "the main driver for investing to make it happen is gone" (6 August 2024); and "the vast majority of cases can fit well within a 4gb compressed heap" (5 September 2024) ✅[^node-build-3204].
+- **2024 to 2026: one cage per thread.** Issue 55735, "Pointer Compression and Isolate Groups", opened on 5 November 2024: pointer compression "has historically forced a process-wide maximum v8 heap limit of 4 GB", because all threads shared one cage; the plan was that "each thread (main thread and each worker thread) will have it's own separate 4GB limit" (28 May 2025), and to "make this the default build mode for Node.js in a later phase 2" (5 November 2024), which on 8 May 2025 depended on whether it is "not too big of a breaking change" ✅[^node-issue-55735]. The same day a user labelled Member wrote: "the ArrayBuffer issues comes from sandboxing, not pointer compression per-se." ✅[^node-issue-55735]. The issue was closed as completed on 26 April 2026, the day a bot marked it stale; that close does not announce a default change ✅[^node-issue-55735].
+- **2025: isolate groups land, still off by default.** Pull request 60254, "src: initial enablement of IsolateGroups", was merged on 17 October 2025 ✅[^node-pr-60254] and is listed in the v25.1.0 release notes ✅[^node-v2510]. Its description: "When pointer compression is enabled, all isolates within a single group are limited to a 4 GB shared pointer cage", but as many groups can be created as virtual memory allows; and "In the default node.js build, this is disabled." Its author wrote that he is "not yet convinced" pointer compression is "safe to enable by default"; a user labelled Contributor (verwaest) wrote on 17 October 2025 that "8gib heaps aren't currently supported by v8" ✅[^node-pr-60254].
+
+**Status as of 2026-11-27:** a compile-time option, off in the default build ✅[^node-configure] ✅[^node-pr-60254]; no release note read announces it on by default ✅[^node-changelogs] ✅[^node-v2510]; the newest statement found in these threads is the close of issue 55735 on 26 April 2026.
+
+**Independent numbers for Node.js, ranked:**
+
+- **A vendor's measurement (Rank 4; the numbers are the vendor's own, in its own product set-up).** Platformatic, which sells the Watt application server, reports "50% memory savings with only a 2-4% increase in average latency", and for plain Node.js an average overhead of 2.5 %, about 1 ms on a 40 ms median ✅[^platformatic]. Its conditions: a Next.js 16 e-commerce application with server-side rendering, 400 requests per second for two minutes after a one-minute ramp-up, the k6 load tool, AWS EKS on m5.2xlarge nodes, Node.js 25 ✅[^platformatic]. For Watt with pointer compression against its baseline, the text says it "increase[s] p99 latency by 43%", while the post's summary says P99 latency fell by 7 %; the two p99 statements do not agree as read, and the post does not say what the 7 % is measured against. P99 latency is the time that 99 % of requests finish within, so it describes the slowest 1 % ✅[^platformatic]. The post shows no date or author.
+- **The pull request author's check (Rank 6, informal).** In pull request 60254: "`heapUsed` is cut in half", and "There should be no real noticeable difference in performance", with no benchmark attached ✅[^node-pr-60254].
+- **User reports (Rank 6, no conditions given).** One user wrote that recompiling their Node.js image with pointer compression "effectively halved our memory use" (12 February 2023) ✅[^node-tsc-790]; another, on 8 May 2025, that the promised performance and memory improvements did not show up in their workload ✅[^node-issue-55735].
+- **This doc's own byte counts** (§3.1, E9 against E2): pointer-heavy data halves, raw data does not ✅[^lab-matrix].
+- No Node.js core benchmark result (the project's `benchmark/` suite) for pointer compression was found on the pages read.
 
 ## Verification status
 
 - **Measured** on 2026-11-26, Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine` on arm64 with `--network none`: every ✅[^lab] claim; 34 scripts in 35 runs, each embedded with its command and output. Build facts read from the same image on 2026-11-27: `process.arch` is `arm64`, `process.platform` is `linux`, and `process.config.variables` gives `v8_enable_pointer_compression: 0`, `v8_enable_sandbox: 0`, `v8_enable_maglev: 1` and `v8_enable_lite_mode: 0`. A result that depends on the word size or on the tiers (the small-integer range, bytes per value, tier-up) may differ on a build with other values, on x64, or on another V8 version: none of those was run in the 2026-11-26 lab (the matrix of 2026-11-27, §6.3, re-ran the scripts on macOS, emulated x64 and V8 12.4 to 15.0). Each script was run at least twice; deterministic outputs matched byte for byte; timings and some memory figures varied as noted. An independent review on the same day re-ran all 29 runs of the original 28 scripts: every deterministic output matched byte for byte; the timing and memory outputs matched in conclusion, with the one exception of a single holey-sum round (§6.1). The review then added six variation scripts (`delete-var`, `fill-var`, `limits-var`, `fieldmem-var`, `twobyte`, `concat-var`) and re-ran `holey.mjs` and `prealloc.mjs` with other sizes (those two edits are described in §6.1, not embedded).
-- **Matrix re-run on 2026-11-27** (§6.3): 34 scripts in 35 runs on E1, E2, E3, E4 and E7, 175 cells: 140 same, 23 differs, 6 cannot run (5 `%DebugPrint` scripts on E7, `strtype.mjs` on E3), 6 not run (timing on emulated E2); timings three times per build and five where they differed, 227 runs in all, plus the probes `smi.js` (E0 to E4 and E7), `litprobe.mjs`, `typed-external.mjs` and `strtype-noflat.mjs`. Still not run: Windows; a linux build with pointer compression (E7 is macOS); native x64 hardware (E2 is emulated); V8 versions outside 12.4 to 15.0; Chrome, the unofficial Node.js pointer-compression builds, and any Node.js build with pointer compression on (Deno 2.9.8 ran only the `smi.js` probe).
+- **Matrix re-run on 2026-11-27** (§6.3): 34 scripts in 35 runs on E1, E2, E3, E4 and E7, 175 cells: 140 same, 23 differs, 6 cannot run (5 `%DebugPrint` scripts on E7, `strtype.mjs` on E3), 6 not run (timing on emulated E2); timings three times per build and five where they differed, 227 runs in all, plus the probes `smi.js` (E0 to E4 and E7), `litprobe.mjs`, `typed-external.mjs` and `strtype-noflat.mjs`. Still not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64; the other unofficial Node.js pointer-compression builds (riscv64, and v26.13.1); V8 versions outside 12.4 to 15.0; Chrome (Deno 2.9.8 ran only the `smi.js` probe).
+- **E9 pass on 2026-11-27** (§6.3): the unofficial Node.js 24.22.3 build `node-v24.22.3-linux-x64-pointer-compression` (checksum checked against `SHASUMS256.txt`; `v8_enable_pointer_compression: 1`, `v8_enable_31bit_smis_on_64bit_arch: 1`, `v8_enable_sandbox: 0`), with E2 re-run beside it: the 29 non-timing scripts once on each, plus `smi.js`, `litprobe.mjs`, `typed-external.mjs`, the build facts and the heap limit, and `delete-var.mjs` again with `--turbofan` on both. E9 column: 25 same, 4 differs, 0 cannot run, 6 not run (timing). New totals over 210 cells: 165 same, 27 differs, 6 cannot run, 12 not run. Of the places that said "cause not isolated", the field sizes and bytes per element were settled as pointer compression, `undefined` in arrays (and the typed-array counter, the tracing silence and the short `%DebugPrint`) as not pointer compression, and the dictionary-read timing was not settled (emulated timings).
 - **Read only** (source or docs, not run): the 43 % heap saving of pointer compression (2020), the 2017 proxy benchmark gains, the 2018 hash-code storage change, the 21 elements kinds, the source constants quoted in §5 (each also observed in the lab except the maximum string length and the 4 preallocated slots). The review re-opened every source cited, and the `DeleteObjectPropertyFast` check was repeated at seven tags.
-- **Not checked:** a Node.js build with pointer compression on (only Electron was run with it), V8 versions before 12.4 in the lab (the `delete` history before 12.0 comes from the source only), the exact commit that removed the delete fast path and the one that added the `fill` exception.
+- **Not checked:** a Node.js build with pointer compression on native hardware (the one run, E9, is emulated), timings on a pointer-compression Node.js build, V8 versions before 12.4 in the lab (the `delete` history before 12.0 comes from the source only), the exact commit that removed the delete fast path and the one that added the `fill` exception.
 
 ## References
 - [V8 source: src/objects/string.h at 13.6.233.17](https://github.com/v8/v8/blob/13.6.233.17/src/objects/string.h) — V8 project, 2025. Rank 1. Backs: §1.1, §3.10, §5, §6.2 (string kinds, minimum cons and slice length, slices keep the parent, maximum length). [^v8-string]
@@ -2689,6 +2973,9 @@ n =   1000000: push 2.63 ms, new Array(n) 1.19 ms, new Array(n).fill(0) 1.27 ms 
 - [Deno: Cargo.toml](https://github.com/denoland/deno/blob/main/Cargo.toml) and [rusty_v8: build.rs](https://github.com/denoland/rusty_v8/blob/main/build.rs) — Deno project, main, read 2026-11-27. Rank 1. Backs: §3.1 (V8 crate without default features; `v8_enable_pointer_compression=false` unless the feature is set). [^deno-build]
 - [Node.js unofficial-builds: README](https://github.com/nodejs/unofficial-builds/blob/main/README.md) and release folders [v24.22.3](https://unofficial-builds.nodejs.org/download/release/v24.22.3/) and [v26.13.1](https://unofficial-builds.nodejs.org/download/release/v26.13.1/) — Node.js project, read 2026-11-27. Rank 1. Backs: §3.1 (pointer-compression builds and their file names). [^node-unofficial]
 - [Docker official images: library/node](https://github.com/docker-library/official-images/blob/master/library/node) — Docker official images, Node.js Docker team, master, read 2026-11-27. Rank 1. Backs: §3.1 (no pointer-compression tag). [^docker-node]
+- [V8 design document: Pointer compression](https://chromium.googlesource.com/v8/v8.git/+/main/docs/heap/pointer-compression.md) — V8 project, main, read 2026-11-27. Rank 1. Backs: §3.1, §6.4 (tagged fields are most of the heap, 30 % to 40 % saving, cache use, base in a register, cage at the start of the sandbox, one cage per isolate group). [^v8-ptrcomp-design]
+- [V8 source: BUILD.gn at main](https://github.com/v8/v8/blob/main/BUILD.gn) — V8 project, main, read 2026-11-27 (first 100 000 of about 331 000 characters). Rank 1. Backs: §3.1 (`v8_enable_pointer_compression_8gb`; the sandbox default depends on shared-cage pointer compression). [^v8-build-gn]
+- [Node.js v25.1.0 release notes](https://nodejs.org/en/blog/release/v25.1.0) — Node.js project, 2025-10-28, read 2026-11-27. Rank 1. Backs: §3.1, §6.4 (initial enablement of IsolateGroups, pull request 60254; no default change). [^node-v2510]
 - [Pointer compression in V8](https://v8.dev/blog/pointer-compression) — V8 team (Igor Sheludko, Santiago Aboy Solanes), 2020-03-30. Rank 4. Backs: §1.1, §3.1, §3.2, §6.1 (Smi width, tag bit, 4 GB range, 43 %, double unboxing disabled). [^v8-ptrcomp]
 - [The story of a V8 performance cliff in React](https://v8.dev/blog/react-cliff) — V8 team (Benedikt Meurer, Mathias Bynens), 2019-08-28. Rank 4. Backs: §3.2 (deprecation and migration, initial values, `null`). [^v8-react]
 - [Fast properties in V8](https://v8.dev/blog/fast-properties) — V8 team (Camillo Bruni), 2017-08-30. Rank 4. Backs: §1.1, §3.3, §3.4, §3.5, §3.12 (in-object count, dictionary properties, elements kept apart, map holds the prototype). [^v8-fastprops]
@@ -2696,11 +2983,17 @@ n =   1000000: push 2.63 ms, new Array(n) 1.19 ms, new Array(n).fill(0) 1.27 ms 
 - [Elements kinds in V8](https://v8.dev/blog/elements-kinds) — V8 team (Mathias Bynens), 2017-09-12, updated 2025-02-28. Rank 4. Backs: §1.1, §3.6, §3.7, §6.1, §6.2 (21 kinds, the lattice, holey forever and the `fill` exception, `-0`/`NaN`/`Infinity`, literal and `push` advice). [^v8-elements]
 - [Optimizing hash tables: hiding the hash code](https://v8.dev/blog/hash-code) — V8 team (Sathya Gunasekaran), 2018-01-29. Rank 4. Backs: §3.11. [^v8-hash]
 - [Optimizing ES2015 proxies in V8](https://v8.dev/blog/optimizing-proxies) — V8 team (Maya Armyanova), 2017-10-05. Rank 4. Backs: §3.13. [^v8-proxy]
-- [V8 release v8.0](https://v8.dev/blog/v8-release-80) — V8 team, 2019-12-18. Rank 4. Backs: §3.1 (average saving of 40 %, timed with Chrome 80). [^v8-release-80]
+- [V8 release v8.0](https://v8.dev/blog/v8-release-80) — V8 team, 2019-12-18. Rank 4. Backs: §3.1 (average saving of 40 %; released in coordination with Chrome 80). [^v8-release-80]
 - [v8-dev list: 31-bit Smis and pointer compression](https://groups.google.com/g/v8-dev/c/AI0RcAj-Z4g/m/Juj4UbcdAwAJ) — Santiago Aboy Solanes (V8 team), 2020-02-20. Rank 4. Backs: §3.1 (Chrome 80 enabled pointer compression and 31-bit Smis by default). [^v8-dev-80]
 - [Electron and the V8 Memory Cage](https://www.electronjs.org/blog/v8-memory-cage) — Electron project (nornagon), 2022-06-30. Rank 4. Backs: §3.1 (on since Electron 14, 4 GB heap cap, up to 40 % smaller heap). [^electron-cage]
+- [We cut Node.js memory in half](https://blog.platformatic.dev/we-cut-nodejs-memory-in-half) — Platformatic (vendor of the Watt application server; the numbers are its own, measured in its own set-up), no date or author shown, read 2026-11-27. Rank 4. Backs: §3.1, §6.4 (Node-API and NAN add-ons; memory and latency figures and their conditions). [^platformatic]
+- [Node.js issue 26756: Pointer compression and Node modules](https://github.com/nodejs/node/issues/26756) — Node.js issue tracker, 2019-03-18 to 2020-06-26, read 2026-11-27. Rank 6. Backs: §6.4. [^node-issue-26756]
+- [Node.js TSC issue 790: Looking for feedback: Pointer compression in Node.js](https://github.com/nodejs/TSC/issues/790) — Node.js Technical Steering Committee tracker, 2019-12-06 to 2023, read 2026-11-27. Rank 6. Backs: §6.4 (including one user report). [^node-tsc-790]
+- [Node.js build issue 3204: Path to adding a Tier 2 build with pointer compression enabled](https://github.com/nodejs/build/issues/3204) — Node.js build working group tracker, 2023-02-22 to 2024-09-25, read 2026-11-27. Rank 6. Backs: §6.4. [^node-build-3204]
+- [Node.js issue 55735: Pointer Compression and Isolate Groups](https://github.com/nodejs/node/issues/55735) — Node.js issue tracker, 2024-11-05 to 2026-04-26, read 2026-11-27. Rank 6. Backs: §6.4 (including one user report). [^node-issue-55735]
+- [Node.js pull request 60254: src: initial enablement of IsolateGroups](https://github.com/nodejs/node/pull/60254) — Node.js project, merged 2025-10-17, read 2026-11-27. Rank 6. Backs: §6.4. [^node-pr-60254]
 - Lab: 34 scripts (35 runs) on Node.js 24.22.1 (V8 13.6.233.17-node.58), image `node:24.22.1-alpine`, arm64, `--network none`, 2026-11-26; each script, command and output is embedded next to the claim it backs. [^lab]
-- Lab matrix: the same scripts and the probe `smi.js` on six environments (E0 Node.js 24.22.1 linux arm64; E1 Node.js 24.22.1 macOS arm64; E2 Node.js 24.22.1 linux x64, emulated; E3 Node.js 22.23.4, V8 12.4; E4 Node.js 25.7.0, V8 14.1; E7 Electron 43.7.7 as Node, V8 15.0, pointer compression on), 2026-11-27. Rank 1 (primary measurement). Backs: §1.1, §1.2, §3.1 to §3.13, §4, §5, §6.1 and §6.3. One more probe: `smi.js` on Deno 2.9.8 (V8 15.0.245.2), image `denoland/deno:alpine-2.9.8`, linux arm64. The heap-limit runs with `--max-old-space-size` also used a second Electron build with pointer compression on: Electron 38.8.6 run as Node (V8 14.0.365.10), macOS arm64. [^lab-matrix]
+- Lab matrix: the same scripts and the probe `smi.js` on six environments (E0 Node.js 24.22.1 linux arm64; E1 Node.js 24.22.1 macOS arm64; E2 Node.js 24.22.1 linux x64, emulated; E3 Node.js 22.23.4, V8 12.4; E4 Node.js 25.7.0, V8 14.1; E7 Electron 43.7.7 as Node, V8 15.0, pointer compression on; E9 the unofficial Node.js 24.22.3 build `node-v24.22.3-linux-x64-pointer-compression`, V8 13.6.233.17-node.63, pointer compression on, sandbox off, linux x64 emulated in a Debian 13 container, run beside E2), 2026-11-27. Rank 1 (primary measurement). Backs: §1.1, §1.2, §3.1 to §3.13, §4, §5, §6.1, §6.3 and §6.4. One more probe: `smi.js` on Deno 2.9.8 (V8 15.0.245.2), image `denoland/deno:alpine-2.9.8`, linux arm64. The heap-limit runs with `--max-old-space-size` also used a second Electron build with pointer compression on: Electron 38.8.6 run as Node (V8 14.0.365.10), macOS arm64. [^lab-matrix]
 
 ## Related
 
