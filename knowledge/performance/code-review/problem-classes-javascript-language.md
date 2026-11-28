@@ -4,7 +4,7 @@ type: reference
 topic: performance/code-review
 status: verified
 applies-to: ["ECMAScript 2025 as described by MDN (pages modified 2025-07 to 2026-11)", "Node.js 24 (docs v24.22.3; lab on Node.js 24.22.1, V8 13.6.233.17)", "TypeScript 5.9.3 (lab) and the TypeScript 6.0 release notes", "all read 2026-11-26", "lab re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 (macOS arm64, linux x64 emulated), 25.7.0 and Electron 43.7.7 (V8 12.4 to 15.0)", "and on Node.js 24.22.3 linux x64 with pointer compression (emulated)", "and in Google Chrome 158.0.8127.89 (V8 15.8, headless page); sort counts also on Deno 2.9.8 (V8 15.0) and Electron 38.8.6 (V8 14.0)"]
-last-verified: 2026-11-27
+last-verified: 2026-11-28
 last-updated: 2026-11-28
 tags: [performance, code-review, javascript, typescript, array-methods, iterator-helpers, async, microtasks, errors, stack-traces, sort, spread, tsconfig]
 ranked-sources: true
@@ -382,7 +382,8 @@ Page variants: `chain.mjs` line 13, `process.memoryUsage().heapUsed` (twice) →
 - A `tsconfig.json` `target` older than the runtime turns native syntax into helper calls in every file; set it to the oldest runtime the code really runs on.
 
 ## Verification status
-- Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-27
+- Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Re-run on 2026-11-28, after a restart of the lab machine: the seven scripts were extracted from this doc and run again (screen unlocked, one browser window at a time; no script prints a time). Results re-run: 7 baseline results (E0), 42 cells on E1, E2, E3, E4, E7 and E9 (once each; E0 and E1 and E3 to E7 also in the pass that found the E0 output equal to the doc line by line), 7 on E10 (page variants; `chain.mjs`, `sortkey.mjs` and `stack.mjs` also three times with `--disable-renderer-backgrounding`), and `sortkey.mjs` on E6 and E8: 58 results, all 58 matching the doc (the 7 differing cells differ as stated, the others are the same). `ts.mjs` ran with a TypeScript 5.9.3 package found on the machine (no download), mounted or loaded read-only; its page variant uses the `transpileModule` output of that package. Nothing in this doc changed except this bullet and the dates.
 - Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Then 7 runs in Chrome 158 (E10; two page variants, checked on E1): 4 same, 3 differ, 0 could not run; and `sortkey.mjs` once each on E6 and E8. Totals: 49 cells, 42 same, 7 differ. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari themselves, and this doc's own scripts on their engines (an engine-neutral cross-check of the rules on SpiderMonkey and JavaScriptCore, run on 2026-11-28, is in `../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md`); V8 versions outside 12.4 to 15.8.
 
 ## References
