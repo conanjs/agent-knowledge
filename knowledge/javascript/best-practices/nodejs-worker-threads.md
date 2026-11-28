@@ -20,6 +20,8 @@ ranked-sources: true
 ## Scope
 Nine practices for worker threads, worker pools, worker messages, worker heap limits, the piscina pool library and BullMQ processors. Numbers come from Node.js 24.22.1 (libuv 1.52.1) in `node:24.22.1-alpine` containers run with `docker run --cpus` and `--memory` between 2026-11-03 and 2026-11-09, and from the lab runs of the Node.js runtime catalog (Node.js 24.22.1, V8 13.6.233.17, linux arm64, 2026-11-26, re-run on six more builds on 2026-11-27). Several measurements used piscina 5.3.2; a note names it where the measurement is about it, and later piscina versions were not checked. All claims are about Node.js. Not run: other pool libraries, Windows, and CPU limits on hosts other than one 8-CPU Linux VM and one Kubernetes pod.
 
+**How the timings were taken.** The seconds and milliseconds in this doc (`JN-W1`, `JN-W2`, `JN-W8`, `JN-W9`) come from the worker-pool measurements of 2026-11-03 to 2026-11-09, in containers on an 8-CPU Linux virtual machine under OrbStack and in one Kubernetes pod; they were measured in one series, were not part of the re-run of 2026-11-28, and their load was not recorded ✅[^lab-pools]. The byte counts of `JN-W3` and `JN-W4` come from the Node.js runtime catalog, on one Apple M2 laptop, macOS 26.1, with the Linux builds in containers in a virtual machine on it and the x64 builds emulated: first run (2026-11-26, the other builds 2026-11-27) and re-run (2026-11-28, after the restart), with the same output in both; load not recorded ✅[^lab]. The conclusions are the order of the alternatives and the ratio between them (one worker against two under the same CPU limit, a worker against the main thread); the absolute times are quoted as the machine printed them and will differ on another machine, another CPU limit or under another load.
+
 How to read the "Applies" column: `always` (the better form is as clear as the other: use it by default), `hot path` (only in code that runs per request, per frame or per element of a large collection, or that a profile points at), `large data` (only above the size the note gives), `startup` (only when start time matters), `check build` (the answer depends on the engine version or build), `no gain` (the lab measured no useful difference, or the advice is outdated: there is no reason to rewrite code for it).
 
 Terms:
@@ -61,6 +63,7 @@ app.post('/pdf', (req, res) => res.end(renderPdf(req.body))); // blocks the loop
 **Full lab:** [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Edge cases, "A CPU-bound render on the main thread of an HTTP service".
 
 ### `JN-W2` Size a CPU-bound pool from the container's CPU limit; use one worker at 1 CPU or less
+**Seen in code as:** `maxThreads: os.cpus().length`, a fixed `maxThreads: 4`, or a pool size with no link to the CPU limit.
 **Prefer:**
 ```js
 import { availableParallelism } from 'node:os';
@@ -84,6 +87,7 @@ The cause, the CPU quota, applies to worker threads in general; only piscina was
 **Full lab:** [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Worked example and Trade-offs.
 
 ### `JN-W3` Transfer large `ArrayBuffer`s to a worker instead of copying them
+**Seen in code as:** `worker.postMessage(bigBuffer)` or `port.postMessage({ data: arrayBuffer })` with no transfer list, once per task.
 **Prefer:**
 ```js
 const ab = new ArrayBuffer(size);                // or Buffer.alloc / allocUnsafeSlow: owned memory
@@ -96,12 +100,13 @@ worker.postMessage({ data: ab }, [ab]);          // moved; ab.byteLength is 0 af
 worker.postMessage({ data: ab });                // structured clone: s bytes copied per message
 ```
 **Why:** An `ArrayBuffer` not in the transfer list is copied; a transferred one moves and becomes unusable on the sending side; a `SharedArrayBuffer` is accessible from both threads ✅[^node-worker]. This matters for messages of a megabyte or more, or many messages per second; the lab posted 1 MiB.
-**Evidence:** Lab run 5, Node.js 24.22.1, byte counts: after posting a 1 MiB `ArrayBuffer` without a transfer list the sender still had 1,048,576 bytes; with one it had 0 ✅[^lab]. Same on all six other builds ✅[^lab-matrix].
+**Evidence:** Lab run 5, Node.js 24.22.1 (V8 13.6.233.17, linux arm64), byte counts: after posting a 1 MiB `ArrayBuffer` without a transfer list the sender still had 1,048,576 bytes (a clone); with one it had 0 ✅[^lab]. Same on all six other builds ✅[^lab-matrix], and in the re-run (2026-11-28, after the restart) ✅[^lab].
 **Exceptions:** Small messages; the sender must keep its copy; data posted once at worker start.
 **Check it:** `ab.byteLength` after `postMessage` is 0 when transferred; count bytes posted per task.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 5.
 
 ### `JN-W4` Do not post small pooled `Buffer`s to workers
+**Seen in code as:** `postMessage(Buffer.from(str))` or `postMessage(Buffer.allocUnsafe(n))` per task, or such a `Buffer` in a transfer list.
 **Prefer:**
 ```js
 const msg = Buffer.alloc(len);  // own memory: can be transferred
@@ -114,7 +119,7 @@ worker.postMessage(msg, [msg.buffer]);
 worker.postMessage(Buffer.from('hello')); // clones the whole pool block it lives in
 ```
 **Why:** A `Buffer` from the internal pool cannot be transferred and is cloned, which "sends a copy of the entire `Buffer` pool"; transferring a `Buffer.alloc` or `allocUnsafeSlow` buffer makes every other view of it unusable ✅[^node-worker].
-**Evidence:** Lab run 5, Node.js 24.22.1, byte counts: a 5-byte pooled `Buffer` arrived with a 65,536-byte backing `ArrayBuffer` ✅[^lab]. Same 65,536 on 24.22.3 and on 24.21.0 (Electron 43.7.7); 8,192 bytes on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix]. Re-run for this doc on Node.js 24.22.1: a pooled `Buffer.from('hello')` arrived with a 65,536-byte backing `ArrayBuffer`; a transferred `Buffer.alloc(5)` arrived with 5 and left the sender with length 0 ✅[^spot].
+**Evidence:** Lab run 5, Node.js 24.22.1, byte counts: a 5-byte pooled `Buffer` arrived with a 65,536-byte backing `ArrayBuffer` ✅[^lab]. Same 65,536 on 24.22.3 and on 24.21.0 (Electron 43.7.7); 8,192 bytes on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix]. The catalog's re-run (2026-11-28, after the restart) gave the same 65,536 bytes on the baseline ✅[^lab]. Re-run for this doc on Node.js 24.22.1: a pooled `Buffer.from('hello')` arrived with a 65,536-byte backing `ArrayBuffer`; a transferred `Buffer.alloc(5)` arrived with 5 and left the sender with length 0 ✅[^spot].
 <details><summary>Spot check: a pooled and a transferred <code>Buffer</code></summary>
 
 `docker run --rm --network none node:24.22.1-alpine node -e '<script>'`:
@@ -137,6 +142,7 @@ pooled Buffer.from("hello") arrives with backing 65536 | transferred Buffer.allo
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 5 and "What differs".
 
 ### `JN-W5` With more than one worker, set each worker's heap limit so all limits fit the container
+**Seen in code as:** `new Worker(...)` or `new Piscina({...})` with 2 or more threads and no `resourceLimits`.
 **Prefer:**
 ```js
 const containerMb = 512, mainReserveMb = 200, workers = 2;
@@ -172,6 +178,7 @@ new Worker("console.log(process.env.M, \"maxOldGenerationSizeMb in worker:\", re
 **Full lab:** [node-worker-default-heap-limit.md](../../js-runtime/node-worker-default-heap-limit.md), Worked example and Edge cases; [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Edge cases, "No `resourceLimits` on the worker".
 
 ### `JN-W6` Enforce a piscina queue limit in the caller when tasks carry an `AbortSignal`
+**Seen in code as:** `new Piscina({ maxQueue })` together with `pool.run(task, { signal })`.
 **Prefer:**
 ```js
 if (pool.queueSize >= MAX_WAITING) throw new ServiceUnavailable('render queue full');
@@ -189,6 +196,7 @@ pool.run(task, { signal }); // the limit is never applied to this task
 **Full lab:** [piscina-queue-size.md](../../js-runtime/piscina-queue-size.md), Worked example and Edge cases.
 
 ### `JN-W7` piscina's `utilization` is not a load signal; read `queueSize`, `needsDrain` and task time for what they are
+**Seen in code as:** `pool.utilization` logged or alerted on; `needsDrain` read as "tasks are queued"; `pool.completed` read as successes.
 **Prefer:**
 ```js
 log.info({ waiting: pool.queueSize, allBusy: pool.needsDrain, ms: Date.now() - started });
@@ -209,6 +217,7 @@ This applies to piscina 5.3.2 statistics in logs, dashboards or autoscaling.
 **Full lab:** [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Edge cases; [piscina-queue-size.md](../../js-runtime/piscina-queue-size.md), Worked example.
 
 ### `JN-W8` Set `idleTimeout` when a piscina pool may grow above `minThreads`
+**Seen in code as:** `new Piscina({ minThreads: 1, maxThreads: 2 })` with no `idleTimeout`, or `idleTimeout` on a pool whose `minThreads` equals `maxThreads`.
 **Prefer:**
 ```js
 const pool = new Piscina({ filename, minThreads: 1, maxThreads: 2, idleTimeout: 10_000 });
@@ -228,6 +237,7 @@ const pool = new Piscina({ filename, minThreads: 1, maxThreads: 2 }); // extra w
 **Full lab:** [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Edge cases (`idleTimeout`).
 
 ### `JN-W9` Give BullMQ a processor file, not a function, for CPU-heavy jobs
+**Seen in code as:** `new Worker(queue, async (job) => heavyRender(job.data))` from `bullmq`, or a NestJS `WorkerHost` whose `process` method does CPU work.
 **Prefer:**
 ```js
 const worker = new Worker('render', path.join(__dirname, 'render.processor.js'),
@@ -251,13 +261,13 @@ const worker = new Worker('render', async (job) => heavyRender(job.data), { conn
 - A BullMQ function processor runs on the main thread; CPU work needs a processor file.
 
 ## Verification status
-- Verified: 43 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 47 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
 - Worker-pool measurements, 2026-11-03 to 2026-11-09: Node.js 24.22.1 (libuv 1.52.1), piscina 5.3.2, pdfmake 0.3.12 (2026-11-03) and 0.3.13 (from 2026-11-05), bullmq 5.80.9, in `node:24.22.1-alpine` with `docker run --cpus` and `--memory`, plus read-only checks in one 0.5 CPU / 512 MiB Kubernetes pod; method and numbers in [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Worked example and Edge cases. Rank 1 (primary measurement). Backs: Summary; Catalog, JN-W1, JN-W2, JN-W7 to JN-W9; Lookup notes. [^lab-pools]
 - Worker heap-limit measurements, 2026-11-06: Node.js 24.22.1 (V8 13.6.233) in `node:24.22.1-alpine` on an 8 GiB Linux VM, piscina 5.3.2, `docker run --memory --memory-swap --cpus`; scripts and outputs in [node-worker-default-heap-limit.md](../../js-runtime/node-worker-default-heap-limit.md), Worked example. Rank 1 (primary measurement). Backs: Summary; Catalog and Lookup notes, JN-W5. [^lab-heap]
 - piscina queue measurements, 2026-11-06: piscina 5.3.2, Node.js 24.22.1; scripts in [piscina-queue-size.md](../../js-runtime/piscina-queue-size.md), Worked example. Rank 1 (primary measurement). Backs: Catalog, JN-W6; Lookup notes, JN-W6 and JN-W7. [^lab-piscina]
-- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, `--network none`), 2026-11-26, each run 3 times; script `transfer.mjs` and its output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 5. Rank 1 (primary measurement). Backs: Catalog and Lookup notes, JN-W3 and JN-W4. [^lab]
+- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, `--network none`), 2026-11-26, each run 3 times, and re-run on 2026-11-28 after a restart of the lab machine (the script extracted from the catalog, three runs, the same output); script `transfer.mjs` and its output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 5, and its Verification status. Rank 1 (primary measurement). Backs: Catalog and Lookup notes, JN-W3 and JN-W4. [^lab]
 - Lab matrix: the same script re-run on 2026-11-27 on Node.js 24.22.1 (macOS 26.1 arm64, linux x64 emulated), 22.23.4, 25.7.0, Electron 43.7.7 run as Node (Node.js 24.21.0 API) and Node.js 24.22.3 with pointer compression; differing output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), "Other builds and versions (2026-11-27)". Rank 1 (primary measurement). Backs: Catalog, JN-W4; Lookup notes, JN-W3 and JN-W4. [^lab-matrix]
 - Spot checks for this doc: the scripts in the `JN-W4` and `JN-W5` notes, run on 2026-11-28 with `docker run --rm --network none node:24.22.1-alpine` (Node.js 24.22.1, linux arm64; `--memory` and `--memory-swap` per row for `JN-W5`); commands and output in those notes. Rank 1 (primary measurement). Backs: Lookup notes, JN-W4 and JN-W5. [^spot]
 - [Worker threads: port.postMessage and transferring Buffers](https://nodejs.org/docs/latest-v24.x/api/worker_threads.html) — Node.js project, v24.22.3 docs. Rank 1. Backs: Lookup notes, JN-W3 and JN-W4. [^node-worker]

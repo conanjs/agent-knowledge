@@ -21,6 +21,13 @@ ranked-sources: true
 ## Scope
 Nine practices for the event loop, the libuv thread pool, microtasks, `async_hooks`, synchronous APIs, timers, source maps and password hashing per request. The lab numbers come from Node.js 24.22.1 (V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs) on 2026-11-26, re-run on 2026-11-27 on six more builds; the other practices rest on the Node.js 24 docs (v24.22.3), the Node.js source, OWASP (Open Worldwide Application Security Project) and NIST (National Institute of Standards and Technology), as each note says. The claims hold for Node.js; only `JN-E3` was also run on other engines. Not run: Windows, native x64 hardware, other CPU counts or pool sizes than 4 and 8 threads on 8 CPUs, and any timing of source maps, `async_hooks` or password hashes.
 
+**How the timings were taken.** The conclusion is the order (the chain of microtasks finished before the 0 ms timer) and how the engines compare, which held in both runs; the milliseconds are quoted as the machine printed them under that load, and will differ on another machine or under another load.
+- **Machine.** All runs were made on one Apple M2 laptop, macOS 26.1; the Linux builds ran in containers in a virtual machine on it, and the x64 builds were emulated ✅[^lab-matrix].
+- **Scripts that print an order or a count.** The scripts behind `JN-E1`, `JN-E3` and `JN-E4` print an order or a count, not a time: first run (2026-11-26, the other builds 2026-11-27) and re-run (2026-11-28, after the restart), whose 40 results all matched the first run; load not recorded ✅[^lab].
+- **The only times.** The only times in this doc are those of the cross-engine microtask trial in `JN-E3`.
+  - **First run.** Its first run (2026-11-28, before the restart) had a one-minute load average 2.1 to 13.8 at the start of the runs over the whole cross-engine lab; for its browser windows the runner did not yet check for a locked screen or keep one browser window at a time, so the conditions of that run are not fully known ✅[^lab-cross].
+  - **Re-run.** Its re-run (2026-11-28, after the restart: screen unlocked, one browser window at a time, one timing run at a time) had a one-minute load average 3.0 to 11.7 at the start of the runs ✅[^lab-cross].
+
 How to read the "Applies" column: `always` (the better form is as clear as the other: use it by default), `hot path` (only in code that runs per request, per frame or per element of a large collection, or that a profile points at), `large data` (only above the size the note gives), `startup` (only when start time matters), `check build` (the answer depends on the engine version or build), `no gain` (the lab measured no useful difference, or the advice is outdated: there is no reason to rewrite code for it).
 
 Terms:
@@ -45,6 +52,7 @@ Terms:
 
 ## Lookup notes
 ### `JN-E1` Cap concurrent long pool tasks, and size the pool in the deploy environment
+**Seen in code as:** `crypto.pbkdf2`, `scrypt`, `randomBytes` or `generateKeyPair`; async `zlib.gzip` or `brotliCompress` per response; `Promise.all` over many `fs.promises` calls in a server.
 **Prefer:**
 ```js
 import pLimit from 'p-limit';
@@ -59,8 +67,8 @@ app.post('/login', async (req, res) => {
 });
 await Promise.all(paths.map((p) => fs.promises.readFile(p)));    // 10,000 paths at once
 ```
-**Why:** The pool serves every `fs` call except the watchers and the `*Sync` calls, the async crypto APIs, `dns.lookup` and the async `zlib` APIs, with 4 threads by default ✅[^node-cli]. Each long task holds one thread until it ends ✅[^node-dontblock], so with 4 in flight an unrelated read or lookup waits. Outgoing HTTP or database connections to host names go through `dns.lookup` too, because other networking APIs call it ✅[^node-dns].
-**Evidence:** Lab run 1, Node.js 24.22.1, 3 runs: a `fs.readFile` and a `dns.lookup('localhost')` issued after four `crypto.pbkdf2` calls both waited for a hash with the default pool, and neither waited with `UV_THREADPOOL_SIZE=8` ✅[^lab]. Same output on Node.js 24.22.1 on macOS arm64 and emulated x64, 22.23.4, 25.7.0, Electron 43.7.7 run as Node and the Node.js 24.22.3 pointer-compression build ✅[^lab-matrix].
+**Why:** The pool serves every `fs` call except the watchers and the `*Sync` calls, the async crypto APIs, `dns.lookup` and the async `zlib` APIs, with 4 threads by default ✅[^node-cli]. Each long task holds one thread until it ends ✅[^node-dontblock], so with 4 in flight an unrelated read or lookup waits. Outgoing HTTP or database connections to host names go through `dns.lookup` too, because other networking APIs call it ✅[^node-dns]. This matters when hashing, compression or many `fs` or `dns.lookup` calls can reach 4 in flight under real load.
+**Evidence:** Lab run 1, Node.js 24.22.1, 3 runs: a `fs.readFile` and a `dns.lookup('localhost')` issued after four `crypto.pbkdf2` calls both waited for a hash with the default pool, and neither waited with `UV_THREADPOOL_SIZE=8` ✅[^lab]. Same output on Node.js 24.22.1 on macOS arm64 and emulated x64, 22.23.4, 25.7.0, Electron 43.7.7 run as Node and the Node.js 24.22.3 pointer-compression build ✅[^lab-matrix]. The re-run (2026-11-28, after the restart) gave the same order, unset and with 8 threads, in three runs ✅[^lab].
 **Exceptions:** Pool work is rare or short; the process does one job at a time (a command-line tool or a batch script); the only I/O (input/output) is network sockets, which do not use the pool. `dns.resolve*` skips the pool but always queries the network and ignores `/etc/hosts`, so switching changes behaviour ✅[^node-dns]. No page gives a recommended pool size; libuv's maximum is 1024 ✅[^libuv-tp]. Related, not the same practice: `JL-A3` in [async-and-promises.md](async-and-promises.md) starts independent async calls together and caps how many run at once; `JB-F7` in [browser-component-frameworks.md](browser-component-frameworks.md) does the same for fetches in a browser. This one is about the 4 threads that Node.js shares between `fs`, DNS, crypto and `zlib`.
 **Check it:** Run the lab's `threadpool.mjs` with and without `UV_THREADPOOL_SIZE=8`; in production, compare the latency of a cheap file-reading endpoint with and without hashing load.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 1, and "Other builds and versions".
@@ -81,6 +89,7 @@ process.env.UV_THREADPOOL_SIZE = '16'; // at the top of server.js
 **Full lab:** none; the statement is in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, "Corrections found while checking the sources".
 
 ### `JN-E3` Yield to the event loop with `setImmediate`, not `nextTick`, `queueMicrotask` or a resolved `await`
+**Seen in code as:** a recursive `process.nextTick(step)` or `queueMicrotask(step)` meant to "break up" work; an `async` loop whose `await`s only meet already-resolved values, such as `await cache.get(k)` on an in-memory cache.
 **Prefer:**
 ```js
 for (let i = 0; i < items.length; i++) {
@@ -93,8 +102,8 @@ for (let i = 0; i < items.length; i++) {
 function step(i) { work(items[i]); if (++i < items.length) process.nextTick(step, i); }
 for (const k of keys) total += await memoryCache.get(k); // never reaches the event loop
 ```
-**Why:** The next-tick queue is drained completely before the loop continues, and the microtask queue right after it ✅[^node-process], so timers and I/O wait until every step has run. Recursive `process.nextTick` calls can starve I/O, and the Node.js guide recommends `setImmediate()` ✅[^node-loop-guide]. The loop size that matters is many steps; the lab used 100,000.
-**Evidence:** Lab run 2, Node.js 24.22.1: 100,000 steps scheduled recursively with `process.nextTick` or `queueMicrotask` all ran before a 0 ms timer; with `setImmediate` the timer ran in between ✅[^lab]. Same on all six other builds ✅[^lab-matrix]. The docs state the starvation for `process.nextTick` only ✅[^node-loop-guide]. The resolved `await` case, re-run for this doc on Node.js 24.22.1 in the same image: a loop of 100,000 `await Promise.resolve(i)` finished before the 0 ms timer ✅[^spot].
+**Why:** The next-tick queue is drained completely before the loop continues, and the microtask queue right after it ✅[^node-process], so timers and I/O wait until every step has run. Recursive `process.nextTick` calls can starve I/O, and the Node.js guide recommends `setImmediate()` ✅[^node-loop-guide]; `setImmediate` puts the next step behind pending I/O ✅[^node-loop-guide]. The loop size that matters is many steps; the lab used 100,000.
+**Evidence:** Lab run 2, Node.js 24.22.1: 100,000 steps scheduled recursively with `process.nextTick` or `queueMicrotask` all ran before a 0 ms timer; with `setImmediate` the timer ran in between ✅[^lab]. Same on all six other builds ✅[^lab-matrix], and in the re-run (2026-11-28, after the restart) ✅[^lab]. The docs state the starvation for `process.nextTick` only ✅[^node-loop-guide]. The lab script did not test a resolved `await` ✅[^lab]: that case follows from `await` continuations being microtasks. The resolved `await` case, re-run for this doc on Node.js 24.22.1 in the same image: a loop of 100,000 `await Promise.resolve(i)` finished before the 0 ms timer ✅[^spot].
 <details><summary>Spot check: resolved awaits against a 0 ms timer</summary>
 
 `docker run --rm --network none node:24.22.1-alpine node --input-type=module -e '<script>'`:
@@ -108,12 +117,17 @@ console.log("100000 resolved awaits finished before the 0 ms timer:", !timerRan)
 ```
 </details>
 
-**Other engines:** holds on all three engines: a chain of 100,000 `queueMicrotask` steps (on the `jsc` shell, which has no `queueMicrotask`, `Promise.resolve().then` steps) started after a 0 ms timer finished before the timer ran, or in the same millisecond, in every run on Node.js 24.22.1 (done at 3.5 to 4.5 ms), Bun 1.4.5 (JavaScriptCore, 2.2 to 4.9 ms), the macOS 26.1 `jsc` shell (9 to 14 ms), Chrome 158 (25 to 39 ms), Firefox 161 (SpiderMonkey, 28 to 48 ms) and a WebKit page (2.0 to 5.0 ms) ✅[^lab-cross]. `process.nextTick` and `setImmediate` were not run off Node.js.
+**Other engines:** holds on all three engines: a chain of 100,000 `queueMicrotask` steps (on the `jsc` shell, which has no `queueMicrotask`, `Promise.resolve().then` steps) started after a 0 ms timer finished before the timer ran, or in the same millisecond, in every run of both runs, on Node.js 24.22.1, Bun 1.4.5 (JavaScriptCore), the macOS 26.1 `jsc` shell, Chrome 158, Firefox 161 (SpiderMonkey) and a WebKit page ✅[^lab-cross]. The chain was done, after the start, at:
+- first run (2026-11-28, before the restart; six runs per environment, load average 2.1 to 13.8 over the lab): 3.7 to 4.5 ms (Node.js), 2.2 to 3.6 ms (Bun), 9 to 14 ms (`jsc` shell), 25 to 27 ms (Chrome), 32 to 48 ms (Firefox) and 2.0 to 3.0 ms (WebKit page) ✅[^lab-cross];
+- re-run (2026-11-28, after the restart; three runs per environment, under a one-minute load average of 3.0 to 11.7 at the start of the runs): 3.5 to 3.7 ms, 2.9 to 4.9 ms, 9.9 to 13.3 ms, 28.1 to 38.5 ms, 28.0 to 34.0 ms and 3.0 to 5.0 ms ✅[^lab-cross];
+- over both runs (nine runs per environment): 3.5 to 4.5 ms (Node.js), 2.2 to 4.9 ms (Bun), 9 to 14 ms (`jsc` shell), 25 to 39 ms (Chrome), 28 to 48 ms (Firefox) and 2.0 to 5.0 ms (WebKit page), with the timer 0.0 to 22.7 ms after the chain ✅[^lab-cross].
+What holds over both runs: the order, in every engine; Chrome and Firefox took several times as long as Node.js, Bun and the WebKit page for the same chain (6 to 14 times Node.js's time over the ranges above). `process.nextTick` and `setImmediate` were not run off Node.js.
 **Exceptions:** Few steps; each step awaits real I/O (each wait returns to the loop); a single `nextTick` to emit an event after the caller attached its handlers ✅[^node-process]. Related, not the same practice: `JL-A1` in [async-and-promises.md](async-and-promises.md) removes the needless `await` of a non-promise value in a loop; this one lets timers and I/O run during a long loop.
 **Check it:** `perf_hooks.monitorEventLoopDelay()` (resolution default 10 ms in Node.js 24) ✅[^node-perf] shows the delay; or run the lab's `starve.mjs`.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 2; [v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md](../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md), §4.29.
 
 ### `JN-E4` Carry request context with `AsyncLocalStorage`, not an `async_hooks` hook
+**Seen in code as:** `async_hooks.createHook({ init, before, after, destroy }).enable()` in application code or an in-house tracing library; `executionAsyncResource()` used for context.
 **Prefer:**
 ```js
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -128,7 +142,7 @@ createHook({ init(id, type, trigger) { ctx.set(id, ctx.get(trigger)); },
              destroy(id) { ctx.delete(id); } }).enable();
 ```
 **Why:** An enabled hook turns on promise tracking (`trackPromises` defaults to `true`), so its callbacks run for every promise; a `destroy` hook adds tracking of promises through the garbage collector; the Node.js 24 docs do not recommend `createHook`, citing "performance implications" ✅[^node-asynchooks].
-**Evidence:** Lab run 3, Node.js 24.22.1: an `init`-only hook was called 2004 times for 1,000 `await`s, and 0 times with `trackPromises: false` ✅[^lab]. Same on Electron 43.7.7 (Node.js 24.21.0 API), 25.7.0 and 24.22.3. Differs on Node.js 22.23.4: 2004 calls with the default hook and 2003 with `trackPromises: false`, so the option is not honoured there ✅[^lab-matrix]. The Async hooks page gives no "added in" version for `trackPromises` ✅[^node-asynchooks], so check it on the minor version in use.
+**Evidence:** Lab run 3, Node.js 24.22.1: an `init`-only hook was called 2004 times for 1,000 `await`s, and 0 times with `trackPromises: false` ✅[^lab]. Same on Electron 43.7.7 (Node.js 24.21.0 API), 25.7.0 and 24.22.3. Differs on Node.js 22.23.4: 2004 calls with the default hook and 2003 with `trackPromises: false`, so the option is not honoured there ✅[^lab-matrix]. The re-run (2026-11-28, after the restart) gave the same counts on the baseline and on these builds ✅[^lab]. The Async hooks page gives no "added in" version for `trackPromises` ✅[^node-asynchooks], so check it on the minor version in use.
 **Exceptions:** The hook runs only in a debugging session or a test; the application has few promises per request.
 **Check it:** `grep -rn "createHook" src/ node_modules/` and look for `--no-async-context-frame` in `NODE_OPTIONS`; count `init` calls as the lab's `hooks.mjs` does.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 3, and "What differs".
@@ -146,6 +160,7 @@ store.run({ requestId }, () => handle(req, res));
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, "Corrections found while checking the sources" and "What differs".
 
 ### `JN-E6` Use the async API, not `*Sync`, inside request handlers
+**Seen in code as:** `fs.readFileSync`, `zlib.gzipSync`, `crypto.pbkdf2Sync`, `execSync` or `spawnSync` inside a handler, middleware or queue processor.
 **Prefer:**
 ```js
 app.get('/report', async (req, res) => {
@@ -176,6 +191,7 @@ entries.set(id, { value, t }); // and clearTimeout(entries.get(id).t) on delete
 **Full lab:** none; the statement is in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, "Corrections found while checking the sources".
 
 ### `JN-E8` Read `err.stack` only for errors that are logged, when the service runs with `--enable-source-maps`
+**Seen in code as:** `--enable-source-maps` in `NODE_OPTIONS`, a Dockerfile `CMD` or a `start` script, together with `new Error().stack` read per call to find the caller, or errors used for expected outcomes.
 **Prefer:**
 ```js
 if (!user) return { ok: false, reason: 'not-found' };       // expected outcome: no Error
@@ -192,6 +208,7 @@ function log(msg) { const caller = new Error().stack.split('\n')[2]; out.write(`
 **Full lab:** none; the class is `source-maps-on-hot-stacks` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md).
 
 ### `JN-E9` Verify a password once at login, not a slow hash on every API request
+**Seen in code as:** `bcrypt.compare`, `argon2.verify`, `crypto.scrypt` or `pbkdf2` in middleware for every call; API keys stored as bcrypt hashes and checked per request.
 **Prefer:**
 ```js
 // API token: at least 112 bits of randomness, stored as SHA-256, looked up by id
@@ -219,12 +236,12 @@ app.use(async (req, res, next) => {
 - A deliberately slow hash belongs to login, not to every API request.
 
 ## Verification status
-- Verified: 48 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 60 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
-- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26, each run 3 times; scripts and output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab runs 1 to 3. Rank 1 (primary measurement). Backs: Summary; Catalog; Lookup notes. [^lab]
+- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26, each run 3 times, and re-run on 2026-11-28 after a restart of the lab machine (the scripts extracted from the catalog, three runs each on the baseline, 40 results, all matching; no script prints a time); scripts and output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab runs 1 to 3, and its Verification status. Rank 1 (primary measurement). Backs: Summary; Catalog; Lookup notes. [^lab]
 - Lab matrix: the same scripts re-run on 2026-11-27 on Node.js 24.22.1 (macOS 26.1 arm64, linux x64 emulated), 22.23.4 (V8 12.4, libuv 1.51.0), 25.7.0 (V8 14.1, libuv 1.51.0), Electron 43.7.7 run as Node (Node.js 24.21.0 API, V8 15.0) and Node.js 24.22.3 with pointer compression (linux x64 emulated), plus `node --help` side checks; table and differing output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), "Other builds and versions (2026-11-27)". Rank 1 (primary measurement). Backs: Catalog, JN-E1 and JN-E4; Lookup notes. [^lab-matrix]
-- Cross-engine lab: `microtask.js` run three times on 2026-11-28 on Node.js 24.22.1 (macOS arm64), Chrome 158.0.8127.89 (V8 15.8), Firefox 161.0 (SpiderMonkey), the `jsc` shell of macOS 26.1, Bun 1.4.5 and a Playwright WebKit page, on one Apple M2; script and output in [v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md](../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md), §4.29. Rank 1 (primary measurement). Backs: Lookup notes, JN-E3. [^lab-cross]
+- Cross-engine lab: `microtask.js` run on 2026-11-28 before a restart of the lab machine (six runs per environment, one-minute load average 2.1 to 13.8 over the lab) and three times again after it (screen unlocked, one browser window at a time, one timing run at a time; load average 3.0 to 11.7 at the start of those runs, from the runner's `uptime` lines) on Node.js 24.22.1 (macOS arm64), Chrome 158.0.8127.89 (V8 15.8), Firefox 161.0 (SpiderMonkey), the `jsc` shell of macOS 26.1, Bun 1.4.5 and a Playwright WebKit page, on one Apple M2; script and output in [v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md](../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md), §4.29. Rank 1 (primary measurement). Backs: Lookup notes, JN-E3. [^lab-cross]
 - Spot check for this doc: the resolved-`await` script in the `JN-E3` note, run on 2026-11-28 with `docker run --rm --network none node:24.22.1-alpine` (Node.js 24.22.1, linux arm64); command and output in that note. Rank 1 (primary measurement). Backs: Lookup notes, JN-E3. [^spot]
 - [Command-line API: UV_THREADPOOL_SIZE, --enable-source-maps, --no-async-context-frame](https://nodejs.org/docs/latest-v24.x/api/cli.html) — Node.js project, v24.22.3 docs. Rank 1. Backs: Catalog, JN-E2, JN-E5, JN-E8; Lookup notes. [^node-cli]
 - [Thread pool work scheduling](https://docs.libuv.org/en/v1.x/threadpool.html) — libuv project, v1.x, living. Rank 1. Backs: Lookup notes, JN-E1. [^libuv-tp]

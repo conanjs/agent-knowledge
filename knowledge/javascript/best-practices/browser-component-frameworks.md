@@ -20,6 +20,8 @@ ranked-sources: true
 ## Scope
 The catalog covers rules `JB-F1` to `JB-F9`. The sources are the React 19 docs (react.dev, living) and the React Redux docs (8.1 and later), read 2026-11-25 and 2026-11-26. None was measured in the knowledge base's own lab; each Evidence line says what the docs state, and counts such as "40 re-renders instead of 0" are arithmetic from the code shape. The rules hold for React as its docs describe it; other component frameworks were not checked.
 
+**How the timings were taken:** no lab timing is behind this doc; its evidence comes from the React and React Redux documentation, and its costs are counts from the code shape.
+
 How to read the "Applies" column: `always` means the better form is as clear as the other, so it is the default; `hot path` means it matters only in code that runs per request, per frame or per element of a large collection, or that a profile points at; `large data` means only above the size the row gives; `startup` means only when start time matters; `check build` means the answer depends on the engine version or build; `no gain` means no useful difference is expected (here: React Compiler already does it), so there is no reason to write code for it.
 
 Terms used below:
@@ -110,7 +112,7 @@ const session = useMemo(() => ({ user, setUser }), [user]);
 ```jsx
 <AppContext.Provider value={{ user, setUser, pointer, now }}>{children}</AppContext.Provider>
 ```
-**Why:** every consumer of a context re-renders when the provider's value changes, and `memo` does not prevent it ✅[^react-usecontext]. A value object built in render is new each time; a fast value mixed with slow ones re-renders every consumer of the slow ones too.
+**Why:** every consumer of a context re-renders when the provider's value changes by `Object.is`, and `memo` does not prevent it ✅[^react-usecontext]. A value object built in render is new each time; a fast value mixed with slow ones re-renders every consumer of the slow ones too.
 **Evidence:** stated by react.dev (`useContext`, React 19 docs, living), not measured here: the fix for a value created on every render is `useMemo` and `useCallback` ✅[^react-usecontext].
 **Exceptions:** react.dev says that re-rendering consumers because a new value object is created on each render is not a problem in smaller apps ✅[^react-usecontext].
 **Check it:** React DevTools Profiler, "Highlight updates": consumers of the slow context do not flash on pointer moves.
