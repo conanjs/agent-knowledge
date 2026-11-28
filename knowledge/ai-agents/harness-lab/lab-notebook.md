@@ -2,9 +2,9 @@
 schema: deep-dive/v1
 topic: ai-agents/harness-lab
 status: verified
-applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-27"]
+applies-to: ["Claude Code 2.1.330 and 2.1.332 (CLI, headless -p), Sonnet and Haiku, one macOS machine", "experiments run 2026-11-24 to 2026-11-28"]
 last-verified: 2026-11-27
-last-updated: 2026-11-27
+last-updated: 2026-11-28
 synthesized-into: []
 tags: [lab-notebook, claude-code, subagents, plugins, hooks, orchestrator, evaluator, token-cost, experiments]
 ---
@@ -21,17 +21,19 @@ What the experiments showed:
 - Hooks see `agent_type` in every mode.
 - Asking an agent to list its tools is not evidence of what it has.
 - Fixed steps are cheaper and steadier in a script than in a model or a workflow (E24, E28, E31).
-- Path-scoped rules reach a worker when it touches their area, and they changed the code when legacy code showed the wrong conventions (E30, E32).
+- Path-scoped rules reach a worker when it reads or writes a file in their area with Read or Write (compound shell reads attached none in E39; Edit alone was not isolated), and they changed the code when legacy code showed the wrong conventions (E30, E32).
 - On one card (Sonnet, 2.1.332), a one-line prompt fix cut tests that assert a whole file after a write from 5 of 5 runs to 1 of 5, while the pass rates could not tell the two prompts apart (E36).
 - In `acceptEdits` mode, a headless session with the workers' flags could create and delete files through the shell, which `--allowedTools` did not allow; `default` mode denied them (2.1.332, one run per mode; E37).
 - The orchestrator stopped for approval after the spec on its own, and resumed headless calls carried on from each approval; it skipped its pattern step until told (one run; E38).
+- With five path-scoped rules installed, Claude Code attached them when a worker read a file in their area with Read, with exceptions. The cards still passed without a file their tasks named, and without one requirement: the cards carried no task text, and the gate did not yet check the named files (2.1.332, headless, Sonnet, one run; E39).
+- Two prompt fixes passed their evals both before and after the change, so the evals showed neither the faults nor a need for the fixes (2.1.332, headless, Sonnet, 2 runs per arm; E40).
 
 **Use this when:**
 - you build or change an agent harness on Claude Code (subagents, plugin agents, hooks, headless runs);
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** thirty-eight experiments (E1–E38; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** forty experiments (E1–E40; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -903,7 +905,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - Nine tool calls needed approval and were denied (2, 2, 1 and 4 in the four sessions; this said eight until E37 counted the run records): test-authors writing files through shell heredocs and chained commands, and the US3 implementer running `prettier --write`, which was not among its commands, so it fixed the formatting by hand (32 turns).
   - Whole run: 2,278,193 tokens and about $1.73; the orchestrator's planning took 36 % of the tokens and about 30 % of the cost.
 - **Conclusion** (one feature, one repository, three attempts at the build):
-  - The chain built three stories on a real repository, and the reviewer ran. Each stop happened before damage: nothing was committed by a failed card. *(The author's reading:)* the stops came from the harness (a state file the script did not commit) and from a model's behaviour (a test that asserted more than its scenario); the proposed fixes for the second are recorded as incidents and were not tried.
+  - The chain built three stories on a real repository, and the reviewer ran. *(E39 found that the two tracker cards changed neither `tracker.schema.md` nor `tracker.feature`, which their tasks named; the reviewer had passed `001-US2`.)* Each stop happened before damage: nothing was committed by a failed card. *(The author's reading:)* the stops came from the harness (a state file the script did not commit) and from a model's behaviour (a test that asserted more than its scenario); the proposed fixes for the second are recorded as incidents and were not tried.
   - Writing `.claude/rules/hook-program.md` with the Write tool was refused once, in a headless `claude -p` session on 2.1.332 with `--allowedTools` including Write: Claude Code treats the path as sensitive. Proposed patterns need another route to the person.
   - Workers on a real repository cost more than in the toy repositories: a test-author's cumulative input was 150,000–200,000 tokens over 11–13 turns here, against about 40,000 over 6–8 turns in E24 and E26 (both from the CLI's `usage` and `num_turns`). That reading the Cucumber steps and fixtures caused most of it is an inference, not measured.
 
@@ -986,7 +988,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - **Fix** (archkit commit `184b6c6`):
     - `build-task.mjs` starts the test-author and the implementer with `--permission-mode default`, and so does the eval runner;
     - the test-author's shell line now says that any command that writes a file is denied, and that the read-only commands still run;
-    - a fake-claude test fails with `acceptEdits` and passes with `default`.
+    - a test that runs `build-task.mjs` with a fake `claude` program (a script that records its arguments and writes canned files) fails with `acceptEdits` and passes with `default`.
   - **Regression eval after the fix, with P1 to P3 merged:** `test-author-scope`, 5 runs.
     - 5 of 5 passed, with no denial.
     - No run had a whole-file assertion after a write.
@@ -1026,7 +1028,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
     - Call 4 made 11 Read calls and wrote five proposals of 10 to 13 lines each to `.archkit/patterns/proposed/`. `patterns.mjs proposed` reported no problems, and the orchestrator stopped.
     - Its one denied call was `patterns.mjs --help`. `bash-guard.mjs`, the orchestrator's shell hook, refuses it because only `check` and `proposed` are allowed.
     - The proposals were left for the user to install, and the build was told to go without them. The script's docs commit (`bf55dac`) put all five on the branch.
-  - **Build:** 8 turns, 7 requests, 202 s, 99,366 tokens and $0.054 for the session around the script, with two `--next` calls. Both cards passed at their first gate attempt:
+  - **Build:** 8 turns, 7 requests, 202 s, 99,366 tokens and $0.054 for the session around the script, with two `--next` calls. Both cards passed at their first gate attempt, although neither changed `tracker.schema.md` or `tracker.feature`, which their tasks named (found in E39):
 
 | Card | Test-author | Implementer | Card total |
 |---|---|---|---|
@@ -1045,9 +1047,106 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **Conclusion** (one feature, one repository, one run, resumed headless calls):
   - The orchestrator stopped after the spec on its own, as its prompt says. The later stops were also asked for in the resumed prompts, so they do not test the prompt.
   - The approvals were typed into resumed headless calls by the lab's agent, under the user's delegation. An approval typed by the user in an interactive session is still untested.
-  - The route for proposed patterns worked when each step was asked for: proposals went to the allowed folder, `patterns.mjs proposed` checked them, then the orchestrator stopped. Installing one was not tried.
-  - The orchestrator skipped its pattern step until corrected. *(The author's reading:)* it read the step as optional because the request did not mention patterns. This is one instance, recorded as an incident; no fix was tried.
+  - The route for proposed patterns worked when each step was asked for: proposals went to the allowed folder, `patterns.mjs proposed` checked them, then the orchestrator stopped. Installing one was not tried in E38; the user installed all five before E39, and `patterns.mjs check` reported no problems.
+  - The orchestrator skipped its pattern step until corrected. *(The author's reading:)* it read the step as optional because the request did not mention patterns. E40 weakens this reading: with the same request in one call, the prompt at archkit `17a1ba0` (E38's, plus a line about rejected proposals) proposed patterns in 2 of 2 runs. This is one instance, recorded as an incident; no fix was tried in E38 (E40 landed one).
   - Resuming sends the whole conversation again. The fourth call was 42 % of the planning input, mostly because each of its 6 requests carried the earlier conversation: its first request was already 78,090 tokens, and the reading for the patterns took it to 105,096.
+---
+
+### E39. A third feature with five installed rules: do they reach the workers, and do the cards deliver what their tasks name? (2026-11-28)
+- **Question:** five path-scoped rules are now installed in E34's repository. They are E38's proposals, approved and installed by the user with `patterns.mjs install`. Do the rules reach the sessions that touch their areas, and do the cards now change every file their tasks name?
+  - **Background, found on 2026-11-28 while the tracker features were moved to a clean branch:** four tracker cards in a row (E34's `001-US1` and `001-US2`, E38's `002-US1` and `002-US2`) passed although the implementer changed only `tracker.mjs`. Each task also named `tracker.schema.md` and `tracker.feature`. The gate runs tests, lint and format only. The counter-case is E34's `001-US3`, which created the `desktop-notify.feature` its task named.
+  - **Also:** does the orchestrator stop after the plan when nothing asks it to? In E38 that stop was asked for in the approval.
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; the worktree and branch of E34; archkit at commit `17a1ba0`, with workers in `default` mode and `--setting-sources project,local`, and E35's proposals P1 to P3 applied;
+  - `repo.json` lists five patterns, whose rules sit in `.claude/rules/`: `hook-program` (`home/hooks/*/runtime/*.mjs`), `hook-scenarios` (`home/hooks/*/tests/**`), `hook-schema-doc` (`home/hooks/*/runtime/*.schema.md`), `tracker-cli-edits` (`home/hooks/tracker/runtime/tracker.mjs`) and `skill-file`. The `tracker-cli-edits` rule ends "Each new option needs scenarios in `tests/tracker.feature` and a line in `tracker.schema.md`";
+  - the request: the tracker CLI gets `--find "<text>"`, which lists the open items whose title, next step or note contains the text, and `--stats`, which prints one line of counts;
+  - planning: `claude -p '<request>' --plugin-dir ~/workspace/archkit/build --agent archkit-build:orchestrator --allowedTools Read Grep Glob Write Edit Bash --output-format json`, then the same command with `--resume <session id>` and each approval as the prompt. The approvals were given by the lab's agent, under the user's delegation: "Spec approved, with your five defaults (approval delegated by V to the agent running this session, 2026-11-28)." and "Plan approved (same delegated approval)." Neither the request nor an approval asked for a stop;
+  - build: `claude -p 'Build specs/003-tracker-find-stats.'` with the same flags, in a fresh session.
+- **Result** ✅[^lab]:
+
+| Planning call | What it did | Turns | Seconds | Input (tokens) |
+|---|---|---|---|---|
+| 1 | Spec: 2 stories, 15 scenarios, 5 stated defaults. FR-008 asks both options to report a format error as `--brief` does; FR-009 asks for them in `tracker.schema.md` and in `tracker.feature`. Stopped for approval | 21 | 61 | 320,936 |
+| 2 | Plan; stopped for approval | 9 | 52 | 305,293 |
+| 3 | Tasks and cards; each card carries 4 patterns, and `cards.mjs` warned that this is more than 3 | 4 | 20 | 263,054 |
+
+  - **Planning in all:** 34 turns, 14 requests, 134 s, 889,283 tokens and $0.596.
+    - Its reply to call 2 said "I checked the plan against the repo's four rule files". It never opened `.claude/rules/`; the four were the rules Claude Code had attached when it read the tracker files.
+    - One call was denied: a chained `git branch --show-current; ls specs …; git status --short …`. `bash-guard.mjs` refuses it because it allows one command at a time.
+  - **What a card carries:** its title, goal, acceptance scenarios, allowed and protected paths, checks, patterns and examples, but only the ids of its tasks (`"tasks": ["T001"]`), not their text. `requirements` lists only the FR ids that the story or task text cites: it was empty on both 003 cards, so FR-008 and FR-009 reached no worker. Of the earlier tracker cards, only `001-US2` carried a requirement (FR-005). Neither implementer opened `specs/`.
+  - **Examples:** `cards.mjs` keeps the first three pattern examples (`desktop-notify.mjs`, `desktop-notify.feature`, `tracker.schema.md`), so `tracker.mjs`, the fourth, was cut.
+  - **Build:** 7 turns, 6 requests, 232 s, 84,320 tokens and $0.049 for the session around the script. Both cards passed at their first gate attempt, with no denial in any worker session:
+
+| Card | Test-author | Implementer | Card total |
+|---|---|---|---|
+| 003-US1 | 97,499, 7 turns | 216,380, 17 turns | 313,879, $0.314 |
+| 003-US2 | 75,967, 8 turns | 159,318, 13 turns | 235,285, $0.251 |
+
+  - **How the rules reached each session**, read from the transcripts. "Attached" means a `nested_memory` attachment that Claude Code added:
+
+| Session | Rules attached by Claude Code | Rule files it opened itself |
+|---|---|---|
+| Planning | `tracker-cli-edits`, `hook-program`, `hook-schema-doc`, `hook-scenarios`, after it read the tracker files with Read | none |
+| 003-US1 test-author | none | `cat .claude/rules/tracker-cli-edits.md .claude/rules/hook-scenarios.md` |
+| 003-US1 implementer | `hook-program` after its first Read of `tracker.mjs`; `hook-schema-doc` after it read `tracker.schema.md` | `tracker-cli-edits.md` with Read, in the same request as its Read of `tracker.mjs`; no attachment for that rule appeared, and why was not checked |
+| 003-US2 test-author | none | `cat .claude/rules/hook-scenarios.md` |
+| 003-US2 implementer | `tracker-cli-edits` and `hook-program` after it read `tracker.mjs`; `hook-schema-doc` after it read `tracker.schema.md` | none |
+
+  - Both test-authors read files under `home/hooks/tracker/tests/` only through compound shell commands, such as `…; cat home/hooks/tracker/tests/tool.mjs; …; head -60 home/hooks/tracker/tests/tracker.feature`, and no rule was attached after them. Neither read the card's examples.
+  - **Files the tasks named:** both code commits changed `tracker.mjs` and `tracker.schema.md` (the usage comment and a row in the schema's Checks table). Neither changed `tracker.feature`. Both implementers said so:
+    - 003-US1: "I didn't add scenarios to `tracker.feature`. The card's acceptance feature already covers `--find`, but the tracker-cli-edits rule asks for scenarios there too."
+    - 003-US2: the protected acceptance feature "already covers US2-AS1 to AS6".
+  - **FR-008 was not built.** In a copy of the tracker's test fixture with one status set to `bogus`, `--brief` printed "TRACKER.md: 1 format error; …", while `--find stash` printed the item with status `bogus` and `--stats` printed its counts, both with exit 0. None of the 20 acceptance scenarios has a format error, and the module scenarios that the tasks asked for were the ones that would have covered it.
+  - **Afterwards:** the repository's full `verify-before-commit` passed with 212 scenarios (192 before, and 20 new acceptance scenarios for the 15 acceptance items). A manual run on a valid tracker found items by title and by note, ignoring case, printed the counts with one overdue item, and refused a blank text with exit 1.
+  - **Whole run:** 1,522,767 tokens and $1.21. The script recorded no incident; the skipped `tracker.feature` was added by hand with `learn.mjs note`.
+- **Conclusion** (one feature, one repository, one run; Claude Code 2.1.332, headless, Sonnet; workers in `default` mode with `--setting-sources project,local`; approvals by the lab's agent in resumed calls):
+  - The orchestrator stopped after the spec and after the plan as its prompt says, with no stop asked for.
+  - Claude Code attached a rule when a session read a file in the rule's area with the Read tool, as in E30. The compound `cat` and `head` reads of the test-authors attached none (2 sessions). Both test-authors opened rule files themselves with `cat`.
+  - The schema doc was updated in 2 of 2 cards, against 0 of 4 before. *(The author's reading:)* the cause is the `tracker-cli-edits` rule, which names the schema and reached both implementers before they opened it, or the schema file among the card's examples. This run cannot tell the two apart. `hook-schema-doc` was attached only after the schema had been opened.
+  - The same rule line also names `tracker.feature`, and both implementers skipped it, one of them saying so. FR-008 was not built. The cards still passed:
+    - the card did not carry the task text or those requirements;
+    - and nothing checks that the files a task names have changed, or that every requirement is met.
+  - The reflector's proposal P1 in archkit's `learning/proposals/2026-11-28.md` adds a gate check for unchanged named files. It was not yet decided when this ran (E40 lands it, widened so that the card also carries the task text). The gate check would not catch an unbuilt requirement such as FR-008; E40's new warning flags FR-008 as uncited when the cards are compiled.
+---
+
+### E40. The learning loop's second round: three fixes and their evals (2026-11-28)
+- **Question:** the user accepted the reflector's three proposals of 2026-11-28 (archkit `learning/proposals/2026-11-28.md`; not E35's P1 to P3 of 2026-11-27):
+  - the 2026-11-28 P1: a gate check that fails while a file a task names is unchanged, widened after E39 so that the card also carries the task text;
+  - P2: the orchestrator always proposes patterns for a repository that has none;
+  - P3: the implementer edits files only with Edit or Write.
+
+  Do the fixes pass their evals, and do the evals show the faults before the fixes?
+- **Setup:**
+  - **P1** (archkit `54236da`), code checked with unit tests (no model runs: the gate is given a hand-written hook input in a temporary git repository, and the card code is called directly):
+    - each card gets `task_text` (each task line, without its `[P]` and `[US<n>]` tags; the id is a separate field) and `named_paths` (the files its tasks name, without globs or protected paths);
+    - `cards.mjs` warns about a requirement that no story or task cites;
+    - the gate's new deliverables check fails while a named file is unchanged;
+    - the implementer's prompt says to do all that `task_text` asks, and the orchestrator's says to cite in each task line the requirements it implements.
+  - **P2 and P3:** one prompt line each, in `orchestrator.md` and `implementer.md`. Their evals are two new cases, each run with `node build/evals/run.mjs <case> --runs 2` (headless, `--permission-mode default`, `--setting-sources project,local`, auto memory off):
+    - **The arms:** once with a copy of the plugin at commit `17a1ba0` (before) and once with the current plugin (after). The arms differ by all of commit `54236da`, P1's code and prompt lines included; the implementer case's card, compiled before `54236da`, has no `task_text` or `named_paths`, so P1's gate check had nothing to act on there, while P1's prompt lines were in the after arm's prompt.
+    - **Runs:** Claude Code 2.1.332, Sonnet; the four groups ran at the same time.
+    - `orchestrator-patterns`: E34's branch at commit `72b76cf`, whose `repo.json` has no patterns, and E38's request word for word. The prompt adds two sentences: one delegates the approval of the spec and the plan, so the planning runs in one call, and the other says "Stop when planned, or when you need V for anything else." It passes when at least one file lands in `.archkit/patterns/proposed/`.
+    - `implementer-edit-tools`: E34's branch at commit `27c3b4f`, with card `001-US1` and its acceptance tests. It passes when the tests pass and no Bash command in the transcript edits a file (python, `sed -i`, `perl -i`, a heredoc, a redirect or `tee`). The denied heredoc of E38 came from the implementer of a different card, `002-US1`.
+- **Result** ✅[^lab]:
+  - **P1:** at `54236da`, 99 tests pass and 2 are skipped (104 and 2 at `722bc72`, after the reason file). With the code from before `54236da`, three fail: the new gate test (a named file left unchanged gives a block whose reason says "`<file>`: named by a task but not changed"), the new card test (`task_text`, `named_paths`), and the updated warnings test. That warning fires on the tests' own fixture spec, for an FR-002 that no task cites.
+  - **P1 on E39's own spec**, compiled in memory with the new `cards.mjs`, nothing written:
+    - the warning names all nine requirements, FR-008 among them;
+    - `003-US2` gets `TRACKER.done.md` in `named_paths`, because task T002 says it "counts the items of `TRACKER.done.md`". `--stats` writes no file, so the new gate would stop that card for a file that needs no change. The proposal had named this risk and left its mitigation to the user. After E40 the user chose a reason file (archkit `722bc72`): the implementer lists such a file with its reason in `.archkit/runs/<card>/unchanged.json`, the gate skips it, and the run record keeps the reason. It is tested without a model.
+
+| Case | Before (`17a1ba0`) | After (`54236da`) | Cost of the 4 runs |
+|---|---|---|---|
+| `orchestrator-patterns` | 2 of 2: 3 and 2 proposals | 2 of 2: 2 and 2 proposals | $2.28 |
+| `implementer-edit-tools` | 2 of 2, no shell edit | 2 of 2, no shell edit | $0.47 |
+
+  - **Per run, cumulative input:** the orchestrator 721,237 and 957,005 tokens before the fix ($0.498, $0.567), 690,152 and 995,857 after ($0.593, $0.618); the implementer 106,834 and 106,816 before ($0.123, $0.103), 163,020 and 107,362 after ($0.145, $0.103). All 8 runs cost $2.75.
+  - Every orchestrator finished the tasks and cards, then listed its proposals and told the user to install or reject them; none installed one, and no run wrote `.claude/rules/`.
+  - One implementer run after the fix also edited `tracker.schema.md`; neither run before the fix did. Task T001 of `001-US1` names that file, which is in the card's `allowed_paths`, and the after arm's prompt carried P1's lines; the card has no rules and no examples.
+- **Conclusion** (Claude Code 2.1.332, headless, Sonnet, `default` mode with `project,local`; 2 runs per arm):
+  - Neither fault came back without its fix:
+    - **P2:** E38's orchestrator skipped its pattern step in a planning split over resumed calls; the third call listed its steps ("Write the tasks and compile the cards, then stop when planned"). This case plans in one call with delegated approvals. Its prompt also says "Stop when planned", and its request, like E38's, does not mention patterns. E34's request had named them ("any patterns you propose").
+    - **P3:** the case uses card `001-US1`, whose implementers in E34 never edited through the shell.
+  - The prompt evals therefore show that the new lines did no harm on these fixtures. They do not show that the fixes were needed, and they would not catch a fix being removed, because the state before the fix passes them too.
+  - P1 is tested only without a model. On E39's spec it would flag the uncited requirements, and, before the reason file of `722bc72`, it would have stopped one card for a file the task only reads.
 ---
 
 ## 4. Four ways to orchestrate, compared
@@ -1077,9 +1176,10 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 10. **Start workers without the user's layer** (`--setting-sources project,local`) in their repository, and give them their own permissions. That drops the user's plugins, hooks and, for a repository, the user's imported instructions, while the harness plugin keeps working (E13, E15). Started in the home folder, the imported instructions still load (E18).
 11. **Keep fixed steps in code, not in an agent.** In E28 a model ran the red check and the commits; two of four runs failed, once on a misread field and once on a rewritten command. In `build-task.mjs` the same steps cost no tokens; its first runs also found defects (a commit that failed on ignored paths in E24, untracked documents and paths misread from task text in E27), but each was fixed once in code, and the later runs passed (E24, E26, E27, E29). The comparison rests on one small card for the workflow (E28).
 12. **A model orchestrator costs what it has read.** Its requests grew from about 10,000 to 72,000 tokens in E27, as it read Spec Kit's skills, templates and a script's source. Put the formats it needs in its prompt, keep it out of mechanical steps, and start a fresh session when the work changes phase. In E29 the orchestrator used 64 % fewer tokens than in E27; the prompt change, the absence of a failed card and the fresh build session all contributed and were not measured apart (one run each). With the build phase as one script call, the build session fell to 43,769 tokens (E31).
-13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area, and not otherwise (E30). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
-14. **Measure a prompt fix with repeated runs, and count the behaviour it targets.** A failure that happens once in several runs needs more than two runs to show up: E35 saw it in 0 of 2 runs, E36's arm without the fix in 1 of 5. At five runs per arm the pass rates could not separate the prompts (4 of 5 against 5 of 5), while whole-file assertions after a write went from 5 of 5 runs to 1 of 5 (E36).
+13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area with Read or Write, and not otherwise (E30; Edit alone was not isolated); compound `cat` and `head` reads attached none (E39). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
+14. **Measure a prompt fix with repeated runs, and count the behaviour it targets.** A failure that happens once in several runs needs more than two runs to show up: E35 saw it in 0 of 2 runs, E36's arm without the fix in 1 of 5. At five runs per arm the pass rates could not separate the prompts (4 of 5 against 5 of 5), while whole-file assertions after a write went from 5 of 5 runs to 1 of 5 (E36). An eval that does not fail before the fix can neither prove the fix nor catch its removal: in E40 neither prompt eval reproduced its fault.
 15. **Check what the permission mode allows beyond `--allowedTools`.** Claude Code's read-only commands run in every mode, apart from the cases its docs list. `acceptEdits` also approves `mkdir`, `touch`, `rm`, `cp`, `mv` and `sed` inside the working folder, and redirects into it, whose targets are checked like file edits. A path guard that watches only Edit and Write misses those writes. Run workers in `default` mode, or guard the shell too (E37).
+16. **A gate proves only what it checks, and a worker builds only what its card carries.** Six tracker cards in a row changed `tracker.mjs` but not `tracker.feature`, which their tasks named, and the first four also left out the schema doc (E34 and E38, found in E39, and E39's own two cards). In E39 one requirement, FR-008, was not built either, and every card passed. Three things let this happen: the card held the task ids but not the task text, and only the requirements that its story or tasks cited; the gate ran tests, lint and format; and a rule naming both files reached the implementers, who changed the schema and not `tracker.feature`. Put each task's text into the card, cite each requirement in a task, and turn each file a task names into a check (E39). Since E40 archkit puts the task text and the named files into the card, warns about a requirement no task cites, and checks the named files, without a model run yet; a named file that needs no change is listed with its reason (archkit `722bc72`).
 
 ---
 
@@ -1089,14 +1189,14 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **One task through the harness:** in a project with `.archkit/tasks/<id>.json`, run `node <plugin>/scripts/build-task.mjs .archkit/tasks/<id>.json [--review]`. It prints the run record with each session's id, turns, seconds and cost.
 - **Tokens per agent:** `python3 -I <plugin>/scripts/measure.py <session-id> …`. It reads `~/.claude/projects/**/<session-id>.jsonl` and the `subagents/` folder beside it. Request size = input + cache-creation + cache-read tokens; repeated message ids are one request.
 - **The start-up block:** `claude -p "/context"`, with or without `--agent <name>`.
-- **An eval case (E35, E36):** `node build/evals/run.mjs <case> --runs <n> [--plugin-dir <dir>]` in the archkit repository. It clones the case's fixture for each run, runs the agent as `build-task.mjs` does, grades the result and prints one JSON summary with each run's session id.
+- **An eval case (E35, E36, E40):** `node build/evals/run.mjs <case> --runs <n> [--plugin-dir <dir>]` in the archkit repository. Since E40 the card is optional (the orchestrator has none), and the grader also gets the session id, to read the transcript. It clones the case's fixture for each run, runs the agent as `build-task.mjs` does, grades the result and prints one JSON summary with each run's session id.
 - **Which hook fires, and with what input:** pass `--settings '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"cat > <file>"}]}]}}'` and read the file.
 
 ---
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 to 2026-11-27 (E24–E38 on 2026-11-26 and 2026-11-27):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24 to 2026-11-28 (E24–E40 on 2026-11-26 to 2026-11-28):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 to 2026-11-27:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -1111,11 +1211,16 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - an earlier manual check in the home folder that saw no loaded instructions, which E18 and E20 could not reproduce; E20 shows one way to get that result (Enter on the trust prompt's default "No, exit");
   - the docs text on external-import approval was not read for this notebook; the rule rests on E15–E17;
   - why `sed -i ''` was refused in `acceptEdits` mode in E37 ("contains potentially dangerous operations"), although the docs list `sed` among the commands that mode approves;
-  - an approval typed by the user in an interactive orchestrator session (E38's approvals went into resumed headless calls), and `patterns.mjs install` run on a real proposal.
+  - an approval typed by the user in an interactive orchestrator session (the approvals of E38 and E39 went into resumed headless calls);
+  - whether a path-scoped rule is attached after a shell read of a file in its area (E39's compound reads attached none; a single plain `cat` was not tried), and why a rule file the worker had opened itself was not attached again (E39);
+  - whether the rule or the card's examples made E39's implementers update the schema doc;
+  - on a real card, whether E40's deliverables check makes the implementer change a file it skipped, and how often the implementer lists a named file as needing no change;
+  - whether E38's skipped pattern step needs the resumed, step-by-step planning, and whether E38's shell edit comes back on its own card, `002-US1` (E40 tried neither);
+  - whether P1's prompt lines made one implementer run in E40 edit `tracker.schema.md`, a file its task names and its card allows (two runs per arm cannot show it).
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-27; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E38 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-28; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E40 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
