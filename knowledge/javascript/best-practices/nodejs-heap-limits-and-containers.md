@@ -5,7 +5,7 @@ topic: javascript/best-practices
 status: verified
 applies-to: ["Node.js 24 (docs v24.22.3)", "lab on Node.js 24.22.1 (V8 13.6.233.17, linux arm64, an 8 GiB VM), 2026-11-06 and 2026-11-26", "re-run 2026-11-27 on Node.js 22.23.4, 24.22.1 and 25.7.0 (macOS arm64), Electron 43.7.7 and Node.js 24.22.3 with pointer compression", "libuv 1.52.1, cgroup v2"]
 last-verified: 2026-11-28
-last-updated: 2026-11-28
+last-updated: 2026-11-29
 tags: [javascript, best-practices, nodejs, heap, garbage-collection, containers, memory, cgroup]
 derived-from: [js-runtime/v8-memory-and-startup-deep-dive.md]
 ranked-sources: true
@@ -21,7 +21,7 @@ ranked-sources: true
 ## Scope
 Six practices for heap flags, memory counters and container CPU and memory limits. Numbers come from Node.js 24.22.1 (V8 13.6.233.17, linux arm64, an 8 GiB virtual machine) on 2026-11-06 and 2026-11-26, re-run on 2026-11-27 on Node.js 22.23.4, 24.22.1 and 25.7.0 on macOS, Electron 43.7.7 run as Node and a Node.js 24.22.3 build with pointer compression. `process.config.variables.v8_enable_pointer_compression` was 0 on Node.js 22.23.4, on 24.22.1 (linux arm64, macOS arm64 and linux x64 emulated) and on 25.7.0, so the heap flags below are not capped near 4 GB on those builds; Electron 43.7.7 and the unofficial Node.js 24.22.3 pointer-compression build report 1 ✅[^lab-pc]. All claims are about Node.js on V8. Not run: Windows, cgroup v1, and the CPU-limit practices on Node.js versions other than 24.22.1.
 
-**How the timings were taken.** No practice here rests on a timing: its numbers are sizes and counts, which the memory deep dive's re-run (2026-11-28, after the restart) gave again on every Node.js build of its first run (2026-11-26, the other builds 2026-11-27), all on one Apple M2 laptop, macOS 26.1, with the Linux builds in containers in a virtual machine on it and the x64 builds emulated ✅[^lab-v8-matrix]; the worker and container-limit counts of 2026-11-06 were measured once ✅[^lab-heap].
+**How the timings were taken.** No practice here rests on a timing: its numbers are sizes and counts, which the memory deep dive's re-run (2026-11-28, after the restart) gave again on every Node.js build of its first run (2026-11-26, the other builds 2026-11-27), all on one Apple M2 laptop, macOS 26.1, with the Linux builds in containers in a virtual machine on it and the x64 builds emulated ✅[^lab-v8-matrix]; the worker and container-limit counts of 2026-11-06 were measured once ✅[^lab-heap]. The deep dive's third run (2026-11-28, evening, quiet machine) covered timing scripts only, none of this doc's: its heap-limit, counter and scavenge-count scripts were not in it ✅[^lab-v8-matrix].
 
 How to read the "Applies" column: `always` (the better form is as clear as the other: use it by default), `hot path` (only in code that runs per request, per frame or per element of a large collection, or that a profile points at), `large data` (only above the size the note gives), `startup` (only when start time matters), `check build` (the answer depends on the engine version or build), `no gain` (the lab measured no useful difference, or the advice is outdated: there is no reason to rewrite code for it).
 
@@ -158,7 +158,7 @@ const limit = process.constrainedMemory() || os.totalmem(); // 2^64 passes as a 
 - Read container limits through `availableParallelism()` and a guarded `constrainedMemory()`, never `os.cpus().length`.
 
 ## Verification status
-- Verified: 59 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 60 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
 - V8 memory lab: the scripts of the deep dive, run on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine`, arm64, 8 CPUs, 8 GiB, `--network none`, three full passes, and re-run on 2026-11-28 after a restart of the lab machine (every baseline output matched); scripts and outputs in [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.7, §3.8 and §4.5, and its Verification status. Rank 1 (primary measurement). Backs: Summary; Scope; Catalog, JN-H1 and JN-H3; Lookup notes. [^lab-v8]
