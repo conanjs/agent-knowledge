@@ -2,10 +2,20 @@
 schema: deep-dive/v1
 topic: js-runtime
 status: verified
-applies-to: ["V8 13.6.233.17-node.58 (Node.js 24.22.1, macOS arm64)", "V8 15.8.62.31 (Google Chrome 158.0.8127.89, macOS arm64, visible window)", "SpiderMonkey (Firefox 161.0, macOS arm64, headless)", "JavaScriptCore 21622.2.11.11.9 (the jsc shell of macOS 26.1)", "JavaScriptCore of Bun 1.4.5 (WebKit commit d6375c72, linux arm64 container)", "JavaScriptCore of the Playwright WebKit build 2311 (macOS arm64, visible window)", "lab runs of 2026-11-28 on one Apple M2"]
+applies-to: ["V8 13.6.233.17-node.58 (Node.js 24.22.1, macOS arm64)", "V8 15.8.62.31 (Google Chrome 158.0.8127.89, macOS arm64, visible window)", "SpiderMonkey (Firefox 161.0, macOS arm64, headless)", "JavaScriptCore 21622.2.11.11.9 (the jsc shell of macOS 26.1)", "JavaScriptCore of Bun 1.4.5 (WebKit commit d6375c72, linux arm64 container)", "JavaScriptCore of the Playwright WebKit build 2311 (macOS arm64, visible window)", "SpiderMonkey shell of Firefox 161.0 (JavaScript-C161.0, jsshell-linux-aarch64, linux arm64 container)", "lab runs of 2026-11-28 on one Apple M2"]
 last-updated: 2026-11-28
 last-verified: 2026-11-28
-synthesized-into: []
+synthesized-into:
+  - { path: javascript/best-practices/async-and-promises.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/browser-rendering-and-interaction.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/functions-and-optimization.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/language-patterns.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/measuring-performance.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/memory-and-garbage-collection.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/nodejs-event-loop-and-threads.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/numbers-and-arrays.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/objects-and-shapes.md, on: 2026-11-28 }
+  - { path: javascript/best-practices/strings-and-collections.md, on: 2026-11-28 }
 tags: [v8, spidermonkey, javascriptcore, firefox, safari, webkit, bun, chrome, nodejs, performance, cross-engine, benchmarks, memory, garbage-collection]
 ranked-sources: true
 ---
@@ -13,10 +23,10 @@ ranked-sources: true
 # V8's performance rules on SpiderMonkey and JavaScriptCore: 33 checks on six environments
 
 ## Summary
-**TL;DR:** 33 checks of V8-derived performance rules ran on V8 (Node.js 24 and Chrome 158), SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS 26.1 shell, Bun 1.4.5 and a WebKit page) on one Apple M2 ✅[^lab]. In 21 checks the rule holds on all three engines; in 8 it holds with a weaker or no effect on one or two engines or environments; 2 are engine-specific numbers (bytes per element, the largest spread call); 2 could not be measured on SpiderMonkey (the closure liveness check, the string slice bytes); no rule mattered on V8 alone. Some results differ from the V8-only picture ✅[^lab]. A direct `eval` that never runs made a function about 25 times slower on V8 in Node.js, 18 times in Chrome, 94 to 99 times on SpiderMonkey and 18 to 28 times on JavaScriptCore when it is called as the V8 catalog calls it; only V8 lost that cost, when it inlined the function into its caller. An accessor in an object literal read 9 to 34 times slower than a field on V8 and at most 1.44 times slower on the other two engines. On JavaScriptCore, `delete` did not slow reads, a plain slice of 3 characters kept a 16 MiB parent string alive (13 characters on V8), and a `Map` entry took 68 to 126 bytes in the table's run (the figure varies with the number of entries, §4.10) against 36.8 on V8 in Node.js. `for…of` was 3.8 to 4.0 times slower than an index loop in Firefox and 2.4 times in the JavaScriptCore shell.
+**TL;DR:** 33 checks of V8-derived performance rules ran on V8 (Node.js 24 and Chrome 158), SpiderMonkey (Firefox 161) and JavaScriptCore (the macOS 26.1 shell, Bun 1.4.5 and a WebKit page) on one Apple M2 ✅[^lab]. In 22 checks the rule holds on all three engines; in 9 it holds with a weaker or no effect on one or two engines or environments; 2 are engine-specific numbers (bytes per element, the largest spread call); no rule mattered on V8 alone. Three checks that a Firefox page cannot make (bytes per element, the closure liveness check, the string slice bytes) were made in the SpiderMonkey shell of Firefox 161.0 (§4.34). Some results differ from the V8-only picture ✅[^lab]. A direct `eval` that never runs made a function about 25 times slower on V8 in Node.js, 18 times in Chrome, 94 to 99 times on SpiderMonkey and 18 to 28 times on JavaScriptCore when it is called as the V8 catalog calls it; only V8 lost that cost, when it inlined the function into its caller. An accessor in an object literal read 9 to 34 times slower than a field on V8 and at most 1.44 times slower on the other two engines. On JavaScriptCore, `delete` did not slow reads, a plain slice of 3 characters kept a 16 MiB parent string alive (13 characters on V8), and a `Map` entry took 68 to 126 bytes in the table's run (the figure varies with the number of entries, §4.10) against 36.8 on V8 in Node.js. `for…of` was 3.8 to 4.0 times slower than an index loop in Firefox and 2.4 times in the JavaScriptCore shell.
 
 **Use this when:**
-- a skill or review comment cites a V8-measured rule, and the code runs in Firefox, in a browser built on WebKit or in another JavaScriptCore host (Bun);
+- a best-practice doc (`javascript/best-practices/`) or a review comment cites a V8-measured rule, and the code runs in Firefox, in a browser built on WebKit or in another JavaScriptCore host (Bun);
 - you want to know which of those rules to follow everywhere, which matter only in Chrome and Node.js, and which cost on another engine;
 - you want to repeat a timing, a byte count or a liveness check on several engines with one plain script.
 
@@ -58,11 +68,74 @@ All six ran on one Apple M2 with macOS 26.1, on 2026-11-28 ✅[^lab].
 | V8-node | V8 13.6.233.17-node.58, Node.js 24.22.1, macOS arm64 (the same build also ran the environment check in the `node:24.22.1-alpine` container, linux arm64) | `node <script>`; `node --expose-gc <script>` for the memory lines | `process.memoryUsage().heapUsed` (plus `arrayBuffers` for typed arrays) | `gc()` |
 | V8-chrome | V8 15.8.62.31, Google Chrome 158.0.8127.89, macOS arm64, a visible window (a foreground tab) | a page; `--js-flags=--expose-gc --enable-precise-memory-info` for the memory lines | `performance.memory.usedJSHeapSize` | `gc()` |
 | SM-firefox | SpiderMonkey, Firefox 161.0, macOS arm64, headless, a new empty profile with `privacy.reduceTimerPrecision` set to `false` | a page | none | none |
+| SM-shell | SpiderMonkey, the JavaScript shell that Mozilla publishes for Firefox 161.0 (`jsshell-linux-aarch64.zip`, `js --version` prints `JavaScript-C161.0`), image `ubuntu:24.04`, linux arm64 container, no network; used only for §4.34 | `js <script>` | `performance.mozMemory.gc.gcBytes + mallocBytes` | `gc()` |
 | JSC-mac | JavaScriptCore 21622.2.11.11.9, the framework that ships with macOS 26.1, through its own `jsc` shell, arm64 | `jsc <script>` | `gcHeapSize()` | `fullGC()` |
 | JSC-bun | JavaScriptCore inside Bun 1.4.5 (WebKit commit d6375c72), image `oven/bun:1.4.5`, linux arm64 container, no network | `bun <script>` | `heapStats().heapSize` from `bun:jsc` | `Bun.gc(true)` |
 | JSC-page | JavaScriptCore inside the WebKit build that the Playwright test tool installs (build 2311, user agent AppleWebKit/605.1.15), a visible window | a page | none | none |
 
-**Safari itself was not run.** JavaScriptCore ran in a shell (JSC-mac), in Bun (JSC-bun) and in a WebKit page (JSC-page). JSC-mac is the JavaScriptCore framework that ships with macOS 26.1 (version 21622.2.11.11.9), run through its own shell, not a browser; Safari 26.1 is installed on the same macOS 26.1 (the `Info.plist` of Safari.app says 26.1) ✅[^lab], but this doc does not say which JavaScriptCore build Safari uses. JSC-page is a browser page with JavaScriptCore, from the WebKit build that the Playwright test tool installs.
+**The SpiderMonkey shell (SM-shell).** A Firefox page has no forced collection and no heap figure, so three checks had no SpiderMonkey result there (§4.10, §4.30, §4.32). For those, the lab added the SpiderMonkey JavaScript shell that Mozilla publishes beside the Firefox 161.0 release in its archive (`jsshell-linux-aarch64.zip`, 16,577,798 bytes) ✅[^mozarchive]; its SHA-512 checksum matched the line for `jsshell/jsshell-linux-aarch64.zip` in the release's `SHA512SUMS` file before it was unpacked, and it ran in a linux arm64 container with no network ✅[^lab-sm]. Its version (`JavaScript-C161.0`) matches Firefox 161.0, and `getBuildConfiguration()` reports a release build for arm64 (`debug` false, `release_or_beta` true) ✅[^lab-sm]. It is a shell, not a page: no DOM, no `EventTarget`, its own event loop, and it is SpiderMonkey on Linux, while SM-firefox is SpiderMonkey on macOS inside Firefox. It has its own `console.log`, and `gc()` (a full collection), `performance.mozMemory.gc` (counters, among them `gcBytes` and `mallocBytes`; `gcparam('gcBytes')` returns the same `gcBytes`), `WeakRef`, `FinalizationRegistry`, `setTimeout`, `drainJobQueue` and `isRope`; it has no `version()`, no `clearTimeout`, no `setInterval` and no `queueMicrotask` ✅[^lab-sm]. Its `setTimeout` does not wait: a callback set for 100 ms ran 0.1 ms after the call, after the promise jobs ✅[^lab-sm]. This lab used `console.log`, `gc()`, `setTimeout` for one-turn waits, and `gcBytes + mallocBytes` after `gc()` as the heap figure: on allocations of known size, `gcBytes` grew by 40.55 bytes per `{ x, y }` object and by nothing for array and typed-array contents, which `mallocBytes` counted (8.00 bytes per `Float64Array` element, 8.39 per element of a 10⁶-element array of doubles, 1.00 per character of a 16 MiB one-byte string), so only the sum counts both ✅[^lab-sm]. `isRope` was used once, to see whether a test string was still made of pieces (§4.34).
+
+<details><summary>Lab: <code>sm-env.js</code>, output of run 1 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+build: arm64 true, debug false, release_or_beta true, pointer-byte-size 8
+typeof: console=object print=function version=undefined gc=function minorgc=function gcparam=function drainJobQueue=function setTimeout=function clearTimeout=undefined setInterval=undefined queueMicrotask=undefined EventTarget=undefined WeakRef=function FinalizationRegistry=function clearKeptObjects=function isRope=function
+performance.mozMemory.gc: gcBytes gcMaxBytes mallocBytes gcIsHighFrequencyMode gcNumber majorGCCount minorGCCount sliceCount compartmentCount lastStartReason zone
+array of 1e6 doubles: gcBytes +0.00, mallocBytes +8.39 per element
+Float64Array(1e6): gcBytes +0.02, mallocBytes +8.00 per element
+1e6 { x, y } in an array: gcBytes +40.55, mallocBytes +8.39 per element
+gcparam("gcBytes") === performance.mozMemory.gc.gcBytes: true
+timer step ms: 0.0010
+order: promise job, timer
+```
+
+```js
+// SM-shell environment check: build, helpers, what the heap figures count (allocations of known size, each kept on globalThis), timer step.
+const g = globalThis, bc = getBuildConfiguration();
+console.log('build: arm64 ' + bc['arm64'] + ', debug ' + bc['debug'] + ', release_or_beta ' + bc['release_or_beta'] + ', pointer-byte-size ' + bc['pointer-byte-size']);
+console.log('typeof: ' + ['console', 'print', 'version', 'gc', 'minorgc', 'gcparam', 'drainJobQueue', 'setTimeout', 'clearTimeout', 'setInterval', 'queueMicrotask', 'EventTarget', 'WeakRef', 'FinalizationRegistry', 'clearKeptObjects', 'isRope'].map((k) => k + '=' + typeof g[k]).join(' '));
+console.log('performance.mozMemory.gc: ' + Object.keys(performance.mozMemory.gc).join(' '));
+const H = () => { gc(); const m = performance.mozMemory.gc; return [m.gcBytes, m.mallocBytes]; };
+g.keep = []; let h = H();
+for (const [label, mk, n] of [
+  ['array of 1e6 doubles', () => new Array(1e6).fill(0).map((_, i) => i + 0.5), 1e6],
+  ['Float64Array(1e6)', () => new Float64Array(1e6), 1e6],
+  ['1e6 { x, y } in an array', () => { const a = []; for (let i = 0; i < 1e6; i++) a[i] = { x: i, y: i }; return a; }, 1e6],
+]) { g.keep.push(mk()); const h1 = H(); console.log(`${label}: gcBytes +${((h1[0] - h[0]) / n).toFixed(2)}, mallocBytes +${((h1[1] - h[1]) / n).toFixed(2)} per element`); h = h1; }
+console.log('gcparam("gcBytes") === performance.mozMemory.gc.gcBytes: ' + (gcparam('gcBytes') === performance.mozMemory.gc.gcBytes));
+let step = Infinity, prev = performance.now();
+for (let i = 0; i < 200000; i++) { const t = performance.now(); if (t !== prev) { step = Math.min(step, t - prev); prev = t; } }
+console.log('timer step ms: ' + step.toFixed(4));
+let order = []; setTimeout(() => order.push('timer'), 0); Promise.resolve().then(() => order.push('promise job')); setTimeout(() => console.log('order: ' + order.join(', ')), 5);
+```
+</details>
+
+<details><summary>Lab: <code>settimeout-delay.js</code>, output of run 1 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+setTimeout(f, 100) ran after 0.1 ms
+setTimeout(f, 0) ran after 0.1 ms
+```
+
+```js
+// does the SM shell's setTimeout wait for its delay?
+const t0 = performance.now();
+setTimeout(() => console.log('setTimeout(f, 100) ran after ' + (performance.now() - t0).toFixed(1) + ' ms'), 100);
+setTimeout(() => console.log('setTimeout(f, 0) ran after ' + (performance.now() - t0).toFixed(1) + ' ms'), 0);
+```
+</details>
+
+`js --version` printed:
+
+```text
+JavaScript-C161.0
+```
+
+**Safari itself was not run.** One attempt to open it on a local test page was made on 2026-11-28, and Safari did not start on the lab machine. JavaScriptCore ran in a shell (JSC-mac), in Bun (JSC-bun) and in a WebKit page (JSC-page). JSC-mac is the JavaScriptCore framework that ships with macOS 26.1 (version 21622.2.11.11.9), run through its own shell, not a browser; Safari 26.1 is installed on the same macOS 26.1 (the `Info.plist` of Safari.app says 26.1) ✅[^lab], but this doc does not say which JavaScriptCore build Safari uses. JSC-page is a browser page with JavaScriptCore, from the WebKit build that the Playwright test tool installs.
 
 **Shell against page.** JSC-mac and JSC-bun have no DOM and their own event loops; SM-firefox, JSC-page and V8-chrome are pages. The JavaScriptCore shell has no `queueMicrotask`, no `setInterval`, no `clearTimeout` and no `EventTarget` ✅[^lab]; the scripts fall back to `Promise.resolve().then()` for a microtask there, and say so in their output.
 
@@ -281,54 +354,55 @@ has: WeakRef FinalizationRegistry structuredClone queueMicrotask setTimeout iter
 - **Checksums.** Every variant returns a number that is added to a global sink, and the script prints each variant's result once: equal results show that the variants did the same work.
 - **Bytes.** Where the environment has a forced full GC and a heap counter (V8-node, V8-chrome, JSC-mac, JSC-bun): counter after a full GC, build the data inside a function and keep it, counter after a full GC again, divided by the element count.
 - **Liveness.** A `WeakRef` to the subject and to a control object that is certainly unreachable; then steps of 16 MB of garbage with a 0 ms timer between them (and a forced full GC where there is one) until the control's `deref()` is `undefined`, then five steps more, then read the subject. Creating a `WeakRef` and calling `deref()` both keep the target alive until the current job ends (the specification's AddToKeptObjects) ✅[^tc39weak], so every check runs in its own timer turn and no byte count is taken while a `WeakRef` to the measured data is new. This shows liveness, not bytes.
-- **Verdicts.** The rule as the skill words it is judged per engine by the ratio of the form the rule advises against to the form it advises: **holds** when that ratio is at least 1.5 in every run; **weaker** when it is between 1.1 and 1.5; **no effect** between 0.9 and 1.1; **reversed** below 0.9 (following the rule costs there). For a "no gain" rule (keep writing the form; rewriting it gains nothing), it holds when the rewrite gains less than a factor 1.5. Counts and bytes are compared as numbers. The verdict for JavaScriptCore uses JSC-mac, JSC-bun and JSC-page together and names the one that differs.
+- **Verdicts.** The rule as its best-practice doc words it (the ids `JE-…`, `JL-…` and `JN-…` are the practice ids of `javascript/best-practices/`) is judged per engine by the ratio of the form the rule advises against to the form it advises: **holds** when that ratio is at least 1.5 in every run; **weaker** when it is between 1.1 and 1.5; **no effect** between 0.9 and 1.1; **reversed** below 0.9 (following the rule costs there). For a "no gain" rule (keep writing the form; rewriting it gains nothing), it holds when the rewrite gains less than a factor 1.5. Counts and bytes are compared as numbers. The verdict for JavaScriptCore uses JSC-mac, JSC-bun and JSC-page together and names the one that differs.
 
 ### 2.3 Reproducing a page run without the runner
 
 1. Serve a page from 127.0.0.1 that holds the script inline and replaces `console.log` with a function that collects the lines; at the end, `fetch('/result', { method: 'POST', body: lines.join('\n') })` sends them back to the same small HTTP server, which prints them.
-2. Firefox: `firefox --headless --no-remote --profile <an empty folder> --new-window http://127.0.0.1:<port>/page`, with a `user.js` file in that folder holding `user_pref("privacy.reduceTimerPrecision", false);` for the finer timer (without it, Firefox rounds `performance.now()` more coarsely).
-3. Chrome: `--user-data-dir=<an empty folder> --enable-precise-memory-info --js-flags=--expose-gc`, a visible window.
+2. Firefox: `firefox --headless --no-remote --profile <an empty folder> --new-window http://127.0.0.1:<port>/page`, with a `user.js` file in that folder holding `user_pref("privacy.reduceTimerPrecision", false);` for the finer timer (without it, Firefox rounds `performance.now()` more coarsely). Firefox keeps running after the page has posted: stop it yourself.
+3. Chrome: Chrome's executable with `--user-data-dir=<an empty folder> --no-first-run --enable-precise-memory-info --js-flags=--expose-gc http://127.0.0.1:<port>/page`, a visible window (a foreground tab that nothing covers; a covered window runs in a slower compiler tier); stop Chrome after the post.
 4. The JavaScriptCore shell sits inside the system framework: `/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`. Load a one-line file first that defines `console.log` with `print` when `console` is missing.
+5. The WebKit page (JSC-page): the `pw_run.sh` launcher in the folder of the Playwright tool's `webkit-2311` build, given the page's address (`pw_run.sh http://127.0.0.1:<port>/page`), opens a visible window; close it after the post. Tried once without the runner on 2026-11-28 with a page that printed two lines: Firefox, Chrome and the WebKit build each posted both ✅[^lab].
 
 ## 3. How it works
 
-The master table: one row per check. Each engine column gives the headline number of that check (ranges over three runs; ×n is the disfavoured form's time divided by the advised form's, so ×3.0 means three times slower). The verdict is about the rule as the skill words it, with the thresholds of §2.2: **holds** at a ratio of 1.5 or more in every run (for a "no gain" rule: the rewrite gains less than 1.5 times), **weaker** at 1.1 to 1.5 or with no effect on the engine named, **reversed** when following the rule costs there. "—" means the environment cannot report that quantity. All rows ✅[^lab].
+The master table: one row per check. Each engine column gives the headline number of that check (ranges over three runs; ×n is the disfavoured form's time divided by the advised form's, so ×3.0 means three times slower). The verdict is about the rule as its best-practice doc words it, with the thresholds of §2.2: **holds** at a ratio of 1.5 or more in every run (for a "no gain" rule: the rewrite gains less than 1.5 times), **weaker** at 1.1 to 1.5 or with no effect on the engine named, **reversed** when following the rule costs there. "—" means the environment cannot report that quantity. All rows ✅[^lab].
 
 | # | Rules | What was measured | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page | Verdict |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | `JE-F1`, `JE-O1` | 8 key orders at one read site against 1 | ×2.98 to 3.11 | ×3.24 to 3.70 | ×2.22 to 2.24 | ×2.22 to 2.33 | ×2.27 to 2.30 | ×2.36 to 2.41 | holds on all three engines |
 | 2 | `JE-O2` | reads after `delete` against untouched | ×4.22 to 4.30 | ×1.78 to 1.98 | ×2.02 to 2.21 | ×1.00 | ×1.00 | ×1.00 | holds, weaker on JavaScriptCore (no effect there) |
-| 3 | `JE-O3` | 30 computed keys against a literal: building / reading | ×31 to 33 / ×4.3 to 4.5 | ×44 to 46 / ×1.2 to 1.9 | ×45 to 50 / ×0.9 to 1.0 | ×7.5 to 8.5 / ×1.0 | ×8.2 to 10.1 / ×1.0 | ×7.2 to 8.2 / ×1.0 | holds on all three engines |
+| 3 | `JE-O3` | 30 computed keys against a literal: building / reading | ×31 to 33 / ×4.3 to 4.5 | ×44 to 46 / ×1.8 to 2.1 | ×45 to 50 / ×0.9 to 1.0 | ×7.5 to 8.5 / ×1.0 | ×8.2 to 10.1 / ×1.0 | ×7.2 to 8.2 / ×1.0 | holds on all three engines |
 | 4 | `JE-O5` | creating with `Object.setPrototypeOf` against a class | ×14.5 to 17.4 | ×33 to 36 | ×3.5 to 4.5 | ×6.0 to 6.6 | ×4.7 to 5.2 | ×6.5 to 7.4 | holds on all three engines |
-| 5 | `JE-O6` | the worst built-in slowdown after one prototype write | ×243 | ×205 to 217 | ×1.0 (at most ×1.15) | ×11.3 | ×10.3 to 11.0 | ×10.6 to 10.8 | holds, weaker on SM-firefox (no effect there) |
+| 5 | `JE-O6` | the worst built-in slowdown after one prototype write | ×243 | ×205 to 217 | ×1.04 to 1.12 (at most ×1.18) | ×11.3 | ×6.9 to 10.9 | ×10.6 to 10.8 | holds, weaker on SM-firefox (at most ×1.18 there) |
 | 6 | `JE-N5` | `new Array(n)` filled by index against packed, sum | ×1.12 to 1.13 | ×0.99 to 1.06 | ×0.94 to 1.01 | ×1.00 to 1.01 | ×1.00 to 1.01 | ×1.00 | holds on all three engines |
 | 7 | `JE-N6` | `push` onto `[]` against `new Array(n)`, 10⁶ | ×3.0 to 3.6 | ×2.3 to 2.4 | ×0.94 to 1.02 | ×4.5 | ×6.3 to 6.7 | ×4.8 to 5.0 | holds, weaker on SM-firefox (no effect there) |
 | 8 | `JE-N7` | sparse array against `Map`: writes / reads | ×2.8 to 3.0 / ×1.4 to 2.0 | ×2.3 / ×1.1 | ×1.8 to 1.9 / ×1.4 to 1.5 | ×3.1 to 3.3 / ×2.2 | ×2.8 to 3.2 / ×1.8 to 1.9 | ×3.3 to 3.4 / ×2.7 to 2.9 | holds, weaker on V8-chrome and SM-firefox (reads) |
-| 9 | `JE-N8` | `for…in` over an array against an index `for` | ×55 to 56 | ×31 | ×25 to 27 | ×79 to 81 | ×82 | ×108 to 112 | holds on all three engines |
-| 10 | `JE-N1`, `JE-N9`, `JE-N10`, `JE-S1`, `JE-S2`, `JE-S9` | bytes: small-integer array / `{ x }` near 2³¹ / `Map` entry (on JavaScriptCore it varies with the count) / object table | 8.0 / 40.0 / 36.8 / 62.9 | 4.0 / 32.0 / 18.4 / 31.5 | — | 8.0 / 40.0 / 84 to 126 / 38.1 | 8.0 / 40.0 / 68.2 / 38.1 | — | engine-specific number |
-| 11 | `JE-S3`, `JE-S4` | `+=` read after the loop at 1.6 × 10⁶ characters / read inside the loop at 40,000, ns per character | 7.6 to 7.8 / 795 to 855 | 4.5 to 4.6 / 770 to 797 | 8.6 to 9.3 / 21 to 22 | 4.8 to 5.2 / 901 to 950 | 9.2 to 11.8 / 935 to 1,370 | 5.1 to 5.8 / 933 to 1,917 | holds, weaker on SM-firefox (reading inside the loop is linear there) |
+| 9 | `JE-N8` | `for…in` over an array against an index `for` | ×55 to 56 | ×31 | ×25 to 27 | ×79 to 81 | ×82 | ×108 to 127 | holds on all three engines |
+| 10 | `JE-N1`, `JE-N9`, `JE-N10`, `JE-S1`, `JE-S2`, `JE-S9` | bytes: small-integer array / `{ x }` near 2³¹ / `Map` entry (on JavaScriptCore it varies with the count) / object table | 8.0 / 40.0 / 36.8 / 62.9 | 4.0 / 32.0 / 18.4 / 31.5 | — (page); SM-shell: 8.4 / 48.9 / 52.7 / 27.3 (§4.34) | 8.0 / 40.0 / 84 to 126 / 38.1 | 8.0 / 40.0 / 68.2 / 38.1 | — | engine-specific number |
+| 11 | `JE-S3`, `JE-S4` | `+=` read after the loop at 1.6 × 10⁶ characters / read inside the loop at 40,000, ns per character | 7.6 to 10.1 / 795 to 855 | 4.5 to 4.6 / 770 to 797 | 8.6 to 9.3 / 21 to 22 | 4.8 to 5.2 / 901 to 950 | 9.2 to 11.8 / 935 to 1,370 | 5.1 to 5.8 / 933 to 1,917 | holds, weaker on SM-firefox (reading inside the loop is linear there) |
 | 12 | `JE-S6` | `Proxy` (empty handler) against a plain read, 8 objects | ×8.5 to 9.0 | ×6.6 to 7.0 | ×3.2 to 3.4 | ×2.0 to 2.3 | ×2.0 | ×2.0 to 2.3 | holds on all three engines |
 | 13 | `JE-S7`, `JE-S8` | literal getter against a field: one object / 8 objects | ×33.9 / ×11.1 | ×19.7 / ×9.2 | ×0.99 / ×1.23 | ×1.00 / ×1.42 | ×1.02 / ×1.44 | ×0.98 / ×1.42 | holds, weaker on SM-firefox and JavaScriptCore (no effect with one object; the class getter `JE-S8` cost nothing anywhere) |
 | 14 | `JE-F3` | sum that once saw a string / hash without `Math.imul`, result used as `& 1023` / as `% 1000` | ×3.0 / ×1.2 / ×5.7 | ×2.6 to 3.2 / ×1.3 / ×4.5 | ×1.0 / ×1.1 / ×5.3 | ×1.0 / ×1.6 / ×9.4 | ×1.0 / ×1.7 / ×2.4 | ×1.0 / ×1.7 / ×10.4 | holds, weaker on SpiderMonkey and JavaScriptCore (the mixed-type half has no effect there; the hash half is 1.1 to 1.7 times unless a `%` follows) |
 | 15 | `JE-F9` | `try`/`catch` against plain / `for…in` against `Object.keys` | ×1.00 / ×0.25 | ×1.00 / ×0.27 | ×0.98 to 1.15 / ×0.37 to 0.40 | ×0.98 to 0.99 / ×0.52 to 0.68 | ×0.99 / ×0.46 to 0.50 | ×1.00 / ×0.52 to 0.53 | holds on all three engines |
 | 16 | `JE-F10` | a direct `eval` that never runs against plain: the catalog's shape / a loop of its own | ×25.3 / ×0.84 to 0.90 | ×17.8 to 18.3 / ×0.98 to 1.05 | ×94 to 99 / ×95 to 102 | ×27.0 / ×19.5 to 21.2 | ×18.1 to 18.5 / ×10.1 to 15.0 | ×27.6 / ×21.4 to 21.9 | holds on all three engines (on V8 only while the function is not inlined into its caller) |
-| 17 | `JE-F11` | `{ x, y }` from a helper against loose variables | ×1.00 | ×1.00 | ×0.98 to 1.00 | ×1.00 | ×0.99 to 1.00 | ×1.00 | holds on all three engines |
+| 17 | `JE-F11` | `{ x, y }` from a helper against loose variables | ×1.00 | ×1.00 | ×0.22 to 1.04 | ×1.00 | ×0.99 to 1.00 | ×1.00 | holds on all three engines (hand-inlining never gained; on SM-firefox it was 4 times slower in 4 of 9 runs) |
 | 18 | `JE-F12` | `forEach` against an index `for`, many small calls (in brackets: `for…of`) | ×1.71 to 1.79 (×1.09 to 1.13) | ×2.55 to 2.68 (×0.94 to 0.98) | ×4.48 to 4.87 (×3.78 to 4.00) | ×1.55 to 1.61 (×2.38 to 2.45) | ×1.81 to 1.86 (×1.23 to 1.50) | ×1.70 to 1.74 (×1.22 to 1.50) | holds on all three engines (for the index `for`; `for…of` is not near it on SM-firefox and JSC-mac) |
 | 19 | `JE-F6` | ns per statement at 6,000 statements / at 1,000; the cliff lies between 2,000 and 3,000 (V8-node), 3,000 and 4,000 (V8-chrome), 1,000 and 2,000 (SM-firefox), 4,000 and 6,000 (JavaScriptCore) | 26.3 to 28.2 / 1.16 to 1.26 | 18.7 to 19.4 / 1.18 to 1.21 | 33.2 to 34.0 / 6.06 to 6.79 | 23.5 to 37.3 / 1.16 to 1.49 | 22.6 to 36.1 / 1.19 to 1.50 | 23.4 to 24.3 / 1.15 to 1.22 | holds on all three engines |
-| 20 | `JE-M1` | round from which `forEach` is steady (1,000 calls per round) | 12 to 15 | 2 | no step in 15 rounds | 10 | 10 | 10 | holds, weaker on V8-chrome and SM-firefox (no warm-up step in 15 rounds) |
-| 21 | `JL-L1`, `JL-L2` | chain / iterator helpers against one loop, 10⁶ (time only: the bytes that `JL-L2` is about were not measured) | ×22.9 to 24.7 / ×35.5 to 38.1 | ×25.9 to 27.1 / ×50.0 to 54.0 | ×4.11 to 5.35 / ×15.6 to 16.3 | ×2.65 to 2.74 / ×12.6 to 12.7 | ×2.86 to 3.04 / ×12.6 to 12.8 | ×2.40 to 2.56 / ×12.3 to 13.0 (one run ×44) | holds on all three engines (`JL-L1`; `JL-L2` not measured) |
+| 20 | `JE-M1` | round from which `forEach` is steady (1,000 calls per round) | 12 to 15 | 2 | no step in 15 rounds | 10 | 10 | 7 to 11 | holds, weaker on V8-chrome and SM-firefox (no warm-up step in 15 rounds) |
+| 21 | `JL-L1`, `JL-L2` | chain / iterator helpers against one loop, 10⁶ (time only: the bytes that `JL-L2` is about were not measured) | ×22.9 to 24.7 / ×35.5 to 38.1 | ×25.9 to 27.1 / ×50.0 to 54.0 | ×4.11 to 5.35 / ×15.6 to 16.3 | ×2.65 to 2.74 / ×12.6 to 12.7 | ×2.86 to 3.04 / ×12.4 to 12.8 (one run ×47) | ×2.40 to 2.56 / ×12.3 to 13.0 (one run ×44) | holds on all three engines (`JL-L1`; `JL-L2` not measured) |
 | 22 | `JL-L3` | predicate calls, `filter(p)[0]` / `find(p)` | 100,000 / 11 | 100,000 / 11 | 100,000 / 11 | 100,000 / 11 | 100,000 / 11 | 100,000 / 11 | holds on all three engines |
 | 23 | `JL-L4` | comparator calls, 10,000 rows | 119,955 | 119,784 | 126,592 | 120,378 | 120,691 | 120,691 | holds on all three engines |
 | 24 | `JL-L5` | default `Error.stackTraceLimit` / error with `.stack` against a plain object | 10 / ×64 | 10 / ×26 | 128 / ×34 | 100 / ×39 | 10 / ×42 | 100 / ×58 | holds on all three engines |
-| 25 | `JL-L6` | largest `Math.max(...arr)` (these builds, top-level call) | 124,539 | 123,681 to 123,683 | 524,287 | 638,728 | 638,454 | 638,722 | engine-specific number |
+| 25 | `JL-L6` | largest `Math.max(...arr)` (these builds, top-level call) | 124,545 | 123,681 to 123,683 | 524,287 | 638,728 | 638,454 | 638,722 | engine-specific number |
 | 26 | `JL-L7`, `JL-L8` | growth when n doubles: `includes` in a loop / `[...acc, x]` | ×3.92 to 4.12 / ×3.24 to 3.69 | ×3.85 to 3.99 / ×4.30 to 4.74 | ×3.64 to 3.90 / ×3.79 to 3.96 | ×3.94 to 4.04 / ×3.40 to 3.72 | ×3.95 to 4.10 / ×3.48 to 4.20 | ×3.92 to 3.96 / ×3.74 to 3.86 | holds on all three engines |
-| 27 | `JL-L10` | `#private` against a public field | ×0.97 to 1.01 | ×0.94 to 1.02 | ×0.97 to 1.02 | ×1.07 to 1.16 | ×1.07 to 1.08 | ×1.00 to 1.16 | holds on all three engines (`#private` costs at most 16 %; avoiding it gains nothing) |
+| 27 | `JL-L10` | `#private` against a public field | ×0.88 to 1.02 | ×0.86 to 1.03 | ×0.97 to 1.02 | ×1.04 to 1.16 | ×1.04 to 1.08 | ×1.00 to 1.16 | holds on all three engines (`#private` costs at most 16 %; avoiding it gains nothing) |
 | 28 | `JL-A1`, `JL-A2` | turns: `await` per plain value / `return p` / `return await p` | 1,001 / 3,001 / 2,001 | same | same | same | same | same | holds on all three engines |
-| 29 | `JL-A8`, `JN-E3` | 100,000 microtasks against a 0 ms timer: first, and when done | microtasks, 3.7 to 4.5 ms | microtasks, 25 to 27 ms | microtasks, 32 to 48 ms | microtasks, 9 to 14 ms | microtasks, 2.2 to 3.6 ms | microtasks, 2.0 to 3.0 ms | holds on all three engines |
-| 30 | `JL-G1` | a sibling closure keeps the array: 10 scopes / liveness | 76.3 MiB / alive | 38.1 MiB / alive | — / not measurable (control object kept) | 76.3 MiB / alive | 76.3 MiB / alive | — / alive | not measurable on SM-firefox |
+| 29 | `JL-A8`, `JN-E3` | 100,000 microtasks against a 0 ms timer: first, and when done | microtasks, 3.5 to 4.5 ms | microtasks, 25 to 39 ms | microtasks, 28 to 48 ms | microtasks, 9 to 14 ms | microtasks, 2.2 to 4.9 ms | microtasks, 2.0 to 5.0 ms | holds on all three engines |
+| 30 | `JL-G1` | a sibling closure keeps the array: 10 scopes / liveness | 76.3 MiB / alive | 38.1 MiB / alive | — / not measurable in a page (control object kept); SM-shell: 80.0 MiB / alive (§4.34) | 76.3 MiB / alive | 76.3 MiB / alive | — / alive | holds on all three engines (SpiderMonkey in its shell, §4.34; not measurable in a Firefox page) |
 | 31 | `JL-G2` | cache of a stopped job whose handle is kept | alive | alive | alive | not measurable (no `setInterval`, no `EventTarget`) | alive | alive | holds on all three engines (the JavaScriptCore shell cannot run it; JSC-bun and JSC-page can) |
-| 32 | `JL-G3` | shortest plain `slice` that kept the 16 MiB parent (`[...s].join('')` freed it, up to 1,000 characters) | 16.0 MiB at 13 | 16.0 MiB at 13 | — | 16.0 MiB at 3 | 16.0 MiB at 3 | — | not measurable on SM-firefox |
-| 33 | `JL-G4`, `JL-G5` | `WeakMap` entry freed / finalizer ran within the script's wait (second script, ms from start to the callback) | yes / yes (24 to 27 ms) | yes / yes | yes / yes | yes / yes (28 to 30 ms) | yes / yes (12 to 16 ms) | yes / yes | holds on all three engines |
+| 32 | `JL-G3` | shortest plain `slice` that kept the 16 MiB parent (`[...s].join('')` freed it, up to 1,000 characters) | 16.0 MiB at 13 | 16.0 MiB at 13 | — (page); SM-shell: no slice up to 100,000 characters kept the parent; 16.0 MiB kept from 1,048,577 characters (§4.34) | 16.0 MiB at 3 | 16.0 MiB at 3 | — | holds, weaker on SpiderMonkey (in its shell no effect up to 100,000 characters; not measurable in a page) |
+| 33 | `JL-G4`, `JL-G5` | `WeakMap` entry freed / finalizer ran within the script's wait (second script, ms from start to the callback) | yes / yes (24 to 27 ms) | yes / yes | yes / yes | yes / yes (24 to 30 ms) | yes / yes (11 to 16 ms) | yes / yes | holds on all three engines |
 
 ## 4. Worked examples
 
@@ -523,13 +597,13 @@ Records of 30 fields `f0` to `f29`, built three ways: a loop `o[k] = i` over the
 
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| 10⁶ reads of `o.f17`, literal, ms | 1.05 to 1.10 | 0.90 to 1.40 | 1.15 to 1.29 | 1.04 to 1.07 | 1.03 to 1.09 | 1.04 to 1.05 |
-| reads, computed keys | ×4.29 to 4.49 | ×1.21 to 1.83 | ×0.89 to 1.00 | ×0.97 to 1.01 | ×0.95 to 1.07 | ×0.99 to 1.01 |
+| 10⁶ reads of `o.f17`, literal, ms | 1.05 to 1.10 | 0.84 to 0.89 | 1.15 to 1.29 | 1.04 to 1.07 | 1.03 to 1.09 | 1.04 to 1.05 |
+| reads, computed keys | ×4.29 to 4.49 | ×1.83 to 2.08 | ×0.89 to 1.00 | ×0.97 to 1.01 | ×0.95 to 1.07 | ×0.99 to 1.01 |
 | building 10⁴ records, literal, ms | 0.111 to 0.116 | 0.080 to 0.081 | 0.18 to 0.20 | 0.22 to 0.24 | 0.22 to 0.26 | 0.22 to 0.26 |
 | building, named assignments | ×4.3 to 4.6 | ×4.3 to 4.6 | ×2.3 to 2.6 | ×0.96 to 1.03 | ×0.93 to 1.08 | ×0.96 to 1.00 |
 | building, computed keys | ×31 to 33 | ×44 to 46 | ×45 to 50 | ×7.5 to 8.5 | ×8.2 to 10.1 | ×7.2 to 8.2 |
 
-Reads of a computed-key record were slower only on V8 (4.3 to 4.5 times in Node.js, 1.2 to 1.9 in Chrome, where the literal's own time ranged from 0.9 to 1.4 ms). Building records with computed keys was the slowest form on every engine: 31 to 46 times the literal on V8, 45 to 50 on SpiderMonkey (one SM-firefox round hit a pause and read 10), 7 to 10 on JavaScriptCore. In the first version of this check the records were not kept and one JSC-mac run timed the literal at 0.003 ms per 10⁴ records, which this lab cannot explain from outside; with the records kept, no run showed it again and the ratios no longer swung. For browser code: write record fields by name; the build cost alone justifies it on every engine, and the read cost on V8.
+Reads of a computed-key record were slower only on V8 (4.3 to 4.5 times in Node.js, 1.8 to 2.1 in Chrome). Building records with computed keys was the slowest form on every engine: 31 to 46 times the literal on V8, 45 to 50 on SpiderMonkey (one SM-firefox round hit a pause and read 10), 7 to 10 on JavaScriptCore. In the first version of this check the records were not kept and one JSC-mac run timed the literal at 0.003 ms per 10⁴ records, which this lab cannot explain from outside; with the records kept, no run showed it again and the ratios no longer swung. For browser code: write record fields by name; the build cost alone justifies it on every engine, and the read cost on V8.
 
 <details><summary>Lab: <code>computed.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -550,13 +624,13 @@ V8-chrome:
 
 ```text
 10^6 reads of o.f17
-  literal: 0.931-1.40 ms/call, x1.00-1.00, result 3500000
-  named assignments: 0.910-1.36 ms/call, x0.97-1.00, result 3500000
-  computed keys: 1.64-1.96 ms/call, x1.21-1.81, result 3500000
+  literal: 0.871-1.51 ms/call, x1.00-1.00, result 3500000
+  named assignments: 0.900-1.57 ms/call, x1.02-1.04, result 3500000
+  computed keys: 1.80-1.89 ms/call, x1.24-2.07, result 3500000
 building 10^4 records
-  literal: 0.0805-0.0808 ms/call, x1.00-1.00, result 49995000
-  named assignments: 0.348-0.361 ms/call, x4.32-4.47, result 49995000
-  computed keys: 3.55-3.58 ms/call, x43.89-44.24, result 49995000
+  literal: 0.0920-0.101 ms/call, x1.00-1.00, result 49995000
+  named assignments: 0.456-0.499 ms/call, x4.60-5.25, result 49995000
+  computed keys: 3.93-4.18 ms/call, x38.78-43.68, result 49995000
 ```
 
 SM-firefox:
@@ -784,18 +858,18 @@ R('10^5 reads of o.getX()', Rd);
 
 ### 4.5 `JE-O6`: writes to built-in prototypes
 
-`a.slice()`, `a.map(f)` and `[...a]` on a 10⁴-element array, timed (best of three 200 ms passes, after four 200 ms warm-up passes of each operation) before and after one write: `Array.prototype.constructor = Array` (the same value), a wrapper on `Array.prototype[Symbol.iterator]`, or `Object.prototype[0] = 'x'`. Each write has its own process, and a fourth process makes no write (the control). The "before" figures are still less warmed than the "after" ones on V8 and SpiderMonkey (in the control, `a.map(f)` got 6 times faster on V8-node and 3 times on V8-chrome, and `a.slice()` 4 times on SM-firefox, with no write at all), so the table divides each write's "after" by the control's "after" of the same run number; three runs ✅[^lab]:
+`a.slice()`, `a.map(f)` and `[...a]` on a 10⁴-element array, timed (best of three 200 ms passes, after four 200 ms warm-up passes of each operation) before and after one write: `Array.prototype.constructor = Array` (the same value), a wrapper on `Array.prototype[Symbol.iterator]`, or `Object.prototype[0] = 'x'`. Each write has its own process, and a fourth process makes no write (the control). The "before" figures are still less warmed than the "after" ones on V8 and SpiderMonkey (in the control, `a.map(f)` got 6 times faster on V8-node and 3 times on V8-chrome, and `a.slice()` 4 times on SM-firefox, with no write at all), so the table divides each write's "after" by the control's "after" of the same run number; three runs (five for SM-firefox and JSC-bun, whose ratios swung, so two more were made) ✅[^lab]:
 
 | Write → operation | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| `constructor` → `a.slice()` | ×108 to 110 | ×205 to 217 | ×1.01 to 1.02 | ×11.3 | ×10.3 to 10.9 | ×10.6 to 10.8 |
-| `constructor` → `a.map(f)` | ×24.1 to 24.8 | ×12.3 to 12.5 | ×0.98 to 1.00 | ×1.12 to 1.13 | ×0.95 to 1.10 | ×1.27 |
-| `Symbol.iterator` → `[...a]` | ×69.5 to 69.8 | ×148 to 150 | ×0.97 to 1.02 | ×4.5 to 4.6 | ×3.6 to 3.9 | ×4.2 to 4.4 |
-| `Object.prototype[0]` → `a.slice()` | ×242 to 244 | ×0.99 to 1.05 | ×1.00 to 1.01 | ×11.3 | ×10.3 to 11.0 | ×10.6 |
-| `Object.prototype[0]` → `a.map(f)` | ×51.1 to 51.6 | ×26.2 | ×0.98 to 1.15 | ×0.64 | ×0.72 to 0.74 | ×0.77 |
-| `Object.prototype[0]` → `[...a]` | ×69.3 to 69.9 | ×148 to 150 | ×0.97 to 1.02 | ×4.3 to 4.9 | ×3.7 to 3.8 | ×4.2 to 4.3 |
+| `constructor` → `a.slice()` | ×108 to 110 | ×205 to 217 | ×0.92 to 1.02 | ×11.3 | ×6.9 to 10.9 | ×10.6 to 10.8 |
+| `constructor` → `a.map(f)` | ×24.1 to 24.8 | ×12.3 to 12.5 | ×0.70 to 1.16 | ×1.12 to 1.13 | ×0.77 to 1.59 | ×1.27 |
+| `Symbol.iterator` → `[...a]` | ×69.5 to 69.8 | ×148 to 150 | ×0.97 to 1.14 | ×4.5 to 4.6 | ×1.6 to 5.5 | ×4.2 to 4.4 |
+| `Object.prototype[0]` → `a.slice()` | ×242 to 244 | ×0.99 to 1.05 | ×1.04 to 1.12 | ×11.3 | ×6.9 to 10.9 | ×10.6 |
+| `Object.prototype[0]` → `a.map(f)` | ×51.1 to 51.6 | ×26.2 | ×0.92 to 1.18 | ×0.64 | ×0.51 to 1.31 | ×0.77 |
+| `Object.prototype[0]` → `[...a]` | ×69.3 to 69.9 | ×148 to 150 | ×1.01 to 1.05 | ×4.3 to 4.9 | ×1.6 to 6.2 | ×4.2 to 4.3 |
 
-The control's "after" times, ms per call: `a.slice()` 0.0023 (V8-node), 0.0010 to 0.0011 (V8-chrome), 0.0013 (SM-firefox), 0.0044 (JSC-mac), 0.0051 to 0.0055 (JSC-bun), 0.0041 (JSC-page). The largest slowdown on V8-node was `Object.prototype[0] = 'x'` → `a.slice()`: 0.55 ms against 0.0023 ms per call, 242 to 244 times. The same write left `a.slice()` unchanged in Chrome and slowed `a.map(f)` there 26 times; in Chrome the largest was the `constructor` write on `a.slice()` (205 to 217 times). On V8 each write slowed some built-ins by 12 to 243 times for the rest of the process; on JavaScriptCore by 3.6 to 11 times (and `a.map(f)` became 1.3 to 1.6 times faster after `Object.prototype[0]`, the one gain). On SpiderMonkey none of the three writes changed any of the three operations: 17 of the 18 ratios were 0.97 to 1.02, and the 18th (1.15) was one run of `a.map(f)` after the `Object.prototype[0]` write (0.0457 ms against 0.0397 to 0.0407 ms in the control). For browser code: never write to a built-in prototype; it costs in Chrome and in Safari's engine, and gains nothing in Firefox.
+The control's "after" times, ms per call: `a.slice()` 0.0023 (V8-node), 0.0010 to 0.0011 (V8-chrome), 0.0013 to 0.0014 (SM-firefox), 0.0044 (JSC-mac), 0.0053 to 0.0081 (JSC-bun), 0.0041 (JSC-page); the control's `a.map(f)` took 0.0397 to 0.0587 ms in SM-firefox and 0.0128 to 0.0222 ms in JSC-bun, so a ratio there moves with the control's own run-to-run swing. The largest slowdown on V8-node was `Object.prototype[0] = 'x'` → `a.slice()`: 0.55 ms against 0.0023 ms per call, 242 to 244 times. The same write left `a.slice()` unchanged in Chrome and slowed `a.map(f)` there 26 times; in Chrome the largest was the `constructor` write on `a.slice()` (205 to 217 times). On V8 each write slowed some built-ins by 12 to 243 times for the rest of the process; on JavaScriptCore by 4 to 11 times in the shell and the WebKit page, and by 1.6 to 11 times in Bun, whose ratios swung (`a.slice()` 6.9 to 10.9, `[...a]` 1.6 to 6.2); `a.map(f)` became 1.3 to 2.0 times faster after `Object.prototype[0]` in the shell, the page and four of five Bun runs (once 1.3 times slower), the one gain. On SpiderMonkey no write changed any operation by more than 1.18 times: of the 45 ratios (nine write and operation pairs, five runs) 17 were 0.97 to 1.02 and the range was 0.70 to 1.18; the `Object.prototype[0]` write left `a.slice()` at 1.04 to 1.12 times its control in all five runs and `a.map(f)` at 0.92 to 1.18, the only effect that repeated there. For browser code: never write to a built-in prototype; it costs a large factor in Chrome and in Safari's engine, and at most about 1.2 times in Firefox.
 
 <details><summary>Lab: <code>patch-none.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -818,9 +892,9 @@ patch none: [...a] 0.00108 -> 0.00107 ms/call (best of 3), x0.99
 SM-firefox:
 
 ```text
-patch none: a.slice() 0.00493 -> 0.00128 ms/call (best of 3), x0.26
-patch none: a.map(f) 0.0399 -> 0.0397 ms/call (best of 3), x1.00
-patch none: [...a] 0.0353 -> 0.0353 ms/call (best of 3), x1.00
+patch none: a.slice() 0.00464 -> 0.00127 ms/call (best of 3), x0.27
+patch none: a.map(f) 0.0404 -> 0.0398 ms/call (best of 3), x0.99
+patch none: [...a] 0.0359 -> 0.0358 ms/call (best of 3), x1.00
 ```
 
 JSC-mac:
@@ -834,9 +908,9 @@ patch none: [...a] 0.00713 -> 0.00716 ms/call (best of 3), x1.00
 JSC-bun:
 
 ```text
-patch none: a.slice() 0.00482 -> 0.00508 ms/call (best of 3), x1.05
-patch none: a.map(f) 0.0153 -> 0.0155 ms/call (best of 3), x1.01
-patch none: [...a] 0.00834 -> 0.00882 ms/call (best of 3), x1.06
+patch none: a.slice() 0.00560 -> 0.00811 ms/call (best of 3), x1.45
+patch none: a.map(f) 0.0173 -> 0.0222 ms/call (best of 3), x1.28
+patch none: [...a] 0.0161 -> 0.0209 ms/call (best of 3), x1.30
 ```
 
 JSC-page:
@@ -893,9 +967,9 @@ patch species: [...a] 0.00109 -> 0.00107 ms/call (best of 3), x0.99
 SM-firefox:
 
 ```text
-patch species: a.slice() 0.00557 -> 0.00130 ms/call (best of 3), x0.23
-patch species: a.map(f) 0.0400 -> 0.0395 ms/call (best of 3), x0.99
-patch species: [...a] 0.0356 -> 0.0353 ms/call (best of 3), x0.99
+patch species: a.slice() 0.00483 -> 0.00128 ms/call (best of 3), x0.26
+patch species: a.map(f) 0.0399 -> 0.0398 ms/call (best of 3), x1.00
+patch species: [...a] 0.0359 -> 0.0358 ms/call (best of 3), x1.00
 ```
 
 JSC-mac:
@@ -909,9 +983,9 @@ patch species: [...a] 0.00714 -> 0.00719 ms/call (best of 3), x1.01
 JSC-bun:
 
 ```text
-patch species: a.slice() 0.00513 -> 0.0555 ms/call (best of 3), x10.82
-patch species: a.map(f) 0.0154 -> 0.0147 ms/call (best of 3), x0.96
-patch species: [...a] 0.00900 -> 0.00879 ms/call (best of 3), x0.98
+patch species: a.slice() 0.00488 -> 0.0563 ms/call (best of 3), x11.55
+patch species: a.map(f) 0.0154 -> 0.0170 ms/call (best of 3), x1.10
+patch species: [...a] 0.00875 -> 0.00886 ms/call (best of 3), x1.01
 ```
 
 JSC-page:
@@ -968,9 +1042,9 @@ patch iterator: [...a] 0.00108 -> 0.160 ms/call (best of 3), x147.99
 SM-firefox:
 
 ```text
-patch iterator: a.slice() 0.00581 -> 0.00128 ms/call (best of 3), x0.22
-patch iterator: a.map(f) 0.0459 -> 0.0457 ms/call (best of 3), x1.00
-patch iterator: [...a] 0.0358 -> 0.0359 ms/call (best of 3), x1.00
+patch iterator: a.slice() 0.00482 -> 0.00128 ms/call (best of 3), x0.27
+patch iterator: a.map(f) 0.0402 -> 0.0403 ms/call (best of 3), x1.00
+patch iterator: [...a] 0.0357 -> 0.0358 ms/call (best of 3), x1.00
 ```
 
 JSC-mac:
@@ -984,9 +1058,9 @@ patch iterator: [...a] 0.00717 -> 0.0331 ms/call (best of 3), x4.61
 JSC-bun:
 
 ```text
-patch iterator: a.slice() 0.00506 -> 0.00534 ms/call (best of 3), x1.06
-patch iterator: a.map(f) 0.0153 -> 0.0154 ms/call (best of 3), x1.00
-patch iterator: [...a] 0.00867 -> 0.0340 ms/call (best of 3), x3.92
+patch iterator: a.slice() 0.00505 -> 0.00513 ms/call (best of 3), x1.02
+patch iterator: a.map(f) 0.0156 -> 0.0155 ms/call (best of 3), x0.99
+patch iterator: [...a] 0.00893 -> 0.0333 ms/call (best of 3), x3.73
 ```
 
 JSC-page:
@@ -1043,9 +1117,9 @@ patch elements: [...a] 0.00109 -> 0.159 ms/call (best of 3), x146.50
 SM-firefox:
 
 ```text
-patch elements: a.slice() 0.00492 -> 0.00129 ms/call (best of 3), x0.26
-patch elements: a.map(f) 0.0459 -> 0.0457 ms/call (best of 3), x0.99
-patch elements: [...a] 0.0358 -> 0.0359 ms/call (best of 3), x1.00
+patch elements: a.slice() 0.00526 -> 0.00141 ms/call (best of 3), x0.27
+patch elements: a.map(f) 0.0446 -> 0.0440 ms/call (best of 3), x0.99
+patch elements: [...a] 0.0368 -> 0.0376 ms/call (best of 3), x1.02
 ```
 
 JSC-mac:
@@ -1059,9 +1133,9 @@ patch elements: [...a] 0.00718 -> 0.0333 ms/call (best of 3), x4.65
 JSC-bun:
 
 ```text
-patch elements: a.slice() 0.00481 -> 0.0559 ms/call (best of 3), x11.62
-patch elements: a.map(f) 0.0155 -> 0.0114 ms/call (best of 3), x0.74
-patch elements: [...a] 0.00895 -> 0.0335 ms/call (best of 3), x3.75
+patch elements: a.slice() 0.00474 -> 0.0559 ms/call (best of 3), x11.79
+patch elements: a.map(f) 0.0154 -> 0.0114 ms/call (best of 3), x0.74
+patch elements: [...a] 0.00871 -> 0.0339 ms/call (best of 3), x3.90
 ```
 
 JSC-page:
@@ -1374,9 +1448,9 @@ Sum of a 10⁵-element array with an index `for`, `for…of` and `for…in` ✅[
 |---|---|---|---|---|---|---|
 | index `for`, ms | 0.049 | 0.068 to 0.069 | 0.068 to 0.069 | 0.049 to 0.050 | 0.048 to 0.049 | 0.048 to 0.050 |
 | `for…of` | ×1.21 to 1.47 | ×0.96 | ×3.92 to 3.97 | ×2.43 to 2.45 | ×1.23 to 1.26 | ×1.20 to 1.23 |
-| `for…in` | ×55 to 56 | ×31 | ×25 to 27 | ×79 to 81 | ×82 | ×108 to 112 |
+| `for…in` | ×55 to 56 | ×31 | ×25 to 27 | ×79 to 81 | ×82 | ×108 to 127 |
 
-`for…in` was 25 to 112 times slower than an index loop on every engine (ratio of lowest times; single rounds ranged from 23 to 133). `for…of` was as fast as the index loop in Chrome, 1.2 to 1.5 times slower in Node.js, Bun and the WebKit page, 2.4 times in the JavaScriptCore shell and 3.9 to 4.0 times in Firefox. For browser code: never `for…in` over an array; in a hot loop over a large array, the index `for` is the one form that is fastest on all three engines.
+`for…in` was 25 to 127 times slower than an index loop on every engine (ratio of lowest times; single rounds ranged from 23 to 133). `for…of` was as fast as the index loop in Chrome, 1.2 to 1.5 times slower in Node.js, Bun and the WebKit page, 2.4 times in the JavaScriptCore shell and 3.9 to 4.0 times in Firefox. For browser code: never `for…in` over an array; in a hot loop over a large array, the index `for` is the one form that is fastest on all three engines.
 
 <details><summary>Lab: <code>forin.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -1429,9 +1503,9 @@ JSC-page:
 
 ```text
 sum of 10^5 elements
-  index for: 0.0484-0.0500 ms/call, x1.00-1.00, result 51031728
-  for...of: 0.0596-0.0600 ms/call, x1.20-1.23, result 51031728
-  for...in: 5.29-5.51 ms/call, x107.81-113.52, result 51031728
+  index for: 0.0486-0.0509 ms/call, x1.00-1.00, result 51031728
+  for...of: 0.0601-0.0645 ms/call, x1.23-1.27, result 51031728
+  for...in: 6.09-6.28 ms/call, x123.36-125.26, result 51031728
 ```
 
 ```js
@@ -1661,7 +1735,7 @@ for (const [label, mk, bytes] of [
 ```
 </details>
 
-**Are bytes per element stable across sizes?** `scale.js` repeated six cases at three sizes (arrays and objects 250,000, 1,000,000 and 4,000,000 elements; `Map` and object tables 25,000, 100,000 and 400,000 entries), three runs each ✅[^lab]. Arrays and objects were the same at every size on all three: 8.0 bytes per small-integer array element, 40.0 per one-field object (V8-node: 48.0 for `{ x, y }`, 56.0 for `{ x }` with a double), and 37.6 to 38.6 per entry of an object table on JavaScriptCore (V8-node: 62.9). `Map` entries on V8-node were also the same at every size (36.7 to 36.9). On JavaScriptCore they were not: JSC-mac took 168 to 210 bytes per integer-key `Map` entry at 25,000 entries, 84 or 126 at 100,000 (84 in some runs and 126 in others at the same size) and 84 at 400,000; JSC-bun took 136.5, 68.2 and 68.2, and for string keys 123 to 124, 53 to 54 and 53. Because the figure moves by a factor of 2 with the count (and in the JSC shell from run to run), no single bytes-per-entry number for a `Map` or `Set` on JavaScriptCore is given in this doc; the counter itself is accurate (see above), but the bytes per entry move with the count; this lab did not look further.
+**Are bytes per element stable across sizes?** `scale.js` repeated six cases at three sizes (arrays and objects 250,000, 1,000,000 and 4,000,000 elements; `Map` and object tables 25,000, 100,000 and 400,000 entries), three runs each ✅[^lab]. Arrays and objects were the same at every size on all three: 8.0 bytes per small-integer array element, 40.0 per one-field object (V8-node: 48.0 for `{ x, y }`, 56.0 for `{ x }` with a double), and 37.6 to 38.6 per entry of an object table on JavaScriptCore (V8-node: 62.9). `Map` entries on V8-node were also the same at every size (36.7 to 36.9; one of five runs in the re-run read 57.0 at 25,000 entries). On JavaScriptCore they were not: JSC-mac took 168 to 210 bytes per integer-key `Map` entry at 25,000 entries, 84 or 126 at 100,000 (84 in some runs and 126 in others at the same size) and 84 at 400,000; JSC-bun took 136.5, 68.2 and 68.2, and for string keys 123 to 124, 53 to 54 and 53. Because the figure moves by a factor of 2 with the count (and in the JSC shell from run to run), no single bytes-per-entry number for a `Map` or `Set` on JavaScriptCore is given in this doc; the counter itself is accurate (see above), but the bytes per entry move with the count; this lab did not look further.
 
 <details><summary>Lab: <code>scale.js</code>, output of run 2 on each environment that has a heap figure, then the script</summary>
 
@@ -1719,20 +1793,20 @@ for (const s of [1, 4, 16]) {
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
 | after the loop, 100,000 characters, ns | 4.5 to 4.9 | 4.4 to 4.7 | 7.2 to 8.2 | 4.6 to 4.8 | 10.2 to 11.1 | 4.8 to 5.0 |
-| after the loop, 1,600,000 characters | 7.6 to 7.8 | 4.5 to 4.6 | 8.6 to 9.3 | 4.8 to 5.2 | 9.2 to 11.8 | 5.1 to 5.8 |
+| after the loop, 1,600,000 characters | 7.6 to 10.1 | 4.5 to 4.6 | 8.6 to 9.3 | 4.8 to 5.2 | 9.2 to 11.8 | 5.1 to 5.8 |
 | inside the loop, 10,000 characters | 216 to 233 | 212 to 214 | 20 to 22 | 247 to 377 | 330 to 447 | 275 to 309 |
 | inside the loop, 20,000 | 441 to 453 | 423 to 447 | 21 to 22 | 539 to 560 | 641 to 752 | 532 to 558 |
 | inside the loop, 40,000 | 795 to 855 | 770 to 797 | 21 to 22 | 901 to 950 | 935 to 1,370 | 933 to 1,917 |
 
-Read once after the loop, the cost per character stayed nearly flat from 100,000 to 1,600,000 characters on every engine (at most 1.7 times higher at the top, V8-node). Read after each append, the cost per character doubled with every doubling of n on V8 and JavaScriptCore (a quadratic total), but stayed at 20 to 22 ns on SpiderMonkey, about 2.5 times the cost of reading once. For browser code: keep `+=` building; do not read the growing string inside the loop, which is quadratic in Chrome and in JavaScriptCore.
+Read once after the loop, the cost per character stayed nearly flat from 100,000 to 1,600,000 characters on every engine (at most 2.2 times higher at the top, V8-node). Read after each append, the cost per character doubled with every doubling of n on V8 and JavaScriptCore (a quadratic total), but stayed at 20 to 22 ns on SpiderMonkey, about 2.5 times the cost of reading once. For browser code: keep `+=` building; do not read the growing string inside the loop, which is quadratic in Chrome and in JavaScriptCore.
 
 <details><summary>Lab: <code>concat.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
 V8-node:
 
 ```text
-read after the loop, ns per character: 100000: 4.5-4.9 | 200000: 5.0-5.2 | 400000: 5.0-5.1 | 800000: 7.6-7.9 | 1600000: 7.7-7.8
-read after each append, ns per character: 10000: 215.9-232.7 | 20000: 440.5-453.0 | 40000: 794.5-855.2
+read after the loop, ns per character: 100000: 4.5-4.8 | 200000: 4.9-5.0 | 400000: 4.9-5.0 | 800000: 8.6-9.3 | 1600000: 8.5-9.1
+read after each append, ns per character: 10000: 238.2-269.5 | 20000: 511.1-557.9 | 40000: 856.3-921.1
 ```
 
 V8-chrome:
@@ -2319,7 +2393,7 @@ Time per call of `direct`, as a multiple of `plain` in the same shape; three run
 
 Indirect `eval` and `new Function` built once cost nothing in C on any engine (×0.89 to 1.04). In B they were also within 0.84 to 1.27 times `plain`, except `new Function` on V8-node (0.21 times: faster than `plain` at that shared site).
 
-**Why the V8 catalog and the first version of this check disagreed.** The catalog's script, run here on Node.js 24.22.1 (V8 13.6) with `--trace-gc`, gave 0.3 ms for `plain` and 15.4 to 15.5 ms for the function with `eval` per 10⁶ calls, and 1,084 scavenges (young-generation garbage collections), three runs ✅[^lab]. Shape A reproduces it on V8 (×25 in Node.js, ×18 in Chrome; 7,026 scavenges for A alone in Node.js). The first version used shape C, where V8 showed ×0.9 to 1.0. Run on Node.js with V8's trace and two switches ✅[^lab]: `--trace-turbo-inlining` printed that V8 inlined `direct` (85 bytes of bytecode) into its loop in C; with `--no-turbo-escape` (escape analysis off) C gave ×22.4 to 24.1; with `--no-turbo-inlining` the original C script gave ×4.1 to 5.3 (with `plain` also left uninlined at 0.40 to 0.45 ms). So V8's cost of a direct `eval` is real, and it disappears only when V8 inlines the function into a loop that passes a constant, which a function reached through a shared call site does not get (B). The two numbers also differ because `plain` is nearly free when inlined (0.6 ns per call in A): the added cost of `direct` was about the same 11 to 14 ns per call in both shapes on Node.js (15.0 ms against 0.59 ms in A; 1.5 against 0.42 ms per 10⁵ calls in B). SpiderMonkey and JavaScriptCore paid in all three shapes, including C, and for them the shape changed the size of the cost (×2 to ×100) but not its sign.
+**Why the V8 catalog and the first version of this check disagreed.** The catalog's script, run here on Node.js 24.22.1 (V8 13.6) with `--trace-gc`, gave 0.4 to 0.6 ms for `plain` and 15.2 to 15.9 ms for the function with `eval` per 10⁶ calls, and 1,084 scavenges (young-generation garbage collections), three runs ✅[^lab]. Shape A reproduces it on V8 (×25 in Node.js, ×18 in Chrome; 7,476 to 7,587 scavenges for A alone in Node.js (the script cut before part B, run with `--trace-gc`)). The first version used shape C, where V8 showed ×0.9 to 1.0. Run on Node.js with V8's trace and two switches ✅[^lab]: `--trace-turbo-inlining` printed that V8 inlined `direct` (85 bytes of bytecode) into its loop in C; with `--no-turbo-escape` (escape analysis off) C gave ×17.3 to 18.9; with `--no-turbo-inlining` C gave ×3.9 to 4.7 (with `plain` also left uninlined at 0.38 to 0.40 ms, 0.61 ms in one round). So V8's cost of a direct `eval` is real, and it disappears only when V8 inlines the function into a loop that passes a constant, which a function reached through a shared call site does not get (B). The two numbers also differ because `plain` is nearly free when inlined (0.6 ns per call in A): the added cost of `direct` was about the same 11 to 14 ns per call in both shapes on Node.js (15.0 ms against 0.59 ms in A; 1.5 against 0.42 ms per 10⁵ calls in B). SpiderMonkey and JavaScriptCore paid in all three shapes, including C, and for them the shape changed the size of the cost (×2 to ×100) but not its sign.
 
 For browser code: keep direct `eval` out of any function that runs often. It cost at least 2 times on every engine as soon as the callee could not be inlined (shapes A and B), and 10 to 100 times in Firefox and in Safari's engine even in a loop of its own; only Chrome and Node.js showed nothing, and only in C.
 
@@ -2478,10 +2552,10 @@ R('C: own loop per variant, 10^5 calls', { plain: loop(plain, 1), 'direct eval, 
 
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| loose variables, ms | 0.89 | 0.89 to 0.90 | 3.90 to 4.08 | 0.75 | 0.71 | 0.75 to 0.76 |
-| `{ x, y }` from a helper | ×1.00 | ×1.00 | ×0.98 to 1.00 | ×1.00 | ×0.99 to 1.00 | ×1.00 |
+| loose variables, ms | 0.89 | 0.89 to 0.90 | 3.90 to 4.26 | 0.75 | 0.71 | 0.75 to 0.76 |
+| `{ x, y }` from a helper | ×1.00 | ×1.00 | ×0.22 to 1.04 | ×1.00 | ×0.99 to 1.00 | ×1.00 |
 
-The temporary object cost nothing measurable on any engine. For browser code: keep the small object; inlining it by hand gains nothing in any of the three engines.
+The temporary object cost nothing measurable on V8 and JavaScriptCore. On SpiderMonkey the loose variables took 3.9 to 4.3 ms in every run, and the helper form took the same in five of nine runs (×0.98 to 1.04) and 0.93 to 1.05 ms in the other four (×0.22 to 0.25, all four in the re-run); this lab did not find what decides which of the two the helper form gets. For browser code: keep the small object; inlining it by hand gained nothing in any of the three engines, and on SpiderMonkey it lost 4 times in four of nine runs.
 
 <details><summary>Lab: <code>temp.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -2505,8 +2579,8 @@ SM-firefox:
 
 ```text
 10^6 steps
-  loose variables: 4.08-4.29 ms/call, x1.00-1.00, result 348364963648
-  { x, y } from a helper: 4.00-4.50 ms/call, x0.94-1.05, result 348364963648
+  loose variables: 4.06-4.19 ms/call, x1.00-1.00, result 348364963648
+  { x, y } from a helper: 0.935-0.953 ms/call, x0.22-0.23, result 348364963648
 ```
 
 JSC-mac:
@@ -2742,11 +2816,11 @@ The same work for 15 rounds, 1,000 calls over 10,000 items per round, for three 
 
 | Form | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| index `for` | round 1 to 2 | round 2 | round 1 to 13 | round 1 to 5 | round 1 to 9 | round 1 |
-| `forEach` | round 12 to 15 (26 → 10 ms) | round 2 | round 1 to 10 (38 to 52 ms, no step) | round 10 (22 → 7.7 ms) | round 10 (23 → 9 ms) | round 10 (23 → 8 ms) |
-| `reduce` | round 13 (51 → 4.2 ms) | round 1 | round 1 to 14 (no step) | round 6 to 9 (9 → 6.7 ms) | round 2 to 7 | round 2 to 5 |
+| index `for` | round 1 to 2 | round 2 to 5 | round 1 to 13 | round 1 to 5 | round 1 to 9 | round 1 to 2 |
+| `forEach` | round 12 to 15 (26 → 10 ms) | round 2 | round 1 to 11 (33 to 52 ms, no step) | round 10 (22 → 7.7 ms) | round 10 (23 → 9 ms) | round 7 to 11 (23 → 8 ms) |
+| `reduce` | round 13 (51 → 4.2 ms) | round 1 | round 1 to 14 (no step) | round 6 to 9 (9 → 6.7 ms) | round 2 to 7 | round 1 to 5 |
 
-V8-node and the three JavaScriptCore environments sped up in a step: `forEach` after 11,000 calls on V8-node (between rounds 11 and 12 in every run; a later round 15 in one run only marks a noisy round) and after 9,000 calls on JavaScriptCore, `reduce` after 11,000 calls on V8-node and 5,000 on JSC-mac. In Chrome neither form stepped within 15,000 calls, and in Firefox `forEach` and `reduce` did not step down either: the "steady" round there only marks the end of noise (one round of 101 ms in run 3). For browser code: warm up for at least 20,000 calls before timing, on every engine; 2,000 calls would have timed the slow phase on V8 and JavaScriptCore.
+V8-node and the three JavaScriptCore environments sped up in a step: `forEach` after 11,000 calls on V8-node (between rounds 11 and 12 in every run; a later round 15 in one run only marks a noisy round) and after 9,000 calls in the JavaScriptCore shell and Bun (in the WebKit page after 5,000 to 10,000 calls, run to run), `reduce` after 11,000 calls on V8-node and 5,000 on JSC-mac. In Chrome neither form stepped within 15,000 calls, and in Firefox `forEach` and `reduce` did not step down either: the "steady" round there only marks the end of noise (one round of 101 ms in run 3). For browser code: warm up for at least 20,000 calls before timing, on every engine; 2,000 calls would have timed the slow phase on V8 and JavaScriptCore.
 
 <details><summary>Lab: <code>warmup.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -2831,9 +2905,9 @@ console.log('check ' + check);
 |---|---|---|---|---|---|---|
 | one loop, ms | 0.58 to 0.67 | 0.46 to 0.49 | 1.04 to 1.14 | 0.74 to 0.79 | 0.74 to 0.79 | 0.74 to 0.78 |
 | chain | ×22.9 to 24.7 | ×25.9 to 27.1 | ×4.11 to 5.35 | ×2.65 to 2.74 | ×2.86 to 3.04 | ×2.40 to 2.56 |
-| iterator helpers | ×35.5 to 38.1 | ×50.0 to 54.0 | ×15.6 to 16.3 | ×12.6 to 12.7 | ×12.6 to 12.8 | ×12.3 to 13.0 (one run of six ×44) |
+| iterator helpers | ×35.5 to 38.1 | ×50.0 to 54.0 | ×15.6 to 16.3 | ×12.6 to 12.7 | ×12.4 to 12.8 (one run of eleven ×47) | ×12.3 to 13.0 (one run of eleven ×44) |
 
-One loop was the fastest everywhere: 23 to 27 times faster than the chain on V8, 4.1 to 5.4 times on SpiderMonkey, 2.4 to 3.0 on JavaScriptCore. Iterator helpers were slower than the chain on every engine (1.5 to 5.2 times the chain; in one WebKit-page run of six the helpers took 33 to 39 ms per call, 44 times the loop, and the five others 12.3 to 13.0). This lab timed the forms; the bytes that `JL-L2` is about were not measured here. For browser code: on a large array in a hot path, one loop pays on all three engines; iterator helpers over an in-memory array are the slowest form everywhere.
+One loop was the fastest everywhere: 23 to 27 times faster than the chain on V8, 4.1 to 5.4 times on SpiderMonkey, 2.4 to 3.0 on JavaScriptCore. Iterator helpers were slower than the chain on every engine (1.5 to 5.2 times the chain; in one WebKit-page run of eleven the helpers took 33 to 39 ms per call, 44 times the loop, and the ten others 12.3 to 13.0; in one Bun run of eleven they took 35 ms per call, 47 times the loop, and in the ten others 12.4 to 12.8). This lab timed the forms; the bytes that `JL-L2` is about were not measured here. For browser code: on a large array in a hot path, one loop pays on all three engines; iterator helpers over an in-memory array are the slowest form everywhere.
 
 <details><summary>Lab: <code>chain.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -2998,8 +3072,8 @@ Frames in `new Error().stack` read 50 calls deep, with the default limit, after 
 | frames, default | 10 | 10 | 52 | 52 | 2 | 52 |
 | frames, `Infinity` | 59 | 52 | 52 | 52 | 2 | 52 |
 | frames, `0` | 0 | 0 | 0 | 0, `stack` is `undefined` | 0, `stack` is `undefined` | 0, `stack` is `undefined` |
-| 1,000 errors with `.stack`, µs | 6,645 to 6,798 | 2,441 to 2,513 | 3,519 to 3,951 | 2,091 to 2,210 | 1,693 to 1,834 | 3,125 to 3,274 |
-| 1,000 plain objects, µs | 105 to 107 | 95 to 98 | 104 to 113 | 54 to 56 | 41 to 42 | 54 to 60 |
+| 1,000 errors with `.stack`, µs | 6,645 to 6,988 | 2,441 to 2,603 | 3,423 to 5,995 | 2,091 to 2,293 | 1,693 to 1,928 | 3,125 to 3,333 |
+| 1,000 plain objects, µs | 105 to 109 | 95 to 98 | 104 to 139 | 54 to 60 | 41 to 43 | 54 to 60 |
 
 With the limit at 0, every engine gave no frames. The table's default frame counts are capped by the 50 calls of the script, so they do not show whether a default of 128 or 100 is honoured: a second script (below) made a 300-call recursion that is not in tail position and set the limit to 5, 60, 1,000, `Infinity` and 0 in turn. V8-node, V8-chrome, JSC-bun and JSC-page followed each limit (5 and 60 frames, then every frame, 309 or 302; then 0). SM-firefox followed 5 and 60 and returned 128 frames for 1,000 and for `Infinity`, the same as its default of 128. The JSC-mac shell gave 100 frames by default and 5 for the limit 5, then kept giving 5 for 60, 1,000, `Infinity` and 0 (in a third script it kept the first limit it was given): in that shell a changed limit is not always followed, and this lab does not know why. Defaults differ: 10 on V8 and in Bun, 100 in the JavaScriptCore shell and page, 128 in Firefox. `Error.stackTraceLimit` is not in the specification: MDN calls it non-standard, part of V8's stack trace API, also implemented by JavaScriptCore ✅[^mdnstack]. With a limit of 0, JavaScriptCore set `stack` to `undefined`, so code that calls `err.stack.split(…)` throws there. Bun showed 2 frames whatever the limit in the first script: Bun ran the file in strict mode (`this` is `undefined` in a plain function call there, not in the JavaScriptCore shell ✅[^lab]), and in strict mode JavaScriptCore drops the frames of calls made from tail position, as the recursion here is ✅[^ptc]. Both checks agree: the same 50-call tail recursion in a file that starts with `'use strict'` gave 2 frames in the JSC-mac shell and in Bun (third script), and the second script's non-tail recursion gave 5, 60 and 302 frames in Bun ✅[^lab]. An error with its stack cost 26 to 64 times a plain object on every engine (2 to 7 µs per error). For browser code: keep errors off routine paths everywhere; leave `Error.stackTraceLimit` alone, and never set it to 0 where JavaScriptCore runs.
 
@@ -3195,8 +3269,8 @@ The largest array that `Math.max(...arr)` and `fn.apply(null, arr)` accepted fro
 
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| `Math.max(...arr)` | 124,539 | 123,681 to 123,683 | 524,287 | 638,728 | 638,454 | 638,722 |
-| `fn.apply(null, arr)` | 124,541 | 123,683 to 123,685 | 500,000 | 638,720 | 638,452 | 638,714 |
+| `Math.max(...arr)` | 124,545 | 123,681 to 123,683 | 524,287 | 638,728 | 638,454 | 638,722 |
+| `fn.apply(null, arr)` | 124,547 | 123,683 to 123,685 | 500,000 | 638,720 | 638,452 | 638,714 |
 
 Every engine has a limit, and V8's was the lowest, about 124,000. These are the limits of these builds, for a call made from the top level of the script; the lab did not vary the call depth or the stack size, so a deeper call, or a build or setting with another stack size, can accept fewer (or more) elements. The counts were the same in each run of an environment, except Chrome's (123,681 to 123,685). Firefox's `apply` limit was exactly 500,000 and its spread limit 2¹⁹ − 1. For browser code: an array whose size comes from data can throw in every engine; Chrome throws first.
 
@@ -3205,8 +3279,8 @@ Every engine has a limit, and V8's was the lowest, about 124,000. These are the 
 V8-node:
 
 ```text
-Math.max(...arr): largest accepted 124539, then RangeError
-fn.apply(null, arr): largest accepted 124541, then RangeError
+Math.max(...arr): largest accepted 124545, then RangeError
+fn.apply(null, arr): largest accepted 124547, then RangeError
 ```
 
 V8-chrome:
@@ -3351,14 +3425,14 @@ for (const k in cases) {
 
 ### 4.27 `JL-L10`: `#private` against public fields
 
-10⁶ reads of `this.v` against `this.#v` inside a method of two otherwise equal classes, in one process with the rounds interleaved (the skill advises separate processes on V8; interleaving the rounds and giving each class its own method served the same purpose here) ✅[^lab]:
+10⁶ reads of `this.v` against `this.#v` inside a method of two otherwise equal classes, in one process with the rounds interleaved (the practice `JE-M` notes in `javascript/best-practices/measuring-performance.md` advise separate processes on V8; interleaving the rounds and giving each class its own method served the same purpose here) ✅[^lab]:
 
 | | V8-node | V8-chrome | SM-firefox | JSC-mac | JSC-bun | JSC-page |
 |---|---|---|---|---|---|---|
-| public, ms | 0.53 to 0.55 | 0.85 to 0.91 | 0.64 to 0.67 | 0.30 | 0.30 | 0.30 |
-| `#private` | ×0.97 to 1.01 | ×0.94 to 1.02 | ×0.97 to 1.02 | ×1.07 to 1.16 | ×1.07 to 1.08 | ×1.00 to 1.16 |
+| public, ms | 0.53 to 0.61 | 0.85 to 0.93 | 0.64 to 0.67 | 0.30 to 0.31 | 0.30 to 0.31 | 0.30 to 0.31 |
+| `#private` | ×0.88 to 1.02 | ×0.86 to 1.03 | ×0.97 to 1.02 | ×1.04 to 1.16 | ×1.04 to 1.08 | ×1.00 to 1.16 |
 
-The same speed on V8 and SpiderMonkey (within 6 % either way); up to 16 % slower on JavaScriptCore (7 to 16 % in the shell, 7 to 8 % in Bun, 0 to 16 % in the page), about 0.05 ms per 10⁶ reads. For browser code: choose `#` fields for privacy; the cost is nil or a few nanoseconds per thousand reads.
+The same speed on SpiderMonkey (within 3 %); on V8 the same speed in most runs and `#private` up to 14 % faster in a few (three of five Chrome runs, one of five Node.js runs); up to 16 % slower on JavaScriptCore (4 to 16 % in the shell, 4 to 8 % in Bun, 0 to 16 % in the page), about 0.05 ms per 10⁶ reads. For browser code: choose `#` fields for privacy; the cost is nil or a few nanoseconds per thousand reads.
 
 <details><summary>Lab: <code>private.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -3484,7 +3558,7 @@ async function countTicks(work) {
 
 ### 4.29 `JL-A8` / `JN-E3`: 100,000 microtasks against a 0 ms timer
 
-A 0 ms timer is set, then a chain of 100,000 microtasks is started ✅[^lab]. On all six environments, in all three runs, the chain finished before the timer ran, or in the same millisecond on a coarse timer: 3.7 to 4.5 ms (Node.js), 2.2 to 3.6 ms (Bun), 9 to 14 ms (JSC-mac), 2.0 to 3.0 ms (JSC-page), 25 to 27 ms (Chrome) and 32 to 48 ms (Firefox) after the start, with the timer 0.0 to 22.7 ms after that (six runs of each environment). For browser code: a long microtask chain, like a long synchronous loop in an `async` function, holds back timers, input and rendering in every engine; yield with a timer.
+A 0 ms timer is set, then a chain of 100,000 microtasks is started ✅[^lab]. On all six environments, in all three runs, the chain finished before the timer ran, or in the same millisecond on a coarse timer: 3.5 to 4.5 ms (Node.js), 2.2 to 4.9 ms (Bun), 9 to 14 ms (JSC-mac), 2.0 to 5.0 ms (JSC-page), 25 to 39 ms (Chrome) and 28 to 48 ms (Firefox) after the start, with the timer 0.0 to 22.7 ms after that (nine runs of each environment). For browser code: a long microtask chain, like a long synchronous loop in an `async` function, holds back timers, input and rendering in every engine; yield with a timer.
 
 <details><summary>Lab: <code>microtask.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -3551,7 +3625,7 @@ Each scope holds a 10⁶-element array (about 7.6 MiB on 8-byte slots) and retur
 | sibling, then `big = null`, bytes | 0.0 MiB | 0.0 MiB | — | 7.6 MiB | 0.0 MiB | — |
 | liveness: control / sibling / never-run `if` / `= null` | 0 / 3 / 3 / 0 of 3 | 0 / 3 / 3 / 0 | 1 / 3 / 3 / 0 (control kept: no verdict) | 0 / 3 / 3 / 0 | 0 / 3 / 3 / 0 | 0 / 3 / 3 / 0 |
 
-On V8 and JavaScriptCore, a closure that never touches the array kept it alive as soon as another closure of the same scope used it, even one on a branch that never ran, and `big = null` released it (bytes and liveness agree, with the exception below for JSC-mac). In SM-firefox the liveness result cannot be used: the control object, which nothing references, was still alive after 500 garbage steps in all six runs (three of the lab, three re-runs), so the engine may not have collected anything, and an "alive" array proves nothing there. Chrome's figure is half the others', as in the Chrome rows of the V8 representation deep dive, which explains pointer compression. One more mark on this table: in JSC-mac the byte pass of the `= null` kind kept one array's worth (7.6 MiB) while the liveness pass found all three collected. For browser code: the rule holds on V8 and JavaScriptCore, including the WebKit page, and could not be measured in Firefox; move the big value's use into a separate function, or set it to `null` when done.
+On V8 and JavaScriptCore, a closure that never touches the array kept it alive as soon as another closure of the same scope used it, even one on a branch that never ran, and `big = null` released it (bytes and liveness agree, with the exception below for JSC-mac). In SM-firefox the liveness result cannot be used: the control object, which nothing references, was still alive after 500 garbage steps in all nine runs (three of the lab, three re-runs, three of the run of 2026-11-28 after the restart), so the engine may not have collected anything, and an "alive" array proves nothing there. Chrome's figure is half the others', as in the Chrome rows of the V8 representation deep dive, which explains pointer compression. One more mark on this table: in JSC-mac the byte pass of the `= null` kind kept one array's worth (7.6 MiB) while the liveness pass found all three collected. For browser code: the rule holds on V8 and JavaScriptCore, including the WebKit page, and could not be measured in Firefox; move the big value's use into a separate function, or set it to `null` when done.
 
 <details><summary>Lab: <code>closures.js</code>, output of run 2 on each environment that ran it, then the script</summary>
 
@@ -3666,7 +3740,7 @@ A job holds a 10⁶-element cache in a `setInterval` callback, or in an `EventTa
 | listener, removed, handle kept | alive | alive | alive | not measurable | alive | alive |
 | listener, removed, handle dropped | collected | collected | collected | not measurable | collected | collected |
 
-The same in all three runs of each environment (V8-node, JSC-bun, V8-chrome, SM-firefox, JSC-page). On every environment that can run the check, a stopped job whose handle was kept still kept its cache, and a stopped job whose handle was dropped did not, so the rule holds on all of them. Firefox's control object was collected after 4 to 55 steps in the three runs; either way the control was collected, so the Firefox result counts. The JavaScriptCore shell has no `setInterval`, no `clearTimeout` and no `EventTarget`, so neither half can be measured there.
+The same in all three runs of each environment (V8-node, JSC-bun, V8-chrome, SM-firefox, JSC-page). On every environment that can run the check, a stopped job whose handle was kept still kept its cache, and a stopped job whose handle was dropped did not, so the rule holds on all of them. Firefox's control object was collected after 4 to 74 steps in the three runs; either way the control was collected, so the Firefox result counts. The JavaScriptCore shell has no `setInterval`, no `clearTimeout` and no `EventTarget`, so neither half can be measured there.
 
 The first version of this part said that keeping the handle changed nothing in Node.js and Bun. That was a script artifact: the script kept the handles in a top-level array that nothing used after the loop, so in a Node.js or Bun file the handles themselves became garbage, while in a page a top-level `const` lives as long as the page. With the array also put on `globalThis` (one line), Node.js and Bun gave the same result as the pages; the unfixed script, run once on each, still gave "collected" (first block of the details below). For browser code: stop the timer, remove the listener, and drop the handle too: the handle alone kept the cache on every engine that ran the check.
 
@@ -4021,7 +4095,7 @@ len 100000 json: 0.1 MiB (part.length 100000)
 ```
 
 ```js
-// JL-G3, second script: one slice length and one copy idiom per process (set len and idiom on the two first lines);
+// JL-G3, second script: one slice length and one copy idiom per process (replace `LEN` and `'IDIOM'` on the first line of code);
 // a 16 MiB one-byte parent is built, a slice of len characters is cut and copied by the idiom, the parent is dropped, heap growth in MiB after a full collection.
 const len = LEN, idiom = 'IDIOM';
 const g = globalThis;
@@ -4046,7 +4120,7 @@ A `WeakMap` entry whose value references its own key, with the key dropped; and 
 | after the next timer turn | 1 | 1 | — | 1 | 1 | — |
 | at the end of the script (after the script's own settling steps) | 1 | 1 | 1 | 1 | 1 | 1 |
 
-The same in all three runs of each environment. A value that points back to its key did not keep the entry alive on any engine. A finalizer callback ran on every engine: in the same turn as the forced collection on Bun, one timer turn later on Node.js, Chrome and the JavaScriptCore shell, and within the script's wait in Firefox and the WebKit page (no forced collection there). A second script (below) forced a collection every 10 ms for up to 3,000 ms and stopped at the first callback: Node.js 24 to 27 ms after the start (2 steps, three runs), the JavaScriptCore shell 28 to 30 ms (2 steps, three runs), Bun 12 to 16 ms (1 step, three runs).
+The same in all three runs of each environment. A value that points back to its key did not keep the entry alive on any engine. A finalizer callback ran on every engine: in the same turn as the forced collection on Bun, one timer turn later on Node.js, Chrome and the JavaScriptCore shell, and within the script's wait in Firefox and the WebKit page (no forced collection there). A second script (below) forced a collection every 10 ms for up to 3,000 ms and stopped at the first callback: Node.js 24 to 27 ms after the start (2 steps, six runs), the JavaScriptCore shell 24 to 30 ms (2 steps, six runs), Bun 11 to 16 ms (1 step, six runs).
 
 The first version of this part said that no finalizer ran on Node.js (none in 3,000 ms and 204 to 246 forced collections) and not by the end of the script on Bun. That was a script artifact of the kind described in §6.1: the registry was held only by a top-level `const` that nothing used after its first lines, so in a Node.js or Bun file the registry itself became garbage, and a registry that is collected never calls back. With one line that puts it on `globalThis`, Node.js and Bun behaved as the other engines. The `WeakMap` is held on `globalThis` too in the final script; its result was the same as before. For browser code: `WeakMap` side data is safe everywhere; a `FinalizationRegistry` callback runs after the collection, at a time the language does not fix (the same turn on one engine, a later turn on the others), so it can never carry program logic.
 
@@ -4159,6 +4233,504 @@ if (typeof process !== 'undefined') process.on('exit', () => console.log('exit e
 ```
 </details>
 
+### 4.34 The checks a Firefox page could not make, in the SpiderMonkey shell
+
+A Firefox page has no forced collection and no heap figure, so §4.10 (bytes), §4.30 (the closure liveness control was not collected) and §4.32 (slice bytes) had no SpiderMonkey result. SM-shell (§2.1) has both, so those three ran there, three times each, with the same scripts plus one line in their `heap` chain (`gc()`, then `gcBytes + mallocBytes` of `performance.mozMemory.gc`); §4.31 and §4.33, which a page could only check by waiting, were run there too ✅[^lab-sm]. A shell is not a page (§2.1): these figures are SpiderMonkey's, on Linux, outside Firefox. The V8-node, JSC-mac and SM-firefox columns are copied from §4.10 to §4.33, not measured again here.
+
+**The heap figure on allocations of known size.** `known.js` of §4.10 with the SpiderMonkey line: an 8 MiB `Uint8Array` (8,388,608 bytes) grew the figure by 8,409,221 bytes, a `Float64Array` of 10⁶ elements (8,000,000) by 8,004,096, a 16 MiB string (16,777,216) by 16,789,560, and an array of 10⁶ doubles grown by `push` by 8,409,088; the same in all three runs ✅[^lab-sm]. So the figure counts typed-array contents and string characters to within 0.3 %.
+
+<details><summary>Lab: <code>known.js</code> with the SpiderMonkey line, output of run 2 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+Uint8Array 8 MiB: delta 8409221 bytes (expected about 8388608)
+Float64Array 1e6 (8 MB): delta 8004096 bytes (expected about 8000000)
+string of 16 MiB (one-byte characters): delta 16789560 bytes (expected about 16777216)
+array 1e6 doubles: delta 8409088 bytes (expected about 8000000)
+```
+
+```js
+// Check of the heap counters on allocations of a known size: the counter after a forced full collection, before and after one kept allocation.
+const g = globalThis;
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }
+  : g.process && g.gc ? () => { gc(); const m = process.memoryUsage(); return m.heapUsed + m.arrayBuffers; }
+  : g.gc && g.performance && performance.memory ? () => { gc(); return performance.memory.usedJSHeapSize; }
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+const out = (l, v) => console.log(l + ': ' + v);
+const keep = [];
+let h0 = heap();
+for (const [label, mk, bytes] of [
+  ['Uint8Array 8 MiB', () => new Uint8Array(8 * 1048576), 8 * 1048576],
+  ['Float64Array 1e6 (8 MB)', () => new Float64Array(1e6), 8e6],
+  ['string of 16 MiB (one-byte characters)', () => { const a = []; for (let i = 0; i < 1024; i++) a.push((i + 'abcdefgh'.repeat(2048)).slice(0, 16384)); return a.join(''); }, 16 * 1048576],
+  ['array 1e6 doubles', () => { const a = []; for (let i = 0; i < 1e6; i++) a.push(i + 0.5); return a; }, 8e6],
+]) {
+  const x = mk(); keep.push(x); if (typeof x === 'string') x.charCodeAt(5);
+  const h1 = heap(); out(label, 'delta ' + (h1 - h0) + ' bytes (expected about ' + bytes + ')'); h0 = h1;
+}
+```
+</details>
+
+#### §4.10 on SM-shell: bytes per element
+
+The same in all three runs, except the string-key `Map` (84.7 or 84.8) ✅[^lab-sm]:
+
+| Bytes per element | SM-firefox | SM-shell | V8-node | JSC-mac |
+|---|---|---|---|---|
+| array, small integers | — | 8.4 | 8.0 | 8.0 |
+| array, integers just below 2³⁰ | — | 8.4 | 8.0 | 8.0 |
+| array, integers just below 2³¹ | — | 8.4 | 8.0 | 8.0 |
+| array, doubles | — | 8.4 | 8.0 | 8.0 |
+| `{ x, y }` small integers, with its array slot | — | 48.9 | 48.0 | 40.0 |
+| `{ x }` small integer, with its slot | — | 48.9 | 40.0 | 40.0 |
+| `{ x }` integer just below 2³¹, with its slot | — | 48.9 | 40.0 | 40.0 |
+| `{ x }` double, with its slot | — | 48.9 | 56.0 | 40.0 |
+| `Map` entry, integer key and value | — | 52.7 | 36.8 to 36.9 | 84.0 (125.9 in one run) |
+| `Set` entry, integer | — | 42.2 | 26.3 to 26.5 | 63.0 |
+| `Map` entry, string key | — | 84.7 to 84.8 | 36.7 | 69.7 to 69.8 |
+| object as a table, string key | — | 27.3 | 62.9 | 38.1 |
+| `Int32Array` | — | 4.0 | 4.0 | 4.0 |
+| `Float64Array` | — | 8.0 | 8.0 | 8.0 |
+
+SpiderMonkey showed none of V8's steps either: 8.4 bytes per array element (8 bytes and the array's spare capacity, the 8.39 of §2.1) and 48.9 bytes per one-field object, whatever number the field or the element held. Like JavaScriptCore, it gave a `Map` entry more bytes than V8-node did, and an object used as a table fewer (27.3 against 52.7 for an integer `Map` and 84.7 for a string-key `Map`). For browser code: the 2³⁰ step and the boxed double field are V8's alone, and a `Map` saves no memory against an object table in Firefox's engine either.
+
+<details><summary>Lab: <code>bytes.js</code> with the SpiderMonkey line, output of run 2 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+array, small integers: 8.4 bytes per element (n = 1000000, kept 1000000)
+array, integers 2^30-1024..2^30-1: 8.4 bytes per element (n = 1000000, kept 1000000)
+array, integers 2^31-1024..2^31-1: 8.4 bytes per element (n = 1000000, kept 1000000)
+array, doubles: 8.4 bytes per element (n = 1000000, kept 1000000)
+{ x, y } small integers, with its array slot: 48.9 bytes per element (n = 1000000, kept 1000000)
+{ x } small integer, with its slot: 48.9 bytes per element (n = 1000000, kept 1000000)
+{ x } integer 2^30..2^31-1, with its slot: 48.9 bytes per element (n = 1000000, kept 1000000)
+{ x } double, with its slot: 48.9 bytes per element (n = 1000000, kept 1000000)
+Map entry, integer key and value: 52.7 bytes per element (n = 100000, kept 100000)
+Set entry, integer: 42.2 bytes per element (n = 100000, kept 100000)
+Map entry, string key (keys made before): 84.7 bytes per element (n = 100000, kept 100000)
+object as table, string key (keys made before): 27.3 bytes per element (n = 100000, kept 100000)
+Int32Array: 4.0 bytes per element (n = 1000000, kept 1000000)
+Float64Array: 8.0 bytes per element (n = 1000000, kept 1000000)
+```
+
+```js
+// JE-N1, JE-N9, JE-N10, JE-S1, JE-S2, JE-S9: bytes per element, from the engine's heap counter after a forced full collection.
+const g = globalThis;
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }                                   // JavaScriptCore shell
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }                     // Bun
+  : g.process && g.gc ? () => { gc(); const m = process.memoryUsage(); return m.heapUsed + m.arrayBuffers; } // Node.js
+  : g.gc && g.performance && performance.memory ? () => { gc(); return performance.memory.usedJSHeapSize; } // Chrome with --expose-gc
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+if (!heap) console.log('no forced GC or heap figure in this environment');
+else {
+  const M = 1e6, K = 1e5, keys = Array.from({ length: K }, (_, i) => 'k' + i);
+  const arr = (f) => () => { const a = new Array(M).fill(0); for (let i = 0; i < M; i++) a[i] = f(i); return a; };
+  const cases = [
+    ['array, small integers', M, arr((i) => i & 1023)],
+    ['array, integers 2^30-1024..2^30-1', M, arr((i) => 1073741823 - (i & 1023))],
+    ['array, integers 2^31-1024..2^31-1', M, arr((i) => 2147483647 - (i & 1023))],
+    ['array, doubles', M, arr((i) => i + 0.5)],
+    ['{ x, y } small integers, with its array slot', M, arr((i) => ({ x: i & 1023, y: i & 1023 }))],
+    ['{ x } small integer, with its slot', M, arr((i) => ({ x: i & 1023 }))],
+    ['{ x } integer 2^30..2^31-1, with its slot', M, arr((i) => ({ x: 2147483647 - (i & 1023) }))],
+    ['{ x } double, with its slot', M, arr((i) => ({ x: i + 0.5 }))],
+    ['Map entry, integer key and value', K, () => { const m = new Map(); for (let i = 0; i < K; i++) m.set(i, i); return m; }],
+    ['Set entry, integer', K, () => { const s = new Set(); for (let i = 0; i < K; i++) s.add(i); return s; }],
+    ['Map entry, string key (keys made before)', K, () => { const m = new Map(); for (let i = 0; i < K; i++) m.set(keys[i], i); return m; }],
+    ['object as table, string key (keys made before)', K, () => { const o = {}; for (let i = 0; i < K; i++) o[keys[i]] = i; return o; }],
+    ['Int32Array', M, () => new Int32Array(M).fill(7)],
+    ['Float64Array', M, () => new Float64Array(M).fill(0.5)],
+  ];
+  const all = [];  // every result stays alive to the end, so no earlier case can be freed inside a later measurement
+  for (const [label, n, build] of cases) {
+    const before = heap(); const kept = build(); const after = heap(); all.push(kept);
+    console.log(`${label}: ${((after - before) / n).toFixed(1)} bytes per element (n = ${n}, kept ${kept.length ?? kept.size ?? Object.keys(kept).length})`);
+  }
+}
+```
+</details>
+
+#### §4.30 on SM-shell: closures that share a scope with a big array
+
+The same in all three runs ✅[^lab-sm]:
+
+| Kind | SM-firefox | SM-shell | V8-node | JSC-mac |
+|---|---|---|---|---|
+| no sibling (control), bytes | — | 0.0 MiB | 0.0 MiB | 0.0 MiB |
+| a sibling closure uses the array, bytes | — | 80.0 MiB | 76.3 MiB | 76.3 MiB |
+| a closure on a never-run `if` uses it, bytes | — | 80.0 MiB | 76.3 MiB | 76.3 MiB |
+| sibling, then `big = null`, bytes | — | 0.0 MiB | 0.0 MiB | 7.6 MiB |
+| liveness: control / sibling / never-run `if` / `= null` | 1 / 3 / 3 / 0 (control kept: no verdict) | 0 / 3 / 3 / 0 of 3 | 0 / 3 / 3 / 0 | 0 / 3 / 3 / 0 |
+
+With a forced collection, SpiderMonkey's control objects were collected after one step, and the result matches V8 and JavaScriptCore: a closure that never touches the array kept it as soon as a sibling closure of the same scope used it, even one on a branch that never ran, and `big = null` released it (80.0 MiB is ten arrays of 8.4 bytes per element). For browser code: the rule holds in Firefox's engine too; move the big value's use into a separate function, or set it to `null` when done.
+
+<details><summary>Lab: <code>closures.js</code> with the SpiderMonkey line, output of run 2 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+no sibling (control): heap +0.0 MiB for 10 kept closures
+sibling uses big: heap +80.0 MiB for 10 kept closures
+never-run if uses big: heap +80.0 MiB for 10 kept closures
+sibling, then big = null: heap +0.0 MiB for 10 kept closures
+controls collected after 1 steps | no sibling (control): 0 of 3 alive | sibling uses big: 3 of 3 alive | never-run if uses big: 3 of 3 alive | sibling, then big = null: 0 of 3 alive | kept 52
+```
+
+```js
+globalThis.__manualFinish = true;
+const g = globalThis;
+// heap(): bytes after a forced full collection, where the environment has both (null in Firefox and WebKit pages).
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }
+  : g.process && g.gc ? () => { gc(); return process.memoryUsage().heapUsed; }
+  : g.gc && g.performance && performance.memory ? () => { gc(); return performance.memory.usedJSHeapSize; }
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+const mib = (b, a) => (heap ? ((a - b) / 2 ** 20).toFixed(1) + ' MiB' : 'no heap figure');
+// Liveness: allocate 16 MB of garbage per step (plus a forced full GC where heap() exists), one timer turn between steps,
+// until every control is collected, then 5 steps more.
+const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+const junk = () => { let a; for (let i = 0; i < 20; i++) a = new Array(1e5).fill(i); return a.length; };
+// deref() itself keeps its target alive until the job ends, so each check runs in its own job before the next step.
+async function settle(controls) { let s = 0; while (s < 500 && controls.some((r) => r.deref() !== undefined)) { await tick(); junk(); if (heap) heap(); s++; } for (let i = 0; i < 5; i++) { await tick(); junk(); if (heap) heap(); } await tick(); return s < 500 ? `controls collected after ${s} steps` : 'controls NOT collected in 500 steps'; }
+const alive = (refs) => refs.filter((r) => r.deref() !== undefined).length + ' of ' + refs.length + ' alive';
+const done = () => g.__finish && g.__finish();
+// JL-G1: scopes that each hold a 10^6-element array (about 7.6 MiB); only a small closure 'tiny' is kept from each.
+// One function per kind: whether a variable is captured is decided per function, from its source.
+const mks = {
+  'no sibling (control)': (refs) => { const big = new Array(1e6).fill(0); if (refs) refs.push(new WeakRef(big)); return () => 'tiny'; },
+  'sibling uses big': (refs) => { const big = new Array(1e6).fill(0); if (refs) refs.push(new WeakRef(big)); const useBig = () => big.length; useBig(); return () => 'tiny'; },
+  'never-run if uses big': (refs) => { const big = new Array(1e6).fill(0); if (refs) refs.push(new WeakRef(big)); if (big.length < 0) g.f = () => big.length; return () => 'tiny'; },
+  'sibling, then big = null': (refs) => { let big = new Array(1e6).fill(0); if (refs) refs.push(new WeakRef(big)); const useBig = () => big.length; useBig(); big = null; return () => 'tiny'; },
+};
+const kept = [], refs = {};
+for (const k in mks) {   // pass 1, bytes: 10 scopes per kind, no WeakRef (a new WeakRef keeps its target alive until the job ends)
+  const b = heap && heap(); for (let i = 0; i < 10; i++) kept.push(mks[k]()); const a = heap && heap();
+  console.log(`${k}: heap +${mib(b, a)} for 10 kept closures`);
+}
+for (const k in mks) { refs[k] = []; for (let i = 0; i < 3; i++) kept.push(mks[k](refs[k])); }  // pass 2, liveness: 3 per kind
+settle(refs['no sibling (control)']).then((s) => {
+  console.log(s + ' | ' + Object.keys(mks).map((k) => `${k}: ${alive(refs[k])}`).join(' | ') + ` | kept ${kept.length}`);
+  done();
+});
+```
+</details>
+
+#### §4.31 on SM-shell: a timer and a listener
+
+Not measurable in the shell: it has no `setInterval`, no `clearTimeout`, no `clearInterval` and no `EventTarget`, and its `setTimeout` does not wait for its delay (§2.1) ✅[^lab-sm]. The script printed the same lines as on JSC-mac in all three runs. The SM-firefox result of §4.31 stands.
+
+<details><summary>Lab: <code>timers.js</code> of §4.31 (unchanged but for the SpiderMonkey line), output of run 2 on SM-shell</summary>
+
+SM-shell:
+
+```text
+setInterval: undefined, clearInterval: undefined, EventTarget: undefined
+timer: not measurable here
+listener: not measurable here
+controls collected after 1 steps
+```
+
+The script is §4.31's `timers.js` with the line `  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell` added to its `heap` chain before `: null;`, as in the scripts above.
+</details>
+
+#### §4.32 on SM-shell: a slice of a 16 MiB string
+
+The same in all three runs ✅[^lab-sm]:
+
+| Kept | SM-firefox | SM-shell | V8-node | JSC-mac |
+|---|---|---|---|---|
+| 13 characters, plain slice (§4.32's script) | — | 0.0 MiB | 16.0 MiB | 16.0 MiB |
+| 12 characters, plain slice | — | 0.0 MiB | 0.0 MiB | 16.0 MiB |
+| shortest plain slice that kept the parent | — | 1,048,577 characters (a parent built by `join`); 524,289 (§4.32's `'ab'.repeat` parent, 9.0 MiB kept) | 13 characters | 3 characters (4 freed it) |
+| `[...s].join('')`, `s.split('').join('')`, `JSON` round trip | — | freed at every length tried | freed | freed |
+| `(' ' + s).slice(1)` | — | kept, from the same length as the plain slice | freed | kept |
+
+In SpiderMonkey no slice of 1 to 100,000 characters kept the parent, with any idiom (one process per length and idiom, lengths 1 to 5, 12, 13, 16, 17, 24, 25, 32, 100, 1,000 and 100,000) ✅[^lab-sm]. A third script searched for the shortest slice that did, by doubling then bisecting. For a flat 16 MiB parent (built by joining 1,024 pieces) it was 1,048,577 characters: 1,048,576 freed it and one more kept all 16.0 MiB. §4.32's parent, `'ab'.repeat(8 * 2 ** 20)`, is a rope in SpiderMonkey: the shell's `isRope` returns `true` for it, and while kept and unsliced it added 0.0 MiB to the heap figure, against 16.0 MiB for the joined one. Its shortest keeping slice was 524,289 characters, and it then kept 9.0 MiB. At the keeping length, `(' ' + s).slice(1)` kept the parent too, while `[...s].join('')`, `s.split('').join('')` and the `JSON` round trip freed it. The other parent sizes were not tried. For browser code: in Firefox's engine a short slice did not keep its parent, so V8's 13-character threshold does not apply there; copy a slice you keep with `[...s].join('')` anyway, because that is the idiom that freed the parent on all three engines.
+
+<details><summary>Lab: <code>slices.js</code> with the SpiderMonkey line, output of run 2 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+13 characters, slice, no copy: heap +0.0 MiB (part.length 13)
+13 characters, [...s].join(""): heap +0.0 MiB (part.length 13)
+13 characters, (" " + s).slice(1): heap +0.0 MiB (part.length 13)
+13 characters, JSON.parse(JSON.stringify(s)): heap +0.0 MiB (part.length 13)
+12 characters, slice, no copy: heap +0.0 MiB (part.length 12)
+12 characters, [...s].join(""): heap +0.0 MiB (part.length 12)
+12 characters, (" " + s).slice(1): heap +0.0 MiB (part.length 12)
+12 characters, JSON.parse(JSON.stringify(s)): heap +0.0 MiB (part.length 12)
+```
+
+```js
+globalThis.__manualFinish = true;
+const g = globalThis;
+// heap(): bytes after a forced full collection, where the environment has both (null in Firefox and WebKit pages).
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }
+  : g.process && g.gc ? () => { gc(); return process.memoryUsage().heapUsed; }
+  : g.gc && g.performance && performance.memory ? () => { gc(); return performance.memory.usedJSHeapSize; }
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+const mib = (b, a) => (heap ? ((a - b) / 2 ** 20).toFixed(1) + ' MiB' : 'no heap figure');
+// Liveness: allocate 16 MB of garbage per step (plus a forced full GC where heap() exists), one timer turn between steps,
+// until every control is collected, then 5 steps more.
+const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+const junk = () => { let a; for (let i = 0; i < 20; i++) a = new Array(1e5).fill(i); return a.length; };
+// deref() itself keeps its target alive until the job ends, so each check runs in its own job before the next step.
+async function settle(controls) { let s = 0; while (s < 500 && controls.some((r) => r.deref() !== undefined)) { await tick(); junk(); if (heap) heap(); s++; } for (let i = 0; i < 5; i++) { await tick(); junk(); if (heap) heap(); } await tick(); return s < 500 ? `controls collected after ${s} steps` : 'controls NOT collected in 500 steps'; }
+const alive = (refs) => refs.filter((r) => r.deref() !== undefined).length + ' of ' + refs.length + ' alive';
+const done = () => g.__finish && g.__finish();
+// JL-G3: keep a 13- or 12-character slice of a 16 MiB one-byte string, drop the parent, and read the heap; then three copy idioms.
+function keepPart(len, copy) { const parent = 'ab'.repeat(8 * 2 ** 20); return copy(parent.slice(1000, 1000 + len)); }
+const idioms = { 'slice, no copy': (s) => s, '[...s].join("")': (s) => [...s].join(''), '(" " + s).slice(1)': (s) => (' ' + s).slice(1), 'JSON.parse(JSON.stringify(s))': (s) => JSON.parse(JSON.stringify(s)) };
+if (!heap) console.log('no forced GC or heap figure here: bytes not measurable (a string cannot be the target of a WeakRef)');
+else for (const len of [13, 12]) for (const k in idioms) {
+  const b = heap(); let part = keepPart(len, idioms[k]); const a = heap();
+  console.log(`${len} characters, ${k}: heap +${mib(b, a)} (part.length ${part.length})`); part = null;
+}
+done();
+```
+</details>
+
+<details><summary>Lab: <code>slices-by-length.js</code> with the SpiderMonkey line, output of run 1 on SM-shell (one process per length and copy idiom; runs 2 and 3 printed the same), then the script</summary>
+
+SM-shell:
+
+```text
+len 1 plain: 0.0 MiB (part.length 1)
+len 1 join: 0.0 MiB (part.length 1)
+len 1 space: 0.0 MiB (part.length 1)
+len 1 split: 0.0 MiB (part.length 1)
+len 1 json: 0.0 MiB (part.length 1)
+len 2 plain: 0.0 MiB (part.length 2)
+len 2 join: 0.0 MiB (part.length 2)
+len 2 space: 0.0 MiB (part.length 2)
+len 2 split: 0.0 MiB (part.length 2)
+len 2 json: 0.0 MiB (part.length 2)
+len 3 plain: 0.0 MiB (part.length 3)
+len 3 join: 0.0 MiB (part.length 3)
+len 3 space: 0.0 MiB (part.length 3)
+len 3 split: 0.0 MiB (part.length 3)
+len 3 json: 0.0 MiB (part.length 3)
+len 4 plain: 0.0 MiB (part.length 4)
+len 4 join: 0.0 MiB (part.length 4)
+len 4 space: 0.0 MiB (part.length 4)
+len 4 split: 0.0 MiB (part.length 4)
+len 4 json: 0.0 MiB (part.length 4)
+len 5 plain: 0.0 MiB (part.length 5)
+len 5 join: 0.0 MiB (part.length 5)
+len 5 space: 0.0 MiB (part.length 5)
+len 5 split: 0.0 MiB (part.length 5)
+len 5 json: 0.0 MiB (part.length 5)
+len 12 plain: 0.0 MiB (part.length 12)
+len 12 join: 0.0 MiB (part.length 12)
+len 12 space: 0.0 MiB (part.length 12)
+len 12 split: 0.0 MiB (part.length 12)
+len 12 json: 0.0 MiB (part.length 12)
+len 13 plain: 0.0 MiB (part.length 13)
+len 13 join: 0.0 MiB (part.length 13)
+len 13 space: 0.0 MiB (part.length 13)
+len 13 split: 0.0 MiB (part.length 13)
+len 13 json: 0.0 MiB (part.length 13)
+len 16 plain: 0.0 MiB (part.length 16)
+len 16 join: 0.0 MiB (part.length 16)
+len 16 space: 0.0 MiB (part.length 16)
+len 16 split: 0.0 MiB (part.length 16)
+len 16 json: 0.0 MiB (part.length 16)
+len 17 plain: 0.0 MiB (part.length 17)
+len 17 join: 0.0 MiB (part.length 17)
+len 17 space: 0.0 MiB (part.length 17)
+len 17 split: 0.0 MiB (part.length 17)
+len 17 json: 0.0 MiB (part.length 17)
+len 24 plain: 0.0 MiB (part.length 24)
+len 24 join: 0.0 MiB (part.length 24)
+len 24 space: 0.0 MiB (part.length 24)
+len 24 split: 0.0 MiB (part.length 24)
+len 24 json: 0.0 MiB (part.length 24)
+len 25 plain: 0.0 MiB (part.length 25)
+len 25 join: 0.0 MiB (part.length 25)
+len 25 space: 0.0 MiB (part.length 25)
+len 25 split: 0.0 MiB (part.length 25)
+len 25 json: 0.0 MiB (part.length 25)
+len 32 plain: 0.0 MiB (part.length 32)
+len 32 join: 0.0 MiB (part.length 32)
+len 32 space: 0.0 MiB (part.length 32)
+len 32 split: 0.0 MiB (part.length 32)
+len 32 json: 0.0 MiB (part.length 32)
+len 100 plain: 0.0 MiB (part.length 100)
+len 100 join: 0.0 MiB (part.length 100)
+len 100 space: 0.0 MiB (part.length 100)
+len 100 split: 0.0 MiB (part.length 100)
+len 100 json: 0.0 MiB (part.length 100)
+len 1000 plain: 0.0 MiB (part.length 1000)
+len 1000 join: 0.0 MiB (part.length 1000)
+len 1000 space: 0.0 MiB (part.length 1000)
+len 1000 split: 0.0 MiB (part.length 1000)
+len 1000 json: 0.0 MiB (part.length 1000)
+len 100000 plain: 0.1 MiB (part.length 100000)
+len 100000 join: 0.1 MiB (part.length 100000)
+len 100000 space: 0.1 MiB (part.length 100000)
+len 100000 split: 0.1 MiB (part.length 100000)
+len 100000 json: 0.1 MiB (part.length 100000)
+```
+
+```js
+// JL-G3, second script: one slice length and one copy idiom per process (set len and idiom on the two first lines);
+// a 16 MiB one-byte parent is built, a slice of len characters is cut and copied by the idiom, the parent is dropped, heap growth in MiB after a full collection.
+const len = LEN, idiom = 'IDIOM';
+const g = globalThis;
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }
+  : g.process && g.gc ? () => { gc(); return process.memoryUsage().heapUsed; }
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+const idioms = { plain: (s) => s, join: (s) => [...s].join(''), space: (s) => (' ' + s).slice(1), split: (s) => s.split('').join(''), json: (s) => JSON.parse(JSON.stringify(s)) };
+function keepPart() { const parent = 'ab'.repeat(8 * 2 ** 20); return idioms[idiom](parent.slice(1000, 1000 + len)); }
+const b = heap(); const part = keepPart(); const a = heap();
+console.log(`len ${len} ${idiom}: ${((a - b) / 2 ** 20).toFixed(1)} MiB (part.length ${part.length})`);
+```
+</details>
+
+<details><summary>Lab: <code>slice-threshold.js</code>, output of run 1 on SM-shell (runs 2 and 3 printed the same), then the script</summary>
+
+SM-shell:
+
+```text
+parent 'ab'.repeat(8 * 2 ** 20): shortest plain slice that keeps it 524289 characters (524288 does not)
+  at 524288: plain 0.5, join 0.5, space 0.5, split 0.5, json 0.5 MiB
+  at 524289: plain 9.0, join 0.5, space 9.0, split 0.5, json 0.5 MiB
+parent join of 1,024 pieces of 16 KiB: shortest plain slice that keeps it 1048577 characters (1048576 does not)
+  at 1048576: plain 1.0, join 1.0, space 1.0, split 1.0, json 1.0 MiB
+  at 1048577: plain 16.0, join 1.0, space 16.0, split 1.0, json 1.0 MiB
+```
+
+```js
+// SM-shell, JL-G3: shortest slice of a 16 MiB one-byte parent that keeps the parent alive, by doubling then bisecting; then the copy idioms at that length.
+const H = () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; };
+const parents = {
+  "'ab'.repeat(8 * 2 ** 20)": () => 'ab'.repeat(8 * 2 ** 20),
+  'join of 1,024 pieces of 16 KiB': () => { const a = []; for (let i = 0; i < 1024; i++) a.push((i + 'abcdefgh'.repeat(2048)).slice(0, 16384)); return a.join(''); },
+};
+const idioms = { plain: (s) => s, join: (s) => [...s].join(''), space: (s) => (' ' + s).slice(1), split: (s) => s.split('').join(''), json: (s) => JSON.parse(JSON.stringify(s)) };
+function grows(mk, len, idiom) { const b = H(); globalThis.q = idioms[idiom](mk().slice(1000, 1000 + len)); const a = H(); const kept = globalThis.q.length; globalThis.q = null; H(); return [(a - b) / 2 ** 20, kept]; }
+for (const k in parents) {
+  const keeps = (len) => grows(parents[k], len, 'plain')[0] > 8;
+  let hi = 1; while (!keeps(hi) && hi < 8 * 2 ** 20) hi *= 2;
+  let lo = hi / 2; while (hi - lo > 1) { const m = Math.floor((lo + hi) / 2); if (keeps(m)) hi = m; else lo = m; }
+  const at = (len) => Object.keys(idioms).map((i) => { const [mib, n] = grows(parents[k], len, i); return i + ' ' + mib.toFixed(1); }).join(', ');
+  console.log(`parent ${k}: shortest plain slice that keeps it ${hi} characters (${lo} does not)`);
+  console.log(`  at ${lo}: ${at(lo)} MiB`);
+  console.log(`  at ${hi}: ${at(hi)} MiB`);
+}
+```
+</details>
+
+<details><summary>Lab: <code>parent-kind.js</code>, output of run 1 on SM-shell (runs 2 and 3 printed the same), then the script</summary>
+
+SM-shell:
+
+```text
+'ab'.repeat(8 * 2 ** 20): length 16777216, isRope true, kept: heap +0.0 MiB
+join of 1,024 pieces of 16 KiB: length 16777216, isRope false, kept: heap +16.0 MiB
+```
+
+```js
+// SM-shell, JL-G3: the two 16 MiB parents of slice-threshold.js: is each a rope (isRope, a shell helper), and how many bytes does it hold while kept?
+const H = () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; };
+const parents = {
+  "'ab'.repeat(8 * 2 ** 20)": () => 'ab'.repeat(8 * 2 ** 20),
+  'join of 1,024 pieces of 16 KiB': () => { const a = []; for (let i = 0; i < 1024; i++) a.push((i + 'abcdefgh'.repeat(2048)).slice(0, 16384)); return a.join(''); },
+};
+for (const k in parents) {
+  const b = H(); globalThis.p = parents[k](); const a = H();
+  console.log(`${k}: length ${p.length}, isRope ${isRope(p)}, kept: heap +${((a - b) / 2 ** 20).toFixed(1)} MiB`);
+  globalThis.p = null; H();
+}
+```
+</details>
+
+#### §4.33 on SM-shell: a `WeakMap` entry and a finalizer after `gc()`
+
+The same in all three runs ✅[^lab-sm]:
+
+| | SM-firefox | SM-shell | V8-node | JSC-mac |
+|---|---|---|---|---|
+| key and value of the `WeakMap` entry | collected | collected | collected | collected |
+| finalizer callbacks right after the forced GC (same turn) | no forced GC | 0 | 0 | 0 |
+| after the next timer turn | — | 1 | 1 | 1 |
+| second script: forced collections until the callback | — | 2 steps | 2 steps | 2 steps |
+
+With `gc()`, SpiderMonkey behaved like V8-node and the JavaScriptCore shell: the entry whose value points back to its key was collected, and the `FinalizationRegistry` callback ran one turn after the forced collection, not in the same turn. The second script reports 1 ms of waiting for its two steps because the shell's `setTimeout` does not wait (§2.1), so that time is not comparable with §4.33's. For browser code: as in §4.33, `WeakMap` side data is safe, and a finalizer can never carry program logic.
+
+<details><summary>Lab: <code>weak.js</code> with the SpiderMonkey line, output of run 2 on SM-shell, then the script</summary>
+
+SM-shell:
+
+```text
+after one forced full GC, same turn: target deref undefined, callbacks 0
+next timer turn: callbacks 1
+after a 10 ms timer: callbacks 1
+controls collected after 0 steps | WeakMap key: 0 of 1 alive, value: 0 of 1 alive | target deref undefined, callbacks 1
+```
+
+```js
+globalThis.__manualFinish = true;
+const g = globalThis;
+// heap(): bytes after a forced full collection, where the environment has both (null in Firefox and WebKit pages).
+const heap = g.gcHeapSize ? () => { fullGC(); return gcHeapSize(); }
+  : g.Bun ? () => { Bun.gc(true); return require('bun:jsc').heapStats().heapSize; }
+  : g.process && g.gc ? () => { gc(); return process.memoryUsage().heapUsed; }
+  : g.gc && g.performance && performance.memory ? () => { gc(); return performance.memory.usedJSHeapSize; }
+  : g.performance && performance.mozMemory ? () => { gc(); const m = performance.mozMemory.gc; return m.gcBytes + m.mallocBytes; } // SpiderMonkey shell
+  : null;
+const mib = (b, a) => (heap ? ((a - b) / 2 ** 20).toFixed(1) + ' MiB' : 'no heap figure');
+// Liveness: allocate 16 MB of garbage per step (plus a forced full GC where heap() exists), one timer turn between steps,
+// until every control is collected, then 5 steps more.
+const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+const junk = () => { let a; for (let i = 0; i < 20; i++) a = new Array(1e5).fill(i); return a.length; };
+// deref() itself keeps its target alive until the job ends, so each check runs in its own job before the next step.
+async function settle(controls) { let s = 0; while (s < 500 && controls.some((r) => r.deref() !== undefined)) { await tick(); junk(); if (heap) heap(); s++; } for (let i = 0; i < 5; i++) { await tick(); junk(); if (heap) heap(); } await tick(); return s < 500 ? `controls collected after ${s} steps` : 'controls NOT collected in 500 steps'; }
+const alive = (refs) => refs.filter((r) => r.deref() !== undefined).length + ' of ' + refs.length + ' alive';
+const done = () => g.__finish && g.__finish();
+// JL-G4: a WeakMap value that references its own key; the key is dropped. JL-G5: when a FinalizationRegistry callback runs.
+const wm = new WeakMap(), refs = { key: [], value: [] }, control = [], log = [];
+globalThis.__wm = wm; // held on globalThis so the WeakMap itself stays reachable
+(() => { const key = {}; const value = { key, big: new Array(1e6).fill(0) }; wm.set(key, value); refs.key.push(new WeakRef(key)); refs.value.push(new WeakRef(value)); control.push(new WeakRef({ big: new Array(1e6).fill(0) })); })();
+const fr = new FinalizationRegistry((h) => log.push(h));
+globalThis.__fr = fr; // the registry must stay reachable or its callbacks never run
+let target = { big: new Array(1e5).fill(0) }; const tref = new WeakRef(target); fr.register(target, 't'); target = null;
+(async () => {
+  await tick();
+  if (g.gc || g.fullGC || g.Bun) {
+    const full = g.fullGC || (g.Bun ? () => Bun.gc(true) : g.gc); full();
+    console.log(`after one forced full GC, same turn: target deref ${tref.deref() === undefined ? 'undefined' : 'alive'}, callbacks ${log.length}`);
+    await tick(); console.log(`next timer turn: callbacks ${log.length}`); await tick(10); console.log(`after a 10 ms timer: callbacks ${log.length}`);
+  } else console.log('no forced GC here');
+  console.log((await settle(control)) + ` | WeakMap key: ${alive(refs.key)}, value: ${alive(refs.value)} | target deref ${tref.deref() === undefined ? 'undefined' : 'alive'}, callbacks ${log.length}`);
+  done();
+})();
+```
+</details>
+
+<details><summary>Lab: <code>finalizer-wait.js</code> of §4.33 (unchanged), output of run 2 on SM-shell</summary>
+
+SM-shell:
+
+```text
+waited 1 ms, 2 steps (gc forced + 10 ms timer each), deref undefined, callbacks 1
+```
+
+The script is §4.33's `finalizer-wait.js`, unchanged: it uses `gc()` where there is no `fullGC` and no `Bun`.
+</details>
+
 ## 5. Reference & invariants
 
 What changes in the advice, rule by rule.
@@ -4182,10 +4754,10 @@ Following them never cost on another engine, but the gain was V8's ✅[^lab]:
 - **`JE-F3`, the type half:** a sum that once saw a string stayed three times slower on V8 only. The other half (wrap 32-bit math with `Math.imul` and `| 0`) paid 1.1 to 1.7 times on every engine when only the loop was timed, and 2.3 to 10 times when the result then went through `% 1000`.
 - **`JE-O2` and the read half of `JE-O3`:** `delete` and computed keys slowed later reads on V8 (and `delete` on SpiderMonkey), not on JavaScriptCore.
 - **`JE-N9`, `JE-N10`:** the 2³⁰ step and the boxed double field are V8 representation steps (in Chrome, 20 against 32 bytes per `{ x }`); JavaScriptCore used 8 bytes per array element and 40 bytes per one-field object for every number tried.
-- **`JE-O6`, `JE-N6`:** prototype writes and `push` against `new Array(n)` made no difference on SpiderMonkey; both still paid on JavaScriptCore.
+- **`JE-O6`, `JE-N6`:** prototype writes cost at most 1.18 times on SpiderMonkey and `push` against `new Array(n)` made no difference there; both still paid on JavaScriptCore.
 - **`JE-N7`, `JE-S3`, `JE-S4`:** the rule held with a smaller effect on one or two engines (reads of a sparse array against a `Map` on V8-chrome and SM-firefox; reading a growing string inside the loop on SM-firefox, where it was linear); rows 8 and 11.
 - **`JE-M1`:** a warm-up step (a faster phase after about 5,000 to 11,000 calls) appeared on V8-node and JavaScriptCore; in Chrome and in Firefox the rounds did not step within 15,000 calls. Warming up longer never hurts.
-- **`JL-L6` is a number of each build, not a rule that moves:** the largest array a spread call accepted was 123,683 to 124,541 on V8, 500,000 to 524,287 on SpiderMonkey and 638,452 to 638,728 on JavaScriptCore, for the builds of this lab and a top-level call.
+- **`JL-L6` is a number of each build, not a rule that moves:** the largest array a spread call accepted was 123,681 to 124,547 on V8, 500,000 to 524,287 on SpiderMonkey and 638,452 to 638,728 on JavaScriptCore, for the builds of this lab and a top-level call.
 
 ### 5.3 Where a V8-only reading would mislead on another engine
 
@@ -4193,7 +4765,7 @@ Following them never cost on another engine, but the gain was V8's ✅[^lab]:
 - **`for…of` is not as cheap as an index loop everywhere.** `JE-N8` and `JE-F12` offer `for…of` beside the index `for`; it was 3.8 to 4.0 times slower than the index loop in Firefox and 2.4 times in the JavaScriptCore shell (and 7.2 to 8.9 times in a first call over 10⁷ items on V8) ✅[^lab]. In code that must be fast in every browser, prefer the index loop.
 - **`JE-S1` on memory.** On JavaScriptCore a `Map` entry took 53 to 210 bytes (it varied with the count and, in the shell, between runs) and an object used as a table 38 bytes, so a `Map` costs more memory there, not less ✅[^lab]; choose it for its behaviour (any key type, no prototype keys, `size`), not to save bytes in JavaScriptCore.
 - **`JL-G3`'s 13-character threshold is V8's.** On JavaScriptCore (the shell and Bun) a plain slice of 3 characters or more, except 4 in the shell, kept the 16 MiB parent, and the copy `(' ' + s).slice(1)` did not free it ✅[^lab]. Copy with `[...s].join('')` whatever the length.
-- **`JL-G1` in Firefox and `JL-G3` in Firefox and the WebKit page could not be measured:** Firefox kept one of three unreferenced control objects through 500 garbage steps, so its liveness verdict is withheld, and a page has no heap figure for a string slice. The V8 and JavaScriptCore results stand.
+- **`JL-G1` and `JL-G3` cannot be measured in a Firefox page, and `JL-G3` not in the WebKit page:** Firefox kept one of three unreferenced control objects through 500 garbage steps, so the page's liveness verdict is withheld, and a page has no heap figure for a string slice. In the SpiderMonkey shell of Firefox 161.0 both were measured (§4.34): the sibling closure kept the array, as on V8 and JavaScriptCore, and no slice of up to 100,000 characters kept its 16 MiB parent, so SpiderMonkey's threshold is far above V8's 13 and JavaScriptCore's 3 characters.
 - **`JL-L5`:** `Error.stackTraceLimit = 0` makes `stack` `undefined` on JavaScriptCore ✅[^lab]; code that reads `err.stack.split(…)` throws there.
 - **Generators (`JE-F9`):** the rule says generators do not stop optimization; a generator that yields one value per call was still 5.5 to 108 times slower than a plain function on every engine ✅[^lab]. Do not turn a plain hot function into one.
 
@@ -4244,14 +4816,14 @@ R('100 calls of 10^4 reads of o.a', { 'plain field': x100(r1, field), 'class get
 - **Before-and-after in one process measures warm-up too.** In the prototype-write control with no write, `a.map(f)` got 5 times faster on V8-node and `a.slice()` 4.5 times faster on SM-firefox between "before" and "after" ✅[^lab]; §4.5 compares each write with that control.
 - **Timers differ.** 0.02 ms in Firefox (with `privacy.reduceTimerPrecision` off) and in the JavaScriptCore shell, 0.1 ms in Chrome, 1 ms in the WebKit page ✅[^lab]: time a pass of 200 ms or more, not single calls.
 - **Algebra can remove work.** In the first version of the §4.19 script (`s = (s + i * j) | 0;`) the generated 1,000-statement function ran at 0.004 ns per statement on JSC-mac and JSC-page, far below one instruction per statement; the final script mixes bits so that nothing can be folded. And one JSC-mac run built 10⁴ records in 0.003 ms (§4.3) ✅[^lab]: a printed result proves the result is used, not that every statement ran.
-- **Liveness without `gc()` is slow and not always conclusive.** In Firefox the controls were collected after 3 to 60 garbage steps in the timer and weak-reference scripts, while in the closure script one of three controls was still alive after 500 steps in every run, so §4.30 gives no Firefox verdict ✅[^lab].
+- **Liveness without `gc()` is slow and not always conclusive.** In Firefox the controls were collected after 3 to 74 garbage steps in the timer and weak-reference scripts, while in the closure script one of three controls was still alive after 500 steps in every run, so §4.30 gives no Firefox verdict ✅[^lab].
 - **A top-level variable of a Node.js or Bun file does not keep an object alive after its last use; a top-level `const` of a page script does.** The first versions of §4.31 and §4.33 kept their handles, and the `FinalizationRegistry`, in top-level variables that nothing used again: the pages kept them, Node.js and Bun let them be collected, and the checks reported "collected" for the handle and "no callback" for the finalizer, which looked like a difference between engines. When a liveness check must keep something alive, hold it on `globalThis` (or use it again after the check) ✅[^lab]. §4.30 and §4.32 use their objects again after the measurement, so they were not affected.
 - **Bun runs a `.js` file in strict mode,** the JavaScriptCore shell does not ✅[^lab]; with strict-mode tail calls, JavaScriptCore drops the caller's frame ✅[^ptc], which changed the frame count in §4.24.
 
 ### 6.2 Not done, and what could not be measured
 
-- **Safari itself:** not run (§2.1). JavaScriptCore ran in JSC-mac, JSC-bun and JSC-page.
-- **Bytes on SpiderMonkey and in the WebKit page:** no forced GC and no heap figure in a page, so §4.10 and §4.32 have no Firefox or WebKit page column. Firefox's own memory tools (`about:memory`) were not used.
+- **Safari itself:** not run (§2.1): one attempt to open it on a local test page was made on 2026-11-28, and Safari did not start on the lab machine. JavaScriptCore ran in JSC-mac, JSC-bun and JSC-page.
+- **Bytes on SpiderMonkey and in the WebKit page:** no forced GC and no heap figure in a page, so §4.10 and §4.32 have no Firefox or WebKit page column, and §4.30 no Firefox verdict. On SpiderMonkey they were measured in the SpiderMonkey shell of Firefox 161.0 instead (§4.34), a shell on Linux, not a page; in the WebKit page they were not measured. Firefox's own memory tools (`about:memory`) were not used. §4.31 could not run in the SpiderMonkey shell either (no `setInterval`, no `EventTarget`, and a `setTimeout` that does not wait).
 - **`JL-L2`'s bytes:** only time was measured (§4.21).
 - **`JL-G2` in the JavaScriptCore shell:** no `setInterval`, `clearTimeout` or `EventTarget` there (§4.31).
 - **Internals on SpiderMonkey and JavaScriptCore:** shapes, tiers and deoptimizations were not observed; no timing in this doc is explained by them.
@@ -4260,6 +4832,8 @@ R('100 calls of 10^4 reads of o.a', { 'plain field': x100(r1, field), 'class get
 ## Verification status
 
 - **Measured on 2026-11-28** on the six environments of §2.1: 50 scripts (41 for the 33 checks, one probe, and 8 for the environment check), each check script run three times on each environment (`features.js` five times), the probe three times on V8-node only, the environment scripts once where they apply; 697 runs in all by the author, not counting the re-runs below. A second reviewer (and a third, who corrected §4.31 and §4.33 by holding the handles and the registry on `globalThis`, three runs on each environment that can run them) re-ran the scripts of §4.18 to §4.33 three times on each environment (the ranges in those parts and in their rows of §3 cover both sets of runs), ran the environment scripts once more, and added four scripts: a probe of `Error.stackTraceLimit` (with a strict-mode variant), the slice lengths of §4.32, and the finalizer wait of §4.33; the bit-mixing script of §4.19 replaced the author's. `uptime` one-minute load averages were 2.1 to 13.8 at the start of a run (the highest during the first runs of §4.2 to §4.5 and §4.12 to §4.13, with another lab and this lab's own script checks on the same machine; §4.4, §4.12 and §4.13 were re-run later at loads of 2.6 to 4). Byte counts, call counts, turn counts and liveness results were the same in every run except one JSC-mac `Map` count (84.0 or 125.9 bytes). Timing ratios are quoted as ranges over the runs.
+- **Re-run on 2026-11-28, after a restart of the lab machine, §4.1 to §4.17:** the 23 scripts of these parts were extracted from this doc and run again (screen unlocked, one browser window at a time, each timing run alone, `uptime` logged before every run). Three runs on each of the six environments: 414 runs, 18 of them the three memory scripts on SM-firefox and JSC-page, which print only that there is no heap figure. 91 more runs were made where a ratio swung or the one-minute load average at the start was above 13.8 (up to 37 in the first runs of §4.3 to §4.5 and §4.7; the repeats ran at 3.4 to 8), and 13 runs for the V8 trace and switch lines of §4.16 (the catalog's script taken from its own doc). No browser run was refused or marked invalid. Of the 100 cells (17 checks times six environments, four for §4.10), 93 matched the quoted counts, bytes and ranges, and no verdict changed. Seven cells differed and were corrected: V8-chrome reads of §4.3 (×1.8 to 2.1, were ×1.2 to 1.9); SM-firefox and JSC-bun in §4.5 (ranges over five runs; on SM-firefox 17 of 45 ratios were 0.97 to 1.02, not 17 of 18); JSC-page in §4.9 (×108 to 127, was ×108 to 112); V8-node in §4.11 at 1.6 × 10⁶ characters (7.6 to 10.1 ns, was 7.6 to 7.8); SM-firefox in §4.17 (the helper form ran in two modes, ×0.22 to 1.04, was ×0.98 to 1.00); V8-node's trace lines in §4.16 (escape analysis off ×17.3 to 18.9, was ×22.4 to 24.1; 7,476 to 7,587 scavenges, was 7,026; catalog `plain` 0.4 to 0.6 ms, was 0.3 ms). The JSC-mac `Map` count of 125.9 bytes did not appear in `bytes.js` in three runs (84.0 each time); it did appear in `scale.js` at 100,000 entries.
+- **Run again on 2026-11-28, after a restart of the lab machine (§2 and §4.18 to §4.33):** every script of those parts was extracted from this doc and run again, on all six environments where the doc reports one (screen unlocked, one browser window at a time under a runner that rejects a page that was not visible for the whole run, timing runs one at a time; no run was refused or invalid), three runs each (five for the cells that disagreed; the 150 slice cases of §4.32's second script three times each on three environments), 126 results in all (a script on an environment). 104 matched as written (counts, bytes, liveness, order and verdict of every timing). 22 differed in a number and were corrected: the largest spread call on V8-node (124,545 and 124,547, not 124,539 and 124,541, in all three runs), the timing ranges of §4.24, §4.27 (including `#private` up to 14 % faster than a public field in some V8 runs) and §4.29, the round of the warm-up step on V8-chrome, SM-firefox and JSC-page (§4.20: Chrome showed no step within 15 rounds with the window visible, as before), one Bun run of eleven whose iterator helpers took 35 ms per call (§4.21), Firefox's control object collected after up to 74 steps (§4.31), and the finalizer wait of §4.33 on the JavaScriptCore shell (24 to 30 ms) and Bun (11 to 16 ms). No verdict changed. The recipe of §2.3 was tried once without the runner on Firefox, Chrome and the WebKit build; its Chrome line now carries the page address and `--no-first-run`.
 - **Read on 2026-11-28:** the WebKit documentation page on JavaScriptCore, the Firefox source docs page on SpiderMonkey, the Bun documentation's first page, the WebKit blog post on proper tail calls, MDN's `Error.stackTraceLimit` page, and the ECMAScript specification's sections on WeakRef (§26.1, AddToKeptObjects) and on `Array.prototype.find`, `filter` and `sort` (§23.1.3).
 - **Not checked:** why any SpiderMonkey or JavaScriptCore timing came out as it did; whether Safari 26.1 uses the same JavaScriptCore build as the macOS 26.1 framework; behaviour on other hardware or operating systems.
 
@@ -4270,12 +4844,15 @@ R('100 calls of 10^4 reads of o.a', { 'plain field': x100(r1, field), 'class get
 - [JavaScriptCore](https://docs.webkit.org/Deep%20Dive/JSC/JavaScriptCore.html) — WebKit project documentation, living. Rank 1. Backs: §1 (JavaScriptCore is WebKit's engine; its tiers LLInt, Baseline JIT, DFG JIT, FTL JIT). [^jsc]
 - [SpiderMonkey](https://firefox-source-docs.mozilla.org/js/index.html) — Firefox source docs, Mozilla, living. Rank 1. Backs: §1 (SpiderMonkey is Firefox's engine; its tiers). [^sm]
 - [Welcome to Bun](https://bun.com/docs) — Bun documentation, living. Rank 1. Backs: §1 (Bun runs on JavaScriptCore). [^bun]
+- [Index of /pub/firefox/releases/161.0/jsshell/](https://archive.mozilla.org/pub/firefox/releases/161.0/jsshell/) — Mozilla's release archive, opened 2026-11-28; the release's checksums are in `SHA512SUMS` one folder up. Rank 1. Backs: §2.1 (the SpiderMonkey shell `jsshell-linux-aarch64.zip` is published beside the Firefox 161.0 release). [^mozarchive]
+- Lab, SpiderMonkey shell: `jsshell-linux-aarch64.zip` of Firefox 161.0 from Mozilla's archive (16,577,798 bytes, SHA-512 equal to its line in the release's `SHA512SUMS`), `js --version` `JavaScript-C161.0`, run in `ubuntu:24.04` (linux arm64 container, no network) on the same Apple M2 on 2026-11-28; 12 scripts in §2.1 and §4.34 (two of them, `timers.js` and `finalizer-wait.js`, given there by reference to §4.31 and §4.33; `sm-env.js`, `settimeout-delay.js`, and `known.js`, `bytes.js`, `closures.js`, `timers.js`, `slices.js`, `slices-by-length.js`, `weak.js`, `finalizer-wait.js` of §4.10 to §4.33 with one line for its heap figure, plus `slice-threshold.js` and `parent-kind.js`), each check script run three times (`slices-by-length.js` three times over 75 processes); the environment scripts once. Rank 1, primary measurement. Backs: every ✅[^lab-sm]. [^lab-sm]
 - [Error.stackTraceLimit](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/stackTraceLimit) — MDN Web Docs, living. Rank 3. Backs: §4.24 (non-standard, part of V8's stack trace API, also implemented by JavaScriptCore). [^mdnstack]
 - [ECMAScript 6 Proper Tail Calls in WebKit](https://webkit.org/blog/6240/ecmascript-6-proper-tail-calls-in-webkit/) — WebKit blog (Michael Saboff), 2016-05-23. Rank 4. Backs: §4.24, §6.1 (proper tail calls only in strict mode, frames of tail calls missing from `Error.stack`). [^ptc]
 - Lab: the 50 scripts embedded in §2.1, §4 and §6.1 (41 for the 33 checks, one probe, 8 for the environment check), each check script run three times on 2026-11-28 on V8-node (Node.js 24.22.1, V8 13.6.233.17-node.58, macOS arm64; the environment check also in `node:24.22.1-alpine`, linux arm64), V8-chrome (Google Chrome 158.0.8127.89, V8 15.8.62.31, a visible window), SM-firefox (Firefox 161.0, headless, empty profile, `privacy.reduceTimerPrecision` false), JSC-mac (the `jsc` shell of the JavaScriptCore framework 21622.2.11.11.9 of macOS 26.1), JSC-bun (Bun 1.4.5, WebKit commit d6375c72, `oven/bun:1.4.5`, linux arm64, no network) and JSC-page (the Playwright WebKit build 2311, a visible window), all on one Apple M2 with macOS 26.1; outputs in §4. Rank 1, primary measurement. Backs: every ✅[^lab]. [^lab]
 
 ## Related
 
+- [javascript/best-practices/](../javascript/best-practices/index.md) — the 17 catalogs whose practices (`JE-…`, `JL-…`, `JN-…`) these checks test; each carries an "Other engines" line taken from here.
 - [v8-object-and-value-representation-deep-dive.md](v8-object-and-value-representation-deep-dive.md) — how V8 lays out objects, arrays, numbers and strings: the mechanisms behind §4.1 to §4.13.
 - [v8-compiler-pipeline-deep-dive.md](v8-compiler-pipeline-deep-dive.md) — V8's tiers, feedback and deoptimization: the mechanisms behind §4.14 to §4.20.
 - [v8-memory-and-startup-deep-dive.md](v8-memory-and-startup-deep-dive.md) — V8's garbage collector and what keeps memory alive: the mechanisms behind §4.30 to §4.33.
