@@ -21,6 +21,13 @@ ranked-sources: true
 ## Scope
 Ten practices for lazy and eager compilation, compile hints, `vm.Script` code caches, startup snapshots, the module compile cache, lazy imports, import specifiers, type stripping and subpath imports. Timings are medians of 9 fresh processes after one warm-up on Node.js 24.22.1 (V8 13.6.233.17, linux arm64) on 2026-11-26, checked on macOS arm64 with Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43.7.7 on 2026-11-27; emulated x64 timings were not used. Type stripping and aliases were measured on Node.js 24.22.1. All claims are about Node.js on V8; the compile hint was not checked in Chrome. Not run: Windows, and the code cache for `vm.compileFunction()` and `vm.SourceTextModule`.
 
+**How the timings were taken.** The conclusions are the order of the alternatives and the ratio between them, which held in both runs; the milliseconds are quoted as the machine printed them under that load, and will differ on another machine or under another load.
+- **Machine.** All runs were made on one Apple M2 laptop, macOS 26.1; the Linux builds ran in containers in a virtual machine on it, and the x64 builds were emulated ✅[^lab-v8-matrix].
+- **The V8 startup lab behind `JN-U1`, `JN-U3`, `JN-U5` and `JN-U6`** ran twice.
+  - **First run:** 2026-11-26 on Node.js 24.22.1 (linux arm64), and 2026-11-27 on the macOS builds, where the snapshot timings were taken with other jobs running; load not recorded ✅[^lab-v8-matrix].
+  - **Re-run** (2026-11-28, after the restart): screen unlocked, one timing run at a time, three runs of each timing script per build, while a one-minute load average of 20 or more from other jobs was observed during the timing runs (the deep dive's record; load not recorded per run); its first `lazy-timing.mjs` pass on macOS Node.js 24.22.1 ran under heavy load, with medians 1.8 to 8.7 times those of the pass run alone later and the order unchanged, and was run again alone ✅[^lab-v8-matrix].
+- **The pdfmake import** of `JN-U7` was measured once, on 2026-11-05, and not re-run; load not recorded ✅[^lab-pools].
+
 How to read the "Applies" column: `always` (the better form is as clear as the other: use it by default), `hot path` (only in code that runs per request, per frame or per element of a large collection, or that a profile points at), `large data` (only above the size the note gives), `startup` (only when start time matters), `check build` (the answer depends on the engine version or build), `no gain` (the lab measured no useful difference, or the advice is outdated: there is no reason to rewrite code for it).
 
 Terms:
@@ -33,12 +40,12 @@ Terms:
 ## Catalog
 | Id | Situation in the code | Practice | Applies | Evidence |
 |---|---|---|---|---|
-| `JN-U1` | Functions wrapped in parentheses `(function () {})` "to compile eagerly", or `--no-lazy` | Use plain declarations unless most functions run at start | startup | 3,000 functions, 1 % called: 15.4 ms as declarations, 32.3 ms parenthesized (Node.js 24.22.1) ✅[^lab-v8] |
+| `JN-U1` | Functions wrapped in parentheses `(function () {})` "to compile eagerly", or `--no-lazy` | Use plain declarations unless most functions run at start | startup | 3,000 functions, 1 % called: 15.0 to 16.3 ms as declarations, 29.6 to 34.3 ms parenthesized (Node.js 24.22.1, two runs) ✅[^lab-v8] |
 | `JN-U2` | `//# allFunctionsCalledOnLoad` as the first line of a file Node.js loads | Leave it out for Node.js | no gain | Parse and compile events were the same with and without it on every build tested (V8 12.4 to 15.0) ✅[^lab-v8-matrix] |
-| `JN-U3` | `createCachedData()` called before the script ran, or `produceCachedData` | Run the script first, then `script.createCachedData()`; save it when absent or rejected | startup | 53.0 ms with no cache, 39.9 ms with a cache made before running, 3.1 ms after (Node.js 24.22.1) ✅[^lab-v8] |
+| `JN-U3` | `createCachedData()` called before the script ran, or `produceCachedData` | Run the script first, then `script.createCachedData()`; save it when absent or rejected | startup | 52.2 to 55.9 ms with no cache, 38.2 to 39.9 ms with a cache made before running, 2.8 to 3.3 ms after (Node.js 24.22.1, two runs) ✅[^lab-v8] |
 | `JN-U4` | A `vm.Script` cache stored by file name, path or source length | Key it by SHA-256 of the source plus `process.version` and flags | always | A same-length edit was accepted (`cachedDataRejected=false`) and ran the old code, on all seven builds ✅[^lab-v8-matrix] |
-| `JN-U5` | A tool whose top level spends its start building tables or state | Build a startup snapshot (`--build-snapshot`, `setDeserializeMainFunction`); start with `--snapshot-blob` | startup | 187.4 ms from source, 20.1 ms from the snapshot, 13.0 ms for `node -e 0` (Node.js 24.22.1) ✅[^lab-v8] |
-| `JN-U6` | A Node.js entry started often, with no `module.enableCompileCache()` or `NODE_COMPILE_CACHE` | Call `module.enableCompileCache()` first in the entry file, or set `NODE_COMPILE_CACHE` | startup | 51.9 ms without, 42.8 ms with a filled cache for one 3,000-function module (Node.js 24.22.1) ✅[^lab-v8] |
+| `JN-U5` | A tool whose top level spends its start building tables or state | Build a startup snapshot (`--build-snapshot`, `setDeserializeMainFunction`); start with `--snapshot-blob` | startup | 179.8 to 187.4 ms from source, 18.4 to 20.6 ms from the snapshot, 12.8 to 15.4 ms for `node -e 0` (Node.js 24.22.1, two runs) ✅[^lab-v8] |
+| `JN-U6` | A Node.js entry started often, with no `module.enableCompileCache()` or `NODE_COMPILE_CACHE` | Call `module.enableCompileCache()` first in the entry file, or set `NODE_COMPILE_CACHE` | startup | 46.0 to 51.9 ms without, 38.8 to 42.8 ms with a filled cache for one 3,000-function module (Node.js 24.22.1, two runs) ✅[^lab-v8] |
 | `JN-U7` | A static top-level import of a heavy module only one optional path uses | Load it with `await import()` inside that path | startup | A static pdfmake 0.3.13 import added 84 ms, 7.2 MiB of heap and 17 MiB of RSS to the main thread ✅[^lab-pools] |
 | `JN-U8` | `import(\`./m.mjs?${Date.now()}\`)` or a per-call query on a dynamic import | Use a fixed specifier | always | Modules are loaded again when the specifier's query or fragment differs ✅[^node-esm] |
 | `JN-U9` | `node file.ts` running code with `enum`, parameter properties, `<T>x`, type imports without `type`, no `.ts` extension | Erasable syntax only: `as const` objects, `import type`, `.ts` extensions, `x as T` | check build | Each failed on Node.js 24.22.1, mostly with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` ✅[^lab-strip]; stable since v24.12.0 ✅[^node-ts] |
@@ -46,6 +53,7 @@ Terms:
 
 ## Lookup notes
 ### `JN-U1` Eager compilation pays off only when most of the file runs at startup
+**Seen in code as:** every function wrapped in parentheses, `const f = (function () { ... });`, "so it compiles eagerly", or `--no-lazy` in a start command.
 **Prefer:**
 ```js
 function parseRow(x) { /* ... */ }   // plain declaration: compiled on first call
@@ -55,8 +63,13 @@ function parseRow(x) { /* ... */ }   // plain declaration: compiled on first cal
 const parseRow = (function (x) { /* ... */ }); // compiled at load even if never called
 ```
 **Why:** V8 assumes a parenthesized function expression is called at once and compiles it eagerly ✅[^preparse]. That saves the second scan when the function does run at start, and wastes compile time and memory when it does not ✅[^preparse]. This matters only when start time matters and most functions of the file are not called during start.
-**Evidence:** Node.js 24.22.1 (V8 13.6.233.17, arm64), a generated file of 3,000 functions of 20 statements: with 1 % called, 15.4 ms as declarations, 32.3 ms parenthesized, 19.2 ms with `--no-lazy`; with all called, 45.2 ms, 31.8 ms and 31.4 ms ✅[^lab-v8]. In three runs each, the doubling held at 1,000 functions with 10 % called (6.8 to 7.1 ms against 10.4 to 10.6 ms) and at 10,000 functions with 1 % called (51.2 to 54.2 against 107.2 to 118.2 ms); `--max-lazy` undid the effect both ways ✅[^lab-v8]. The order held on macOS with Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43.7.7 ✅[^lab-v8-matrix].
-**Exceptions:** When all 3,000 functions ran at start-up, the parenthesized file loaded 11 to 30 % faster over four runs ✅[^lab-v8]. Smaller or larger function bodies were not tried: measure both forms.
+**Evidence:** Node.js 24.22.1 (V8 13.6.233.17, arm64), a generated file of 3,000 functions of 20 statements, medians of 9 fresh processes after one warm-up. Over both runs the parenthesized file took about twice as long with 1 % called (1.9 to 2.1 times in the printed first run, 1.9 to 2.0 times in the three re-run runs). The order held on macOS with Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43.7.7 ✅[^lab-v8-matrix], in both runs ✅[^lab-v8-matrix].
+- **Times.**
+  - **First run (2026-11-26):** with 1 % called, 15.4 ms as declarations, 32.3 ms parenthesized, 19.2 ms with `--no-lazy`; with all called, 45.2 ms, 31.8 ms and 31.4 ms ✅[^lab-v8].
+  - **Over the three runs of the first run,** with 1 % called: 15.0 to 16.3 ms as declarations and 29.8 to 34.3 ms parenthesized ✅[^lab-v8].
+  - **Re-run** (2026-11-28, after the restart, three runs, under the load named in Scope; load not recorded per run): with 1 % called, 15.0 to 16.0 ms, 29.6 to 31.8 ms and 19.0 to 20.4 ms; with all called, 45.2 to 46.6 ms, 31.5 to 32.0 ms and 30.5 to 31.1 ms ✅[^lab-v8].
+- **Other sizes.** In three runs each (first run only: not part of the re-run), the doubling held at 1,000 functions with 10 % called (6.8 to 7.1 ms against 10.4 to 10.6 ms) and at 10,000 functions with 1 % called (51.2 to 54.2 against 107.2 to 118.2 ms); `--max-lazy` undid the effect both ways ✅[^lab-v8].
+**Exceptions:** When all 3,000 functions ran at start-up, the parenthesized file loaded 11 to 30 % faster over four runs of the first run ✅[^lab-v8], and 29 to 32 % faster in the three runs of the re-run (2026-11-28, after the restart) ✅[^lab-v8]; over both runs, 11 to 32 % faster ✅[^lab-v8]. The gain is therefore real but its size varies from run to run. Smaller or larger function bodies were not tried: measure both forms.
 **Check it:** `node --log-function-events --logfile=fe.log --no-logfile-per-isolate app.js` lists per function `preparse-resolution` (lazy) or `full-parse -> interpreter` at load; time fresh processes.
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.9 "Startup: the scanner, the preparser and lazy compilation" and §4.6 "Lazy against eager compilation, timed".
 
@@ -69,6 +82,7 @@ const parseRow = (function (x) { /* ... */ }); // compiled at load even if never
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.9 and §6.4.
 
 ### `JN-U3` Create a `vm.Script` code cache after the code has run
+**Seen in code as:** `new vm.Script(src).createCachedData()` called before `runInThisContext()`, or the deprecated `produceCachedData: true`.
 **Prefer:**
 ```js
 const script = new vm.Script(src, { filename: 'app.js', cachedData });
@@ -80,12 +94,18 @@ if (!cachedData || script.cachedDataRejected) save(script.createCachedData()); /
 save(new vm.Script(src).createCachedData()); // made before running: functions still lazy are missing
 ```
 **Why:** A cache holds what V8 has compiled when it is made; functions that were still lazy are not in it ✅[^nodevm], so a cache made before running skips little. The V8 team's guidance is to make the cache after execution ✅[^ccdev]; `produceCachedData` is deprecated in favour of `createCachedData()` ✅[^nodevm]. This matters for tools that compile the same large script in many processes.
-**Evidence:** Node.js 24.22.1, a 3,000-function script with every function called: 53.0 ms with no cache, 39.9 ms with a cache made before running (396,608 bytes), 3.1 ms with one made after running (2,516,608 bytes); with 1,000 functions, 15.6 to 16.8, 11.6 to 14.1 and 1.1 to 1.2 ms ✅[^lab-v8]. The fastest path was the same on every build where timing ran; cache sizes differ by V8 version ✅[^lab-v8-matrix].
+**Evidence:** Over both runs a cache made after running cut the start about 17 to 19 times (18 to 19 times in the re-run), and one made before running about 1.3 to 1.4 times, in the printed first run and in the three re-run runs. The fastest path was the same on every build where timing ran, in both runs; cache sizes differ by V8 version ✅[^lab-v8-matrix].
+- **Node.js 24.22.1, a 3,000-function script with every function called.**
+  - **First run:** first run (2026-11-26): 53.0 ms with no cache, 39.9 ms with a cache made before running (396,608 bytes), 3.1 ms with one made after running (2,516,608 bytes); with 1,000 functions, 15.6 to 16.8, 11.6 to 14.1 and 1.1 to 1.2 ms ✅[^lab-v8].
+  - **Three more runs of that script on the same day** gave 52.7 to 55.9 ms, 38.4 to 39.6 ms and 2.9 to 3.3 ms ✅[^lab-v8].
+  - **Re-run** (2026-11-28, after the restart, three runs, under the load named in Scope; load not recorded per run): 52.2 to 53.5 ms, 38.2 to 38.4 ms and 2.8 to 2.9 ms, with the same cache sizes ✅[^lab-v8].
+  - **Gap of the cache made before running.** The cache made before running was 27 to 28 % faster than none in the re-run; the first run's deep dive put that gap at about 25 % (10 to 25 % for the 1,000-function script, which was not re-run) ✅[^lab-v8].
 **Exceptions:** Measured only for scripts whose every function is called.
 **Check it:** `script.cachedDataRejected` must be `false` on the run that uses the cache; time fresh processes.
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.10 and §4.7 "`vm.Script` cached data, timed".
 
 ### `JN-U4` Key a stored code cache by a hash of the source, the Node.js version and the flags
+**Seen in code as:** cached data saved under a file name, a path or a source length, then passed to `new vm.Script(src, { cachedData })`.
 **Prefer:**
 ```js
 const key = crypto.createHash('sha256')
@@ -98,12 +118,13 @@ const cachedData = readCache(key); // a missing entry means: compile without a c
 const cachedData = readCache(`${filename}.cache`); // an edited file of the same length reuses it
 ```
 **Why:** V8 checks a cache against its version and flags, and against a source hash that is the source's length plus two bits, not the source text ✅[^codeser]. A cache for a same-length edit is accepted and runs the old code.
-**Evidence:** Node.js 24.22.1 (V8 13.6.233.17): a cache made for `globalThis.r = 111;` was accepted for `globalThis.r = 222;` (`cachedDataRejected=false`) and set `r=111`; one character added: rejected; `--no-lazy`: rejected ✅[^lab-v8]. The accept and reject results were the same on all seven builds (V8 12.4 to 15.0, macOS and linux, arm64 and x64, pointer compression off and on) ✅[^lab-v8-matrix].
+**Evidence:** Node.js 24.22.1 (V8 13.6.233.17): a cache made for `globalThis.r = 111;` was accepted for `globalThis.r = 222;` (`cachedDataRejected=false`) and set `r=111`; one character added: rejected; `--no-lazy`: rejected ✅[^lab-v8]. The accept and reject results were the same on all seven builds (V8 12.4 to 15.0, macOS and linux, arm64 and x64, pointer compression off and on) ✅[^lab-v8-matrix], in the first run and in the re-run (2026-11-28, after the restart) ✅[^lab-v8-matrix].
 **Exceptions:** Not tested for `vm.compileFunction()` and `vm.SourceTextModule`. A later V8 may compare more; the hash key stays correct either way.
 **Check it:** Change one character of the source without changing its length and confirm the cache is not used.
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.10 "The code cache and `v8.Script` cached data".
 
 ### `JN-U5` Build a startup snapshot when start-up spends its time building data
+**Seen in code as:** a command-line tool or worker whose top level builds a large table, parses a big constant file or warms a cache before doing its job.
 **Prefer:**
 ```js
 // snap-entry.js: built once with  node --snapshot-blob snap.blob --build-snapshot snap-entry.js
@@ -117,7 +138,17 @@ v8.startupSnapshot.setDeserializeMainFunction(() => main(table));
 main(buildTable()); // recomputed on every start
 ```
 **Why:** At start V8 deserializes the saved heap instead of running the setup code again ✅[^snap15]; Node.js exposes this through `--build-snapshot` and `--snapshot-blob` ✅[^node-cli] and `setDeserializeMainFunction` ✅[^nodev8]. This matters for setup code that computes tables or state for tens of milliseconds or more.
-**Evidence:** Node.js 24.22.1, a program that builds a table of 300,000 primes: 187.4 ms from source, 20.1 ms from an 8.5 MiB snapshot, 13.0 ms for `node -e 0` ✅[^lab-v8]. On macOS (Node.js 22.23.4, 24.22.1, 25.7.0, three runs each, with other jobs running): 187 to 263 ms, 27 to 80 ms and 23 to 43 ms (three timed runs of each build on 2026-11-28, one at a time: 187 to 196 ms, 27 to 36 ms and 23 to 33 ms), a smaller ratio. Electron 43.7.7 run as Node could not build the snapshot (`ERR_NOT_BUILDING_SNAPSHOT`) ✅[^lab-v8-matrix].
+**Evidence:** Node.js 24.22.1 (linux arm64), a program that builds a table of 300,000 primes, wall time from spawn to exit, medians of 9 runs:
+- first run (2026-11-26): 187.4 ms from source, 20.1 ms from an 8.5 MiB snapshot, 13.0 ms for `node -e 0`; three more runs gave 179.8 to 186.1 ms, 18.4 to 18.9 ms and 12.8 to 15.4 ms ✅[^lab-v8];
+- re-run (2026-11-28, after the restart, three runs, under the load named in Scope; load not recorded per run): 181.0 to 182.8 ms, 18.6 to 20.6 ms and 13.0 to 15.3 ms ✅[^lab-v8];
+- over both runs the snapshot started the program about 9 to 10 times faster than the source did.
+
+On macOS (Node.js 22.23.4, 24.22.1, 25.7.0, three runs each) ✅[^lab-v8-matrix]:
+- first run (2026-11-27, with other jobs running; load not recorded): 195 to 263 ms from source, 29 to 80 ms from the snapshot and 23 to 43 ms for `node -e 0`;
+- re-run (2026-11-28, after the restart, timed one at a time, under the load named in Scope; load not recorded per run): 187 to 197 ms from source (largest median 196.7 ms), 27 to 36 ms and 23 to 33 ms;
+- over both runs: 187 to 263 ms, 27 to 80 ms and 23 to 43 ms. The snapshot won in every run, with a smaller ratio than on linux, because a bare process start was slower there.
+
+Electron 43.7.7 run as Node could not build the snapshot (`ERR_NOT_BUILDING_SNAPSHOT`) ✅[^lab-v8-matrix].
 **Exceptions:** The building script is one entry point that can load built-in modules but not other user-land modules; loading needs the same Node.js version, architecture and platform, or the process exits with status 1 ✅[^node-cli]; values such as `Math.random()` are frozen at build time ✅[^snap15]. The build process is no longer experimental since Node.js 24.13.1 ✅[^node-cli].
 **Check it:** Wall time of fresh processes with and without `--snapshot-blob`; both must print the same result.
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.11 and §4.8 "A startup snapshot, timed".
@@ -134,12 +165,18 @@ module.enableCompileCache(); // or NODE_COMPILE_CACHE=<dir> in the environment
 // no compile cache: every start compiles every module again
 ```
 **Why:** Node.js keeps an on-disk V8 code cache per module; it is made when the module is compiled and written when the process exits or on `module.flushCompileCache()` ✅[^nodemodule]. This matters for command-line tools, short jobs and serverless handlers.
-**Evidence:** Node.js 24.22.1, importing a 3,000-function ES module: 51.9 ms without the cache, 53.2 ms on the run that fills it, 42.8 ms with a filled cache; over four runs the filled cache was about 10 to 20 % faster than none, for this one module ✅[^lab-v8]. On macOS (Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43, three runs each) the gain was mostly 30 to 40 % (14 to 53 % over all twelve runs) ✅[^lab-v8-matrix]. The gain is far smaller than that of a `vm.Script` cache made after running (`JN-U3`). Stable since Node.js 24.15.0 ✅[^nodemodule].
+**Evidence:** Over both runs the filled cache was the faster start on every build. The gain is far smaller than that of a `vm.Script` cache made after running (`JN-U3`). Stable since Node.js 24.15.0 ✅[^nodemodule].
+- **Node.js 24.22.1, importing a 3,000-function ES module.**
+  - **First run:** first run (2026-11-26): 51.9 ms without the cache, 53.2 ms on the run that fills it, 42.8 ms with a filled cache; over four runs the filled cache was about 10 to 20 % faster than none, for this one module ✅[^lab-v8].
+  - **Three more runs of the first run** gave 46.9 to 48.6 ms, 48.1 to 55.2 ms and 38.8 to 42.1 ms ✅[^lab-v8].
+  - **Re-run** (2026-11-28, after the restart, three runs, under the load named in Scope; load not recorded per run): 46.0 to 48.4 ms, 48.5 to 53.5 ms and 39.1 to 41.3 ms, 10 to 19 % faster ✅[^lab-v8]; about 10 to 20 % over both runs on this build ✅[^lab-v8].
+- **macOS.** On macOS (Node.js 22.23.4, 24.22.1, 25.7.0 and Electron 43, three runs each) the gain was mostly 30 to 40 % (14 to 53 % over all twelve runs) in the first run (2026-11-27), and 33 to 36 % over the twelve runs of the re-run ✅[^lab-v8-matrix].
 **Exceptions:** The first run is slightly slower ✅[^lab-v8]; caches are invalidated when a module's absolute path changes (unless `portable`) and are typically reusable only by the same Node.js version; `NODE_DISABLE_COMPILE_CACHE=1` turns it off ✅[^nodemodule].
 **Check it:** `module.enableCompileCache()` returns an object whose `status` is `module.constants.compileCacheStatus.ENABLED` when it works; compare import time on the second start.
 **Full lab:** [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.12 and §4.9 "The module compile cache, timed".
 
 ### `JN-U7` Load heavy optional modules on the path that uses them
+**Seen in code as:** a static top-level `import` of a renderer, parser or SDK (software development kit) that only one optional code path calls.
 **Prefer:**
 ```js
 async function renderInline(task) {
@@ -173,6 +210,7 @@ const { handler } = await import(`./m.mjs?v=${Date.now()}`); // a new module eac
 **Full lab:** none; the shape is listed under `caching-recomputation` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes.
 
 ### `JN-U9` Write TypeScript that Node.js runs directly with erasable syntax only
+**Seen in code as:** `node file.ts` in a script, test command or tool, where the file uses `enum`, a `namespace` with code, a parameter property, `<T>expr`, a type imported without `type`, or an import without `.ts`.
 **Prefer:**
 ```ts
 import type { Role } from './role.ts';
@@ -200,6 +238,7 @@ No warning is printed for stripping since v24.3.0 ✅[^node-ts].
 **Full lab:** [node-type-stripping.md](../../js-runtime/node-type-stripping.md), Catalog.
 
 ### `JN-U10` Use `#` subpath imports, not tsconfig `paths` alone, for aliases Node.js resolves
+**Seen in code as:** imports like `@/core/role` or `core/role` backed only by `compilerOptions.paths`.
 **Prefer:**
 ```jsonc
 // package.json
@@ -235,11 +274,11 @@ resolved to src
 - TypeScript run by plain `node` must be erasable, and its aliases must be `#` subpath imports or rewritten by a build step.
 
 ## Verification status
-- Verified: 65 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 83 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
-- V8 startup lab: the scripts of the deep dive, run on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine`, arm64, 8 CPUs, 8 GiB, `--network none`; timings are medians of 9 fresh processes after one warm-up, in three full passes; scripts and outputs in [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.9 to §3.12 and §4.6 to §4.9. Rank 1 (primary measurement). Backs: Summary; Catalog, JN-U1, JN-U3, JN-U5 and JN-U6; Lookup notes. [^lab-v8]
-- V8 startup lab matrix: the same scripts re-run on 2026-11-27 on macOS 26.1 arm64 with Node.js 24.22.1, 22.23.4 (V8 12.4) and 25.7.0 (V8 14.1), Electron 43.7.7 as Node (V8 15.0), linux x64 emulated with Node.js 24.22.1 and Node.js 24.22.3 with pointer compression (no timings used from the emulated builds); outputs in [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §6.4. Rank 1 (primary measurement). Backs: Catalog, JN-U2 and JN-U4; Lookup notes. [^lab-v8-matrix]
+- V8 startup lab: the scripts of the deep dive, run on 2026-11-26 with Node.js 24.22.1 (V8 13.6.233.17-node.58) in `node:24.22.1-alpine`, arm64, 8 CPUs, 8 GiB, `--network none`; timings are medians of 9 fresh processes after one warm-up, in three full passes; re-run on 2026-11-28 after a restart of the lab machine (the scripts extracted from the deep dive, timing scripts three times each, one at a time; every baseline output matched); scripts and outputs in [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §3.9 to §3.12 and §4.6 to §4.9, and its Verification status. Rank 1 (primary measurement). Backs: Summary; Catalog, JN-U1, JN-U3, JN-U5 and JN-U6; Lookup notes. [^lab-v8]
+- V8 startup lab matrix: the same scripts re-run on 2026-11-27 on macOS 26.1 arm64 with Node.js 24.22.1, 22.23.4 (V8 12.4) and 25.7.0 (V8 14.1), Electron 43.7.7 as Node (V8 15.0), linux x64 emulated with Node.js 24.22.1 and Node.js 24.22.3 with pointer compression (no timings used from the emulated builds), and re-run on 2026-11-28 after a restart of the lab machine (all cells matched; the macOS snapshot ranges widened to 187 and 27 ms); outputs in [v8-memory-and-startup-deep-dive.md](../../js-runtime/v8-memory-and-startup-deep-dive.md), §6.4 and §4.8, and its Verification status. Rank 1 (primary measurement). Backs: Catalog, JN-U2 and JN-U4; Lookup notes. [^lab-v8-matrix]
 - Worker-pool measurements, 2026-11-05: Node.js 24.22.1, pdfmake 0.3.13, a main-thread service with and without the static task import; numbers in [worker-thread-pools.md](../../js-runtime/worker-thread-pools.md), Edge cases. Rank 1 (primary measurement). Backs: Catalog and Lookup notes, JN-U7. [^lab-pools]
 - Type stripping probe, 2026-11-14: Node.js 24.22.1 on macOS 26.1 arm64, one-line `.ts` files run with `node <file>` and the flags named; results in [node-type-stripping.md](../../js-runtime/node-type-stripping.md), Catalog. Rank 1 (primary measurement). Backs: Catalog, JN-U9 and JN-U10; Lookup notes. [^lab-strip]
 - Subpath imports measurement, 2026-11-16: a package whose `imports` targets point outside it, Node.js 24.22.1 on macOS; result in [subpath-imports.md](../../js-runtime/subpath-imports.md), Edge cases. Rank 1 (primary measurement). Backs: Lookup notes, JN-U10. [^lab-subpath]

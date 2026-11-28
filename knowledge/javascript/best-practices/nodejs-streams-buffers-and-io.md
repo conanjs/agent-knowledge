@@ -20,6 +20,8 @@ ranked-sources: true
 ## Scope
 Nine practices for `Buffer` views and the buffer pool, joining chunks, backpressure, `highWaterMark`, raw TCP (Transmission Control Protocol) sockets, `readdir`, file watching and logging in loops. Byte counts come from the lab on Node.js 24.22.1 (V8 13.6.233.17, libuv 1.52.1, linux arm64) on 2026-11-26, re-run on six more builds on 2026-11-27; the other practices rest on the Node.js docs and RFCs (requests for comments, the Internet standards), as each note says. All claims are about Node.js. Not run: Windows, and any timing of these practices.
 
+**How the timings were taken.** No practice here rests on a timing: the lab results are byte counts, the same in the first run (2026-11-26, the other builds 2026-11-27) and in the re-run (2026-11-28, after the restart), all on one Apple M2 laptop, macOS 26.1, with the Linux builds in containers in a virtual machine on it and the x64 builds emulated ✅[^lab].
+
 How to read the "Applies" column: `always` (the better form is as clear as the other: use it by default), `hot path` (only in code that runs per request, per frame or per element of a large collection, or that a profile points at), `large data` (only above the size the note gives), `startup` (only when start time matters), `check build` (the answer depends on the engine version or build), `no gain` (the lab measured no useful difference, or the advice is outdated: there is no reason to rewrite code for it).
 
 Terms:
@@ -44,6 +46,7 @@ Terms:
 
 ## Lookup notes
 ### `JN-S1` Copy a small slice that is kept into its own memory
+**Seen in code as:** `buf.subarray(a, b)` or the deprecated `buf.slice(a, b)` of a file, socket or body buffer stored in a long-lived `Map`, cache or session.
 **Prefer:**
 ```js
 const view = body.subarray(0, 16);
@@ -57,12 +60,13 @@ sessions.set(id, body.subarray(0, 16));  // keeps all of body alive
 sessions.set(id, Buffer.from(view));     // copy lands in a shared pool block
 ```
 **Why:** `subarray` returns a `Buffer` that references the same memory as the original ✅[^node-buffer], so the whole parent stays reachable. `Buffer.from(view)` copies, but the lab shows the copy inside a pool block ✅[^lab] (the Buffer docs list `allocUnsafe`, `from(array)`, `from(string)` and `concat` as pool users, and do not list `from(buffer)`), so it keeps a pool block alive instead. The size that matters is a parent of megabytes; the lab kept 16 bytes of 10 MiB.
-**Evidence:** Lab run 4, Node.js 24.22.1, byte counts: a 16-byte `subarray` of a 10 MiB buffer had a backing `ArrayBuffer` of 10,485,760 bytes; `Buffer.from(view)` had 65,536; `Buffer.allocUnsafeSlow(16)` plus `copy` had 16 ✅[^lab]. The view and the own copy gave the same counts on every build of the matrix; the `Buffer.from(view)` block was 8,192 bytes on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix].
+**Evidence:** Lab run 4, Node.js 24.22.1, byte counts: a 16-byte `subarray` of a 10 MiB buffer had a backing `ArrayBuffer` of 10,485,760 bytes; `Buffer.from(view)` had 65,536; `Buffer.allocUnsafeSlow(16)` plus `copy` had 16 ✅[^lab]. The view and the own copy gave the same counts on every build of the matrix; the `Buffer.from(view)` block was 8,192 bytes on Node.js 22.23.4 and 25.7.0 ✅[^lab-matrix]. The re-run (2026-11-28, after the restart) gave the same three counts ✅[^lab].
 **Exceptions:** The view lives only for one request; the parent is kept anyway.
 **Check it:** For stored entries compare `entry.buffer.byteLength` with `entry.length`; a heap snapshot shows the retained `ArrayBuffer`.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 4.
 
 ### `JN-S2` Keep many long-lived small values as strings, not pooled `Buffer`s
+**Seen in code as:** thousands of `Buffer.from(string)` or `Buffer.allocUnsafe(n)` values (ids, tokens, keys) kept for the life of the process.
 **Prefer:**
 ```js
 cache.set(key, token);                                 // a string
@@ -74,12 +78,13 @@ function ownCopy(b) { const o = Buffer.allocUnsafeSlow(b.length); b.copy(o); ret
 cache.set(key, Buffer.from(token)); // 14 bytes that pin a 64 KiB pool block
 ```
 **Why:** `allocUnsafe` takes sizes below half of `Buffer.poolSize` from the pool, and `Buffer.from(string)`, `from(array)` and `concat` may do the same ✅[^node-buffer]. A kept small `Buffer` keeps its whole block alive.
-**Evidence:** Lab run 4, Node.js 24.22.1: `Buffer.poolSize` 65,536, and a 14-character `Buffer.from(string)` had a 65,536-byte backing `ArrayBuffer` ✅[^lab]. Same 65,536 on Node.js 24.22.3 and on 24.21.0 (Electron 43.7.7). Differs on Node.js 22.23.4 and 25.7.0: 8,192 bytes, so a newer major version does not imply the larger pool ✅[^lab-matrix]. The docs list the raise from 8,192 in v24.18.0 and suggest `Buffer.allocUnsafeSlow()` plus a copy for memory kept "for an indeterminate amount of time" ✅[^node-buffer].
+**Evidence:** Lab run 4, Node.js 24.22.1: `Buffer.poolSize` 65,536, and a 14-character `Buffer.from(string)` had a 65,536-byte backing `ArrayBuffer` ✅[^lab]. Same 65,536 on Node.js 24.22.3 and on 24.21.0 (Electron 43.7.7). Differs on Node.js 22.23.4 and 25.7.0: 8,192 bytes, so a newer major version does not imply the larger pool ✅[^lab-matrix]. The docs list the raise from 8,192 in v24.18.0 and suggest `Buffer.allocUnsafeSlow()` plus a copy for memory kept "for an indeterminate amount of time" ✅[^node-buffer]. So the 65,536-byte block applies on Node.js 24.18.0 and later 24.x releases (documented ✅[^node-buffer]; measured on 24.21.0, 24.22.1 and 24.22.3 ✅[^lab-matrix]), and 8,192 bytes on 22.23.4 and 25.7.0. The re-run (2026-11-28, after the restart) gave the same 65,536 on the baseline ✅[^lab].
 **Exceptions:** The kept values are few, so one pool block is an acceptable cost.
 **Check it:** `node -p "Buffer.poolSize"` on the version in use; `buf.buffer.byteLength` of a stored value.
 **Full lab:** [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 4 and "What differs".
 
 ### `JN-S3` Collect chunks in an array and join them once
+**Seen in code as:** `acc = Buffer.concat([acc, chunk])` or `body += chunk` inside a `'data'` handler or a `for await` over a stream.
 **Prefer:**
 ```js
 const chunks = [];
@@ -100,6 +105,7 @@ req.on('data', (chunk) => { text += chunk; });                     // can split 
 **Full lab:** none; the shape is listed under `allocation-gc` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, "Belongs to an existing class".
 
 ### `JN-S4` Stop writing when `write()` returns `false`; use `pipeline`
+**Seen in code as:** a loop of `stream.write(x)` or `res.write(x)` that ignores the return value.
 **Prefer:**
 ```js
 import { pipeline } from 'node:stream/promises';
@@ -117,6 +123,7 @@ for (const row of rows) res.write(JSON.stringify(row) + '\n'); // buffers everyt
 **Full lab:** none; the class is `concurrency-backpressure` in [problem-classes.md](../../performance/code-review/problem-classes.md).
 
 ### `JN-S5` Leave `highWaterMark` at its default unless a measurement says otherwise
+**Seen in code as:** `highWaterMark: 16` or `highWaterMark: 1024` on a byte stream (`fs.createReadStream`, a custom `Readable`).
 **Prefer:**
 ```js
 const rs = fs.createReadStream(path); // 64 KiB per read on non-Windows platforms
@@ -146,6 +153,7 @@ fs.createReadStream: 65536 | new Readable(): 65536 | objectMode: 16
 **Full lab:** none beyond the spot check above; the shape is listed under `unbuffered-io` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, "Belongs to an existing class".
 
 ### `JN-S6` Send one write per message on a raw socket, and turn Nagle off for request and response
+**Seen in code as:** `socket.write(header); socket.write(body);` followed by waiting for a reply, with no `socket.setNoDelay()`.
 **Prefer:**
 ```js
 socket.setNoDelay(true);
@@ -163,6 +171,7 @@ socket.write(body); // may wait for the peer's delayed acknowledgement
 **Full lab:** none; the class is `small-socket-writes` in [problem-classes-network-and-delivery.md](../../performance/code-review/problem-classes-network-and-delivery.md).
 
 ### `JN-S7` List a folder with `withFileTypes: true` instead of `stat` per entry
+**Seen in code as:** `fs.readdir(dir)` followed by `fs.stat` on each entry only to tell files from folders.
 **Prefer:**
 ```js
 const entries = await fs.promises.readdir(dir, { withFileTypes: true });
@@ -181,6 +190,7 @@ const files = (await Promise.all(names.map((n) => fs.promises.stat(path.join(dir
 **Full lab:** none; the shape is listed under `io-batching-n-plus-one` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes.
 
 ### `JN-S8` Watch files with `fs.watch`, not `fs.watchFile`
+**Seen in code as:** `fs.watchFile(path, listener)`.
 **Prefer:**
 ```js
 const watcher = fs.watch(configPath, () => reload());
@@ -196,6 +206,7 @@ fs.watchFile(configPath, () => reload()); // polls with stat
 **Full lab:** none; the shape is listed under `polling-event-rate` in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes.
 
 ### `JN-S9` Log a summary, not one line per item, in hot code
+**Seen in code as:** `console.log(...)` or `logger.debug(...)` with a built string inside a loop over items, or arguments built for a level that is off.
 **Prefer:**
 ```js
 let failed = 0;
@@ -221,10 +232,10 @@ for (const item of items) console.log(`processed ${JSON.stringify(item)}`);
 - Raw sockets need one write per message and `setNoDelay(true)`; Node.js HTTP servers already set it.
 
 ## Verification status
-- Verified: 43 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 48 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
-- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26, each run 3 times; script `buffers.mjs` and its output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 4. Rank 1 (primary measurement). Backs: Summary; Catalog, JN-S1 and JN-S2; Lookup notes. [^lab]
+- Lab runs on Node.js 24.22.1 (image `node:24.22.1-alpine`, V8 13.6.233.17, libuv 1.52.1, linux arm64, 8 CPUs, Apple M2 under Docker, `--network none`), 2026-11-26, each run 3 times, and re-run on 2026-11-28 after a restart of the lab machine (the script extracted from the catalog, three runs, the same output); script `buffers.mjs` and its output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), Lookup notes, lab run 4, and its Verification status. Rank 1 (primary measurement). Backs: Summary; Catalog, JN-S1 and JN-S2; Lookup notes. [^lab]
 - Lab matrix: the same script re-run on 2026-11-27 on Node.js 24.22.1 (macOS 26.1 arm64, linux x64 emulated), 22.23.4, 25.7.0, Electron 43.7.7 run as Node (Node.js 24.21.0 API) and Node.js 24.22.3 with pointer compression (linux x64 emulated); differing output in [problem-classes-nodejs-runtime.md](../../performance/code-review/problem-classes-nodejs-runtime.md), "Other builds and versions (2026-11-27)". Rank 1 (primary measurement). Backs: Summary; Catalog, JN-S2; Lookup notes. [^lab-matrix]
 - Spot check for this doc: the `highWaterMark` script in the `JN-S5` note, run on 2026-11-28 with `docker run --rm --network none node:24.22.1-alpine` (Node.js 24.22.1, linux arm64); command and output in that note. Rank 1 (primary measurement). Backs: Catalog and Lookup notes, JN-S5. [^spot]
 - [Buffer](https://nodejs.org/docs/latest-v24.x/api/buffer.html) — Node.js project, v24.22.3 docs. Rank 1. Backs: Catalog, JN-S3; Lookup notes, JN-S1 to JN-S3. [^node-buffer]

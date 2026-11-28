@@ -21,6 +21,8 @@ ranked-sources: true
 ## Scope
 The catalog covers rules `JB-N1` to `JB-N9`. Their figures come from IETF (Internet Engineering Task Force) RFCs, MDN, nginx, Amazon S3 and Google API design docs, read 2026-11-22 to 2026-11-26, and from a peer-reviewed study and content delivery network (CDN) vendors' posts. They are stated by those sources, not measured in the knowledge base's own lab, except one Node.js probe in `JB-N6` (Node.js 24.22.1, one run) ✅[^lab-probe]. Each Evidence line says "stated by" to keep a source's figure apart from a measured one; counts such as "18 connections → 1" are arithmetic from the code.
 
+**How the timings were taken:** no lab timing is behind this doc; its evidence comes from IETF RFCs, vendors' documentation (MDN, nginx, Amazon S3, Google's API design guide), a peer-reviewed study and CDN vendors' posts, and the one lab probe counts connections, it times nothing.
+
 How to read the "Applies" column: `always` means the better form is as clear as the other, so it is the default; `hot path` means it matters only in code that runs per request, per frame or per element of a large collection, or that a profile points at; `large data` means only above the size the row gives; `startup` means only when start time matters; `check build` means the answer depends on the client, server or network, as the row says; `no gain` means no useful difference was measured or expected, so there is no reason to change code or configuration for it.
 
 Terms used below:
@@ -63,6 +65,7 @@ app.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }); 
 
 ### `JB-N2` Send HTML and API reads with `no-cache` and a validator, not `no-store`
 Applies to HTML documents and GET API responses that can change.
+**Seen in code as:** HTML or JSON GET responses with no `Cache-Control` and no `ETag`/`Last-Modified`, or `no-store` on pages that hold no sensitive data.
 **Prefer:**
 ```http
 Cache-Control: no-cache          (add "private" when the response is per user)
@@ -162,6 +165,7 @@ render(all.slice(0, 20).map(({ id, total, status }) => ({ id, total, status })))
 
 ### `JB-N8` When a page polls a URL, make each poll a conditional request
 Applies to `setInterval` or a loop that re-fetches the same resource and downloads the full body each time.
+**Seen in code as:** `setInterval(() => fetch(url).then(r => r.json()).then(render), 5000)` that downloads the full body each time.
 **Prefer:**
 ```js
 let etag;

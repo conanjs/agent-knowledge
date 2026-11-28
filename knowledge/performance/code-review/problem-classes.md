@@ -4,8 +4,8 @@ type: reference
 topic: performance/code-review
 status: verified
 applies-to: ["Any language; examples in TypeScript, Python and SQL", "ECMAScript living spec, Python 3 docs, Java SE 21, PostgreSQL 19, React 19 docs, all read 2026-11-25 and re-read 2026-11-26"]
-last-verified: 2026-11-26
-last-updated: 2026-11-26
+last-verified: 2026-11-28
+last-updated: 2026-11-28
 tags: [performance, code-review, complexity, data-structures, n-plus-one, indexes, backpressure, retries, rendering, allocation]
 ranked-sources: true
 ---
@@ -76,7 +76,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 |---|---|---|---|---|
 | `concurrency-backpressure` | independent awaits in sequence; `Promise.all` over a large or unbounded list; `write()` returning false ignored; CPU-heavy work on the event loop | A pool of c concurrent calls (`p-limit`, `errgroup.SetLimit`); honor `'drain'`; bounded queues; partition or offload CPU work | Latency n·t → about n/c·t; in-flight O(n) → O(c). promises represent work already in progress, and combinators facilitate async task concurrency ✅[^mdn-promise]; never `write()` after false, wait for `'drain'` ✅[^node-bp]; `SetLimit` caps active goroutines ✅[^go-errgroup]; bounded queues, with finite maximum pool sizes, prevent resource exhaustion ✅[^java-tpe]; blocking the loop stalls every client ✅[^node-loop] | Maximum in-flight at growing n; time against a fixed-delay stub |
 | `distributed-calls` | remote calls with no timeout; retries with no backoff, jitter or cap; retries at several layers; one call per item; fan-out | Timeouts and deadline propagation; capped exponential backoff with jitter; retry at one layer; retry budget; batch endpoint; circuit breaker | Unbounded → bounded. Set a timeout on any remote call, backoff with jitter, retry at a single point, limit retries with a token bucket ✅[^aws-retries]; limit retries per request, a server-wide retry budget, propagate deadlines ✅[^sre-cascade]; gRPC sets no deadline by default ✅[^grpc-deadline]; retry storms keep a busy service from recovering ✅[^az-retrystorm] | Stub that fails: attempts per request stay within the cap |
-| `frontend-rendering` | thousands of rows rendered at once; heavy filter or sort in the render body; new props to memoized children; layout reads after style writes | Virtualization (windowing) or `content-visibility: auto`; `useMemo`; `useDeferredValue`; read-then-write | DOM and render work O(n) → O(visible): windowing renders only what is visible ✅[^webdev-virtual]; `memo` compares props with `Object.is` ✅[^react-memo]; memoizing may make sense when a calculation logs, say, 1 ms or more ✅[^react-usememo]; reading layout after a style change forces layout ✅[^webdev-layout] | React Profiler `actualDuration` ✅[^react-profiler]; long tasks take 50 ms or more ✅[^w3c-longtasks] |
+| `frontend-rendering` | thousands of rows rendered at once; heavy filter or sort in the render body; new props to memoized children; layout reads after style writes | Virtualization (windowing) or `content-visibility: auto`; `useMemo`; `useDeferredValue`; read-then-write | DOM and render work O(n) → O(visible): windowing renders only what is visible ✅[^webdev-virtual]; `memo` compares props with `Object.is` ✅[^react-memo]; memoizing may make sense when a calculation logs, say, 1 ms or more ✅[^react-usememo]; reading layout after a style change forces layout ✅[^webdev-layout] | React Profiler `actualDuration` ✅[^react-profiler]; long tasks, threshold 50 ms: "longer than" ✅[^webdev-longtasks], "or more" ✅[^mdn-longtask]; the W3C draft says "exceeds" in its definition, "or more" in its introduction ✅[^w3c-longtasks] |
 | `lock-contention` | one global lock on a common path; I/O or callbacks under a lock; one mutex around a hot counter or map | Shorter critical sections; concurrent maps or sharding; per-thread accumulation; read-write locks | Threads queue on one lock → they do not: `ConcurrentHashMap` retrievals generally do not block ✅[^java-chm]; `LongAdder` has significantly higher expected throughput than `AtomicLong` for updates to a common sum under high contention, and is similar under low ✅[^java-longadder]; hold a lock for as short a time as possible ✅[^cs-lock]; Go's mutex profile reports contention ✅[^go-diag] | Contention profile; throughput at 1, 2, 4, 8 threads |
 | `blocking-in-async` | `*Sync` calls in a Node handler; `time.sleep` or `requests` in `async def`; `.Result` / `.Wait()`; blocking I/O in a Tokio task | The async API; offload to an executor or worker pool | One blocking call stalls every task on its thread → none: Node's synchronous APIs block the loop ✅[^node-loop]; run blocking code in an executor, and callbacks over 100 ms are logged in debug mode ✅[^py-asyncio-dev]; `spawn_blocking` ✅[^tokio-blocking]; many blocking calls can starve the thread pool ✅[^aspnet-best]; `synchronized` pins a virtual thread in JDK 21 ✅[^java-vthreads21]; the JDK 25 guide lists only native methods and foreign functions as pinning cases ✅[^java-vthreads25] | Latency of a cheap endpoint while a slow one runs |
 | `polling-event-rate` | tight polling loops or short `setInterval` checks; spin-waits; heavy work in `scroll` / `resize` / `input` handlers | Push or long polling; wait on an event; throttle or debounce; `IntersectionObserver` | Work per tick or event → work per change: long polling can cut empty responses ✅[^sqs-polling]; repeatedly submitting commands to check for notifications wastes processing power ✅[^pg-libpq-notify]; scroll events can fire at a high rate ✅[^mdn-scroll]; consider debouncing inputs to limit handler calls ✅[^webdev-input] | Requests per minute while idle; main-thread time per scroll burst |
@@ -125,7 +125,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 - Confirm a growth-class claim with a scaling test, a round-trip claim with a query count, and an index claim with a plan.
 
 ## Verification status
-- Verified: 168 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- Verified: 170 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
 - [ECMA-262, Array.prototype methods (includes, indexOf, find, slice, concat, join)](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.includes) — Ecma TC39, living. Rank 1. Backs: Catalog, lookup-in-loop and linear-call-in-loop. [^ecma-array]
@@ -172,7 +172,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 - [useMemo](https://react.dev/reference/react/useMemo) — React team, React 19 docs, living. Rank 1. Backs: Catalog, frontend-rendering. [^react-usememo]
 - [Profiler](https://react.dev/reference/react/Profiler) — React team, React 19 docs, living. Rank 1. Backs: Catalog, frontend-rendering check. [^react-profiler]
 - [Introduction to React Compiler](https://react.dev/learn/react-compiler/introduction) — React team, living. Rank 1. Backs: Lookup notes. [^react-compiler]
-- [Long Tasks API](https://www.w3.org/TR/longtasks-1/) — W3C, Discontinued Draft 2026. Rank 1. Backs: Catalog, frontend-rendering check. [^w3c-longtasks]
+- [Long Tasks API](https://www.w3.org/TR/longtasks-1/) — W3C, Discontinued Draft 2026. Rank 1. Backs: Catalog, frontend-rendering check (definition: exceeds 50ms; introduction: 50ms or more). [^w3c-longtasks]
 - [no-await-in-loop](https://eslint.org/docs/latest/rules/no-await-in-loop) — ESLint, living. Rank 1. Backs: Lookup notes. [^eslint-await]
 - [The Stony Brook Algorithm Repository](https://www.algorist.com/algorist.html) — Steven Skiena, living. Rank 1. Backs: Lookup notes, classification. [^skiena]
 - [collections.deque](https://docs.python.org/3/library/collections.html#collections.deque) — Python Software Foundation, living. Rank 1. Backs: Catalog, sequence-shift-in-loop. [^py-deque]
@@ -262,6 +262,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 - [Document: scroll event](https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event) — MDN Web Docs, living. Rank 3. Backs: Catalog, polling-event-rate; Lookup notes. [^mdn-scroll]
 - [The script element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script) — MDN Web Docs, living. Rank 3. Backs: Catalog, page-load-delivery. [^mdn-script]
 - [String.prototype.localeCompare](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/localeCompare) — MDN Web Docs, living. Rank 3. Backs: Catalog, hot-path-constants. [^mdn-localecompare]
+- [PerformanceLongTaskTiming](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming) — MDN Web Docs, living. Rank 3. Backs: Catalog, frontend-rendering check (50 milliseconds or more). [^mdn-longtask]
 - [Traveling Salesman Problem](https://algorist.com/problems/Traveling_Salesman_Problem.html) — Steven Skiena, The Algorithm Design Manual catalog, living. Rank 3. Backs: Catalog, combinatorial-explosion. [^skiena-tsp]
 - [Memory part 2: CPU caches (series: What every programmer should know about memory)](https://lwn.net/Articles/252125/) — Ulrich Drepper, LWN, 2007. Rank 4. Backs: Catalog, data-layout-locality. [^drepper-2]
 - [Use The Index, Luke: fetching the next page](https://use-the-index-luke.com/sql/partial-results/fetch-next-page) — Markus Winand, living. Rank 4. Backs: Catalog, db-query-index. [^winand]
@@ -272,6 +273,7 @@ Covered: 39 classes, in five groups: in-memory algorithms, memory, data access, 
 - [Optimize input delay](https://web.dev/articles/optimize-input-delay) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, polling-event-rate. [^webdev-input]
 - [Largest Contentful Paint](https://web.dev/articles/lcp) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, page-load-delivery. [^webdev-lcp]
 - [Optimize Largest Contentful Paint](https://web.dev/articles/optimize-lcp) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, page-load-delivery. [^webdev-optlcp]
+- [Optimize long tasks](https://web.dev/articles/optimize-long-tasks) — web.dev (Chrome team), 2024. Rank 4. Backs: Catalog, frontend-rendering check (longer than 50 milliseconds). [^webdev-longtasks]
 - [Avoiding insurmountable queue backlogs](https://builder.aws.com/content/3EuRcgkTP1MI0c7zM8W6HL3WIqA/avoiding-insurmountable-queue-backlogs) — AWS Builders' Library, 2019. Rank 4. Backs: Catalog, inline-slow-work. [^aws-backlog]
 - [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) — Wikipedia, living. Rank 5. Backs: Lookup notes. [^wiki-dijkstra]
 - [Aho–Corasick algorithm](https://en.wikipedia.org/wiki/Aho%E2%80%93Corasick_algorithm) — Wikipedia, living. Rank 5. Backs: Lookup notes. [^wiki-ac]

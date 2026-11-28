@@ -20,6 +20,8 @@ ranked-sources: true
 ## Scope
 The catalog covers rules `JB-L1` to `JB-L7`. Their figures are statements of web.dev (the Chrome team's guidance pages), MDN (Mozilla's web reference) and the React docs, read 2026-11-26, about browsers in general. None was measured in the knowledge base's own lab, and each Evidence line says "stated by" to keep a source's figure apart from a measured one; where a rule's cost is given, it is a count from the code, not a timing.
 
+**How the timings were taken:** no lab timing is behind this doc; its evidence comes from browser vendors' and web-standards documentation (web.dev, MDN), the React docs, the Android developer docs and one engineering blog post.
+
 How to read the "Applies" column: `always` means the better form is as clear as the other, so it is the default; `hot path` means it matters only in code that runs per request, per frame or per element of a large collection, or that a profile points at; `large data` means only above the size the row gives; `startup` means only when start time matters; `check build` means the answer depends on the engine version or build; `no gain` means no useful difference was measured or the advice is outdated, so there is no reason to rewrite code for it.
 
 Terms used below:
@@ -43,6 +45,7 @@ Terms used below:
 ## Lookup notes
 ### `JB-L1` Never lazy-load the main (LCP) image; raise its priority instead
 Applies to the hero image, banner or first product photo in view.
+**Seen in code as:** `loading="lazy"` on the image at the top of the page, or the main image set as a CSS background or inserted by script after load.
 **Prefer:**
 ```html
 <img src="/hero-1200.jpg" width="1200" height="600" fetchpriority="high" alt="…">
@@ -60,6 +63,7 @@ Applies to the hero image, banner or first product photo in view.
 
 ### `JB-L2` Give every image (and embed) its `width` and `height`
 Applies to any `<img>`, `<video>` or `<iframe>` in content with no `width`/`height` attributes and no CSS `aspect-ratio`.
+**Seen in code as:** `<img src=…>` with no `width`/`height` attributes and no CSS `aspect-ratio`.
 **Prefer:**
 ```html
 <img src="/photo.jpg" width="800" height="533" alt="…" style="max-width:100%;height:auto">
@@ -75,6 +79,7 @@ Applies to any `<img>`, `<video>` or `<iframe>` in content with no `width`/`heig
 
 ### `JB-L3` Load external scripts with `defer` or `async`
 Applies to every `<script src>` in the document head or body.
+**Seen in code as:** `<script src="…"></script>` with neither `defer` nor `async`.
 **Prefer:**
 ```html
 <script src="/app.js" defer></script>          <!-- runs after parsing, in order -->
@@ -108,6 +113,7 @@ Applies to content images whose shown width varies by screen: for example a 2048
 
 ### `JB-L5` Make web-font text visible on first paint
 Applies to any `@font-face` or font stylesheet used for body or heading text.
+**Seen in code as:** `@font-face` with no `font-display`; fonts pulled in through CSS `@import` or a third-party stylesheet; no `preconnect` or `preload` for the main text font.
 **Prefer:**
 ```html
 <link rel="preconnect" href="https://fonts.example" crossorigin>
@@ -141,7 +147,12 @@ import { openEditor } from './editor.js'; // in the first bundle of every page
 **Evidence:** the first performance catalog files a large initial bundle under its start-up class, whose fix is to load on demand; its source for the browser case is React's `lazy` page (React 19 docs, living), which defers loading a component's code until it first renders ✅[^react-lazy]. Not measured here; no byte or time figure is in the sources. The React form is `JB-F8` in [browser-component-frameworks.md](browser-component-frameworks.md).
 **Exceptions:** code the first screen needs: loading it on demand only adds a round trip.
 **Check it:** a bundle analyzer: modules in the entry chunk before and after; the Network panel shows the new chunk fetched on first use.
-**Related, not the same rule:** `JN-U7` in [nodejs-startup.md](nodejs-startup.md) loads heavy optional modules on the path that uses them in Node.js; this rule is about the browser bundle. Importing through a barrel file (a re-exporting `index.ts`) is owned by `JL-L12` in [language-patterns.md](language-patterns.md): import the file that declares a symbol. What the author of one engineering post adds from the tooling side: a barrel file pulls in a web of imports, so a test runner that rebuilds the module graph for every test file and a linter that runs file by file pay the load cost of every module behind the barrel, while bundling the same code into one flat file ran faster in his experiment ✅[^barrel-debacle]. That post does not discuss tree shaking (the bundler dropping exports nothing uses), and the knowledge base has no bundle-size measurement for barrels.
+**Related, not the same rule:** `JN-U7` in [nodejs-startup.md](nodejs-startup.md) loads heavy optional modules on the path that uses them in Node.js; this rule is about the browser bundle.
+- Importing through a barrel file (a re-exporting `index.ts`) is owned by `JL-L12` in [language-patterns.md](language-patterns.md): import the file that declares a symbol.
+- What the author of one engineering post adds from the tooling side: a barrel file pulls in a web of imports, so a test runner that rebuilds the module graph for every test file and a linter that runs file by file pay the load cost of every module behind the barrel, while bundling the same code into one flat file ran faster in his experiment ✅[^barrel-debacle]. That post does not discuss tree shaking.
+- Tree shaking (the bundler dropping exports nothing uses) is dead-code elimination ✅[^webpack-treeshaking] that bundlers do when they merge files into one bundle ✅[^mdn-treeshaking], and it runs after the bundler has compiled every module and analyzed the whole module graph ✅[^vercel-imports].
+- So a small production bundle may result, but it does not spare the tools that load modules one by one: Vite's dev server fetches and transforms every file a barrel lists ✅[^vite-performance], and TypeScript type-checks every file the barrel imports ✅[^atlassian-barrels].
+- The knowledge base has no bundle-size measurement for barrels.
 
 ### `JB-L7` Keep the page eligible for the back/forward cache
 Applies to page lifecycle listeners and the HTML response's cache headers: `addEventListener('unload', …)` or `onunload`; a `beforeunload` listener added on page load; `Cache-Control: no-store` on a page with no sensitive data.
@@ -170,15 +181,18 @@ addEventListener('beforeunload', warn); // from page load, forever
 - `pagehide` replaces `unload`, and `no-store` is kept for sensitive pages, so Back stays instant ✅[^webdev-bfcache].
 
 ## Verification status
-- Verified: 37 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 42 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 
 ## References
 - [lazy](https://react.dev/reference/react/lazy) — React team, React 19 docs, living. Rank 1. Backs: Catalog, JB-L6; Lookup notes. [^react-lazy]
+- [Performance](https://vite.dev/guide/performance) — Vite project, living. Rank 1. Backs: Lookup notes, JB-L6 (the dev server fetches and transforms every file a barrel lists). [^vite-performance]
+- [Tree Shaking](https://webpack.js.org/guides/tree-shaking/) — webpack project, living. Rank 1. Backs: Lookup notes, JB-L6 (tree shaking is dead-code elimination). [^webpack-treeshaking]
 - [Loading large bitmaps efficiently](https://developer.android.com/topic/performance/graphics/load-bitmap) — Android Developers, living. Rank 1. Backs: Lookup notes, JB-L4. [^android-bitmap]
 - [The script element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script) — MDN Web Docs, living. Rank 3. Backs: Catalog, JB-L3; Lookup notes; Takeaways. [^mdn-script]
 - [font-display](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display) — MDN Web Docs, living. Rank 3. Backs: Catalog, JB-L5; Lookup notes. [^mdn-fontdisplay]
 - [Responsive images](https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Responsive_images) — MDN Web Docs, living. Rank 3. Backs: Lookup notes, JB-L4. [^mdn-responsive]
 - [HTTP caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching) — MDN Web Docs, living. Rank 3. Backs: Lookup notes, JB-L7. [^mdn-caching]
+- [Tree shaking](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking) — MDN Web Docs, living. Rank 3. Backs: Lookup notes, JB-L6 (bundlers remove dead code when bundling into single files). [^mdn-treeshaking]
 - [Largest Contentful Paint](https://web.dev/articles/lcp) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, JB-L1; Lookup notes. [^webdev-lcp]
 - [Optimize Largest Contentful Paint](https://web.dev/articles/optimize-lcp) — web.dev (Chrome team), living. Rank 4. Backs: Summary; Catalog, JB-L1; Lookup notes; Takeaways. [^webdev-optlcp]
 - [Web Vitals](https://web.dev/articles/vitals) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, JB-L2; Lookup notes; Takeaways. [^webdev-vitals]
@@ -186,6 +200,8 @@ addEventListener('beforeunload', warn); // from page load, forever
 - [Best practices for fonts](https://web.dev/articles/font-best-practices) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, JB-L5; Lookup notes; Takeaways. [^webdev-fonts]
 - [Optimize Cumulative Layout Shift](https://web.dev/articles/optimize-cls) — web.dev (Chrome team), 2025. Rank 4. Backs: Lookup notes, JB-L5. [^webdev-cls]
 - [Back/forward cache](https://web.dev/articles/bfcache) — web.dev (Chrome team), 2026. Rank 4. Backs: Summary; Catalog, JB-L7; Lookup notes; Takeaways. [^webdev-bfcache]
+- [How we optimized package imports in Next.js](https://vercel.com/blog/how-we-optimized-package-imports-in-next-js) — Shu Ding, Vercel, 2023-10-13. Rank 4. Backs: Lookup notes, JB-L6 (tree shaking follows compiling all modules and analyzing the whole graph). [^vercel-imports]
+- [How We Achieved 75% Faster Builds by Removing Barrel Files](https://www.atlassian.com/blog/atlassian-engineering/faster-builds-when-removing-barrel-files) — Atlassian Engineering, 2025-06-26. Rank 4. Backs: Lookup notes, JB-L6 (TypeScript type-checks every imported file). [^atlassian-barrels]
 - [Speeding up the JavaScript ecosystem – The barrel file debacle](https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/) — Marvin Hagemeister, 2023, a personal blog. Rank 6. Backs: Lookup notes, JB-L6 (tooling pays the load cost of a barrel; a flat bundle ran faster). [^barrel-debacle]
 
 ## Related
