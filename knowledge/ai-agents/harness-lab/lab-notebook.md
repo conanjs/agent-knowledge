@@ -27,13 +27,14 @@ What the experiments showed:
 - The orchestrator stopped for approval after the spec on its own, and resumed headless calls carried on from each approval; it skipped its pattern step until told (one run; E38).
 - With five path-scoped rules installed, Claude Code attached them when a worker read a file in their area with Read, with exceptions. The cards still passed without a file their tasks named, and without one requirement: the cards carried no task text, and the gate did not yet check the named files (2.1.332, headless, Sonnet, one run; E39).
 - Two prompt fixes passed their evals both before and after the change, so the evals showed neither the faults nor a need for the fixes (2.1.332, headless, Sonnet, 2 runs per arm; E40).
+- With the task text and the named files in the card, the implementers of one real feature changed every file their tasks named, without the named-file check ever having to stop them, and building a missing requirement exposed invalid test data an earlier feature had hidden (2.1.332, headless, Sonnet, one run of 3 implementer sessions; E41).
 
 **Use this when:**
 - you build or change an agent harness on Claude Code (subagents, plugin agents, hooks, headless runs);
 - you need a tested fact rather than a docs summary;
 - you want to repeat an experiment: the commands are given.
 
-**Depth:** forty experiments (E1–E40; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
+**Depth:** forty-one experiments (E1–E41; E10 is a 3-arm, 21-run trial), each with question, setup, command, result and conclusion; four ways to orchestrate, compared with measured costs; the lessons drawn; how to repeat the runs.
 
 ---
 
@@ -1131,7 +1132,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - **P1:** at `54236da`, 99 tests pass and 2 are skipped (104 and 2 at `722bc72`, after the reason file). With the code from before `54236da`, three fail: the new gate test (a named file left unchanged gives a block whose reason says "`<file>`: named by a task but not changed"), the new card test (`task_text`, `named_paths`), and the updated warnings test. That warning fires on the tests' own fixture spec, for an FR-002 that no task cites.
   - **P1 on E39's own spec**, compiled in memory with the new `cards.mjs`, nothing written:
     - the warning names all nine requirements, FR-008 among them;
-    - `003-US2` gets `TRACKER.done.md` in `named_paths`, because task T002 says it "counts the items of `TRACKER.done.md`". `--stats` writes no file, so the new gate would stop that card for a file that needs no change. The proposal had named this risk and left its mitigation to the user. After E40 the user chose a reason file (archkit `722bc72`): the implementer lists such a file with its reason in `.archkit/runs/<card>/unchanged.json`, the gate skips it, and the run record keeps the reason. It is tested without a model.
+    - `003-US2` gets `TRACKER.done.md` in `named_paths`, because task T002 says it "counts the items of `TRACKER.done.md`". `--stats` writes no file, so the new gate would stop that card for a file that needs no change. The proposal had named this risk and left its mitigation to the user. After E40 the user chose a reason file (archkit `722bc72`): the implementer lists such a file with its reason in `.archkit/runs/<card>/unchanged.json`, the gate skips it, and the run record keeps the reason. It is tested without a model here; E41 tried it with a real implementer.
 
 | Case | Before (`17a1ba0`) | After (`54236da`) | Cost of the 4 runs |
 |---|---|---|---|
@@ -1146,7 +1147,66 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
     - **P2:** E38's orchestrator skipped its pattern step in a planning split over resumed calls; the third call listed its steps ("Write the tasks and compile the cards, then stop when planned"). This case plans in one call with delegated approvals. Its prompt also says "Stop when planned", and its request, like E38's, does not mention patterns. E34's request had named them ("any patterns you propose").
     - **P3:** the case uses card `001-US1`, whose implementers in E34 never edited through the shell.
   - The prompt evals therefore show that the new lines did no harm on these fixtures. They do not show that the fixes were needed, and they would not catch a fix being removed, because the state before the fix passes them too.
-  - P1 is tested only without a model. On E39's spec it would flag the uncited requirements, and, before the reason file of `722bc72`, it would have stopped one card for a file the task only reads.
+  - P1 is tested only without a model here. E41 ran it on a real feature, where the named-file check never had to stop a card and the new warning exposed a bug (`690ab61`). On E39's spec it would flag the uncited requirements, and, before the reason file of `722bc72`, it would have stopped one card for a file the task only reads.
+---
+
+### E41. Finishing feature 003 with the new cards and gate, and the reason file with a real implementer (2026-11-28)
+- **Question:** archkit now has E40's changes: cards that carry the task text and the files the tasks name, a gate check on those files, and a reason file for a named file that needs no change. Does a real feature run then deliver what its tasks name? The feature finishes 003: its FR-008 (format errors) and its FR-009 (scenarios in the module's own test file). And does a real implementer use the reason file when a named file needs no change?
+- **Setup:**
+  - Claude Code 2.1.332, headless, Sonnet; E34's worktree and branch at commit `488a3fe`; archkit at commit `722bc72`; workers in `default` mode with `--setting-sources project,local`;
+  - planning in one orchestrator session continued with `--resume`, and a fresh build session, as in E39. The lab's agent gave the approvals and decisions, under the user's delegation;
+  - then an eval, `implementer-unchanged-reason`, run twice with `node build/evals/run.mjs implementer-unchanged-reason --runs 2`, with archkit at commit `690ab61`. Its fixture is E34's branch at commit `e9b1e1a` (003-US2's acceptance tests, before its code). Its card is 003-US2 recompiled by the current `cards.mjs`, whose `named_paths` include `TRACKER.done.md`: the repository's own archive, which the task only reads. It passes when the tests pass, the gate passed, `TRACKER.done.md` is unchanged, and it is listed with a reason in `unchanged.json`.
+- **Result** ✅[^lab]:
+
+| Planning call | What it did | Turns | Seconds | Input (tokens) |
+|---|---|---|---|---|
+| 1 | Spec of feature 004: US1 builds FR-008 for `--find` and `--stats`, US2 adds their scenarios to `tracker.feature`; stopped for approval | 26 | 53 | 302,489 |
+| 2 | Plan; it warned that US2's red check cannot hold, since its scenarios describe code that already works; stopped for approval | 7 | 41 | 207,480 |
+| 3 | Tasks and cards | 3 | 21 | 227,443 |
+
+  - **Planning in all:** 36 turns, 13 requests, 115 s, 737,412 tokens and $0.528.
+  - **The cards:**
+    - `004-US1` named `tracker.mjs`, `tracker.schema.md` and `tracker.feature`, and carried FR-001 to FR-005 and FR-007, which its task line cited;
+    - `004-US2` named `tracker.feature` and carried FR-006.
+    - After the decision below, the recompiled `004-US1` also named `tests/acceptance/003-US1/find.feature`, and the task card `004-T002` carried no requirement, because of a bug described below.
+  - **Build, attempt 1:** `004-US1` ended `gate-failed` after 3 gate attempts.
+    - The deliverables check reported 0 unchanged files in each attempt.
+    - All 9 failing scenarios were in `tests/acceptance/003-US1/find.feature`. Its fixture has T-2 with `status: waiting` and no `waiting-on`, which `tracker.mjs` (line 48) counts as a format error under the tracker's rule TR-3. With FR-008 built, `--find` printed the format-error line instead of the item, so 003's tests had passed only because FR-008 was missing.
+    - The orchestrator stopped, offered two options (fix the fixture, or relax the rule) and recommended the first.
+  - **Decision**, by the lab's agent: fix the fixture, and turn T002 into a task without a story label, so that it becomes a task card with no test-author and no red check. The orchestrator recorded the decision with `learn.mjs note`, edited `tasks.md`, compiled the cards again and ran `build-feature.mjs --next`.
+  - **Build, attempt 2:** both cards passed at their first gate attempt, and the deliverables check reported 0 unchanged files in every gate run.
+    - `004-US1` changed `tracker.mjs` (+20, −3 lines), `tracker.schema.md` (+2, −2), `tracker.feature` (+107) and one line of 003's fixture.
+    - `004-T002` added 326 lines to `tracker.feature`.
+    - No card used the reason file: no task named a file it only reads.
+
+| Card | Test-author | Implementer | Result |
+|---|---|---|---|
+| 004-US1, attempt 1 | 110,895, 11 turns, $0.158 | 559,378, 33 turns, 2 denials, $0.292 | gate-failed |
+| 004-US1, attempt 2 | 122,530, 13 turns, $0.137 | 291,644, 30 turns, $0.185 | pass |
+| 004-T002 (task card) | — | 270,258, 15 turns, $0.234 | pass |
+
+  - **The two denials in attempt 1:** the implementer tried to run the tool on the fixture to confirm its diagnosis, with shell commands that wrote through a variable or a redirect target that Claude Code could not analyse ("A variable in this command can't be checked before it runs"). Both went against its prompt's line that the shell runs only `checks` and `fixers` (E40's P3), and without them it could not confirm the cause it reported.
+  - **Build session:** 2 calls, 18 turns, 380 s, 13 requests, 266,758 tokens and $0.148. One chained `git` command was denied.
+  - **A bug the run found:** `cards.mjs` warned that FR-006 was cited by no story or task, although T002 cited it. Task cards did not collect the requirements their task cites; fixed in archkit `690ab61`.
+  - **Afterwards:**
+    - the repository's full `verify-before-commit` passed with 248 scenarios;
+    - with one format error in `TRACKER.md`, `--brief`, `--find` and `--stats` all printed "TRACKER.md: 1 format error; …" and exited 0;
+    - on a valid file, `--find` still found the item.
+  - **Whole run:** 2,358,875 tokens and $1.68. `learn.mjs status` then reported 5 open incidents (2 written by hand: E39's skipped `tracker.feature` and E41's fixture decision; plus `gate-failed`, `gate-retry` and `cost-outlier` from attempt 1), so a reflection is due.
+  - **The eval:** 2 of 2 runs passed. Each implementer:
+    - wrote `unchanged.json` before its first stop, with a reason such as "--stats only reads the archive; the task needs no change to this repo's own TRACKER.done.md";
+    - left `TRACKER.done.md` unchanged;
+    - changed `tracker.mjs`, `tracker.schema.md` and `tracker.feature`;
+    - and passed the gate at its first attempt.
+
+    The two runs used 283,539 and 231,468 tokens of cumulative input ($0.210, $0.206).
+- **Conclusion** (one feature and one run, plus 2 eval runs; Claude Code 2.1.332, headless, Sonnet; approvals by the lab's agent):
+  - With the task text and the named files in the card, the implementers changed every file their tasks named: both attempts of `004-US1` and `004-T002`. In the eval, both runs of `003-US2` changed the three files the task changes and listed the one it only reads; in E39 that story's implementer had left `tracker.feature` unchanged.
+  - The named-file check never had to stop anyone: every first gate run reported 0 unchanged files. *(The author's reading:)* the card's new contents and the implementer prompt's line "Change every file in `named_paths`: the gate fails while one is unchanged" made the difference. The check's feedback was not exercised, and the plugin also differed from E39's in P3 and the reason-file lines. The samples are small: 3 implementer sessions and 2 eval runs.
+  - Building a missing requirement exposed invalid test data that an earlier feature's tests had hidden. The gate caught it because it runs the whole suite.
+  - *(A prediction, not observed:)* a story card that only adds tests for code that already works would stop at the red check. The orchestrator warned of this, and `build-task.mjs` stops a card when the tests pass before the implementer runs. `004-US2` never ran as a story card. As a task card, T002 built, at the cost of having no test-author and no red check.
+  - The reason file was used as intended in 2 of 2 eval runs, before the gate had to ask for it.
+
 ---
 
 ## 4. Four ways to orchestrate, compared
@@ -1179,7 +1239,7 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 13. **Conventions the tests do not check need a rule that arrives at the right moment.** A rule in `.claude/rules/` with `paths:` reached the worker when it read or wrote a file in that area with Read or Write, and not otherwise (E30; Edit alone was not isolated); compound `cat` and `head` reads attached none (E39). With legacy code around the change, two such rules raised a convention score from 3 of 8 to 8 of 8, while the gate and the tests passed either way (E32).
 14. **Measure a prompt fix with repeated runs, and count the behaviour it targets.** A failure that happens once in several runs needs more than two runs to show up: E35 saw it in 0 of 2 runs, E36's arm without the fix in 1 of 5. At five runs per arm the pass rates could not separate the prompts (4 of 5 against 5 of 5), while whole-file assertions after a write went from 5 of 5 runs to 1 of 5 (E36). An eval that does not fail before the fix can neither prove the fix nor catch its removal: in E40 neither prompt eval reproduced its fault.
 15. **Check what the permission mode allows beyond `--allowedTools`.** Claude Code's read-only commands run in every mode, apart from the cases its docs list. `acceptEdits` also approves `mkdir`, `touch`, `rm`, `cp`, `mv` and `sed` inside the working folder, and redirects into it, whose targets are checked like file edits. A path guard that watches only Edit and Write misses those writes. Run workers in `default` mode, or guard the shell too (E37).
-16. **A gate proves only what it checks, and a worker builds only what its card carries.** Six tracker cards in a row changed `tracker.mjs` but not `tracker.feature`, which their tasks named, and the first four also left out the schema doc (E34 and E38, found in E39, and E39's own two cards). In E39 one requirement, FR-008, was not built either, and every card passed. Three things let this happen: the card held the task ids but not the task text, and only the requirements that its story or tasks cited; the gate ran tests, lint and format; and a rule naming both files reached the implementers, who changed the schema and not `tracker.feature`. Put each task's text into the card, cite each requirement in a task, and turn each file a task names into a check (E39). Since E40 archkit puts the task text and the named files into the card, warns about a requirement no task cites, and checks the named files, without a model run yet; a named file that needs no change is listed with its reason (archkit `722bc72`).
+16. **A gate proves only what it checks, and a worker builds only what its card carries.** Six tracker cards in a row changed `tracker.mjs` but not `tracker.feature`, which their tasks named, and the first four also left out the schema doc (E34 and E38, found in E39, and E39's own two cards). In E39 one requirement, FR-008, was not built either, and every card passed. Three things let this happen: the card held the task ids but not the task text, and only the requirements that its story or tasks cited; the gate ran tests, lint and format; and a rule naming both files reached the implementers, who changed the schema and not `tracker.feature`. Put each task's text into the card, cite each requirement in a task, and turn each file a task names into a check (E39). Since E40 archkit puts the task text and the named files into the card, warns about a requirement no task cites, and checks the named files; a named file that needs no change is listed with its reason (archkit `722bc72`). In E41's one real feature the implementers changed every file their tasks named, and the check never had to stop them.
 
 ---
 
@@ -1189,14 +1249,14 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
 - **One task through the harness:** in a project with `.archkit/tasks/<id>.json`, run `node <plugin>/scripts/build-task.mjs .archkit/tasks/<id>.json [--review]`. It prints the run record with each session's id, turns, seconds and cost.
 - **Tokens per agent:** `python3 -I <plugin>/scripts/measure.py <session-id> …`. It reads `~/.claude/projects/**/<session-id>.jsonl` and the `subagents/` folder beside it. Request size = input + cache-creation + cache-read tokens; repeated message ids are one request.
 - **The start-up block:** `claude -p "/context"`, with or without `--agent <name>`.
-- **An eval case (E35, E36, E40):** `node build/evals/run.mjs <case> --runs <n> [--plugin-dir <dir>]` in the archkit repository. Since E40 the card is optional (the orchestrator has none), and the grader also gets the session id, to read the transcript. It clones the case's fixture for each run, runs the agent as `build-task.mjs` does, grades the result and prints one JSON summary with each run's session id.
+- **An eval case (E35, E36, E40, E41):** `node build/evals/run.mjs <case> --runs <n> [--plugin-dir <dir>]` in the archkit repository. Since E40 the card is optional (the orchestrator has none), and the grader also gets the session id, to read the transcript. Since E41 a case may give its own card file (`card_file`), compiled beforehand by the current `cards.mjs` and copied in by the runner. It clones the case's fixture for each run, runs the agent as `build-task.mjs` does, grades the result and prints one JSON summary with each run's session id.
 - **Which hook fires, and with what input:** pass `--settings '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"cat > <file>"}]}]}}'` and read the file.
 
 ---
 
 ## 7. Verification
 
-- **Measured on 2026-11-24 to 2026-11-28 (E24–E40 on 2026-11-26 to 2026-11-28):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
+- **Measured on 2026-11-24 to 2026-11-28 (E24–E41 on 2026-11-26 to 2026-11-28):** every ✅[^lab] result, on one machine with Claude Code 2.1.330 to 2.1.332 (the CLI updated itself during the work; E11 onward ran on 2.1.332). Each arm and test ran once unless stated, so the numbers show size, not run-to-run spread.
 - **Checked against the Claude Code docs on 2026-11-24 to 2026-11-27:**
   - plugin-agent frontmatter limits;
   - `omitClaudeMd` in main-session mode;
@@ -1214,13 +1274,14 @@ tests/hooks.test.mjs            known-good and known-bad hook inputs
   - an approval typed by the user in an interactive orchestrator session (the approvals of E38 and E39 went into resumed headless calls);
   - whether a path-scoped rule is attached after a shell read of a file in its area (E39's compound reads attached none; a single plain `cat` was not tried), and why a rule file the worker had opened itself was not attached again (E39);
   - whether the rule or the card's examples made E39's implementers update the schema doc;
-  - on a real card, whether E40's deliverables check makes the implementer change a file it skipped, and how often the implementer lists a named file as needing no change;
+  - whether the named-file check makes an implementer change a file it skipped (in E41 no implementer skipped one, so the check never stopped a card);
+  - how often, on real features, a task names a file it only reads (none in E41's feature; the reason file was tried in an eval built for it);
   - whether E38's skipped pattern step needs the resumed, step-by-step planning, and whether E38's shell edit comes back on its own card, `002-US1` (E40 tried neither);
   - whether P1's prompt lines made one implementer run in E40 edit `tracker.schema.md`, a file its task names and its card allows (two runs per arm cannot show it).
 
 ## References
 
-- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-28; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E40 results. [^lab]
+- Local experiments: the `archkit-build` plugin and its trial projects, run with Claude Code 2.1.330 to 2.1.332 on one machine, 2026-11-24 to 2026-11-28; results read from the CLI's JSON output, the session transcripts and recorded requests (§6 counting rules), `/context`, hook inputs saved by debug hooks, and start-up screens recorded under `expect`. Backs: §2 trial project; §3 E2–E41 results. [^lab]
 - [Create custom subagents](https://code.claude.com/docs/en/sub-agents) — Anthropic, living, read 2026-11-25. Backs: §2 plugin-agent frontmatter limits; E7 `omitClaudeMd` ignored in main-session mode; E19 the fields the page names for session mode. [^cc_sub]
 - [Hooks reference](https://code.claude.com/docs/en/hooks) — Anthropic, living, read 2026-11-25. Backs: §2 hooks inside subagents, `agent_type`. [^cc_hooks]
 - [Plugins reference](https://code.claude.com/docs/en/plugins-reference) — Anthropic, living, read 2026-11-24. Backs: §2 plugin layout. [^cc_plugins]
