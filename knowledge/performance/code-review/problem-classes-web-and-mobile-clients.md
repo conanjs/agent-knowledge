@@ -5,7 +5,7 @@ topic: performance/code-review
 status: verified
 applies-to: ["Browsers: web.dev and MDN pages (living), read 2026-11-26", "React 19 docs (react.dev, living); React Redux 8.1 and later for the selector checks", "Android: androidx RecyclerView 1.x; Jetpack Compose with Kotlin 2.0.20 or later (strong skipping on by default), earlier versions where a row says so"]
 last-verified: 2026-11-26
-last-updated: 2026-11-26
+last-updated: 2026-11-28
 tags: [performance, code-review, browser, react, android, jetpack-compose, animation, fonts, bfcache, images, lists, recomposition]
 ranked-sources: true
 ---
@@ -78,7 +78,7 @@ Notation, each with one worked example:
 **Belongs to an existing class** (client sub-cases of the first catalog's classes, not added here)
 - A large initial JavaScript bundle (code that only one route or interaction needs) → `startup-cold-start`, whose fix is load on demand. In React, `lazy(() => import('./X.js'))` defers loading a component's code until it first renders, and `lazy` must be declared at module top level, or state resets ✅[^react-lazy].
 - A context value object or function created on every render → `frontend-rendering` ("new props to memoized children"): the same `Object.is` identity problem, fixed with `useMemo` and `useCallback` ✅[^react-usecontext]. A subscription that is too broad even with stable values is `broad-store-subscription` here.
-- Long tasks that delay input (Interaction to Next Paint) → `concurrency-backpressure` ("CPU-heavy work on the event loop", partition it). Browser specifics: a task over 50 ms is a long task; `scheduler.yield()` runs the continuation before other similar tasks, and is supported in Chrome and Edge 129 and Firefox 142 but not Safari, so keep a `setTimeout` fallback; do the visible update first and yield before analytics or saving ✅[^webdev-longtasks].
+- Long tasks that delay input (Interaction to Next Paint) → `concurrency-backpressure` ("CPU-heavy work on the event loop", partition it). Browser specifics: a task over 50 ms is a long task. The sources agree on 50 ms and differ on a task of exactly 50 ms (pages read on 2026-11-28): web.dev says "longer than 50 milliseconds" ✅[^webdev-longtasks]; the W3C Long Tasks draft says "exceeds 50ms" in its definition and "50ms or more" in its introduction ✅[^w3c-longtasks]; MDN says "50 milliseconds or more" ✅[^mdn-longtask]. `scheduler.yield()` runs the continuation before other similar tasks, and is supported in Chrome and Edge 129 and Firefox 142 but not Safari, so keep a `setTimeout` fallback; do the visible update first and yield before analytics or saving ✅[^webdev-longtasks].
 - An excessive DOM size → `frontend-rendering` (windowing, `content-visibility`). Lighthouse warns above 800 nodes and calls a DOM over 1,400 nodes excessive ✅[^webdev-domsize].
 - Disk or network I/O on the Android main thread → `blocking-in-async`: the main thread is the app's event loop. An Application Not Responding (ANR) error is triggered when input gets no response within 5 seconds, and the fix is `withContext(Dispatchers.IO)` in a `ViewModel` or a repository ✅[^android-anr]; StrictMode catches accidental disk or network access on the main thread, but is best effort and not guaranteed to find all of it ✅[^android-strictmode].
 - Sorting or filtering inside a composable body → `frontend-rendering` ("heavy filter or sort in the render body"): compute it once with `remember(keys) { }` or in the `ViewModel` ✅[^compose-best].
@@ -107,7 +107,7 @@ Notation, each with one worked example:
 - Check the version before flagging: Compose strong skipping (Kotlin 2.0.20) and Chrome's `unload` change both narrowed older advice.
 
 ## Verification status
-- Verified: 65 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
+- Verified: 68 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-26
 
 ## References
 - [renderToPipeableStream](https://react.dev/reference/react-dom/server/renderToPipeableStream) — React team, React 19 docs, living. Rank 1. Backs: Catalog, client-boundary-too-high. [^react-pipeable]
@@ -132,9 +132,11 @@ Notation, each with one worked example:
 - [Loading large bitmaps efficiently](https://developer.android.com/topic/performance/graphics/load-bitmap) — Android Developers, living. Rank 1. Backs: Catalog, oversized-image-decode; Lookup notes. [^android-bitmap]
 - [ANRs](https://developer.android.com/topic/performance/vitals/anr) — Android Developers, living. Rank 1. Backs: Lookup notes, existing classes. [^android-anr]
 - [StrictMode](https://developer.android.com/reference/android/os/StrictMode) — Android Developers, API level 9 and later, living. Rank 1. Backs: Lookup notes, existing classes. [^android-strictmode]
+- [Long Tasks API](https://www.w3.org/TR/longtasks-1/) — W3C, Discontinued Draft 2026. Rank 1. Backs: Lookup notes, existing classes and corrections (definition: exceeds 50ms; introduction: 50ms or more). [^w3c-longtasks]
 - [will-change](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change) — MDN Web Docs, living. Rank 3. Backs: Catalog, layout-property-animation; Lookup notes. [^mdn-willchange]
 - [font-display](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display) — MDN Web Docs, living. Rank 3. Backs: Catalog, web-font-blocking. [^mdn-fontdisplay]
 - [Responsive images](https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Responsive_images) — MDN Web Docs, living. Rank 3. Backs: Catalog, oversized-image-decode. [^mdn-responsive]
+- [PerformanceLongTaskTiming](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming) — MDN Web Docs, living. Rank 3. Backs: Lookup notes, existing classes and corrections (50 milliseconds or more). [^mdn-longtask]
 - [Stick to compositor-only properties and manage layer count](https://web.dev/articles/stick-to-compositor-only-properties-and-manage-layer-count) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, layout-property-animation. [^webdev-compositor]
 - [How to create high-performance CSS animations](https://web.dev/articles/animations-guide) — web.dev (Chrome team), living. Rank 4. Backs: Catalog, layout-property-animation. [^webdev-animations]
 - [Optimize Cumulative Layout Shift](https://web.dev/articles/optimize-cls) — web.dev (Chrome team), 2025. Rank 4. Backs: Catalog, layout-property-animation and web-font-blocking. [^webdev-cls]
