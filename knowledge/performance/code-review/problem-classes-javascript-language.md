@@ -104,7 +104,7 @@ Terms:
   - MDN says `for await` over a sync iterable is slower ✅[^mdn-forawait] but gives no factor; V8's stack-trace page gives no cost per frame.
 - **Weaker sources, rank 5 or 6.** None used.
 
-**Lab runs.** Each script below ran in `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, Apple M2 under Docker) on 2026-11-26 with `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node <flags> <script>.mjs`; flags are given per script. The TypeScript script also mounts a TypeScript 5.9.3 package read-only with `-v <path-to-typescript-package>:/ts:ro`.
+**Lab runs.** Each script below ran in `node:24.22.1-alpine` (Node.js v24.22.1, V8 13.6.233.17-node.58, Apple M2 under Docker) on 2026-11-26 with `docker run --rm --network none -v "$PWD:/work" -w /work node:24.22.1-alpine node <flags> <script>.mjs`; flags are given per script. The TypeScript script also mounts a TypeScript 5.9.3 package read-only with `-v <path-to-typescript-package>:/ts:ro`. These scripts print counts, sizes and frames, not times, so their results do not depend on the machine or its load; they gave the same output in the first run (2026-11-26 and 2026-11-27) and in the re-run (2026-11-28, after the restart) ✅[^lab-matrix].
 
 Chained methods allocate an array per step; iterator helpers allocated more bytes in this run ✅[^lab] (flags `--expose-gc --max-semi-space-size=256 --min-semi-space-size=256`, so no collection runs inside one measurement):
 <details><summary><code>chain.mjs</code> (run as <code>node --expose-gc --max-semi-space-size=256 --min-semi-space-size=256 chain.mjs</code>) and its output</summary>
@@ -341,7 +341,7 @@ Chrome 158 (E10): `chrome --headless=new --user-data-dir=<an empty folder> --ena
   - `sortkey.mjs`: 119,784 comparator calls against 119,955, as on the V8 15.0 builds; same order.
   - `stack.mjs`: 202 frames with `Infinity` against 205: one frame sits below the 201 recursion frames in the page, four (the module loader) in Node.js; 10 and 0 unchanged.
 
-Efficiency mode: in default headless Chrome the renderer is sometimes treated as a background process and V8 then stays in Maglev; none of these seven scripts reads a time or a tier (counts, heap growth and frames only), and `chain.mjs`, `sortkey.mjs`, `stack.mjs` gave the same output in 3 of 3 runs also with the Chrome flag `--disable-renderer-backgrounding` (10, 0 and 40 MB; 119,784 calls; 202 frames), so the figures above do not depend on it.
+Efficiency mode: in default headless Chrome the renderer is sometimes treated as a background process and V8 then stays in Maglev; none of these seven scripts reads a time or a tier (counts, heap growth and frames only), and `chain.mjs`, `sortkey.mjs`, `stack.mjs` gave the same output in 3 of 3 runs also with the Chrome flag `--disable-renderer-backgrounding` (10, 0 and 40 MB; 119,784 calls; 202 frames), in the first run (2026-11-27) and again in 3 of 3 in the re-run (2026-11-28, after the restart) ✅[^lab-matrix], so the figures above do not depend on it.
 
 Could not be checked in Chrome: none.
 
@@ -382,7 +382,7 @@ Page variants: `chain.mjs` line 13, `process.memoryUsage().heapUsed` (twice) →
 - A `tsconfig.json` `target` older than the runtime turns native syntax into helper calls in every file; set it to the oldest runtime the code really runs on.
 
 ## Verification status
-- Verified: 69 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
+- Verified: 71 claims (✅) · Unverified: 0 claims (⚠️) · Last verified: 2026-11-28
 - Re-run on 2026-11-28, after a restart of the lab machine: the seven scripts were extracted from this doc and run again (screen unlocked, one browser window at a time; no script prints a time). Results re-run: 7 baseline results (E0), 42 cells on E1, E2, E3, E4, E7 and E9 (once each; E0 and E1 and E3 to E7 also in the pass that found the E0 output equal to the doc line by line), 7 on E10 (page variants; `chain.mjs`, `sortkey.mjs` and `stack.mjs` also three times with `--disable-renderer-backgrounding`), and `sortkey.mjs` on E6 and E8: 58 results, all 58 matching the doc (the 7 differing cells differ as stated, the others are the same). `ts.mjs` ran with a TypeScript 5.9.3 package found on the machine (no download), mounted or loaded read-only; its page variant uses the `transpileModule` output of that package. Nothing in this doc changed except this bullet and the dates.
 - Matrix re-run on 2026-11-27: 7 scripts on 6 more builds, 44 runs (35, then 7 on E9 and 2 on E2 to compare): of 42 script-and-build cells 38 same, 4 differ, 0 could not run. Then 7 runs in Chrome 158 (E10; two page variants, checked on E1): 4 same, 3 differ, 0 could not run; and `sortkey.mjs` once each on E6 and E8. Totals: 49 cells, 42 same, 7 differ. Not run: Windows; native x64 hardware (E2 and E9 are emulated, and both default to `--no-turbofan` there); a pointer-compression build on arm64 other than Chrome and Electron; Firefox and Safari themselves, and this doc's own scripts on their engines (an engine-neutral cross-check of the rules on SpiderMonkey and JavaScriptCore, run on 2026-11-28, is in `../../js-runtime/v8-rules-on-spidermonkey-and-javascriptcore-deep-dive.md`); V8 versions outside 12.4 to 15.8.
 
