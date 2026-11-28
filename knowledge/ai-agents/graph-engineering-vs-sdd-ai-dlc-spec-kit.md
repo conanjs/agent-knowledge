@@ -5,7 +5,7 @@ topic: ai-agents
 status: draft
 applies-to: ["Concept comparison; product documentation checked 2026-10-26"]
 last-verified: 2026-10-27
-last-updated: 2026-10-27
+last-updated: 2026-11-28
 tags: [ai-agents, orchestration, study-guide]
 ---
 
@@ -253,7 +253,7 @@ flowchart TD
 
 #### Step C — Turn task descriptions into executable dependencies
 
-Spec Kit's [complex-feature guide](https://github.github.com/spec-kit/concepts/complex-features.html) discusses `[P]` tasks and delegation where the host agent supports it. A parallel marker is useful input, not proof that arbitrary tasks can safely run together.
+Spec Kit's [command reference](https://github.github.com/spec-kit/reference/agentic-sdd.html) says `/speckit.tasks` marks tasks for parallel execution where possible and `/speckit.implement` respects those markers. Its [complex-feature guide](https://github.github.com/spec-kit/how-to/complex-features.html) shows how to delegate each `[P]` task to a sub-agent, only when the coding agent supports sub-agents. A parallel marker is useful input, not proof that arbitrary tasks can safely run together.
 
 The following table is **an illustrative adapter design**, not a built-in Spec Kit schema or a claim that it automatically compiles Markdown into LangGraph:
 
@@ -383,8 +383,8 @@ The two marked claim groups were checked against current primary documentation. 
 
 - [Spec Kit overview](https://github.github.com/spec-kit/) — GitHub, living. Backs: scope, independent processes, and workflow customization.
 - [Spec Kit quickstart](https://github.github.com/spec-kit/quickstart.html) — GitHub, living. Backs: constitution, feature steps, artifacts, and convergence.
-- [Agentic SDD command reference](https://github.github.com/spec-kit/reference/agentic-sdd.html) — GitHub, living. Backs: command behavior and invocation forms.
-- [Complex features](https://github.github.com/spec-kit/concepts/complex-features.html) — GitHub, living. Backs: scoped implementation and host-supported delegation of parallel tasks.
+- [Agentic SDD command reference](https://github.github.com/spec-kit/reference/agentic-sdd.html) — GitHub, living. Backs: command behavior and invocation forms; tasks marked for parallel execution, and implement respecting parallel markers.
+- [How to implement complex features in bounded runs](https://github.github.com/spec-kit/how-to/complex-features.html) — GitHub, living. Backs: scoped implementation and delegation of parallel `[P]` tasks to sub-agents when the coding agent supports them. Moved from `concepts/` to `how-to/` on 2026-11-03; re-read 2026-11-28.
 - [AI-Driven Development Life Cycle](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) — AWS, 2025. Backs: lifecycle phases, units of work, bolts, and human oversight.
 - [Adopt AI in software development practices](https://aws.amazon.com/isv/resources/adopt-ai-in-software-development-practices-with-aws/) — AWS, living. Supplementary lifecycle reading.
 - [Collaborative AI-DLC methodology notes](https://github.com/aws-samples/sample-collaborative-ai-dlc/blob/main/docs/getting-started/methodology.md) — AWS Samples, living. Supplementary sample implementation; not the normative definition of every AI-DLC process.

@@ -5,7 +5,7 @@ topic: deno/std-and-jsr
 status: verified
 applies-to: ["Deno 2.9.8", "JSR (jsr.io) as documented on 2026-11-24"]
 last-verified: 2026-11-24
-last-updated: 2026-11-24
+last-updated: 2026-11-28
 tags: [deno, jsr, deno-publish, slow-types, exports, semver, provenance, oidc, npm-compatibility, jsr-score, license]
 ranked-sources: true
 ---
@@ -206,7 +206,7 @@ A one-function package taken from failing to a passing dry run in the lab, netwo
 | `// deno-lint-ignore no-slow-types` | Not honoured; only package-wide exclusion works ✅[^slow-types] | `deno lint` in a package with `name` + `exports` reported `error[no-slow-types]`; `--rules-exclude=no-slow-types` silenced it ✅[^run] |
 | `export const five = 5;`, `export const double = (n: number) => n * 2;` | No diagnostic ✅[^run] | Literals and single-expression arrows count as simple inference ✅[^slow-types] |
 | `deno add jsr:@std/path@1.0` | JSR's guide presents `deno add jsr:@luca/cases@1.0` as the way to use a specific minor version ✅[^using]; Deno 2.9.8 printed `Add jsr:@std/path@1.0.9`, saved `^1.0.9` and installed 1.1.6 ✅[^run] | `deno add` turns the resolved version into a caret range; write `jsr:@std/path@~1.0.9` by hand, or pass `--save-exact` ("Save exact version without the caret (^)", from `deno add --help`) ✅[^run] |
-| Name length limits | The publishing guide says scope 2–32 and package 2–20 characters ✅[^jsr-publish]; the scopes and packages pages and the registry's validation code say scope 2–20, package 2–58, no leading, trailing or double hyphen ✅[^scopes] ✅[^packages] ✅[^jsr-ids] | The code is what the registry enforces; the guide's numbers are out of date |
+| Name length limits | The publishing guide says scope 2–32 and package 2–20 characters ✅[^jsr-publish]; the scopes and packages pages say scope 2–20 and package 2–58 characters, no leading hyphen ✅[^scopes] ✅[^packages]; the registry's validation code (read 2026-11-28) also enforces those lengths and rejects a leading, trailing or double hyphen ✅[^jsr-ids] | The code is what the registry enforces; the guide's numbers are out of date |
 | A bad version is already published | It cannot be changed; yank it (ranges skip it, pinned and locked users keep it), or delete it only within 24 hours and under 10 downloads; a deleted number is never reusable ✅[^packages] | Registry immutability ✅[^packages] |
 | Publishing from another CI with `--token` | Works, but no provenance is created ✅[^jsr-publish] | Provenance needs the GitHub Actions OIDC integration ✅[^trust] |
 
@@ -243,7 +243,7 @@ A one-function package taken from failing to a passing dry run in the lab, netwo
 - [Packages](https://jsr.io/docs/packages) — JSR project, living. Rank 1. Backs: package name length, immutability, pre-releases, yanking, deletion. [^packages]
 - [Scopes](https://jsr.io/docs/scopes) — JSR project, living. Rank 1. Backs: scope name length. [^scopes]
 - [Troubleshooting](https://jsr.io/docs/troubleshooting) — JSR project, living. Rank 1. Backs: `missingLicense`, SPDX, `commonJs`. [^troubleshoot]
-- [jsr_types/src/ids.rs](https://github.com/jsr-io/jsr/blob/main/crates/jsr_types/src/ids.rs) — JSR project, living. Rank 1. Backs: scope 2–20 and package 2–58 characters, hyphen rules. [^jsr-ids]
+- [shared/src/ids.rs at 96d8bd4](https://github.com/jsr-io/jsr/blob/96d8bd406f6494b6404bbe1e05697228f0215458/shared/src/ids.rs) — JSR project, 2026. Rank 1. Backs: scope 2–20 and package 2–58 characters, hyphen rules; read 2026-11-28 at commit 96d8bd4 (the file moved from `crates/jsr_types/src/` to `shared/src/` on 2026-11-27, limits unchanged; [current version on `main`](https://github.com/jsr-io/jsr/blob/main/shared/src/ids.rs)). [^jsr-ids]
 - [Frequently Asked Questions (Deno Standard Library)](https://github.com/denoland/std/blob/main/.github/FAQ.md) — Deno project, living. Rank 1. Backs: a caret range allows fixes and features but not breaking changes. [^std-faq]
 - [JSR API: packages in scope std](https://api.jsr.io/scopes/std/packages?limit=100) — JSR project, living. Rank 1. Backs: `@std/path` and `@std/cli` scores. [^jsr-api]
 - [deno publish](https://docs.deno.com/runtime/reference/cli/publish/) — Deno project, living. Rank 1. Backs: required fields, `--check`, create the package first. [^publish-ref]
