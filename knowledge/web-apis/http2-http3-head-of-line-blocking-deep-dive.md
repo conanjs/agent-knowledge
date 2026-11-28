@@ -5,7 +5,8 @@ status: verified
 applies-to: ["HTTP/2 (RFC 9113)", "HTTP/3 (RFC 9114)", "QUIC version 1 (RFC 9000)", "QPACK (RFC 9204)", "H2O ≥ 2.1", "quiche 0.22.0", "Node.js 24.22.1 (probe)"]
 last-updated: 2026-11-22
 last-verified: 2026-11-22
-synthesized-into: []
+synthesized-into:
+  - { path: javascript/best-practices/browser-network-requests.md, on: 2026-11-28 }
 tags: [http2, http3, quic, head-of-line-blocking, hpack, qpack, flow-control, tcp, udp]
 ranked-sources: true
 ---

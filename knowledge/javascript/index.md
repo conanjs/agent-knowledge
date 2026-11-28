@@ -2,7 +2,7 @@
 schema: topic-index/v1
 kind: topic
 topic: javascript
-last-updated: 2026-11-10
+last-updated: 2026-11-28
 ---
 
 # JavaScript, the language
@@ -34,6 +34,7 @@ The JavaScript language as taught in Part 1 of javascript.info ("The JavaScript 
 | [browser/](browser/index.md) | All javascript.info Parts 2–8 lessons: DOM, geometry, events, forms and selection, frames and clickjacking, binary data and files, network (fetch options, XHR, WebSocket, SSE), storage and IndexedDB, animation, web components — verified in Chrome 152 (deep dive + 10 typed docs + lesson map) |
 | [node/](node/index.md) | Node.js services (event loop, thread pool, timeouts, graceful shutdown) and data wrangling (streams, CSV, backpressure) (deep dives) |
 | [regular-expressions/](regular-expressions/index.md) | Flags, Unicode, groups, lookaround, backtracking and ReDoS, methods and `lastIndex` (deep dive) |
+| [best-practices/](best-practices/index.md) | 157 measured practices in 17 catalogs: language patterns, promises, memory, V8 object and function behaviour, measuring, the Node.js runtime, the browser; each with when it applies and its evidence |
 
 ## References
 - [The Modern JavaScript Tutorial, Part 1: The JavaScript language](https://javascript.info/js) — javascript.info, living. Backs: topic scope and structure.
